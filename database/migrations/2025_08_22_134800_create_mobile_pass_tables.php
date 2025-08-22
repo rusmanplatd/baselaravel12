@@ -15,7 +15,7 @@ return new class extends Migration
             $table->json('content');
             $table->json('images');
             $table->nullableMorphs('model');
-            $table->timestamps();
+            $table->timestampsTz();
         });
 
         Schema::create('mobile_pass_devices', function (Blueprint $table) {
@@ -23,7 +23,7 @@ return new class extends Migration
 
             $table->string('push_token');
 
-            $table->timestamps();
+            $table->timestampsTz();
         });
 
         Schema::create('mobile_pass_registrations', function (Blueprint $table) {
@@ -36,7 +36,7 @@ return new class extends Migration
             $table->uuid('pass_serial');
             $table->foreign('pass_serial')->references('id')->on('mobile_passes');
 
-            $table->timestamps();
+            $table->timestampsTz();
 
             $table->index(['device_id', 'pass_serial']);
             $table->index(['device_id', 'pass_type_id']);

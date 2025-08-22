@@ -9,7 +9,7 @@ return new class extends Migration
     public function up()
     {
         Schema::create('one_time_passwords', function (Blueprint $table) {
-            $table->id();
+            $table->ulid('id')->primary();
 
             $table->string('password');
             $table->json('origin_properties')->nullable();
@@ -17,7 +17,7 @@ return new class extends Migration
             $table->dateTime('expires_at');
             $table->morphs('authenticatable');
 
-            $table->timestamps();
+            $table->timestampsTz();
         });
     }
 };

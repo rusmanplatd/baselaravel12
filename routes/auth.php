@@ -4,10 +4,12 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\ConfirmablePasswordController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\EmailVerificationPromptController;
+use App\Http\Controllers\Auth\MfaController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Http\Controllers\Auth\WebAuthnController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -32,6 +34,13 @@ Route::middleware('guest')->group(function () {
 
     Route::post('reset-password', [NewPasswordController::class, 'store'])
         ->name('password.store');
+
+    // WebAuthn authentication routes
+    Route::get('webauthn/options', [WebAuthnController::class, 'authenticateOptions'])
+        ->name('webauthn.authenticate.options');
+    
+    Route::post('webauthn/authenticate', [WebAuthnController::class, 'authenticate'])
+        ->name('webauthn.authenticate');
 });
 
 Route::middleware('auth')->group(function () {
@@ -54,4 +63,22 @@ Route::middleware('auth')->group(function () {
 
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
+
+    // MFA routes
+    Route::prefix('mfa')->name('mfa.')->group(function () {
+        Route::get('setup', [MfaController::class, 'show'])->name('setup');
+        Route::post('enable', [MfaController::class, 'enable'])->name('enable');
+        Route::post('confirm', [MfaController::class, 'confirm'])->name('confirm');
+        Route::post('disable', [MfaController::class, 'disable'])->name('disable');
+        Route::post('verify', [MfaController::class, 'verify'])->name('verify');
+        Route::post('backup-codes/regenerate', [MfaController::class, 'regenerateBackupCodes'])->name('backup-codes.regenerate');
+    });
+
+    // WebAuthn management routes
+    Route::prefix('webauthn')->name('webauthn.')->group(function () {
+        Route::get('register/options', [WebAuthnController::class, 'registerOptions'])->name('register.options');
+        Route::post('register', [WebAuthnController::class, 'register'])->name('register');
+        Route::get('passkeys', [WebAuthnController::class, 'list'])->name('list');
+        Route::delete('passkeys/{passkey}', [WebAuthnController::class, 'delete'])->name('delete');
+    });
 });

@@ -9,14 +9,33 @@ import { Plus, Eye, Edit, Trash2 } from 'lucide-react';
 
 interface Organization {
     id: number;
+    organization_code: string | null;
     name: string;
+    organization_type: 'holding_company' | 'subsidiary' | 'division' | 'branch' | 'department' | 'unit';
+    parent_organization_id: number | null;
     description: string | null;
     address: string | null;
     phone: string | null;
     email: string | null;
     website: string | null;
+    registration_number: string | null;
+    tax_number: string | null;
+    authorized_capital: string | null;
+    paid_capital: string | null;
+    establishment_date: string | null;
+    legal_status: string | null;
+    business_activities: string | null;
+    level: number;
+    path: string | null;
     is_active: boolean;
     departments_count: number;
+    organization_units_count: number;
+    child_organizations_count: number;
+    parent_organization?: {
+        id: number;
+        name: string;
+        organization_type: string;
+    } | null;
     created_at: string;
     updated_at: string;
 }
@@ -70,8 +89,10 @@ export default function Index({ organizations }: Props) {
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>Name</TableHead>
-                                        <TableHead>Email</TableHead>
-                                        <TableHead>Departments</TableHead>
+                                        <TableHead>Type</TableHead>
+                                        <TableHead>Parent</TableHead>
+                                        <TableHead>Units</TableHead>
+                                        <TableHead>Children</TableHead>
                                         <TableHead>Status</TableHead>
                                         <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
@@ -79,16 +100,47 @@ export default function Index({ organizations }: Props) {
                                 <TableBody>
                                     {organizations.data.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={5} className="text-center text-muted-foreground">
+                                            <TableCell colSpan={7} className="text-center text-muted-foreground">
                                                 No organizations found.
                                             </TableCell>
                                         </TableRow>
                                     ) : (
                                         organizations.data.map((org) => (
                                             <TableRow key={org.id}>
-                                                <TableCell className="font-medium">{org.name}</TableCell>
-                                                <TableCell>{org.email || '-'}</TableCell>
-                                                <TableCell>{org.departments_count}</TableCell>
+                                                <TableCell className="font-medium">
+                                                    <div className="flex flex-col">
+                                                        <span className="font-semibold">{org.name}</span>
+                                                        {org.organization_code && (
+                                                            <span className="text-sm text-muted-foreground">{org.organization_code}</span>
+                                                        )}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Badge variant="outline">
+                                                        {org.organization_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                                    </Badge>
+                                                </TableCell>
+                                                <TableCell>
+                                                    {org.parent_organization ? (
+                                                        <span className="text-sm">
+                                                            {org.parent_organization.name}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-muted-foreground">-</span>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex gap-1 text-sm">
+                                                        <span className="font-medium">{org.organization_units_count}</span>
+                                                        <span className="text-muted-foreground">units</span>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex gap-1 text-sm">
+                                                        <span className="font-medium">{org.child_organizations_count}</span>
+                                                        <span className="text-muted-foreground">children</span>
+                                                    </div>
+                                                </TableCell>
                                                 <TableCell>
                                                     <Badge variant={org.is_active ? 'default' : 'secondary'}>
                                                         {org.is_active ? 'Active' : 'Inactive'}

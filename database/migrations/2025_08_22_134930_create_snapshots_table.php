@@ -9,12 +9,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('snapshots', function (Blueprint $table) {
-            $table->id();
+            $table->ulid('id')->primary();
             $table->uuid('aggregate_uuid');
             $table->unsignedBigInteger('aggregate_version');
             $table->jsonb('state');
 
-            $table->timestamps();
+            $table->timestampsTz();
 
             $table->index('aggregate_uuid');
         });

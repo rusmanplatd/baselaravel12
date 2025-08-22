@@ -33,6 +33,14 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        $user = Auth::user();
+        
+        // Check if user has MFA enabled
+        if ($user->hasMfaEnabled()) {
+            // Don't mark MFA as verified yet - they need to complete the challenge
+            return redirect()->route('mfa.setup'); // This will be caught by middleware
+        }
+
         return redirect()->intended(route('dashboard', absolute: false));
     }
 
@@ -45,6 +53,9 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
+        // Clear MFA verification
+        $request->session()->forget('mfa_verified');
 
         return redirect('/');
     }

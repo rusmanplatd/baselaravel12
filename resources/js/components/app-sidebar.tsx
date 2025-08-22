@@ -4,7 +4,7 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, Building, Users, TrendingUp, Briefcase } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, Building, Users, TrendingUp, Briefcase, Network, UserCheck, Target } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -15,23 +15,76 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'Organizations',
-        href: '/organizations',
         icon: Building,
+        items: [
+            {
+                title: 'All Organizations',
+                href: '/organizations',
+            },
+            {
+                title: 'Hierarchy View',
+                href: '/organizations-hierarchy',
+            },
+        ],
     },
     {
-        title: 'Departments',
-        href: '/departments',
-        icon: Users,
+        title: 'Organizational Units',
+        icon: Network,
+        items: [
+            {
+                title: 'All Units',
+                href: '/organization-units',
+            },
+            {
+                title: 'Governance Units',
+                href: '/organization-units-governance',
+            },
+            {
+                title: 'Operational Units',
+                href: '/organization-units-operational',
+            },
+        ],
     },
     {
-        title: 'Job Levels',
-        href: '/job-levels',
-        icon: TrendingUp,
+        title: 'Positions',
+        href: '/organization-positions',
+        icon: Target,
     },
     {
-        title: 'Job Positions',
-        href: '/job-positions',
-        icon: Briefcase,
+        title: 'Memberships',
+        icon: UserCheck,
+        items: [
+            {
+                title: 'All Memberships',
+                href: '/organization-memberships',
+            },
+            {
+                title: 'Board Members',
+                href: '/board-members',
+            },
+            {
+                title: 'Executives',
+                href: '/executives',
+            },
+        ],
+    },
+    {
+        title: 'Legacy',
+        icon: Shield,
+        items: [
+            {
+                title: 'Departments',
+                href: '/departments',
+            },
+            {
+                title: 'Job Levels',
+                href: '/job-levels',
+            },
+            {
+                title: 'Job Positions',
+                href: '/job-positions',
+            },
+        ],
     },
 ];
 
