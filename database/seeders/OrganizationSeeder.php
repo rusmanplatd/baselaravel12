@@ -28,7 +28,7 @@ class OrganizationSeeder extends Seeder
             'governance_structure' => [
                 'board_size' => 7,
                 'independent_directors' => 4,
-                'committees' => ['audit', 'risk', 'nomination', 'remuneration']
+                'committees' => ['audit', 'risk', 'nomination', 'remuneration'],
             ],
             'authorized_capital' => 10000000.00,
             'paid_capital' => 8500000.00,
@@ -37,7 +37,7 @@ class OrganizationSeeder extends Seeder
             'business_activities' => 'Investment holding and management',
             'contact_persons' => [
                 'ceo' => ['name' => 'John Smith', 'email' => 'ceo@techcorp.com'],
-                'cfo' => ['name' => 'Jane Doe', 'email' => 'cfo@techcorp.com']
+                'cfo' => ['name' => 'Jane Doe', 'email' => 'cfo@techcorp.com'],
             ],
             'is_active' => true,
             'created_by' => $adminUserId,
@@ -61,7 +61,7 @@ class OrganizationSeeder extends Seeder
             'governance_structure' => [
                 'board_size' => 5,
                 'independent_directors' => 2,
-                'committees' => ['audit', 'risk']
+                'committees' => ['audit', 'risk'],
             ],
             'authorized_capital' => 5000000.00,
             'paid_capital' => 4000000.00,
@@ -70,7 +70,7 @@ class OrganizationSeeder extends Seeder
             'business_activities' => 'Software development, web applications, mobile apps',
             'contact_persons' => [
                 'managing_director' => ['name' => 'Mike Johnson', 'email' => 'md@techcorpsoftware.com'],
-                'cto' => ['name' => 'Sarah Wilson', 'email' => 'cto@techcorpsoftware.com']
+                'cto' => ['name' => 'Sarah Wilson', 'email' => 'cto@techcorpsoftware.com'],
             ],
             'is_active' => true,
             'created_by' => $adminUserId,
@@ -93,7 +93,7 @@ class OrganizationSeeder extends Seeder
             'governance_structure' => [
                 'board_size' => 5,
                 'independent_directors' => 2,
-                'committees' => ['audit', 'risk']
+                'committees' => ['audit', 'risk'],
             ],
             'authorized_capital' => 3000000.00,
             'paid_capital' => 2500000.00,
@@ -102,7 +102,7 @@ class OrganizationSeeder extends Seeder
             'business_activities' => 'Data analytics, machine learning, AI consulting',
             'contact_persons' => [
                 'managing_director' => ['name' => 'David Brown', 'email' => 'md@techcorpdata.com'],
-                'head_of_ai' => ['name' => 'Emily Davis', 'email' => 'ai@techcorpdata.com']
+                'head_of_ai' => ['name' => 'Emily Davis', 'email' => 'ai@techcorpdata.com'],
             ],
             'is_active' => true,
             'created_by' => $adminUserId,
@@ -130,7 +130,7 @@ class OrganizationSeeder extends Seeder
             'legal_status' => 'Division',
             'business_activities' => 'Enterprise software development and implementation',
             'contact_persons' => [
-                'division_head' => ['name' => 'Robert Taylor', 'email' => 'robert.taylor@techcorpsoftware.com']
+                'division_head' => ['name' => 'Robert Taylor', 'email' => 'robert.taylor@techcorpsoftware.com'],
             ],
             'is_active' => true,
             'created_by' => $adminUserId,
@@ -157,7 +157,7 @@ class OrganizationSeeder extends Seeder
             'legal_status' => 'Division',
             'business_activities' => 'iOS and Android application development',
             'contact_persons' => [
-                'division_head' => ['name' => 'Lisa Anderson', 'email' => 'lisa.anderson@techcorpsoftware.com']
+                'division_head' => ['name' => 'Lisa Anderson', 'email' => 'lisa.anderson@techcorpsoftware.com'],
             ],
             'is_active' => true,
             'created_by' => $adminUserId,
@@ -173,7 +173,7 @@ class OrganizationSeeder extends Seeder
                 'techcorp_data' => $techCorpData->id,
                 'enterprise_division' => $enterpriseDivision->id,
                 'mobile_division' => $mobileDivision->id,
-            ]
+            ],
         ]);
     }
 }

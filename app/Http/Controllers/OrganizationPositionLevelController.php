@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\OrganizationPositionLevel;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Inertia\Inertia;
 
 class OrganizationPositionLevelController extends Controller
 {

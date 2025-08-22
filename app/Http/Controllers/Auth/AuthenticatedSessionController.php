@@ -34,7 +34,7 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerate();
 
         $user = Auth::user();
-        
+
         // Check if user has MFA enabled
         if ($user->hasMfaEnabled()) {
             // Don't mark MFA as verified yet - they need to complete the challenge

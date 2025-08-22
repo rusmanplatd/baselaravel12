@@ -4,7 +4,7 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, Building, Users, TrendingUp, Briefcase, Network, UserCheck, Target } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, Building, Users, TrendingUp, Briefcase, Network, UserCheck, Target, Shield } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -69,20 +69,20 @@ const mainNavItems: NavItem[] = [
         ],
     },
     {
-        title: 'Legacy',
+        title: 'OAuth',
         icon: Shield,
         items: [
             {
-                title: 'Departments',
-                href: '/departments',
+                title: 'OAuth Clients',
+                href: '/oauth/clients',
             },
             {
-                title: 'Job Levels',
-                href: '/job-levels',
+                title: 'Analytics',
+                href: '/oauth/analytics',
             },
             {
-                title: 'Job Positions',
-                href: '/job-positions',
+                title: 'Test Client',
+                href: '/oauth/test',
             },
         ],
     },

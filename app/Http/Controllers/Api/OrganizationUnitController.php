@@ -4,9 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\OrganizationUnit;
-use App\Models\Organization;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class OrganizationUnitController extends Controller
 {
@@ -67,7 +66,7 @@ class OrganizationUnitController extends Controller
             'parentUnit',
             'childUnits.positions',
             'positions.activeMemberships.user',
-            'memberships.user'
+            'memberships.user',
         ]);
 
         return response()->json($organizationUnit);
@@ -76,7 +75,7 @@ class OrganizationUnitController extends Controller
     public function update(Request $request, OrganizationUnit $organizationUnit): JsonResponse
     {
         $request->validate([
-            'unit_code' => 'required|string|unique:organization_units,unit_code,' . $organizationUnit->id,
+            'unit_code' => 'required|string|unique:organization_units,unit_code,'.$organizationUnit->id,
             'name' => 'required|string|max:255',
             'unit_type' => 'required|in:board_of_commissioners,board_of_directors,executive_committee,audit_committee,risk_committee,nomination_committee,remuneration_committee,division,department,section,team,branch_office,representative_office',
             'description' => 'nullable|string',
@@ -89,7 +88,7 @@ class OrganizationUnitController extends Controller
 
         if ($request->parent_unit_id && $request->parent_unit_id == $organizationUnit->id) {
             return response()->json([
-                'message' => 'Unit cannot be its own parent'
+                'message' => 'Unit cannot be its own parent',
             ], 400);
         }
 
@@ -103,13 +102,13 @@ class OrganizationUnitController extends Controller
     {
         if ($organizationUnit->childUnits()->count() > 0) {
             return response()->json([
-                'message' => 'Cannot delete unit with child units. Please reassign or delete child units first.'
+                'message' => 'Cannot delete unit with child units. Please reassign or delete child units first.',
             ], 400);
         }
 
         if ($organizationUnit->positions()->count() > 0) {
             return response()->json([
-                'message' => 'Cannot delete unit with positions. Please reassign or delete positions first.'
+                'message' => 'Cannot delete unit with positions. Please reassign or delete positions first.',
             ], 400);
         }
 
@@ -121,10 +120,10 @@ class OrganizationUnitController extends Controller
     public function getHierarchy(Request $request): JsonResponse
     {
         $organizationId = $request->get('organization_id');
-        
-        if (!$organizationId) {
+
+        if (! $organizationId) {
             return response()->json([
-                'message' => 'organization_id is required'
+                'message' => 'organization_id is required',
             ], 400);
         }
 
@@ -151,12 +150,12 @@ class OrganizationUnitController extends Controller
     {
         $validTypes = [
             'governance' => ['board_of_commissioners', 'board_of_directors', 'executive_committee', 'audit_committee', 'risk_committee', 'nomination_committee', 'remuneration_committee'],
-            'operational' => ['division', 'department', 'section', 'team', 'branch_office', 'representative_office']
+            'operational' => ['division', 'department', 'section', 'team', 'branch_office', 'representative_office'],
         ];
 
-        if (!array_key_exists($type, $validTypes)) {
+        if (! array_key_exists($type, $validTypes)) {
             return response()->json([
-                'message' => 'Invalid type. Must be governance or operational'
+                'message' => 'Invalid type. Must be governance or operational',
             ], 400);
         }
 

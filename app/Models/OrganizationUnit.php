@@ -58,8 +58,9 @@ class OrganizationUnit extends Model
     public function getFullNameAttribute(): string
     {
         if ($this->parentUnit) {
-            return $this->parentUnit->full_name . ' - ' . $this->name;
+            return $this->parentUnit->full_name.' - '.$this->name;
         }
+
         return $this->name;
     }
 
@@ -71,6 +72,7 @@ class OrganizationUnit extends Model
             $level++;
             $parent = $parent->parentUnit;
         }
+
         return $level;
     }
 
@@ -82,6 +84,7 @@ class OrganizationUnit extends Model
             $ancestors->prepend($parent);
             $parent = $parent->parentUnit;
         }
+
         return $ancestors;
     }
 
@@ -92,6 +95,7 @@ class OrganizationUnit extends Model
             $descendants->push($child);
             $descendants = $descendants->merge($child->getAllDescendants());
         }
+
         return $descendants;
     }
 
@@ -104,7 +108,7 @@ class OrganizationUnit extends Model
             'audit_committee',
             'risk_committee',
             'nomination_committee',
-            'remuneration_committee'
+            'remuneration_committee',
         ]);
     }
 
@@ -116,7 +120,7 @@ class OrganizationUnit extends Model
             'section',
             'team',
             'branch_office',
-            'representative_office'
+            'representative_office',
         ]);
     }
 
@@ -129,7 +133,7 @@ class OrganizationUnit extends Model
             'audit_committee',
             'risk_committee',
             'nomination_committee',
-            'remuneration_committee'
+            'remuneration_committee',
         ]);
     }
 
@@ -141,7 +145,7 @@ class OrganizationUnit extends Model
             'section',
             'team',
             'branch_office',
-            'representative_office'
+            'representative_office',
         ]);
     }
 

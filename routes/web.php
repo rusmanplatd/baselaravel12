@@ -15,19 +15,19 @@ Route::middleware(['auth', 'verified', 'mfa.verified'])->group(function () {
     // Organizations
     Route::resource('organizations', \App\Http\Controllers\OrganizationController::class);
     Route::get('organizations-hierarchy', [\App\Http\Controllers\OrganizationController::class, 'hierarchy'])->name('organizations.hierarchy');
-    
-    // Organization Units  
+
+    // Organization Units
     Route::resource('organization-units', \App\Http\Controllers\OrganizationUnitController::class);
     Route::get('organization-units-governance', [\App\Http\Controllers\OrganizationUnitController::class, 'governance'])->name('organization-units.governance');
     Route::get('organization-units-operational', [\App\Http\Controllers\OrganizationUnitController::class, 'operational'])->name('organization-units.operational');
-    
+
     // Organization Position Levels
     Route::resource('organization-position-levels', \App\Http\Controllers\OrganizationPositionLevelController::class);
     Route::get('api/organization-position-levels', [\App\Http\Controllers\OrganizationPositionLevelController::class, 'api'])->name('organization-position-levels.api');
-    
+
     // Organization Positions
     Route::resource('organization-positions', \App\Http\Controllers\OrganizationPositionController::class);
-    
+
     // Organization Memberships
     Route::resource('organization-memberships', \App\Http\Controllers\OrganizationMembershipController::class);
     Route::post('organization-memberships/{organizationMembership}/activate', [\App\Http\Controllers\OrganizationMembershipController::class, 'activate'])->name('organization-memberships.activate');
@@ -39,4 +39,5 @@ Route::middleware(['auth', 'verified', 'mfa.verified'])->group(function () {
 });
 
 require __DIR__.'/settings.php';
+require __DIR__.'/oauth.php';
 require __DIR__.'/auth.php';

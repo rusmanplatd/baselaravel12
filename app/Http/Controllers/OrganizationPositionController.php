@@ -74,7 +74,7 @@ class OrganizationPositionController extends Controller
         $organizationPosition->load([
             'organizationUnit.organization',
             'activeMemberships.user',
-            'memberships.user'
+            'memberships.user',
         ]);
 
         return Inertia::render('OrganizationPositions/Show', [
@@ -97,7 +97,7 @@ class OrganizationPositionController extends Controller
     public function update(Request $request, OrganizationPosition $organizationPosition)
     {
         $validated = $request->validate([
-            'position_code' => 'required|string|unique:organization_positions,position_code,' . $organizationPosition->id,
+            'position_code' => 'required|string|unique:organization_positions,position_code,'.$organizationPosition->id,
             'title' => 'required|string|max:255',
             'position_level' => 'required|in:board_member,c_level,vice_president,director,senior_manager,manager,assistant_manager,supervisor,senior_staff,staff,junior_staff',
             'job_description' => 'nullable|string',

@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\OrganizationMembership;
-use App\Models\User;
 use App\Models\Organization;
-use App\Models\OrganizationUnit;
+use App\Models\OrganizationMembership;
 use App\Models\OrganizationPosition;
+use App\Models\OrganizationUnit;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Carbon\Carbon;
 
 class OrganizationMembershipController extends Controller
 {
@@ -78,7 +78,7 @@ class OrganizationMembershipController extends Controller
 
         if ($request->organization_position_id) {
             $position = OrganizationPosition::find($request->organization_position_id);
-            if (!$position->hasAvailableSlots()) {
+            if (! $position->hasAvailableSlots()) {
                 return redirect()->back()
                     ->withErrors(['organization_position_id' => 'No available slots for this position'])
                     ->withInput();
@@ -109,7 +109,7 @@ class OrganizationMembershipController extends Controller
             'user',
             'organization',
             'organizationUnit',
-            'organizationPosition'
+            'organizationPosition',
         ]);
 
         return Inertia::render('OrganizationMemberships/Show', [
@@ -147,7 +147,7 @@ class OrganizationMembershipController extends Controller
 
         if ($request->organization_position_id && $request->organization_position_id != $organizationMembership->organization_position_id) {
             $position = OrganizationPosition::find($request->organization_position_id);
-            if (!$position->hasAvailableSlots()) {
+            if (! $position->hasAvailableSlots()) {
                 return redirect()->back()
                     ->withErrors(['organization_position_id' => 'No available slots for this position'])
                     ->withInput();
@@ -185,7 +185,7 @@ class OrganizationMembershipController extends Controller
     {
         if ($organizationMembership->organization_position_id) {
             $position = $organizationMembership->organizationPosition;
-            if (!$position->hasAvailableSlots() && $organizationMembership->status !== 'active') {
+            if (! $position->hasAvailableSlots() && $organizationMembership->status !== 'active') {
                 return redirect()->back()
                     ->withErrors(['membership' => 'No available slots for this position']);
             }

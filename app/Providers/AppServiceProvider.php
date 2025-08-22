@@ -2,7 +2,11 @@
 
 namespace App\Providers;
 
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Passport\Passport;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,6 +23,56 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        $this->configureRateLimiting();
+
+        Passport::tokensExpireIn(now()->addDays(15));
+        Passport::refreshTokensExpireIn(now()->addDays(30));
+        Passport::personalAccessTokensExpireIn(now()->addMonths(6));
+
+        Passport::tokensCan([
+            'openid' => 'OpenID Connect',
+            'profile' => 'Profile Information',
+            'email' => 'Email Address',
+            'read' => 'Read Access',
+            'write' => 'Write Access',
+            'organization:read' => 'Organization Read',
+            'organization:write' => 'Organization Write',
+        ]);
+    }
+
+    protected function configureRateLimiting(): void
+    {
+        RateLimiter::for('oauth_token', function (Request $request) {
+            $clientId = $request->input('client_id');
+            $key = $clientId ? "oauth_client:$clientId" : 'oauth_ip:'.$request->ip();
+
+            return Limit::perMinute(10)->by($key)->response(function () {
+                return response()->json([
+                    'error' => 'rate_limit_exceeded',
+                    'error_description' => 'Too many token requests. Please try again later.',
+                ], 429);
+            });
+        });
+
+        RateLimiter::for('oauth_authorize', function (Request $request) {
+            $clientId = $request->input('client_id');
+            $key = $clientId ? "oauth_client:$clientId" : 'oauth_ip:'.$request->ip();
+
+            return Limit::perMinute(30)->by($key)->response(function () {
+                return response()->json([
+                    'error' => 'rate_limit_exceeded',
+                    'error_description' => 'Too many authorization requests. Please try again later.',
+                ], 429);
+            });
+        });
+
+        RateLimiter::for('oauth_userinfo', function (Request $request) {
+            return Limit::perMinute(60)->by($request->ip())->response(function () {
+                return response()->json([
+                    'error' => 'rate_limit_exceeded',
+                    'error_description' => 'Too many userinfo requests. Please try again later.',
+                ], 429);
+            });
+        });
     }
 }

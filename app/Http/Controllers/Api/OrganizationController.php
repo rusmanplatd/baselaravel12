@@ -29,21 +29,21 @@ class OrganizationController extends Controller
 
         if ($request->has('include')) {
             $includes = explode(',', $request->get('include'));
-            
+
             if (in_array('departments', $includes)) {
                 $query->with(['departments' => function ($query) {
                     $query->withCount('jobPositions');
                 }]);
             }
-            
+
             if (in_array('parent', $includes)) {
                 $query->with('parentOrganization');
             }
-            
+
             if (in_array('children', $includes)) {
                 $query->with('childOrganizations');
             }
-            
+
             if (in_array('units', $includes)) {
                 $query->with(['organizationUnits' => function ($query) {
                     $query->with('positions')->orderBy('sort_order');
@@ -82,7 +82,7 @@ class OrganizationController extends Controller
         ]);
 
         $organization = Organization::create($validated);
-        
+
         if ($organization->parent_organization_id) {
             $organization->updatePath();
         }
@@ -111,7 +111,7 @@ class OrganizationController extends Controller
     public function update(Request $request, Organization $organization)
     {
         $validated = $request->validate([
-            'organization_code' => 'nullable|string|unique:organizations,organization_code,' . $organization->id,
+            'organization_code' => 'nullable|string|unique:organizations,organization_code,'.$organization->id,
             'name' => 'required|string|max:255',
             'organization_type' => 'required|in:holding_company,subsidiary,division,branch,department,unit',
             'parent_organization_id' => 'nullable|exists:organizations,id',
@@ -134,13 +134,13 @@ class OrganizationController extends Controller
 
         if (isset($validated['parent_organization_id']) && $validated['parent_organization_id'] == $organization->id) {
             return response()->json([
-                'message' => 'Organization cannot be its own parent'
+                'message' => 'Organization cannot be its own parent',
             ], 400);
         }
 
         $oldParentId = $organization->parent_organization_id;
         $organization->update($validated);
-        
+
         if ($oldParentId !== $organization->parent_organization_id) {
             $organization->updatePath();
         }
@@ -152,13 +152,13 @@ class OrganizationController extends Controller
     {
         if ($organization->childOrganizations()->count() > 0) {
             return response()->json([
-                'message' => 'Cannot delete organization with child organizations. Please reassign or delete child organizations first.'
+                'message' => 'Cannot delete organization with child organizations. Please reassign or delete child organizations first.',
             ], 400);
         }
 
         if ($organization->organizationUnits()->count() > 0) {
             return response()->json([
-                'message' => 'Cannot delete organization with organizational units. Please delete units first.'
+                'message' => 'Cannot delete organization with organizational units. Please delete units first.',
             ], 400);
         }
 
@@ -190,9 +190,9 @@ class OrganizationController extends Controller
     {
         $validTypes = ['holding_company', 'subsidiary', 'division', 'branch', 'department', 'unit'];
 
-        if (!in_array($type, $validTypes)) {
+        if (! in_array($type, $validTypes)) {
             return response()->json([
-                'message' => 'Invalid organization type'
+                'message' => 'Invalid organization type',
             ], 400);
         }
 

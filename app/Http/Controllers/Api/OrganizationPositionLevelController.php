@@ -21,7 +21,7 @@ class OrganizationPositionLevelController extends Controller
 
         return response()->json([
             'data' => $organizationPositionLevels,
-            'message' => 'Organization position levels retrieved successfully'
+            'message' => 'Organization position levels retrieved successfully',
         ]);
     }
 
@@ -47,7 +47,7 @@ class OrganizationPositionLevelController extends Controller
 
         return response()->json([
             'data' => $organizationPositionLevel,
-            'message' => 'Organization position level created successfully'
+            'message' => 'Organization position level created successfully',
         ], 201);
     }
 
@@ -60,7 +60,7 @@ class OrganizationPositionLevelController extends Controller
 
         return response()->json([
             'data' => $organizationPositionLevel,
-            'message' => 'Organization position level retrieved successfully'
+            'message' => 'Organization position level retrieved successfully',
         ]);
     }
 
@@ -85,7 +85,7 @@ class OrganizationPositionLevelController extends Controller
 
         return response()->json([
             'data' => $organizationPositionLevel->fresh(),
-            'message' => 'Organization position level updated successfully'
+            'message' => 'Organization position level updated successfully',
         ]);
     }
 
@@ -96,14 +96,14 @@ class OrganizationPositionLevelController extends Controller
     {
         if ($organizationPositionLevel->organizationPositions()->exists()) {
             return response()->json([
-                'message' => 'Cannot delete organization position level that is being used by organization positions.'
+                'message' => 'Cannot delete organization position level that is being used by organization positions.',
             ], 422);
         }
 
         $organizationPositionLevel->delete();
 
         return response()->json([
-            'message' => 'Organization position level deleted successfully'
+            'message' => 'Organization position level deleted successfully',
         ]);
     }
 
@@ -118,7 +118,7 @@ class OrganizationPositionLevelController extends Controller
 
         return response()->json([
             'data' => $organizationPositionLevels,
-            'message' => 'Active organization position levels retrieved successfully'
+            'message' => 'Active organization position levels retrieved successfully',
         ]);
     }
 
@@ -134,7 +134,7 @@ class OrganizationPositionLevelController extends Controller
 
         return response()->json([
             'data' => $organizationPositionLevels,
-            'message' => 'Organization position levels by hierarchy retrieved successfully'
+            'message' => 'Organization position levels by hierarchy retrieved successfully',
         ]);
     }
 }

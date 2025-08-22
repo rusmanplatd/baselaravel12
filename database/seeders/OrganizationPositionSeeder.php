@@ -13,7 +13,7 @@ class OrganizationPositionSeeder extends Seeder
         // Get admin user ID and unit IDs for created_by/updated_by
         $adminUserId = config('seeder.admin_user_id', 1);
         $unitIds = config('seeder.unit_ids');
-        
+
         // Get position level IDs
         $positionLevels = OrganizationPositionLevel::pluck('id', 'code')->toArray();
 
@@ -29,13 +29,13 @@ class OrganizationPositionSeeder extends Seeder
                     'Minimum 15 years of executive experience',
                     'Strong leadership and governance experience',
                     'Understanding of corporate governance principles',
-                    'Board certification preferred'
+                    'Board certification preferred',
                 ],
                 'responsibilities' => [
                     'Chair board meetings',
                     'Provide strategic oversight',
                     'Ensure compliance with regulations',
-                    'Evaluate board performance'
+                    'Evaluate board performance',
                 ],
                 'min_salary' => 500000.00,
                 'max_salary' => 800000.00,
@@ -52,13 +52,13 @@ class OrganizationPositionSeeder extends Seeder
                     'Minimum 10 years of senior management experience',
                     'Relevant industry knowledge',
                     'Strong analytical and strategic thinking skills',
-                    'Board experience preferred'
+                    'Board experience preferred',
                 ],
                 'responsibilities' => [
                     'Participate in board meetings',
                     'Review strategic plans',
                     'Monitor risk management',
-                    'Ensure regulatory compliance'
+                    'Ensure regulatory compliance',
                 ],
                 'min_salary' => 300000.00,
                 'max_salary' => 500000.00,
@@ -77,13 +77,13 @@ class OrganizationPositionSeeder extends Seeder
                     'MBA or equivalent advanced degree',
                     'Minimum 15 years of executive experience',
                     'Proven track record in technology industry',
-                    'Strong leadership and communication skills'
+                    'Strong leadership and communication skills',
                 ],
                 'responsibilities' => [
                     'Develop and execute corporate strategy',
                     'Lead executive team',
                     'Represent company to stakeholders',
-                    'Drive business growth and profitability'
+                    'Drive business growth and profitability',
                 ],
                 'min_salary' => 800000.00,
                 'max_salary' => 1500000.00,
@@ -100,13 +100,13 @@ class OrganizationPositionSeeder extends Seeder
                     'CPA or equivalent professional certification',
                     'Minimum 12 years of finance experience',
                     'Experience in public companies preferred',
-                    'Strong analytical and strategic skills'
+                    'Strong analytical and strategic skills',
                 ],
                 'responsibilities' => [
                     'Oversee financial planning and analysis',
                     'Manage investor relations',
                     'Ensure regulatory compliance',
-                    'Lead finance team'
+                    'Lead finance team',
                 ],
                 'min_salary' => 600000.00,
                 'max_salary' => 1000000.00,
@@ -125,13 +125,13 @@ class OrganizationPositionSeeder extends Seeder
                     'Advanced degree in business or technology',
                     'Minimum 12 years of software industry experience',
                     'Strong leadership and management skills',
-                    'Proven track record in business growth'
+                    'Proven track record in business growth',
                 ],
                 'responsibilities' => [
                     'Execute business strategy',
                     'Manage day-to-day operations',
                     'Lead management team',
-                    'Drive revenue growth'
+                    'Drive revenue growth',
                 ],
                 'min_salary' => 400000.00,
                 'max_salary' => 700000.00,
@@ -148,13 +148,13 @@ class OrganizationPositionSeeder extends Seeder
                     'Computer Science or Engineering degree',
                     'Minimum 10 years of technology leadership experience',
                     'Strong technical and management skills',
-                    'Experience with enterprise software development'
+                    'Experience with enterprise software development',
                 ],
                 'responsibilities' => [
                     'Define technology strategy',
                     'Lead engineering teams',
                     'Drive technical innovation',
-                    'Ensure technology excellence'
+                    'Ensure technology excellence',
                 ],
                 'min_salary' => 350000.00,
                 'max_salary' => 600000.00,
@@ -173,13 +173,13 @@ class OrganizationPositionSeeder extends Seeder
                     'Computer Science or Engineering degree',
                     'Minimum 8 years of engineering management experience',
                     'Strong technical leadership skills',
-                    'Experience scaling engineering teams'
+                    'Experience scaling engineering teams',
                 ],
                 'responsibilities' => [
                     'Lead engineering organization',
                     'Drive technical excellence',
                     'Manage engineering teams',
-                    'Define development processes'
+                    'Define development processes',
                 ],
                 'min_salary' => 250000.00,
                 'max_salary' => 400000.00,
@@ -198,13 +198,13 @@ class OrganizationPositionSeeder extends Seeder
                     'Computer Science degree or equivalent experience',
                     'Minimum 5 years of frontend development experience',
                     'Expertise in React, TypeScript, and modern frontend technologies',
-                    'Strong problem-solving and communication skills'
+                    'Strong problem-solving and communication skills',
                 ],
                 'responsibilities' => [
                     'Develop complex frontend features',
                     'Mentor junior developers',
                     'Define frontend architecture',
-                    'Ensure code quality and best practices'
+                    'Ensure code quality and best practices',
                 ],
                 'min_salary' => 120000.00,
                 'max_salary' => 180000.00,
@@ -221,13 +221,13 @@ class OrganizationPositionSeeder extends Seeder
                     'Computer Science degree or equivalent experience',
                     'Minimum 2 years of frontend development experience',
                     'Proficiency in HTML, CSS, JavaScript, and React',
-                    'Understanding of responsive design principles'
+                    'Understanding of responsive design principles',
                 ],
                 'responsibilities' => [
                     'Implement UI components',
                     'Collaborate with designers and backend developers',
                     'Write clean, maintainable code',
-                    'Participate in code reviews'
+                    'Participate in code reviews',
                 ],
                 'min_salary' => 80000.00,
                 'max_salary' => 120000.00,
@@ -246,13 +246,13 @@ class OrganizationPositionSeeder extends Seeder
                     'Computer Science degree or equivalent experience',
                     'Minimum 5 years of backend development experience',
                     'Expertise in PHP, Laravel, databases, and API development',
-                    'Strong system design and architecture skills'
+                    'Strong system design and architecture skills',
                 ],
                 'responsibilities' => [
                     'Design and implement backend systems',
                     'Develop and maintain APIs',
                     'Optimize database performance',
-                    'Mentor junior developers'
+                    'Mentor junior developers',
                 ],
                 'min_salary' => 125000.00,
                 'max_salary' => 185000.00,
@@ -269,13 +269,13 @@ class OrganizationPositionSeeder extends Seeder
                     'Computer Science degree or equivalent experience',
                     'Minimum 2 years of backend development experience',
                     'Proficiency in PHP, Laravel, and database technologies',
-                    'Understanding of RESTful API design'
+                    'Understanding of RESTful API design',
                 ],
                 'responsibilities' => [
                     'Implement business logic',
                     'Develop REST APIs',
                     'Write database queries',
-                    'Ensure code quality and testing'
+                    'Ensure code quality and testing',
                 ],
                 'min_salary' => 85000.00,
                 'max_salary' => 125000.00,
@@ -294,13 +294,13 @@ class OrganizationPositionSeeder extends Seeder
                     'Computer Science degree or equivalent experience',
                     'Minimum 5 years of QA experience',
                     'Strong knowledge of testing methodologies',
-                    'Leadership and team management skills'
+                    'Leadership and team management skills',
                 ],
                 'responsibilities' => [
                     'Define testing strategies',
                     'Manage QA team',
                     'Ensure product quality',
-                    'Implement QA processes'
+                    'Implement QA processes',
                 ],
                 'min_salary' => 100000.00,
                 'max_salary' => 150000.00,
@@ -317,13 +317,13 @@ class OrganizationPositionSeeder extends Seeder
                     'Computer Science degree or equivalent experience',
                     'Minimum 2 years of testing experience',
                     'Knowledge of manual and automated testing',
-                    'Attention to detail and analytical skills'
+                    'Attention to detail and analytical skills',
                 ],
                 'responsibilities' => [
                     'Execute test plans',
                     'Report and track bugs',
                     'Perform functional and regression testing',
-                    'Collaborate with development teams'
+                    'Collaborate with development teams',
                 ],
                 'min_salary' => 70000.00,
                 'max_salary' => 100000.00,
@@ -342,13 +342,13 @@ class OrganizationPositionSeeder extends Seeder
                     'HR or Business degree',
                     'Minimum 8 years of HR experience',
                     'Strong knowledge of employment law',
-                    'Leadership and strategic thinking skills'
+                    'Leadership and strategic thinking skills',
                 ],
                 'responsibilities' => [
                     'Develop HR strategies',
                     'Lead HR team',
                     'Ensure compliance with labor laws',
-                    'Drive employee engagement'
+                    'Drive employee engagement',
                 ],
                 'min_salary' => 120000.00,
                 'max_salary' => 180000.00,
@@ -365,13 +365,13 @@ class OrganizationPositionSeeder extends Seeder
                     'HR or Business degree',
                     'Minimum 2 years of HR experience',
                     'Knowledge of HR processes',
-                    'Strong communication and interpersonal skills'
+                    'Strong communication and interpersonal skills',
                 ],
                 'responsibilities' => [
                     'Support recruitment processes',
                     'Assist with employee onboarding',
                     'Handle employee inquiries',
-                    'Maintain HR records'
+                    'Maintain HR records',
                 ],
                 'min_salary' => 60000.00,
                 'max_salary' => 85000.00,
@@ -406,7 +406,7 @@ class OrganizationPositionSeeder extends Seeder
                 'qa_engineer' => $createdPositions[12]->id,
                 'hr_director' => $createdPositions[13]->id,
                 'hr_specialist' => $createdPositions[14]->id,
-            ]
+            ],
         ]);
     }
 }

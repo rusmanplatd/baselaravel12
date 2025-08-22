@@ -20,7 +20,7 @@ return new class extends Migration
                 'division',
                 'branch',
                 'department',
-                'unit'
+                'unit',
             ])->default('subsidiary');
             $table->ulid('parent_organization_id')->nullable();
             $table->string('name');
@@ -72,7 +72,7 @@ return new class extends Migration
                 'section',
                 'team',
                 'branch_office',
-                'representative_office'
+                'representative_office',
             ]);
             $table->text('description')->nullable();
             $table->ulid('parent_unit_id')->nullable();
@@ -146,7 +146,7 @@ return new class extends Migration
                 'board_member',
                 'consultant',
                 'contractor',
-                'intern'
+                'intern',
             ])->default('employee');
             $table->date('start_date');
             $table->date('end_date')->nullable();

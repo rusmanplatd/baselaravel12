@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\OrganizationUnit;
 use App\Models\Organization;
+use App\Models\OrganizationUnit;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -73,7 +73,7 @@ class OrganizationUnitController extends Controller
             'parentUnit',
             'childUnits.positions',
             'positions.activeMemberships.user',
-            'memberships.user'
+            'memberships.user',
         ]);
 
         return Inertia::render('OrganizationUnits/Show', [
@@ -98,7 +98,7 @@ class OrganizationUnitController extends Controller
     public function update(Request $request, OrganizationUnit $organizationUnit)
     {
         $validated = $request->validate([
-            'unit_code' => 'required|string|unique:organization_units,unit_code,' . $organizationUnit->id,
+            'unit_code' => 'required|string|unique:organization_units,unit_code,'.$organizationUnit->id,
             'name' => 'required|string|max:255',
             'unit_type' => 'required|in:board_of_commissioners,board_of_directors,executive_committee,audit_committee,risk_committee,nomination_committee,remuneration_committee,division,department,section,team,branch_office,representative_office',
             'description' => 'nullable|string',

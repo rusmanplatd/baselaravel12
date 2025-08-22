@@ -11,8 +11,10 @@ This is a Laravel 12 + React fullstack application using:
 - **Testing**: Pest (PHP) for backend, no frontend testing setup currently
 - **Database**: SQLite (default), migrations in `database/migrations/`
 - **SSR**: Enabled via Inertia.js server-side rendering
-- **Authentication**: Laravel Passport for OAuth, Laravel Breeze-style UI flows
+- **Authentication**: Laravel Passport for OAuth 2.0/OIDC, Laravel Breeze-style UI flows, WebAuthn/Passkeys support
 - **Extensions**: Multiple Spatie packages (permissions, activity logs, event sourcing, multitenancy)
+- **Organization Management**: Hierarchical organization structure with units, positions, and memberships
+- **Multi-tenancy**: Organization-based tenancy with Spatie multitenancy package
 
 ## Development Commands
 
@@ -52,10 +54,10 @@ npm run format:check # Check formatting
 ## Project Structure
 
 ### Backend (Laravel)
-- **Routes**: `routes/web.php` (main), `routes/auth.php` (authentication), `routes/settings.php` (user settings), `routes/api.php` (API endpoints)
-- **Controllers**: `app/Http/Controllers/` - organized by feature (Auth/, Settings/)
-- **Models**: `app/Models/` - User model with OAuth and Spatie package integrations
-- **Middleware**: `app/Http/Middleware/` - includes HandleInertiaRequests for Inertia.js and HandleAppearance
+- **Routes**: `routes/web.php` (main), `routes/auth.php` (authentication), `routes/oauth.php` (OAuth/OIDC), `routes/api.php` (API endpoints)
+- **Controllers**: `app/Http/Controllers/` - organized by feature (Auth/, OAuth/, Api/Organization*)
+- **Models**: `app/Models/` - includes User, Organization hierarchy (Organization, OrganizationUnit, OrganizationPosition, OrganizationMembership)
+- **Middleware**: `app/Http/Middleware/` - includes HandleInertiaRequests for Inertia.js, HandleAppearance, OAuthRateLimiter
 - **Config**: Multiple configurations for Spatie packages, Passport OAuth, and Inertia.js (SSR on port 13714)
 
 ### Frontend (React)
@@ -106,8 +108,35 @@ Tests are located in:
 
 ### Database
 - Uses SQLite by default (`database/database.sqlite`)
-- Extensive migration set including OAuth tables (Passport), permission tables (Spatie), activity logs, event sourcing, and multitenancy
-- Seeder available in `database/seeders/`
+- Extensive migration set including:
+  - OAuth 2.0/OIDC tables (Passport) with organization-scoped clients
+  - Organization hierarchy tables (organizations, units, positions, memberships)
+  - Permission tables (Spatie), activity logs, event sourcing, multitenancy
+  - Passkeys/WebAuthn support tables
+- Seeders available in `database/seeders/` including organizational structure seeders
+
+## Key Features
+
+### Organization Management
+- **Hierarchical Structure**: Organizations can have parent-child relationships with automatic path/level management
+- **Organization Types**: holding_company, subsidiary, division, branch, department, unit
+- **Organization Units**: Various unit types (boards, committees, divisions, departments, etc.)
+- **Position Management**: Hierarchical position levels with salary ranges and qualifications
+- **Membership System**: Users can have memberships across multiple organizations with different roles
+
+### OAuth 2.0 & OIDC Provider
+- **Full OAuth 2.0 Server**: Authorization code, client credentials, refresh token flows
+- **OpenID Connect**: Complete OIDC implementation with discovery endpoints
+- **Organization-Scoped Clients**: All OAuth clients must be associated with an organization
+- **Dynamic Scopes**: Organization-specific scopes (organization:read, organization:admin, etc.)
+- **Rate Limiting**: Separate rate limits for different OAuth endpoints
+- **Audit Logging**: Complete audit trail for OAuth operations with tenant context
+
+### Security Features
+- **WebAuthn/Passkeys**: Modern passwordless authentication
+- **Two-Factor Authentication**: TOTP/Google Authenticator support
+- **Rate Limiting**: Comprehensive rate limiting across OAuth and auth endpoints
+- **Activity Logging**: Full activity logging with Spatie activity log package
 
 ## Development Notes
 

@@ -14,7 +14,7 @@ class OrganizationPositionLevelSeeder extends Seeder
     public function run(): void
     {
         $defaultUserId = Str::ulid();
-        
+
         $levels = [
             [
                 'code' => 'board_member',

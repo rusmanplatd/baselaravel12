@@ -2,13 +2,12 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\Organization;
-use App\Models\OrganizationUnit;
-use App\Models\OrganizationPosition;
 use App\Models\OrganizationMembership;
+use App\Models\OrganizationPosition;
+use App\Models\OrganizationUnit;
 use App\Models\User;
+use Illuminate\Database\Seeder;
 
 class OrganizationalStructureSeeder extends Seeder
 {
@@ -34,16 +33,16 @@ class OrganizationalStructureSeeder extends Seeder
             'governance_structure' => [
                 'board_size' => 7,
                 'independent_directors' => 4,
-                'executive_directors' => 3
+                'executive_directors' => 3,
             ],
             'contact_persons' => [
                 [
                     'name' => 'John Smith',
                     'position' => 'Company Secretary',
-                    'email' => 'secretary@globaltech.com'
-                ]
+                    'email' => 'secretary@globaltech.com',
+                ],
             ],
-            'is_active' => true
+            'is_active' => true,
         ]);
         $holdingCompany->updatePath();
 
@@ -65,7 +64,7 @@ class OrganizationalStructureSeeder extends Seeder
             'establishment_date' => '2020-03-01',
             'legal_status' => 'Private Limited Company',
             'business_activities' => 'Software development, cloud services, IT consulting',
-            'is_active' => true
+            'is_active' => true,
         ]);
         $techSub->updatePath();
 
@@ -86,7 +85,7 @@ class OrganizationalStructureSeeder extends Seeder
             'establishment_date' => '2021-06-15',
             'legal_status' => 'Private Limited Company',
             'business_activities' => 'Digital banking, payment processing, financial software',
-            'is_active' => true
+            'is_active' => true,
         ]);
         $finSub->updatePath();
 
@@ -101,16 +100,16 @@ class OrganizationalStructureSeeder extends Seeder
                 'Strategic oversight',
                 'Risk management supervision',
                 'Executive performance evaluation',
-                'Corporate governance compliance'
+                'Corporate governance compliance',
             ],
             'authorities' => [
                 'Approve strategic plans',
                 'Appoint/remove board of directors',
                 'Approve major transactions',
-                'Set executive compensation'
+                'Set executive compensation',
             ],
             'is_active' => true,
-            'sort_order' => 1
+            'sort_order' => 1,
         ]);
 
         // Create Board of Directors for Holding Company
@@ -124,16 +123,16 @@ class OrganizationalStructureSeeder extends Seeder
                 'Daily operations management',
                 'Strategy implementation',
                 'Business development',
-                'Operational oversight'
+                'Operational oversight',
             ],
             'authorities' => [
                 'Execute business strategy',
                 'Manage operations',
                 'Make operational decisions',
-                'Hire/fire executives'
+                'Hire/fire executives',
             ],
             'is_active' => true,
-            'sort_order' => 2
+            'sort_order' => 2,
         ]);
 
         // Create Audit Committee
@@ -148,16 +147,16 @@ class OrganizationalStructureSeeder extends Seeder
                 'Financial reporting oversight',
                 'Internal audit supervision',
                 'External auditor management',
-                'Compliance monitoring'
+                'Compliance monitoring',
             ],
             'authorities' => [
                 'Review financial statements',
                 'Appoint external auditors',
                 'Oversee internal controls',
-                'Investigate financial irregularities'
+                'Investigate financial irregularities',
             ],
             'is_active' => true,
-            'sort_order' => 1
+            'sort_order' => 1,
         ]);
 
         // Create divisions for TechSolutions
@@ -171,10 +170,10 @@ class OrganizationalStructureSeeder extends Seeder
                 'Software development',
                 'Product architecture',
                 'Technical innovation',
-                'Quality assurance'
+                'Quality assurance',
             ],
             'is_active' => true,
-            'sort_order' => 1
+            'sort_order' => 1,
         ]);
 
         $salesDiv = OrganizationUnit::create([
@@ -187,10 +186,10 @@ class OrganizationalStructureSeeder extends Seeder
                 'Customer acquisition',
                 'Revenue generation',
                 'Marketing campaigns',
-                'Customer relationship management'
+                'Customer relationship management',
             ],
             'is_active' => true,
-            'sort_order' => 2
+            'sort_order' => 2,
         ]);
 
         // Create positions
@@ -203,16 +202,16 @@ class OrganizationalStructureSeeder extends Seeder
             'qualifications' => [
                 'Minimum 15 years senior management experience',
                 'Strong corporate governance background',
-                'Strategic leadership skills'
+                'Strategic leadership skills',
             ],
             'responsibilities' => [
                 'Chair board meetings',
                 'Represent shareholders',
                 'Ensure governance compliance',
-                'Guide strategic direction'
+                'Guide strategic direction',
             ],
             'max_incumbents' => 1,
-            'is_active' => true
+            'is_active' => true,
         ]);
 
         $ceoPos = OrganizationPosition::create([
@@ -224,18 +223,18 @@ class OrganizationalStructureSeeder extends Seeder
             'qualifications' => [
                 'MBA or equivalent',
                 'Minimum 10 years executive experience',
-                'Proven leadership track record'
+                'Proven leadership track record',
             ],
             'responsibilities' => [
                 'Strategic execution',
                 'Organizational leadership',
                 'Stakeholder management',
-                'Performance accountability'
+                'Performance accountability',
             ],
             'min_salary' => 300000.00,
             'max_salary' => 500000.00,
             'max_incumbents' => 1,
-            'is_active' => true
+            'is_active' => true,
         ]);
 
         $ctoPos = OrganizationPosition::create([
@@ -247,18 +246,18 @@ class OrganizationalStructureSeeder extends Seeder
             'qualifications' => [
                 'Computer Science degree',
                 'Minimum 10 years tech leadership',
-                'Strong technical architecture skills'
+                'Strong technical architecture skills',
             ],
             'responsibilities' => [
                 'Technology strategy',
                 'Engineering leadership',
                 'Technical architecture',
-                'Innovation management'
+                'Innovation management',
             ],
             'min_salary' => 250000.00,
             'max_salary' => 400000.00,
             'max_incumbents' => 1,
-            'is_active' => true
+            'is_active' => true,
         ]);
 
         $vpSalesPos = OrganizationPosition::create([
@@ -270,39 +269,39 @@ class OrganizationalStructureSeeder extends Seeder
             'qualifications' => [
                 'Business or Marketing degree',
                 'Minimum 8 years sales leadership',
-                'Proven revenue growth track record'
+                'Proven revenue growth track record',
             ],
             'responsibilities' => [
                 'Sales strategy',
                 'Revenue targets',
                 'Team leadership',
-                'Customer relationships'
+                'Customer relationships',
             ],
             'min_salary' => 150000.00,
             'max_salary' => 250000.00,
             'max_incumbents' => 1,
-            'is_active' => true
+            'is_active' => true,
         ]);
 
         // Create sample users
         $user1 = User::firstOrCreate(['email' => 'chairman@globaltech.com'], [
             'name' => 'Robert Johnson',
-            'password' => bcrypt('password')
+            'password' => bcrypt('password'),
         ]);
 
         $user2 = User::firstOrCreate(['email' => 'ceo@globaltech.com'], [
             'name' => 'Sarah Williams',
-            'password' => bcrypt('password')
+            'password' => bcrypt('password'),
         ]);
 
         $user3 = User::firstOrCreate(['email' => 'cto@techsolutions.com'], [
             'name' => 'Michael Chen',
-            'password' => bcrypt('password')
+            'password' => bcrypt('password'),
         ]);
 
         $user4 = User::firstOrCreate(['email' => 'vpsales@techsolutions.com'], [
             'name' => 'Jennifer Davis',
-            'password' => bcrypt('password')
+            'password' => bcrypt('password'),
         ]);
 
         // Create memberships
@@ -313,7 +312,7 @@ class OrganizationalStructureSeeder extends Seeder
             'organization_position_id' => $chairmanPos->id,
             'membership_type' => 'board_member',
             'start_date' => '2020-01-15',
-            'status' => 'active'
+            'status' => 'active',
         ]);
 
         OrganizationMembership::create([
@@ -323,7 +322,7 @@ class OrganizationalStructureSeeder extends Seeder
             'organization_position_id' => $ceoPos->id,
             'membership_type' => 'board_member',
             'start_date' => '2020-02-01',
-            'status' => 'active'
+            'status' => 'active',
         ]);
 
         OrganizationMembership::create([
@@ -333,7 +332,7 @@ class OrganizationalStructureSeeder extends Seeder
             'organization_position_id' => $ctoPos->id,
             'membership_type' => 'employee',
             'start_date' => '2020-03-15',
-            'status' => 'active'
+            'status' => 'active',
         ]);
 
         OrganizationMembership::create([
@@ -343,7 +342,7 @@ class OrganizationalStructureSeeder extends Seeder
             'organization_position_id' => $vpSalesPos->id,
             'membership_type' => 'employee',
             'start_date' => '2020-04-01',
-            'status' => 'active'
+            'status' => 'active',
         ]);
 
         $this->command->info('Organizational structure seeded successfully!');

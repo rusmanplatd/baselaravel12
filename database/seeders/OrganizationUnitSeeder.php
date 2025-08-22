@@ -26,13 +26,13 @@ class OrganizationUnitSeeder extends Seeder
                     'Strategic oversight',
                     'Risk management oversight',
                     'Appointment of board of directors',
-                    'Approval of major corporate actions'
+                    'Approval of major corporate actions',
                 ],
                 'authorities' => [
                     'Approve annual budget',
                     'Appoint and dismiss directors',
                     'Approve major investments',
-                    'Set executive compensation'
+                    'Set executive compensation',
                 ],
                 'is_active' => true,
                 'sort_order' => 1,
@@ -48,13 +48,13 @@ class OrganizationUnitSeeder extends Seeder
                     'Corporate management',
                     'Strategic execution',
                     'Financial performance',
-                    'Operational oversight'
+                    'Operational oversight',
                 ],
                 'authorities' => [
                     'Execute business strategy',
                     'Manage operations',
                     'Make operational decisions',
-                    'Report to commissioners'
+                    'Report to commissioners',
                 ],
                 'is_active' => true,
                 'sort_order' => 2,
@@ -70,13 +70,13 @@ class OrganizationUnitSeeder extends Seeder
                     'Financial reporting oversight',
                     'Internal audit supervision',
                     'External auditor management',
-                    'Compliance monitoring'
+                    'Compliance monitoring',
                 ],
                 'authorities' => [
                     'Review financial statements',
                     'Appoint internal auditors',
                     'Review audit findings',
-                    'Recommend corrective actions'
+                    'Recommend corrective actions',
                 ],
                 'is_active' => true,
                 'sort_order' => 3,
@@ -92,13 +92,13 @@ class OrganizationUnitSeeder extends Seeder
                     'Risk strategy oversight',
                     'Risk appetite setting',
                     'Risk monitoring',
-                    'Crisis management'
+                    'Crisis management',
                 ],
                 'authorities' => [
                     'Set risk policies',
                     'Review risk reports',
                     'Approve risk limits',
-                    'Escalate major risks'
+                    'Escalate major risks',
                 ],
                 'is_active' => true,
                 'sort_order' => 4,
@@ -116,13 +116,13 @@ class OrganizationUnitSeeder extends Seeder
                     'Strategic planning',
                     'Corporate governance',
                     'Stakeholder management',
-                    'Executive decision making'
+                    'Executive decision making',
                 ],
                 'authorities' => [
                     'Set company direction',
                     'Approve major decisions',
                     'Represent company externally',
-                    'Allocate resources'
+                    'Allocate resources',
                 ],
                 'is_active' => true,
                 'sort_order' => 1,
@@ -138,13 +138,13 @@ class OrganizationUnitSeeder extends Seeder
                     'Software development',
                     'Technical architecture',
                     'Code quality assurance',
-                    'Development methodology'
+                    'Development methodology',
                 ],
                 'authorities' => [
                     'Define technical standards',
                     'Approve technical designs',
                     'Manage development teams',
-                    'Release software products'
+                    'Release software products',
                 ],
                 'is_active' => true,
                 'sort_order' => 2,
@@ -160,13 +160,13 @@ class OrganizationUnitSeeder extends Seeder
                     'UI/UX development',
                     'Frontend architecture',
                     'User interaction design',
-                    'Frontend testing'
+                    'Frontend testing',
                 ],
                 'authorities' => [
                     'Choose frontend frameworks',
                     'Design user interfaces',
                     'Implement frontend features',
-                    'Optimize user experience'
+                    'Optimize user experience',
                 ],
                 'is_active' => true,
                 'sort_order' => 1,
@@ -182,13 +182,13 @@ class OrganizationUnitSeeder extends Seeder
                     'API development',
                     'Database design',
                     'Server architecture',
-                    'Backend testing'
+                    'Backend testing',
                 ],
                 'authorities' => [
                     'Design database schemas',
                     'Implement business logic',
                     'Develop APIs',
-                    'Optimize performance'
+                    'Optimize performance',
                 ],
                 'is_active' => true,
                 'sort_order' => 2,
@@ -204,13 +204,13 @@ class OrganizationUnitSeeder extends Seeder
                     'Test planning',
                     'Test execution',
                     'Bug reporting',
-                    'Quality metrics'
+                    'Quality metrics',
                 ],
                 'authorities' => [
                     'Approve software releases',
                     'Define testing standards',
                     'Block defective releases',
-                    'Report quality metrics'
+                    'Report quality metrics',
                 ],
                 'is_active' => true,
                 'sort_order' => 3,
@@ -226,13 +226,13 @@ class OrganizationUnitSeeder extends Seeder
                     'Talent acquisition',
                     'Employee development',
                     'Performance management',
-                    'HR policy implementation'
+                    'HR policy implementation',
                 ],
                 'authorities' => [
                     'Hire employees',
                     'Conduct performance reviews',
                     'Implement HR policies',
-                    'Manage compensation'
+                    'Manage compensation',
                 ],
                 'is_active' => true,
                 'sort_order' => 4,
@@ -250,13 +250,13 @@ class OrganizationUnitSeeder extends Seeder
                     'AI research',
                     'Machine learning development',
                     'Algorithm optimization',
-                    'AI product development'
+                    'AI product development',
                 ],
                 'authorities' => [
                     'Conduct research projects',
                     'Develop AI models',
                     'Publish research findings',
-                    'Collaborate with academia'
+                    'Collaborate with academia',
                 ],
                 'is_active' => true,
                 'sort_order' => 1,
@@ -272,13 +272,13 @@ class OrganizationUnitSeeder extends Seeder
                     'Data analysis',
                     'Business intelligence',
                     'Data visualization',
-                    'Reporting and insights'
+                    'Reporting and insights',
                 ],
                 'authorities' => [
                     'Access company data',
                     'Generate reports',
                     'Provide recommendations',
-                    'Implement analytics solutions'
+                    'Implement analytics solutions',
                 ],
                 'is_active' => true,
                 'sort_order' => 2,
@@ -289,7 +289,7 @@ class OrganizationUnitSeeder extends Seeder
         foreach ($units as $index => $unitData) {
             $unitData['created_by'] = $adminUserId;
             $unitData['updated_by'] = $adminUserId;
-            
+
             // Handle parent_unit_id references to previously created units
             if (isset($unitData['parent_unit_id']) && is_int($unitData['parent_unit_id'])) {
                 // Convert 1-based index to 0-based for array access
@@ -300,7 +300,7 @@ class OrganizationUnitSeeder extends Seeder
                     $unitData['parent_unit_id'] = null;
                 }
             }
-            
+
             $unit = OrganizationUnit::create($unitData);
             $createdUnits[] = $unit;
         }
@@ -320,7 +320,7 @@ class OrganizationUnitSeeder extends Seeder
                 'hr_department' => $createdUnits[9]->id,
                 'ai_research_division' => $createdUnits[10]->id,
                 'data_analytics_department' => $createdUnits[11]->id,
-            ]
+            ],
         ]);
     }
 }

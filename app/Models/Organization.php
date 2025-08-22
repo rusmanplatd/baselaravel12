@@ -4,12 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Spatie\Multitenancy\Models\Tenant;
 
 class Organization extends Model
 {
     use HasUlids;
+
     protected $fillable = [
         'organization_code',
         'name',
@@ -63,12 +66,22 @@ class Organization extends Model
         return $this->hasMany(OrganizationMembership::class);
     }
 
+    public function tenant(): HasOne
+    {
+        return $this->hasOne(Tenant::class, 'name', 'organization_code');
+    }
+
+    public function oauthClients(): HasMany
+    {
+        return $this->hasMany(\Laravel\Passport\Client::class, 'organization_id');
+    }
+
     public function updatePath(): void
     {
         if ($this->parent_organization_id) {
             $parent = $this->parentOrganization;
             $this->level = $parent->level + 1;
-            $this->path = $parent->path . '/' . $this->id;
+            $this->path = $parent->path.'/'.$this->id;
         } else {
             $this->level = 0;
             $this->path = (string) $this->id;
@@ -82,7 +95,7 @@ class Organization extends Model
 
     public function getAncestors()
     {
-        if (!$this->path) {
+        if (! $this->path) {
             return collect();
         }
 
@@ -94,22 +107,52 @@ class Organization extends Model
 
     public function getDescendants()
     {
-        return static::where('path', 'like', $this->path . '/%')->orderBy('level')->get();
+        return static::where('path', 'like', $this->path.'/%')->orderBy('level')->get();
     }
 
     public function isAncestorOf(Organization $organization): bool
     {
-        return str_starts_with($organization->path, $this->path . '/');
+        return str_starts_with($organization->path, $this->path.'/');
     }
 
     public function isDescendantOf(Organization $organization): bool
     {
-        return str_starts_with($this->path, $organization->path . '/');
+        return str_starts_with($this->path, $organization->path.'/');
     }
 
     public function isSiblingOf(Organization $organization): bool
     {
         return $this->parent_organization_id === $organization->parent_organization_id
             && $this->id !== $organization->id;
+    }
+
+    public function createTenant(): ?Tenant
+    {
+        if ($this->tenant) {
+            return $this->tenant;
+        }
+
+        return Tenant::create([
+            'name' => $this->organization_code,
+            'domain' => strtolower($this->organization_code).'.example.com',
+            'database' => 'tenant_'.strtolower($this->organization_code),
+        ]);
+    }
+
+    public function getAvailableOAuthScopes(): array
+    {
+        $baseScopes = ['openid', 'profile', 'email'];
+
+        if ($this->organization_type === 'corporate') {
+            $baseScopes[] = 'organization:read';
+            $baseScopes[] = 'organization:members';
+        }
+
+        if ($this->level === 0) {
+            $baseScopes[] = 'organization:admin';
+            $baseScopes[] = 'organization:hierarchy';
+        }
+
+        return $baseScopes;
     }
 }

@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\OrganizationMembership;
-use App\Models\User;
 use App\Models\Organization;
+use App\Models\OrganizationMembership;
 use App\Models\OrganizationPosition;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
+use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class OrganizationMembershipController extends Controller
 {
@@ -19,7 +19,7 @@ class OrganizationMembershipController extends Controller
             'user',
             'organization',
             'organizationUnit',
-            'organizationPosition'
+            'organizationPosition',
         ]);
 
         if ($request->has('user_id')) {
@@ -83,9 +83,9 @@ class OrganizationMembershipController extends Controller
 
         if ($request->organization_position_id) {
             $position = OrganizationPosition::find($request->organization_position_id);
-            if (!$position->hasAvailableSlots()) {
+            if (! $position->hasAvailableSlots()) {
                 return response()->json([
-                    'message' => 'No available slots for this position'
+                    'message' => 'No available slots for this position',
                 ], 400);
             }
 
@@ -97,7 +97,7 @@ class OrganizationMembershipController extends Controller
 
             if ($existingMembership) {
                 return response()->json([
-                    'message' => 'User already has an active membership in this position'
+                    'message' => 'User already has an active membership in this position',
                 ], 400);
             }
         }
@@ -114,7 +114,7 @@ class OrganizationMembershipController extends Controller
             'user',
             'organization',
             'organizationUnit',
-            'organizationPosition'
+            'organizationPosition',
         ]);
 
         return response()->json($organizationMembership);
@@ -134,9 +134,9 @@ class OrganizationMembershipController extends Controller
 
         if ($request->organization_position_id && $request->organization_position_id != $organizationMembership->organization_position_id) {
             $position = OrganizationPosition::find($request->organization_position_id);
-            if (!$position->hasAvailableSlots()) {
+            if (! $position->hasAvailableSlots()) {
                 return response()->json([
-                    'message' => 'No available slots for this position'
+                    'message' => 'No available slots for this position',
                 ], 400);
             }
 
@@ -149,7 +149,7 @@ class OrganizationMembershipController extends Controller
 
             if ($existingMembership) {
                 return response()->json([
-                    'message' => 'User already has an active membership in this position'
+                    'message' => 'User already has an active membership in this position',
                 ], 400);
             }
         }
@@ -171,9 +171,9 @@ class OrganizationMembershipController extends Controller
     {
         if ($organizationMembership->organization_position_id) {
             $position = $organizationMembership->organizationPosition;
-            if (!$position->hasAvailableSlots() && $organizationMembership->status !== 'active') {
+            if (! $position->hasAvailableSlots() && $organizationMembership->status !== 'active') {
                 return response()->json([
-                    'message' => 'No available slots for this position'
+                    'message' => 'No available slots for this position',
                 ], 400);
             }
         }

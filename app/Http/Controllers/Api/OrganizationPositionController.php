@@ -4,9 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\OrganizationPosition;
-use App\Models\OrganizationUnit;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class OrganizationPositionController extends Controller
 {
@@ -74,7 +73,7 @@ class OrganizationPositionController extends Controller
         $organizationPosition->load([
             'organizationUnit.organization',
             'activeMemberships.user',
-            'memberships.user'
+            'memberships.user',
         ]);
 
         return response()->json($organizationPosition);
@@ -83,7 +82,7 @@ class OrganizationPositionController extends Controller
     public function update(Request $request, OrganizationPosition $organizationPosition): JsonResponse
     {
         $request->validate([
-            'position_code' => 'required|string|unique:organization_positions,position_code,' . $organizationPosition->id,
+            'position_code' => 'required|string|unique:organization_positions,position_code,'.$organizationPosition->id,
             'title' => 'required|string|max:255',
             'position_level' => 'required|in:board_member,c_level,vice_president,director,senior_manager,manager,assistant_manager,supervisor,senior_staff,staff,junior_staff',
             'job_description' => 'nullable|string',
@@ -105,7 +104,7 @@ class OrganizationPositionController extends Controller
     {
         if ($organizationPosition->memberships()->count() > 0) {
             return response()->json([
-                'message' => 'Cannot delete position with active or historical memberships. Please reassign or remove memberships first.'
+                'message' => 'Cannot delete position with active or historical memberships. Please reassign or remove memberships first.',
             ], 400);
         }
 
@@ -137,14 +136,14 @@ class OrganizationPositionController extends Controller
     public function getByLevel(Request $request, string $level): JsonResponse
     {
         $validLevels = [
-            'board_member', 'c_level', 'vice_president', 'director', 
-            'senior_manager', 'manager', 'assistant_manager', 'supervisor', 
-            'senior_staff', 'staff', 'junior_staff'
+            'board_member', 'c_level', 'vice_president', 'director',
+            'senior_manager', 'manager', 'assistant_manager', 'supervisor',
+            'senior_staff', 'staff', 'junior_staff',
         ];
 
-        if (!in_array($level, $validLevels)) {
+        if (! in_array($level, $validLevels)) {
             return response()->json([
-                'message' => 'Invalid position level'
+                'message' => 'Invalid position level',
             ], 400);
         }
 
@@ -165,13 +164,13 @@ class OrganizationPositionController extends Controller
     public function getIncumbents(OrganizationPosition $organizationPosition): JsonResponse
     {
         $incumbents = $organizationPosition->getCurrentIncumbents();
-        
+
         return response()->json([
             'position' => $organizationPosition->title,
             'max_incumbents' => $organizationPosition->max_incumbents,
             'current_incumbents' => $incumbents->count(),
             'available_slots' => $organizationPosition->getAvailableSlots(),
-            'incumbents' => $incumbents
+            'incumbents' => $incumbents,
         ]);
     }
 }

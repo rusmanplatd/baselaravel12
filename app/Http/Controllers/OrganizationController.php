@@ -56,7 +56,7 @@ class OrganizationController extends Controller
         ]);
 
         $organization = Organization::create($validated);
-        
+
         if ($organization->parent_organization_id) {
             $organization->updatePath();
         }
@@ -72,7 +72,7 @@ class OrganizationController extends Controller
             'parentOrganization',
             'childOrganizations',
             'organizationUnits.positions.activeMemberships.user',
-            'memberships.user.organizationPosition'
+            'memberships.user.organizationPosition',
         ]);
 
         return Inertia::render('Organizations/Show', [
@@ -96,7 +96,7 @@ class OrganizationController extends Controller
     public function update(Request $request, Organization $organization)
     {
         $validated = $request->validate([
-            'organization_code' => 'nullable|string|unique:organizations,organization_code,' . $organization->id,
+            'organization_code' => 'nullable|string|unique:organizations,organization_code,'.$organization->id,
             'name' => 'required|string|max:255',
             'organization_type' => 'required|in:holding_company,subsidiary,division,branch,department,unit',
             'parent_organization_id' => 'nullable|exists:organizations,id',
@@ -122,7 +122,7 @@ class OrganizationController extends Controller
 
         $oldParentId = $organization->parent_organization_id;
         $organization->update($validated);
-        
+
         if ($oldParentId !== $organization->parent_organization_id) {
             $organization->updatePath();
         }

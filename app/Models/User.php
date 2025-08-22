@@ -5,8 +5,8 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -18,11 +18,13 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable implements HasPasskeys
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasApiTokens;
-    use InteractsWithPasskeys, HasRoles;
+    use HasApiTokens, HasFactory, Notifiable;
+
+    use HasRoles, InteractsWithPasskeys;
     use HasUlids;
 
     protected $table = 'sys_users';
+
     /**
      * The attributes that are mass assignable.
      *
@@ -92,7 +94,7 @@ class User extends Authenticatable implements HasPasskeys
 
     public function verifyTotpCode(string $code): bool
     {
-        if (!$this->mfaSettings || !$this->mfaSettings->totp_secret) {
+        if (! $this->mfaSettings || ! $this->mfaSettings->totp_secret) {
             return false;
         }
 

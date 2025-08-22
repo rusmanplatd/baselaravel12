@@ -94,25 +94,26 @@ class OrganizationPosition extends Model
             'vice_president',
             'director',
             'senior_manager',
-            'manager'
+            'manager',
         ]);
     }
 
     public function getSalaryRangeAttribute(): string
     {
         if ($this->min_salary && $this->max_salary) {
-            return number_format($this->min_salary, 0) . ' - ' . number_format($this->max_salary, 0);
+            return number_format($this->min_salary, 0).' - '.number_format($this->max_salary, 0);
         } elseif ($this->min_salary) {
-            return 'Min: ' . number_format($this->min_salary, 0);
+            return 'Min: '.number_format($this->min_salary, 0);
         } elseif ($this->max_salary) {
-            return 'Max: ' . number_format($this->max_salary, 0);
+            return 'Max: '.number_format($this->max_salary, 0);
         }
+
         return 'Not specified';
     }
 
     public function getFullTitleAttribute(): string
     {
-        return $this->title . ' - ' . $this->organizationUnit->name;
+        return $this->title.' - '.$this->organizationUnit->name;
     }
 
     public function scopeBoard($query)
@@ -137,7 +138,7 @@ class OrganizationPosition extends Model
                 'vice_president',
                 'director',
                 'senior_manager',
-                'manager'
+                'manager',
             ]);
         });
     }

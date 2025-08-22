@@ -38,7 +38,7 @@ Route::middleware('guest')->group(function () {
     // WebAuthn authentication routes
     Route::get('webauthn/options', [WebAuthnController::class, 'authenticateOptions'])
         ->name('webauthn.authenticate.options');
-    
+
     Route::post('webauthn/authenticate', [WebAuthnController::class, 'authenticate'])
         ->name('webauthn.authenticate');
 });

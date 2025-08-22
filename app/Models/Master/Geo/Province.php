@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 class Province extends Model
 {
     use HasUlids;
+
     protected $table = 'ref_province';
 
     protected $fillable = [
@@ -20,7 +21,7 @@ class Province extends Model
     ];
 
     protected $casts = [
-        'id'   => 'string',
+        'id' => 'string',
         'code' => 'string',
         'name' => 'string',
 
@@ -65,7 +66,7 @@ class Province extends Model
         $this->beginTransaction();
         try {
             [$guard, $user] = getAuthenticatedUser();
-            $is_update      = false;
+            $is_update = false;
             if ($this->id) {
                 $is_update = true;
             }
@@ -76,11 +77,11 @@ class Province extends Model
             $this->save();
 
             if ($is_update) {
-                $this->addLog('Mengubah Data ' . $this->getLogMessage(), Activity::UPDATE);
+                $this->addLog('Mengubah Data '.$this->getLogMessage(), Activity::UPDATE);
 
                 return $this->commitSaved();
             } else {
-                $this->addLog('Membuat Data ' . $this->getLogMessage(), Activity::CREATE);
+                $this->addLog('Membuat Data '.$this->getLogMessage(), Activity::CREATE);
 
                 return $this->commitStateStill();
             }
@@ -93,7 +94,7 @@ class Province extends Model
     {
         $this->beginTransaction();
         try {
-            $this->addLog('Menghapus Data ' . $this->getLogMessage(), Activity::DELETE);
+            $this->addLog('Menghapus Data '.$this->getLogMessage(), Activity::DELETE);
             $this->delete();
 
             return $this->commitDeleted();
@@ -129,15 +130,15 @@ class Province extends Model
 
     public function checkAction(?User &$user, string $action, string $permission): bool
     {
-        if (!$user) {
+        if (! $user) {
             return false;
         }
         switch ($action) {
             case 'update':
-                return $user && $user->hasPermissionTo($permission . ':update');
+                return $user && $user->hasPermissionTo($permission.':update');
 
             case 'delete':
-                return $user && $user->hasPermissionTo($permission . ':delete') && $this->canDeleted();
+                return $user && $user->hasPermissionTo($permission.':delete') && $this->canDeleted();
         }
 
         return false;

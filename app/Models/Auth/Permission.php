@@ -10,8 +10,8 @@ class Permission extends SpatiePermission
     use HasUlids;
 
     protected $casts = [
-        'id'         => 'string',
-        'name'       => 'string',
+        'id' => 'string',
+        'name' => 'string',
         'guard_name' => 'string',
     ];
 }

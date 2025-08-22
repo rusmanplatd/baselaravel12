@@ -273,7 +273,7 @@ class WebAuthnApiController extends Controller
         try {
             // Test basic functionality
             $testChallenge = base64_encode(random_bytes(32));
-            
+
             return response()->json([
                 'status' => 'healthy',
                 'webauthn_server' => 'operational',

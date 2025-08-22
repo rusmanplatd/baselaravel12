@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Carbon\Carbon;
 
 class OrganizationMembership extends Model
 {
     use HasUlids;
+
     protected $fillable = [
         'user_id',
         'organization_id',
@@ -56,11 +57,11 @@ class OrganizationMembership extends Model
         $duration = $start->diff($end);
 
         if ($duration->y > 0) {
-            return $duration->y . ' years, ' . $duration->m . ' months';
+            return $duration->y.' years, '.$duration->m.' months';
         } elseif ($duration->m > 0) {
-            return $duration->m . ' months, ' . $duration->d . ' days';
+            return $duration->m.' months, '.$duration->d.' days';
         } else {
-            return $duration->d . ' days';
+            return $duration->d.' days';
         }
     }
 
@@ -76,7 +77,7 @@ class OrganizationMembership extends Model
     {
         return $this->status === 'active' &&
                $this->start_date <= now() &&
-               (!$this->end_date || $this->end_date >= now());
+               (! $this->end_date || $this->end_date >= now());
     }
 
     public function isExpired(): bool
@@ -112,7 +113,7 @@ class OrganizationMembership extends Model
         }
 
         if ($this->organizationUnit) {
-            return ucfirst(str_replace('_', ' ', $this->membership_type)) . ' - ' . $this->organizationUnit->name;
+            return ucfirst(str_replace('_', ' ', $this->membership_type)).' - '.$this->organizationUnit->name;
         }
 
         return ucfirst(str_replace('_', ' ', $this->membership_type));
@@ -132,18 +133,18 @@ class OrganizationMembership extends Model
     {
         $this->update([
             'status' => 'terminated',
-            'end_date' => $endDate ?? now()
+            'end_date' => $endDate ?? now(),
         ]);
     }
 
     public function scopeActive($query)
     {
         return $query->where('status', 'active')
-                    ->where('start_date', '<=', now())
-                    ->where(function ($q) {
-                        $q->whereNull('end_date')
-                          ->orWhere('end_date', '>=', now());
-                    });
+            ->where('start_date', '<=', now())
+            ->where(function ($q) {
+                $q->whereNull('end_date')
+                    ->orWhere('end_date', '>=', now());
+            });
     }
 
     public function scopeInactive($query)
@@ -159,7 +160,7 @@ class OrganizationMembership extends Model
     public function scopeExpired($query)
     {
         return $query->whereNotNull('end_date')
-                    ->where('end_date', '<', now());
+            ->where('end_date', '<', now());
     }
 
     public function scopeUpcoming($query)
@@ -170,9 +171,9 @@ class OrganizationMembership extends Model
     public function scopeBoard($query)
     {
         return $query->where('membership_type', 'board_member')
-                    ->orWhereHas('organizationPosition', function ($q) {
-                        $q->where('position_level', 'board_member');
-                    });
+            ->orWhereHas('organizationPosition', function ($q) {
+                $q->where('position_level', 'board_member');
+            });
     }
 
     public function scopeExecutive($query)
@@ -190,7 +191,7 @@ class OrganizationMembership extends Model
                 'vice_president',
                 'director',
                 'senior_manager',
-                'manager'
+                'manager',
             ]);
         });
     }
