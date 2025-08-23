@@ -268,7 +268,114 @@ class OrganizationMembershipSeeder extends Seeder
             ],
         ];
 
-        foreach ($memberships as $membershipData) {
+        // Add more diverse memberships for new organizations and roles
+        $additionalMemberships = [
+            // Cloud team members
+            [
+                'user_id' => $testUser->id,
+                'organization_id' => $orgIds['techcorp_cloud'],
+                'organization_unit_id' => null,
+                'organization_position_id' => null,
+                'membership_type' => 'contractor',
+                'start_date' => '2024-01-01',
+                'end_date' => '2024-12-31',
+                'status' => 'active',
+                'additional_roles' => ['cloud_architect', 'devops_consultant'],
+            ],
+
+            // Security team members
+            [
+                'user_id' => User::where('email', 'admin@example.com')->first()->id,
+                'organization_id' => $orgIds['techcorp_security'],
+                'organization_unit_id' => null,
+                'organization_position_id' => null,
+                'membership_type' => 'employee',
+                'start_date' => '2023-01-01',
+                'end_date' => null,
+                'status' => 'active',
+                'additional_roles' => ['security_lead', 'incident_commander'],
+            ],
+
+            // International branch memberships
+            [
+                'user_id' => $robertTaylor->id,
+                'organization_id' => $orgIds['software_europe'],
+                'organization_unit_id' => null,
+                'organization_position_id' => null,
+                'membership_type' => 'employee',
+                'start_date' => '2023-01-01',
+                'end_date' => null,
+                'status' => 'active',
+                'additional_roles' => ['branch_coordinator', 'eu_compliance'],
+            ],
+            [
+                'user_id' => $lisaAnderson->id,
+                'organization_id' => $orgIds['software_asia'],
+                'organization_unit_id' => null,
+                'organization_position_id' => null,
+                'membership_type' => 'employee',
+                'start_date' => '2023-06-01',
+                'end_date' => null,
+                'status' => 'active',
+                'additional_roles' => ['asia_coordinator', 'cultural_liaison'],
+            ],
+
+            // Cross-organization memberships
+            [
+                'user_id' => $mikeJohnson->id,
+                'organization_id' => $orgIds['techcorp_holdings'],
+                'organization_unit_id' => null,
+                'organization_position_id' => null,
+                'membership_type' => 'board_member',
+                'start_date' => '2022-01-01',
+                'end_date' => null,
+                'status' => 'active',
+                'additional_roles' => ['strategic_advisor', 'technology_committee'],
+            ],
+
+            // Consultants and advisors
+            [
+                'user_id' => $davidBrown->id,
+                'organization_id' => $orgIds['techcorp_holdings'],
+                'organization_unit_id' => null,
+                'organization_position_id' => null,
+                'membership_type' => 'consultant',
+                'start_date' => '2023-01-01',
+                'end_date' => '2025-12-31',
+                'status' => 'active',
+                'additional_roles' => ['ai_advisor', 'data_strategy'],
+            ],
+
+            // Part-time and temporary roles
+            [
+                'user_id' => $emilyDavis->id,
+                'organization_id' => $orgIds['techcorp_software'],
+                'organization_unit_id' => null,
+                'organization_position_id' => null,
+                'membership_type' => 'consultant',
+                'start_date' => '2024-01-01',
+                'end_date' => null,
+                'status' => 'active',
+                'additional_roles' => ['ai_consultant', 'research_liaison'],
+            ],
+
+            // Seasonal/project-based roles
+            [
+                'user_id' => $sarahWilson->id,
+                'organization_id' => $orgIds['techcorp_cloud'],
+                'organization_unit_id' => null,
+                'organization_position_id' => null,
+                'membership_type' => 'contractor',
+                'start_date' => '2024-03-01',
+                'end_date' => '2024-09-30',
+                'status' => 'active',
+                'additional_roles' => ['cloud_migration_lead', 'technical_architect'],
+            ],
+        ];
+
+        $allMemberships = array_merge($memberships, $additionalMemberships);
+
+        foreach ($allMemberships as $membershipData) {
             $membershipData['created_by'] = $adminUserId;
             $membershipData['updated_by'] = $adminUserId;
             OrganizationMembership::create($membershipData);

@@ -13,6 +13,9 @@ class OrganizationalStructureSeeder extends Seeder
 {
     public function run(): void
     {
+        // Get admin user ID for created_by/updated_by
+        $adminUserId = config('seeder.admin_user_id', 1);
+
         // Create Holding Company
         $holdingCompany = Organization::create([
             'organization_code' => 'HC-001',
@@ -43,6 +46,8 @@ class OrganizationalStructureSeeder extends Seeder
                 ],
             ],
             'is_active' => true,
+            'created_by' => $adminUserId,
+            'updated_by' => $adminUserId,
         ]);
         $holdingCompany->updatePath();
 
@@ -65,6 +70,8 @@ class OrganizationalStructureSeeder extends Seeder
             'legal_status' => 'Private Limited Company',
             'business_activities' => 'Software development, cloud services, IT consulting',
             'is_active' => true,
+            'created_by' => $adminUserId,
+            'updated_by' => $adminUserId,
         ]);
         $techSub->updatePath();
 
@@ -86,11 +93,21 @@ class OrganizationalStructureSeeder extends Seeder
             'legal_status' => 'Private Limited Company',
             'business_activities' => 'Digital banking, payment processing, financial software',
             'is_active' => true,
+            'created_by' => $adminUserId,
+            'updated_by' => $adminUserId,
         ]);
         $finSub->updatePath();
 
+        // Helper function to add audit fields
+        $addAuditFields = function($data) use ($adminUserId) {
+            return array_merge($data, [
+                'created_by' => $adminUserId,
+                'updated_by' => $adminUserId,
+            ]);
+        };
+
         // Create Board of Commissioners for Holding Company
-        $boc = OrganizationUnit::create([
+        $boc = OrganizationUnit::create($addAuditFields([
             'organization_id' => $holdingCompany->id,
             'unit_code' => 'BOC-HC-001',
             'name' => 'Board of Commissioners',
@@ -110,10 +127,10 @@ class OrganizationalStructureSeeder extends Seeder
             ],
             'is_active' => true,
             'sort_order' => 1,
-        ]);
+        ]));
 
         // Create Board of Directors for Holding Company
-        $bod = OrganizationUnit::create([
+        $bod = OrganizationUnit::create($addAuditFields([
             'organization_id' => $holdingCompany->id,
             'unit_code' => 'BOD-HC-001',
             'name' => 'Board of Directors',
@@ -133,10 +150,10 @@ class OrganizationalStructureSeeder extends Seeder
             ],
             'is_active' => true,
             'sort_order' => 2,
-        ]);
+        ]));
 
         // Create Audit Committee
-        $auditCommittee = OrganizationUnit::create([
+        $auditCommittee = OrganizationUnit::create($addAuditFields([
             'organization_id' => $holdingCompany->id,
             'unit_code' => 'AC-HC-001',
             'name' => 'Audit Committee',
@@ -157,10 +174,10 @@ class OrganizationalStructureSeeder extends Seeder
             ],
             'is_active' => true,
             'sort_order' => 1,
-        ]);
+        ]));
 
         // Create divisions for TechSolutions
-        $engineeringDiv = OrganizationUnit::create([
+        $engineeringDiv = OrganizationUnit::create($addAuditFields([
             'organization_id' => $techSub->id,
             'unit_code' => 'ENG-TS-001',
             'name' => 'Engineering Division',
@@ -174,9 +191,9 @@ class OrganizationalStructureSeeder extends Seeder
             ],
             'is_active' => true,
             'sort_order' => 1,
-        ]);
+        ]));
 
-        $salesDiv = OrganizationUnit::create([
+        $salesDiv = OrganizationUnit::create($addAuditFields([
             'organization_id' => $techSub->id,
             'unit_code' => 'SALES-TS-001',
             'name' => 'Sales & Marketing Division',
@@ -190,14 +207,19 @@ class OrganizationalStructureSeeder extends Seeder
             ],
             'is_active' => true,
             'sort_order' => 2,
-        ]);
+        ]));
 
         // Create positions
-        $chairmanPos = OrganizationPosition::create([
+        $boardMemberLevel = \App\Models\OrganizationPositionLevel::where('code', 'board_member')->first();
+        $cLevelLevel = \App\Models\OrganizationPositionLevel::where('code', 'c_level')->first();
+        $vpLevel = \App\Models\OrganizationPositionLevel::where('code', 'vice_president')->first();
+
+        $chairmanPos = OrganizationPosition::create($addAuditFields([
+            'organization_id' => $holdingCompany->id,
             'organization_unit_id' => $boc->id,
             'position_code' => 'POS-CHAIR-001',
             'title' => 'Chairman of Board of Commissioners',
-            'position_level' => 'board_member',
+            'organization_position_level_id' => $boardMemberLevel->id,
             'job_description' => 'Lead the board of commissioners and provide strategic oversight',
             'qualifications' => [
                 'Minimum 15 years senior management experience',
@@ -212,13 +234,14 @@ class OrganizationalStructureSeeder extends Seeder
             ],
             'max_incumbents' => 1,
             'is_active' => true,
-        ]);
+        ]));
 
-        $ceoPos = OrganizationPosition::create([
+        $ceoPos = OrganizationPosition::create($addAuditFields([
+            'organization_id' => $holdingCompany->id,
             'organization_unit_id' => $bod->id,
             'position_code' => 'POS-CEO-001',
             'title' => 'Chief Executive Officer',
-            'position_level' => 'c_level',
+            'organization_position_level_id' => $cLevelLevel->id,
             'job_description' => 'Lead the organization and execute strategic plans',
             'qualifications' => [
                 'MBA or equivalent',
@@ -235,13 +258,14 @@ class OrganizationalStructureSeeder extends Seeder
             'max_salary' => 500000.00,
             'max_incumbents' => 1,
             'is_active' => true,
-        ]);
+        ]));
 
-        $ctoPos = OrganizationPosition::create([
+        $ctoPos = OrganizationPosition::create($addAuditFields([
+            'organization_id' => $techSub->id,
             'organization_unit_id' => $engineeringDiv->id,
             'position_code' => 'POS-CTO-001',
             'title' => 'Chief Technology Officer',
-            'position_level' => 'c_level',
+            'organization_position_level_id' => $cLevelLevel->id,
             'job_description' => 'Lead technology strategy and engineering operations',
             'qualifications' => [
                 'Computer Science degree',
@@ -258,13 +282,14 @@ class OrganizationalStructureSeeder extends Seeder
             'max_salary' => 400000.00,
             'max_incumbents' => 1,
             'is_active' => true,
-        ]);
+        ]));
 
-        $vpSalesPos = OrganizationPosition::create([
+        $vpSalesPos = OrganizationPosition::create($addAuditFields([
+            'organization_id' => $techSub->id,
             'organization_unit_id' => $salesDiv->id,
             'position_code' => 'POS-VP-SALES-001',
             'title' => 'Vice President of Sales',
-            'position_level' => 'vice_president',
+            'organization_position_level_id' => $vpLevel->id,
             'job_description' => 'Lead sales operations and revenue generation',
             'qualifications' => [
                 'Business or Marketing degree',
@@ -281,31 +306,31 @@ class OrganizationalStructureSeeder extends Seeder
             'max_salary' => 250000.00,
             'max_incumbents' => 1,
             'is_active' => true,
-        ]);
+        ]));
 
         // Create sample users
-        $user1 = User::firstOrCreate(['email' => 'chairman@globaltech.com'], [
+        $user1 = User::firstOrCreate(['email' => 'chairman@globaltech.com'], $addAuditFields([
             'name' => 'Robert Johnson',
             'password' => bcrypt('password'),
-        ]);
+        ]));
 
-        $user2 = User::firstOrCreate(['email' => 'ceo@globaltech.com'], [
+        $user2 = User::firstOrCreate(['email' => 'ceo@globaltech.com'], $addAuditFields([
             'name' => 'Sarah Williams',
             'password' => bcrypt('password'),
-        ]);
+        ]));
 
-        $user3 = User::firstOrCreate(['email' => 'cto@techsolutions.com'], [
+        $user3 = User::firstOrCreate(['email' => 'cto@techsolutions.com'], $addAuditFields([
             'name' => 'Michael Chen',
             'password' => bcrypt('password'),
-        ]);
+        ]));
 
-        $user4 = User::firstOrCreate(['email' => 'vpsales@techsolutions.com'], [
+        $user4 = User::firstOrCreate(['email' => 'vpsales@techsolutions.com'], $addAuditFields([
             'name' => 'Jennifer Davis',
             'password' => bcrypt('password'),
-        ]);
+        ]));
 
         // Create memberships
-        OrganizationMembership::create([
+        OrganizationMembership::create($addAuditFields([
             'user_id' => $user1->id,
             'organization_id' => $holdingCompany->id,
             'organization_unit_id' => $boc->id,
@@ -313,9 +338,9 @@ class OrganizationalStructureSeeder extends Seeder
             'membership_type' => 'board_member',
             'start_date' => '2020-01-15',
             'status' => 'active',
-        ]);
+        ]));
 
-        OrganizationMembership::create([
+        OrganizationMembership::create($addAuditFields([
             'user_id' => $user2->id,
             'organization_id' => $holdingCompany->id,
             'organization_unit_id' => $bod->id,
@@ -323,9 +348,9 @@ class OrganizationalStructureSeeder extends Seeder
             'membership_type' => 'board_member',
             'start_date' => '2020-02-01',
             'status' => 'active',
-        ]);
+        ]));
 
-        OrganizationMembership::create([
+        OrganizationMembership::create($addAuditFields([
             'user_id' => $user3->id,
             'organization_id' => $techSub->id,
             'organization_unit_id' => $engineeringDiv->id,
@@ -333,9 +358,9 @@ class OrganizationalStructureSeeder extends Seeder
             'membership_type' => 'employee',
             'start_date' => '2020-03-15',
             'status' => 'active',
-        ]);
+        ]));
 
-        OrganizationMembership::create([
+        OrganizationMembership::create($addAuditFields([
             'user_id' => $user4->id,
             'organization_id' => $techSub->id,
             'organization_unit_id' => $salesDiv->id,
@@ -343,7 +368,7 @@ class OrganizationalStructureSeeder extends Seeder
             'membership_type' => 'employee',
             'start_date' => '2020-04-01',
             'status' => 'active',
-        ]);
+        ]));
 
         $this->command->info('Organizational structure seeded successfully!');
         $this->command->info('- 1 Holding Company (Global Tech Holdings Ltd)');

@@ -5,7 +5,7 @@ use App\Http\Controllers\OAuth\OAuthController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('oauth')->group(function () {
-    Route::get('authorize', [OAuthController::class, 'authorize'])
+    Route::get('authorize', [OAuthController::class, 'handleAuthorize'])
         ->middleware(['throttle:oauth_authorize'])
         ->name('oauth.authorize');
     Route::post('authorize', [OAuthController::class, 'approve'])

@@ -12,7 +12,13 @@ Route::get('/user', function (Request $request) {
 
 // Public API routes (no authentication required for demo)
 Route::prefix('v1')->group(function () {
-    Route::apiResource('organizations', \App\Http\Controllers\Api\OrganizationController::class);
+    Route::apiResource('organizations', \App\Http\Controllers\Api\OrganizationController::class)->names([
+        'index' => 'api.organizations.index',
+        'store' => 'api.organizations.store',
+        'show' => 'api.organizations.show',
+        'update' => 'api.organizations.update',
+        'destroy' => 'api.organizations.destroy',
+    ]);
     Route::get('organizations/hierarchy/tree', [\App\Http\Controllers\Api\OrganizationController::class, 'getHierarchy']);
     Route::get('organizations/type/{type}', [\App\Http\Controllers\Api\OrganizationController::class, 'getByType']);
 

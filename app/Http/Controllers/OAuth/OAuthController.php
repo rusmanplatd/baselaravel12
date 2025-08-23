@@ -37,7 +37,7 @@ class OAuthController extends Controller
     #[QueryParam('scope', 'string', 'Requested scopes (space-separated)', false, 'openid profile organization:read')]
     #[QueryParam('state', 'string', 'CSRF protection state parameter', false, 'random-state-string')]
     #[ScribeResponse(null, 302, headers: ['Location' => 'https://example.com/callback?code=auth_code&state=random-state-string'])]
-    public function authorize(AuthorizeRequest $request)
+    public function handleAuthorize(AuthorizeRequest $request)
     {
 
         if (! Auth::check()) {
@@ -342,6 +342,26 @@ class OAuthController extends Controller
                 ],
             ],
         ]);
+    }
+
+    public function revoke(Request $request)
+    {
+        $token = $request->input('token');
+        if (!$token) {
+            return response()->json(['error' => 'invalid_request'], 400);
+        }
+
+        // Revoke access token
+        DB::table('oauth_access_tokens')
+            ->where('id', $token)
+            ->update(['revoked' => true]);
+
+        // Revoke refresh token
+        DB::table('oauth_refresh_tokens')
+            ->where('access_token_id', $token)
+            ->update(['revoked' => true]);
+
+        return response()->json(['revoked' => true]);
     }
 
     private function generateAuthorizationCode($client, $scopes, $request)

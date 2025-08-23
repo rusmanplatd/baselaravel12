@@ -36,13 +36,41 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // Create additional staff users
-        User::factory(15)->create();
+        User::factory(50)->create();
+
+        // Create some department-specific users
+        $hrUsers = User::factory(5)->create([
+            'name' => fn() => fake()->name(),
+            'email' => fn() => fake()->unique()->safeEmail(),
+        ]);
+
+        $engineeringUsers = User::factory(15)->create([
+            'name' => fn() => fake()->name(),
+            'email' => fn() => fake()->unique()->safeEmail(),
+        ]);
+
+        $salesUsers = User::factory(8)->create([
+            'name' => fn() => fake()->name(),
+            'email' => fn() => fake()->unique()->safeEmail(),
+        ]);
+
+        $marketingUsers = User::factory(6)->create([
+            'name' => fn() => fake()->name(),
+            'email' => fn() => fake()->unique()->safeEmail(),
+        ]);
+
+        $financeUsers = User::factory(4)->create([
+            'name' => fn() => fake()->name(),
+            'email' => fn() => fake()->unique()->safeEmail(),
+        ]);
 
         // Store the admin user ID for use in other seeders
         config(['seeder.admin_user_id' => $testUser->id]);
 
-        // Role and Permission seeder
+        // System users and permissions
         $this->call([
+            SystemUserSeeder::class,
+            PermissionSeeder::class,
             RolePermissionSeeder::class,
         ]);
 
@@ -53,6 +81,12 @@ class DatabaseSeeder extends Seeder
             OrganizationUnitSeeder::class,
             OrganizationPositionSeeder::class,
             OrganizationMembershipSeeder::class,
+            OrganizationalStructureSeeder::class,
+        ]);
+
+        // OAuth and scopes
+        $this->call([
+            OAuthScopesSeeder::class,
         ]);
 
         // Assign roles to demo users

@@ -73,6 +73,66 @@ class OAuthScopesSeeder extends Seeder
                 'description' => 'Administrative access within tenant scope',
                 'is_default' => false,
             ],
+            [
+                'identifier' => 'user:read',
+                'name' => 'User Read',
+                'description' => 'Read user profile and basic information',
+                'is_default' => false,
+            ],
+            [
+                'identifier' => 'user:write',
+                'name' => 'User Write',
+                'description' => 'Update user profile and settings',
+                'is_default' => false,
+            ],
+            [
+                'identifier' => 'analytics:read',
+                'name' => 'Analytics Read',
+                'description' => 'Access to analytics and reporting data',
+                'is_default' => false,
+            ],
+            [
+                'identifier' => 'webhooks:manage',
+                'name' => 'Webhooks Management',
+                'description' => 'Create and manage webhook subscriptions',
+                'is_default' => false,
+            ],
+            [
+                'identifier' => 'api:full_access',
+                'name' => 'Full API Access',
+                'description' => 'Complete API access for trusted applications',
+                'is_default' => false,
+            ],
+            [
+                'identifier' => 'financial:read',
+                'name' => 'Financial Data Read',
+                'description' => 'Access to financial and billing information',
+                'is_default' => false,
+            ],
+            [
+                'identifier' => 'security:audit',
+                'name' => 'Security Audit',
+                'description' => 'Access to security logs and audit trails',
+                'is_default' => false,
+            ],
+            [
+                'identifier' => 'integration:third_party',
+                'name' => 'Third-party Integrations',
+                'description' => 'Access for third-party system integrations',
+                'is_default' => false,
+            ],
+            [
+                'identifier' => 'mobile:access',
+                'name' => 'Mobile Application Access',
+                'description' => 'Specialized access for mobile applications',
+                'is_default' => false,
+            ],
+            [
+                'identifier' => 'offline_access',
+                'name' => 'Offline Access',
+                'description' => 'Ability to refresh tokens when user is offline',
+                'is_default' => false,
+            ],
         ];
 
         foreach ($scopes as $scope) {

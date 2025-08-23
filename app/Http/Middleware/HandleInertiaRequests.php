@@ -2,7 +2,6 @@
 
 namespace App\Http\Middleware;
 
-use App\Services\PermissionService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -46,7 +45,6 @@ class HandleInertiaRequests extends Middleware
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => [
                 'user' => $request->user(),
-                'permissions' => $request->user() ? PermissionService::getPermissionsForFrontend($request->user()) : null,
             ],
             'ziggy' => fn (): array => [
                 ...(new Ziggy)->toArray(),

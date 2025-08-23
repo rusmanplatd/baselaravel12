@@ -283,10 +283,212 @@ class OrganizationUnitSeeder extends Seeder
                 'is_active' => true,
                 'sort_order' => 2,
             ],
+            [
+                'organization_id' => $orgIds['techcorp_cloud'],
+                'unit_code' => 'OPS001',
+                'name' => 'Operations Department',
+                'unit_type' => 'department',
+                'description' => 'Cloud operations and infrastructure management',
+                'parent_unit_id' => null,
+                'responsibilities' => [
+                    'Infrastructure monitoring',
+                    'Server management',
+                    'Network administration',
+                    'Performance optimization',
+                ],
+                'authorities' => [
+                    'Deploy cloud resources',
+                    'Scale infrastructure',
+                    'Monitor system health',
+                    'Implement security patches',
+                ],
+                'is_active' => true,
+                'sort_order' => 1,
+            ],
+            [
+                'organization_id' => $orgIds['techcorp_cloud'],
+                'unit_code' => 'DEV001',
+                'name' => 'DevOps Team',
+                'unit_type' => 'team',
+                'description' => 'Development operations and automation',
+                'parent_unit_id' => null,
+                'responsibilities' => [
+                    'CI/CD pipeline management',
+                    'Container orchestration',
+                    'Infrastructure as code',
+                    'Monitoring and alerting',
+                ],
+                'authorities' => [
+                    'Configure deployment pipelines',
+                    'Manage container platforms',
+                    'Implement automation tools',
+                    'Set up monitoring systems',
+                ],
+                'is_active' => true,
+                'sort_order' => 2,
+            ],
+
+            // Security organization units
+            [
+                'organization_id' => $orgIds['techcorp_security'],
+                'unit_code' => 'SEC001',
+                'name' => 'Security Operations Center',
+                'unit_type' => 'department',
+                'description' => '24/7 security monitoring and incident response',
+                'parent_unit_id' => null,
+                'responsibilities' => [
+                    'Security monitoring',
+                    'Incident response',
+                    'Threat analysis',
+                    'Vulnerability management',
+                ],
+                'authorities' => [
+                    'Investigate security incidents',
+                    'Implement security controls',
+                    'Block malicious traffic',
+                    'Coordinate incident response',
+                ],
+                'is_active' => true,
+                'sort_order' => 1,
+            ],
+            [
+                'organization_id' => $orgIds['techcorp_security'],
+                'unit_code' => 'PEN001',
+                'name' => 'Penetration Testing Team',
+                'unit_type' => 'team',
+                'description' => 'Ethical hacking and security assessment',
+                'parent_unit_id' => null,
+                'responsibilities' => [
+                    'Security assessments',
+                    'Penetration testing',
+                    'Red team exercises',
+                    'Security research',
+                ],
+                'authorities' => [
+                    'Conduct security tests',
+                    'Access target systems',
+                    'Report vulnerabilities',
+                    'Recommend fixes',
+                ],
+                'is_active' => true,
+                'sort_order' => 2,
+            ],
+            [
+                'organization_id' => $orgIds['techcorp_security'],
+                'unit_code' => 'COMP001',
+                'name' => 'Compliance Team',
+                'unit_type' => 'team',
+                'description' => 'Security compliance and audit support',
+                'parent_unit_id' => null,
+                'responsibilities' => [
+                    'Compliance monitoring',
+                    'Audit support',
+                    'Policy development',
+                    'Risk assessment',
+                ],
+                'authorities' => [
+                    'Conduct compliance audits',
+                    'Develop security policies',
+                    'Assess compliance risks',
+                    'Report to regulators',
+                ],
+                'is_active' => true,
+                'sort_order' => 3,
+            ],
+
+            // Additional support units
+            [
+                'organization_id' => $orgIds['techcorp_software'],
+                'unit_code' => 'FIN001',
+                'name' => 'Finance Department',
+                'unit_type' => 'department',
+                'description' => 'Financial management and accounting',
+                'parent_unit_id' => null,
+                'responsibilities' => [
+                    'Financial planning',
+                    'Budget management',
+                    'Accounting operations',
+                    'Financial reporting',
+                ],
+                'authorities' => [
+                    'Approve expenditures',
+                    'Manage budgets',
+                    'Generate financial reports',
+                    'Control cash flow',
+                ],
+                'is_active' => true,
+                'sort_order' => 5,
+            ],
+            [
+                'organization_id' => $orgIds['techcorp_software'],
+                'unit_code' => 'LEG001',
+                'name' => 'Legal Department',
+                'unit_type' => 'department',
+                'description' => 'Legal affairs and contract management',
+                'parent_unit_id' => null,
+                'responsibilities' => [
+                    'Contract review',
+                    'Legal compliance',
+                    'Intellectual property',
+                    'Litigation support',
+                ],
+                'authorities' => [
+                    'Review contracts',
+                    'Provide legal advice',
+                    'Manage IP portfolio',
+                    'Handle legal disputes',
+                ],
+                'is_active' => true,
+                'sort_order' => 6,
+            ],
+            [
+                'organization_id' => $orgIds['techcorp_data'],
+                'unit_code' => 'RES001',
+                'name' => 'Research & Development',
+                'unit_type' => 'department',
+                'description' => 'Advanced AI research and development',
+                'parent_unit_id' => null,
+                'responsibilities' => [
+                    'AI research',
+                    'Algorithm development',
+                    'Patent applications',
+                    'Academic collaboration',
+                ],
+                'authorities' => [
+                    'Conduct research projects',
+                    'Publish research papers',
+                    'File patent applications',
+                    'Collaborate with universities',
+                ],
+                'is_active' => true,
+                'sort_order' => 3,
+            ],
+            [
+                'organization_id' => $orgIds['techcorp_data'],
+                'unit_code' => 'BUS001',
+                'name' => 'Business Intelligence Team',
+                'unit_type' => 'team',
+                'description' => 'Business analytics and intelligence',
+                'parent_unit_id' => null,
+                'responsibilities' => [
+                    'Business analytics',
+                    'Market research',
+                    'Performance metrics',
+                    'Strategic insights',
+                ],
+                'authorities' => [
+                    'Analyze business data',
+                    'Generate insights',
+                    'Create dashboards',
+                    'Present findings',
+                ],
+                'is_active' => true,
+                'sort_order' => 4,
+            ],
         ];
 
         $createdUnits = [];
-        foreach ($units as $index => $unitData) {
+        foreach ($units as $unitData) {
             $unitData['created_by'] = $adminUserId;
             $unitData['updated_by'] = $adminUserId;
 
@@ -294,11 +496,7 @@ class OrganizationUnitSeeder extends Seeder
             if (isset($unitData['parent_unit_id']) && is_int($unitData['parent_unit_id'])) {
                 // Convert 1-based index to 0-based for array access
                 $parentIndex = $unitData['parent_unit_id'] - 1;
-                if (isset($createdUnits[$parentIndex])) {
-                    $unitData['parent_unit_id'] = $createdUnits[$parentIndex]->id;
-                } else {
-                    $unitData['parent_unit_id'] = null;
-                }
+                $unitData['parent_unit_id'] = isset($createdUnits[$parentIndex]) ? $createdUnits[$parentIndex]->id : null;
             }
 
             $unit = OrganizationUnit::create($unitData);

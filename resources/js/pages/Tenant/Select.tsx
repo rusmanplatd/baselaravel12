@@ -1,6 +1,6 @@
 import React from 'react'
 import { Head, useForm } from '@inertiajs/react'
-import { AuthenticatedLayout } from '@/layouts/authenticated-layout'
+import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -43,7 +43,7 @@ export default function TenantSelect({ tenants, currentTenant }: Props) {
   }
 
   return (
-    <AuthenticatedLayout>
+    <AppLayout>
       <Head title="Select Organization" />
 
       <div className="py-12">
@@ -95,11 +95,11 @@ export default function TenantSelect({ tenants, currentTenant }: Props) {
           ) : (
             <div className="grid gap-4">
               {tenants.map((tenant) => (
-                <Card 
-                  key={tenant.id} 
+                <Card
+                  key={tenant.id}
                   className={`transition-all hover:shadow-md cursor-pointer ${
-                    currentTenant?.id === tenant.id 
-                      ? 'ring-2 ring-green-500 bg-green-50' 
+                    currentTenant?.id === tenant.id
+                      ? 'ring-2 ring-green-500 bg-green-50'
                       : 'hover:ring-2 hover:ring-blue-500'
                   }`}
                   onClick={() => !processing && handleTenantSwitch(tenant.id)}
@@ -137,6 +137,6 @@ export default function TenantSelect({ tenants, currentTenant }: Props) {
           )}
         </div>
       </div>
-    </AuthenticatedLayout>
+    </AppLayout>
   )
 }
