@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\StoreOrganizationMembershipRequest;
-use App\Http\Requests\Api\UpdateOrganizationMembershipRequest;
 use App\Http\Requests\Api\TerminateOrganizationMembershipRequest;
+use App\Http\Requests\Api\UpdateOrganizationMembershipRequest;
 use App\Models\Organization;
 use App\Models\OrganizationMembership;
 use App\Models\OrganizationPosition;

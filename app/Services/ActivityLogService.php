@@ -34,8 +34,11 @@ class ActivityLogService
     {
         $activity = activity($logName)
             ->event($event)
-            ->performedOn($subject)
             ->withProperties($properties);
+
+        if ($subject) {
+            $activity->performedOn($subject);
+        }
 
         // Add organization context if available
         $organizationId = self::getCurrentOrganizationId();
@@ -68,6 +71,12 @@ class ActivityLogService
 
     private static function getCurrentOrganizationId(): ?string
     {
+        // First try to get from our tenant service
+        $tenantId = TenantService::getTenantId();
+        if ($tenantId) {
+            return $tenantId;
+        }
+
         $user = Auth::user();
         if (! $user instanceof User) {
             return null;
@@ -86,12 +95,8 @@ class ActivityLogService
 
     private static function getCurrentTenantId(): ?string
     {
-        // Get tenant from multitenancy package if available
-        if (class_exists(\Spatie\Multitenancy\Models\Tenant::class)) {
-            return app('current-tenant')?->getKey();
-        }
-
-        return null;
+        // Use our custom tenant service
+        return TenantService::getTenantId();
     }
 
     public static function getActivitiesForUser(User $user, array $filters = [])
@@ -138,5 +143,53 @@ class ActivityLogService
         }
 
         return $query->orderBy('created_at', 'desc')->get();
+    }
+
+    public static function getActivitiesForCurrentTenant(array $filters = [])
+    {
+        $tenant = TenantService::getCurrentTenant();
+        if (! $tenant) {
+            return collect();
+        }
+
+        return self::getActivitiesForOrganization($tenant, $filters);
+    }
+
+    public static function logTenantAction(string $event, string $description, array $properties = [], ?Model $subject = null): Activity
+    {
+        $tenant = TenantService::getCurrentTenant();
+
+        $enhancedProperties = array_merge($properties, [
+            'tenant_context' => [
+                'organization_id' => $tenant?->id,
+                'organization_name' => $tenant?->name,
+                'organization_code' => $tenant?->organization_code,
+                'organization_type' => $tenant?->organization_type,
+                'tenant_level' => $tenant?->level,
+                'tenant_path' => $tenant?->path,
+            ],
+        ]);
+
+        return self::log('tenant', $event, $description, $enhancedProperties, $subject);
+    }
+
+    public static function logTenantSwitch(?Organization $fromTenant = null, ?Organization $toTenant = null, array $properties = []): Activity
+    {
+        $enhancedProperties = array_merge($properties, [
+            'switch_context' => [
+                'from_tenant' => $fromTenant ? [
+                    'id' => $fromTenant->id,
+                    'name' => $fromTenant->name,
+                    'code' => $fromTenant->organization_code,
+                ] : null,
+                'to_tenant' => $toTenant ? [
+                    'id' => $toTenant->id,
+                    'name' => $toTenant->name,
+                    'code' => $toTenant->organization_code,
+                ] : null,
+            ],
+        ]);
+
+        return self::log('tenant', 'switched', 'User switched tenant context', $enhancedProperties);
     }
 }

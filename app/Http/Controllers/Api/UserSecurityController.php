@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\RevokeSessionsRequest;
 use App\Http\Requests\Api\UpdatePasswordRequest;
 use App\Http\Requests\Api\UpdateSecuritySettingsRequest;
-use App\Http\Requests\Api\RevokeSessionsRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -15,23 +15,23 @@ use Knuckles\Scribe\Attributes\Endpoint;
 use Knuckles\Scribe\Attributes\Group;
 use Knuckles\Scribe\Attributes\Response as ScribeResponse;
 
-#[Group("User Security")]
+#[Group('User Security')]
 class UserSecurityController extends Controller
 {
     #[Endpoint(
-        title: "Get security profile",
-        description: "Get a comprehensive security profile for the authenticated user including authentication methods, security score, and recommendations"
+        title: 'Get security profile',
+        description: 'Get a comprehensive security profile for the authenticated user including authentication methods, security score, and recommendations'
     )]
     #[Authenticated]
     #[ScribeResponse([
-        "user" => ["id" => 1, "name" => "John Doe", "email" => "john@example.com"],
-        "authentication_methods" => [
-            "password" => ["enabled" => true],
-            "mfa" => ["enabled" => true, "totp_enabled" => true],
-            "webauthn" => ["enabled" => true, "passkey_count" => 2]
+        'user' => ['id' => 1, 'name' => 'John Doe', 'email' => 'john@example.com'],
+        'authentication_methods' => [
+            'password' => ['enabled' => true],
+            'mfa' => ['enabled' => true, 'totp_enabled' => true],
+            'webauthn' => ['enabled' => true, 'passkey_count' => 2],
         ],
-        "security_score" => 85,
-        "recommendations" => []
+        'security_score' => 85,
+        'recommendations' => [],
     ])]
     public function index(Request $request): JsonResponse
     {
@@ -107,11 +107,11 @@ class UserSecurityController extends Controller
     }
 
     #[Endpoint(
-        title: "Update password",
+        title: 'Update password',
         description: "Update the user's password with current password verification"
     )]
     #[Authenticated]
-    #[ScribeResponse(["message" => "Password updated successfully", "updated_at" => "2024-01-15T10:30:00Z"], 200)]
+    #[ScribeResponse(['message' => 'Password updated successfully', 'updated_at' => '2024-01-15T10:30:00Z'], 200)]
     public function updatePassword(UpdatePasswordRequest $request): JsonResponse
     {
         $validated = $request->validated();

@@ -2,14 +2,16 @@
 
 namespace App\Models;
 
+use App\Traits\TenantScoped;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class OrganizationMembership extends Model
 {
-    use HasUlids;
+    use HasFactory, HasUlids, TenantScoped;
 
     protected $fillable = [
         'user_id',

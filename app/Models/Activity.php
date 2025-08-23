@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\TenantScoped;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\Activitylog\Models\Activity as BaseActivity;
 
 class Activity extends BaseActivity
 {
-    use HasUlids;
+    use HasUlids, TenantScoped;
 
     protected $table = 'activity_log';
 
@@ -90,7 +91,7 @@ class Activity extends BaseActivity
 
     public function getFormattedPropertiesAttribute()
     {
-        return $this->properties->map(function ($value, $key) {
+        return $this->properties->map(function ($value) {
             if (is_array($value) || is_object($value)) {
                 return json_encode($value);
             }

@@ -15,23 +15,23 @@ use Knuckles\Scribe\Attributes\Group;
 use Knuckles\Scribe\Attributes\QueryParam;
 use Knuckles\Scribe\Attributes\Response as ScribeResponse;
 
-#[Group("Role & Permission Management")]
+#[Group('Role & Permission Management')]
 class RoleController extends Controller
 {
     #[Endpoint(
-        title: "Get roles",
-        description: "Retrieve a paginated list of roles with their permissions, optionally filtered by organization"
+        title: 'Get roles',
+        description: 'Retrieve a paginated list of roles with their permissions, optionally filtered by organization'
     )]
     #[Authenticated]
-    #[QueryParam("organization_id", "integer", "Filter by organization/team ID", false, 1)]
-    #[QueryParam("search", "string", "Search roles by name", false, "admin")]
-    #[QueryParam("per_page", "integer", "Number of results per page", false, 15)]
+    #[QueryParam('organization_id', 'integer', 'Filter by organization/team ID', false, 1)]
+    #[QueryParam('search', 'string', 'Search roles by name', false, 'admin')]
+    #[QueryParam('per_page', 'integer', 'Number of results per page', false, 15)]
     #[ScribeResponse([
-        "data" => [
-            ["id" => 1, "name" => "admin", "permissions" => [["name" => "organization:admin"]]],
-            ["id" => 2, "name" => "member", "permissions" => [["name" => "organization:read"]]]
+        'data' => [
+            ['id' => 1, 'name' => 'admin', 'permissions' => [['name' => 'organization:admin']]],
+            ['id' => 2, 'name' => 'member', 'permissions' => [['name' => 'organization:read']]],
         ],
-        "meta" => ["current_page" => 1, "total" => 2]
+        'meta' => ['current_page' => 1, 'total' => 2],
     ])]
     public function index(Request $request)
     {
@@ -53,12 +53,12 @@ class RoleController extends Controller
     }
 
     #[Endpoint(
-        title: "Create role",
-        description: "Create a new role with specified permissions"
+        title: 'Create role',
+        description: 'Create a new role with specified permissions'
     )]
     #[Authenticated]
-    #[ScribeResponse(["message" => "Role created successfully", "role" => ["id" => 1, "name" => "manager", "permissions" => []]], 201)]
-    #[ScribeResponse(["message" => "Role already exists for this team/guard combination"], 400)]
+    #[ScribeResponse(['message' => 'Role created successfully', 'role' => ['id' => 1, 'name' => 'manager', 'permissions' => []]], 201)]
+    #[ScribeResponse(['message' => 'Role already exists for this team/guard combination'], 400)]
     public function store(StoreRoleRequest $request)
     {
         $validated = $request->validated();

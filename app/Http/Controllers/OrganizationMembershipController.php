@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\OrganizationMembership\StoreOrganizationMembershipRequest;
-use App\Http\Requests\OrganizationMembership\UpdateOrganizationMembershipRequest;
 use App\Http\Requests\OrganizationMembership\TerminateOrganizationMembershipRequest;
+use App\Http\Requests\OrganizationMembership\UpdateOrganizationMembershipRequest;
 use App\Models\Organization;
 use App\Models\OrganizationMembership;
 use App\Models\OrganizationPosition;

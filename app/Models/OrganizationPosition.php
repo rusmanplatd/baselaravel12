@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\TenantScoped;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,9 +10,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class OrganizationPosition extends Model
 {
-    use HasUlids;
+    use HasUlids, TenantScoped;
 
     protected $fillable = [
+        'organization_id',
         'organization_unit_id',
         'position_code',
         'organization_position_level_id',
@@ -32,6 +34,11 @@ class OrganizationPosition extends Model
         'max_salary' => 'decimal:2',
         'is_active' => 'boolean',
     ];
+
+    public function organization(): BelongsTo
+    {
+        return $this->belongsTo(Organization::class);
+    }
 
     public function organizationUnit(): BelongsTo
     {

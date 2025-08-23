@@ -23,20 +23,20 @@ use Knuckles\Scribe\Attributes\Response as ScribeResponse;
 use Laravel\Passport\Client;
 use Laravel\Passport\Passport;
 
-#[Group("OAuth 2.0 & OpenID Connect")]
+#[Group('OAuth 2.0 & OpenID Connect')]
 class OAuthController extends Controller
 {
     #[Endpoint(
-        title: "OAuth 2.0 Authorization",
-        description: "Initiate OAuth 2.0 authorization flow with organization-scoped clients"
+        title: 'OAuth 2.0 Authorization',
+        description: 'Initiate OAuth 2.0 authorization flow with organization-scoped clients'
     )]
     #[Authenticated]
-    #[QueryParam("client_id", "string", "OAuth client ID", true, "9a5d7f8e-1234-5678-9abc-def012345678")]
-    #[QueryParam("redirect_uri", "string", "Redirect URI registered with the client", true, "https://example.com/callback")]
-    #[QueryParam("response_type", "string", "OAuth response type", true, "code")]
-    #[QueryParam("scope", "string", "Requested scopes (space-separated)", false, "openid profile organization:read")]
-    #[QueryParam("state", "string", "CSRF protection state parameter", false, "random-state-string")]
-    #[ScribeResponse(null, 302, headers: ["Location" => "https://example.com/callback?code=auth_code&state=random-state-string"])]
+    #[QueryParam('client_id', 'string', 'OAuth client ID', true, '9a5d7f8e-1234-5678-9abc-def012345678')]
+    #[QueryParam('redirect_uri', 'string', 'Redirect URI registered with the client', true, 'https://example.com/callback')]
+    #[QueryParam('response_type', 'string', 'OAuth response type', true, 'code')]
+    #[QueryParam('scope', 'string', 'Requested scopes (space-separated)', false, 'openid profile organization:read')]
+    #[QueryParam('state', 'string', 'CSRF protection state parameter', false, 'random-state-string')]
+    #[ScribeResponse(null, 302, headers: ['Location' => 'https://example.com/callback?code=auth_code&state=random-state-string'])]
     public function authorize(AuthorizeRequest $request)
     {
 

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\TenantScoped;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class OrganizationUnit extends Model
 {
-    use HasUlids;
+    use HasUlids, TenantScoped;
 
     protected $fillable = [
         'organization_id',

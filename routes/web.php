@@ -8,6 +8,13 @@ Route::get('/', function () {
 })->name('home');
 
 Route::middleware(['auth', 'verified', 'mfa.verified'])->group(function () {
+    // Tenant management routes (before tenant middleware)
+    Route::get('tenant/select', [\App\Http\Controllers\TenantController::class, 'select'])->name('tenant.select');
+    Route::post('tenant/switch', [\App\Http\Controllers\TenantController::class, 'switch'])->name('tenant.switch');
+    Route::get('tenant/current', [\App\Http\Controllers\TenantController::class, 'current'])->name('tenant.current');
+    Route::get('tenant/available', [\App\Http\Controllers\TenantController::class, 'available'])->name('tenant.available');
+    Route::post('tenant/clear', [\App\Http\Controllers\TenantController::class, 'clear'])->name('tenant.clear');
+
     Route::get('dashboard', function () {
         return Inertia::render('dashboard');
     })->name('dashboard');

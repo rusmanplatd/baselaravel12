@@ -13,9 +13,13 @@ class OrganizationPositionSeeder extends Seeder
         // Get admin user ID and unit IDs for created_by/updated_by
         $adminUserId = config('seeder.admin_user_id', 1);
         $unitIds = config('seeder.unit_ids');
+        $orgIds = config('seeder.organization_ids');
 
         // Get position level IDs
         $positionLevels = OrganizationPositionLevel::pluck('id', 'code')->toArray();
+
+        // Get unit-to-organization mapping
+        $unitOrganizations = \App\Models\OrganizationUnit::pluck('organization_id', 'id')->toArray();
 
         $positions = [
             // Board of Commissioners
@@ -384,6 +388,13 @@ class OrganizationPositionSeeder extends Seeder
         foreach ($positions as $positionData) {
             $positionData['created_by'] = $adminUserId;
             $positionData['updated_by'] = $adminUserId;
+
+            // Add organization_id based on organization_unit_id
+            $unitId = $positionData['organization_unit_id'];
+            if (isset($unitOrganizations[$unitId])) {
+                $positionData['organization_id'] = $unitOrganizations[$unitId];
+            }
+
             $position = OrganizationPosition::create($positionData);
             $createdPositions[] = $position;
         }

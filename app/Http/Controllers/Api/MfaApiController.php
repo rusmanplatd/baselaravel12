@@ -15,20 +15,20 @@ use Knuckles\Scribe\Attributes\Endpoint;
 use Knuckles\Scribe\Attributes\Group;
 use Knuckles\Scribe\Attributes\Response as ScribeResponse;
 
-#[Group("Multi-Factor Authentication")]
+#[Group('Multi-Factor Authentication')]
 class MfaApiController extends Controller
 {
     #[Endpoint(
-        title: "Get MFA status",
-        description: "Retrieve the current MFA configuration status for the authenticated user"
+        title: 'Get MFA status',
+        description: 'Retrieve the current MFA configuration status for the authenticated user'
     )]
     #[Authenticated]
     #[ScribeResponse([
-        "mfa_enabled" => true,
-        "totp_enabled" => true,
-        "backup_codes_count" => 8,
-        "created_at" => "2024-01-15T10:30:00Z",
-        "confirmed_at" => "2024-01-15T10:35:00Z"
+        'mfa_enabled' => true,
+        'totp_enabled' => true,
+        'backup_codes_count' => 8,
+        'created_at' => '2024-01-15T10:30:00Z',
+        'confirmed_at' => '2024-01-15T10:35:00Z',
     ])]
     public function index(Request $request): JsonResponse
     {
@@ -45,16 +45,16 @@ class MfaApiController extends Controller
     }
 
     #[Endpoint(
-        title: "Initialize MFA setup",
-        description: "Start the MFA setup process by generating a TOTP secret and QR code"
+        title: 'Initialize MFA setup',
+        description: 'Start the MFA setup process by generating a TOTP secret and QR code'
     )]
     #[Authenticated]
     #[ScribeResponse([
-        "message" => "MFA setup initiated",
-        "secret" => "JBSWY3DPEHPK3PXP",
-        "qr_code_url" => "otpauth://totp/Example:user@example.com?secret=JBSWY3DPEHPK3PXP&issuer=Example"
+        'message' => 'MFA setup initiated',
+        'secret' => 'JBSWY3DPEHPK3PXP',
+        'qr_code_url' => 'otpauth://totp/Example:user@example.com?secret=JBSWY3DPEHPK3PXP&issuer=Example',
     ], 201)]
-    #[ScribeResponse(["error" => "MFA is already enabled", "code" => "MFA_ALREADY_ENABLED"], 400)]
+    #[ScribeResponse(['error' => 'MFA is already enabled', 'code' => 'MFA_ALREADY_ENABLED'], 400)]
     public function store(Request $request): JsonResponse
     {
         $user = $request->user();

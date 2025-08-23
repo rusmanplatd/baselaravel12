@@ -18,20 +18,20 @@ use Knuckles\Scribe\Attributes\Group;
 use Knuckles\Scribe\Attributes\QueryParam;
 use Knuckles\Scribe\Attributes\Response as ScribeResponse;
 
-#[Group("Organization Management")]
+#[Group('Organization Management')]
 class OrganizationController extends Controller
 {
     #[Endpoint(
-        title: "Get organizations",
-        description: "Retrieve a paginated list of organizations with optional filtering and relationships"
+        title: 'Get organizations',
+        description: 'Retrieve a paginated list of organizations with optional filtering and relationships'
     )]
     #[Authenticated]
-    #[QueryParam("organization_type", "string", "Filter by organization type", false, "holding_company")]
-    #[QueryParam("parent_organization_id", "integer", "Filter by parent organization ID", false, 1)]
-    #[QueryParam("hierarchy_root", "boolean", "Show only root organizations (no parent)", false, true)]
-    #[QueryParam("include", "string", "Include relationships (comma-separated: departments,parent,children,units)", false, "departments,children")]
-    #[QueryParam("per_page", "integer", "Number of results per page", false, 15)]
-    #[ScribeResponse(["data" => ["id" => 1, "name" => "Acme Corp", "organization_type" => "holding_company"], "meta" => ["current_page" => 1]])]
+    #[QueryParam('organization_type', 'string', 'Filter by organization type', false, 'holding_company')]
+    #[QueryParam('parent_organization_id', 'integer', 'Filter by parent organization ID', false, 1)]
+    #[QueryParam('hierarchy_root', 'boolean', 'Show only root organizations (no parent)', false, true)]
+    #[QueryParam('include', 'string', 'Include relationships (comma-separated: departments,parent,children,units)', false, 'departments,children')]
+    #[QueryParam('per_page', 'integer', 'Number of results per page', false, 15)]
+    #[ScribeResponse(['data' => ['id' => 1, 'name' => 'Acme Corp', 'organization_type' => 'holding_company'], 'meta' => ['current_page' => 1]])]
     public function index(Request $request)
     {
         $query = Organization::query()
@@ -80,12 +80,12 @@ class OrganizationController extends Controller
     }
 
     #[Endpoint(
-        title: "Create organization",
-        description: "Create a new organization with hierarchical structure support"
+        title: 'Create organization',
+        description: 'Create a new organization with hierarchical structure support'
     )]
     #[Authenticated]
-    #[ScribeResponse(["id" => 1, "name" => "New Organization", "organization_type" => "division", "created_at" => "2024-01-15T10:30:00Z"], 201)]
-    #[ScribeResponse(["message" => "Organization cannot be its own parent"], 400)]
+    #[ScribeResponse(['id' => 1, 'name' => 'New Organization', 'organization_type' => 'division', 'created_at' => '2024-01-15T10:30:00Z'], 201)]
+    #[ScribeResponse(['message' => 'Organization cannot be its own parent'], 400)]
     public function store(StoreOrganizationRequest $request)
     {
         $validated = $request->validated();
@@ -103,12 +103,12 @@ class OrganizationController extends Controller
     }
 
     #[Endpoint(
-        title: "Get organization details",
-        description: "Retrieve detailed information about a specific organization"
+        title: 'Get organization details',
+        description: 'Retrieve detailed information about a specific organization'
     )]
     #[Authenticated]
-    #[QueryParam("include", "string", "Include relationships (comma-separated: departments)", false, "departments")]
-    #[ScribeResponse(["id" => 1, "name" => "Acme Corp", "organization_type" => "holding_company"])]
+    #[QueryParam('include', 'string', 'Include relationships (comma-separated: departments)', false, 'departments')]
+    #[ScribeResponse(['id' => 1, 'name' => 'Acme Corp', 'organization_type' => 'holding_company'])]
     public function show(Organization $organization, Request $request)
     {
         $query = Organization::query()->where('id', $organization->id);
@@ -128,12 +128,12 @@ class OrganizationController extends Controller
     }
 
     #[Endpoint(
-        title: "Update organization",
-        description: "Update an existing organization with validation to prevent circular hierarchies"
+        title: 'Update organization',
+        description: 'Update an existing organization with validation to prevent circular hierarchies'
     )]
     #[Authenticated]
-    #[ScribeResponse(["id" => 1, "name" => "Updated Organization", "organization_type" => "division", "updated_at" => "2024-01-15T10:30:00Z"], 200)]
-    #[ScribeResponse(["message" => "Organization cannot be its own parent"], 400)]
+    #[ScribeResponse(['id' => 1, 'name' => 'Updated Organization', 'organization_type' => 'division', 'updated_at' => '2024-01-15T10:30:00Z'], 200)]
+    #[ScribeResponse(['message' => 'Organization cannot be its own parent'], 400)]
     public function update(UpdateOrganizationRequest $request, Organization $organization)
     {
         $validated = $request->validated();
@@ -157,12 +157,12 @@ class OrganizationController extends Controller
     }
 
     #[Endpoint(
-        title: "Delete organization",
-        description: "Delete an organization after validating no dependencies exist"
+        title: 'Delete organization',
+        description: 'Delete an organization after validating no dependencies exist'
     )]
     #[Authenticated]
-    #[ScribeResponse(["message" => "Organization deleted successfully"], 200)]
-    #[ScribeResponse(["message" => "Cannot delete organization with child organizations. Please reassign or delete child organizations first."], 400)]
+    #[ScribeResponse(['message' => 'Organization deleted successfully'], 200)]
+    #[ScribeResponse(['message' => 'Cannot delete organization with child organizations. Please reassign or delete child organizations first.'], 400)]
     public function destroy(Organization $organization)
     {
         if ($organization->childOrganizations()->count() > 0) {
@@ -183,14 +183,14 @@ class OrganizationController extends Controller
     }
 
     #[Endpoint(
-        title: "Get organization hierarchy",
-        description: "Retrieve the complete organizational hierarchy tree starting from root organizations"
+        title: 'Get organization hierarchy',
+        description: 'Retrieve the complete organizational hierarchy tree starting from root organizations'
     )]
     #[Authenticated]
     #[ScribeResponse([
-        ["id" => 1, "name" => "Root Corp", "children" => [
-            ["id" => 2, "name" => "Division A", "children" => []]
-        ]]
+        ['id' => 1, 'name' => 'Root Corp', 'children' => [
+            ['id' => 2, 'name' => 'Division A', 'children' => []],
+        ]],
     ])]
     public function getHierarchy(Request $request)
     {
@@ -212,13 +212,13 @@ class OrganizationController extends Controller
     }
 
     #[Endpoint(
-        title: "Get organizations by type",
-        description: "Retrieve organizations filtered by their organizational type"
+        title: 'Get organizations by type',
+        description: 'Retrieve organizations filtered by their organizational type'
     )]
     #[Authenticated]
-    #[QueryParam("type", "string", "Organization type", true, "holding_company", enum: ["holding_company", "subsidiary", "division", "branch", "department", "unit"])]
-    #[ScribeResponse(["data" => [["id" => 1, "name" => "Acme Holdings", "organization_type" => "holding_company"]]])]
-    #[ScribeResponse(["message" => "Invalid organization type"], 400)]
+    #[QueryParam('type', 'string', 'Organization type', true, 'holding_company', enum: ['holding_company', 'subsidiary', 'division', 'branch', 'department', 'unit'])]
+    #[ScribeResponse(['data' => [['id' => 1, 'name' => 'Acme Holdings', 'organization_type' => 'holding_company']]])]
+    #[ScribeResponse(['message' => 'Invalid organization type'], 400)]
     public function getByType(Request $request, string $type)
     {
         $validTypes = ['holding_company', 'subsidiary', 'division', 'branch', 'department', 'unit'];
@@ -238,13 +238,13 @@ class OrganizationController extends Controller
     }
 
     #[Endpoint(
-        title: "Get organization members",
-        description: "Retrieve a paginated list of members in an organization with their roles"
+        title: 'Get organization members',
+        description: 'Retrieve a paginated list of members in an organization with their roles'
     )]
     #[Authenticated]
-    #[QueryParam("status", "string", "Filter by membership status", false, "active")]
-    #[QueryParam("per_page", "integer", "Number of results per page", false, 15)]
-    #[ScribeResponse(["data" => ["id" => 1, "name" => "John Doe", "email" => "john@example.com"], "meta" => ["current_page" => 1]])]
+    #[QueryParam('status', 'string', 'Filter by membership status', false, 'active')]
+    #[QueryParam('per_page', 'integer', 'Number of results per page', false, 15)]
+    #[ScribeResponse(['data' => ['id' => 1, 'name' => 'John Doe', 'email' => 'john@example.com'], 'meta' => ['current_page' => 1]])]
     public function members(Organization $organization, Request $request)
     {
         $query = $organization->users()
@@ -264,12 +264,12 @@ class OrganizationController extends Controller
     }
 
     #[Endpoint(
-        title: "Add member to organization",
-        description: "Add a user as a member to an organization with optional role assignments"
+        title: 'Add member to organization',
+        description: 'Add a user as a member to an organization with optional role assignments'
     )]
     #[Authenticated]
-    #[ScribeResponse(["message" => "Member added successfully", "membership" => ["id" => 1, "user_id" => 1, "organization_id" => 1]], 201)]
-    #[ScribeResponse(["message" => "User is already an active member of this organization"], 400)]
+    #[ScribeResponse(['message' => 'Member added successfully', 'membership' => ['id' => 1, 'user_id' => 1, 'organization_id' => 1]], 201)]
+    #[ScribeResponse(['message' => 'User is already an active member of this organization'], 400)]
     public function addMember(AddMemberRequest $request, Organization $organization)
     {
         $validated = $request->validated();
@@ -308,12 +308,12 @@ class OrganizationController extends Controller
     }
 
     #[Endpoint(
-        title: "Update organization membership",
-        description: "Update an existing organization membership including role assignments"
+        title: 'Update organization membership',
+        description: 'Update an existing organization membership including role assignments'
     )]
     #[Authenticated]
-    #[ScribeResponse(["message" => "Membership updated successfully", "membership" => ["id" => 1, "status" => "active"]], 200)]
-    #[ScribeResponse(["message" => "Membership not found in this organization"], 404)]
+    #[ScribeResponse(['message' => 'Membership updated successfully', 'membership' => ['id' => 1, 'status' => 'active']], 200)]
+    #[ScribeResponse(['message' => 'Membership not found in this organization'], 404)]
     public function updateMember(UpdateMemberRequest $request, Organization $organization, OrganizationMembership $membership)
     {
         if ($membership->organization_id !== $organization->id) {
@@ -348,12 +348,12 @@ class OrganizationController extends Controller
     }
 
     #[Endpoint(
-        title: "Remove member from organization",
-        description: "Remove a member from an organization and revoke all associated roles"
+        title: 'Remove member from organization',
+        description: 'Remove a member from an organization and revoke all associated roles'
     )]
     #[Authenticated]
-    #[ScribeResponse(["message" => "Member removed successfully"], 200)]
-    #[ScribeResponse(["message" => "Membership not found in this organization"], 404)]
+    #[ScribeResponse(['message' => 'Member removed successfully'], 200)]
+    #[ScribeResponse(['message' => 'Membership not found in this organization'], 404)]
     public function removeMember(Organization $organization, OrganizationMembership $membership)
     {
         if ($membership->organization_id !== $organization->id) {
@@ -374,13 +374,13 @@ class OrganizationController extends Controller
     }
 
     #[Endpoint(
-        title: "Get organization roles",
-        description: "Retrieve all roles defined for a specific organization"
+        title: 'Get organization roles',
+        description: 'Retrieve all roles defined for a specific organization'
     )]
     #[Authenticated]
     #[ScribeResponse([
-        ["id" => 1, "name" => "admin", "permissions" => [["name" => "organization:admin"]]],
-        ["id" => 2, "name" => "member", "permissions" => [["name" => "organization:read"]]]
+        ['id' => 1, 'name' => 'admin', 'permissions' => [['name' => 'organization:admin']]],
+        ['id' => 2, 'name' => 'member', 'permissions' => [['name' => 'organization:read']]],
     ])]
     public function roles(Organization $organization)
     {
@@ -392,12 +392,12 @@ class OrganizationController extends Controller
     }
 
     #[Endpoint(
-        title: "Create organization role",
-        description: "Create a new role within an organization with specific permissions"
+        title: 'Create organization role',
+        description: 'Create a new role within an organization with specific permissions'
     )]
     #[Authenticated]
-    #[ScribeResponse(["message" => "Role created successfully", "role" => ["id" => 1, "name" => "manager", "permissions" => []]], 201)]
-    #[ScribeResponse(["message" => "Role already exists in this organization"], 400)]
+    #[ScribeResponse(['message' => 'Role created successfully', 'role' => ['id' => 1, 'name' => 'manager', 'permissions' => []]], 201)]
+    #[ScribeResponse(['message' => 'Role already exists in this organization'], 400)]
     public function createRole(CreateRoleRequest $request, Organization $organization)
     {
         $validated = $request->validated();
