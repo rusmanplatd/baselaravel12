@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "36c10d8ad7eabd010205e211c981edc3",
+    "content-hash": "eaa773db9e02d663c75594e1f6a77b1f",
     "packages": [
         {
             "name": "brick/math",
@@ -948,16 +948,16 @@
         },
         {
             "name": "guzzlehttp/promises",
-            "version": "2.2.0",
+            "version": "2.3.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/promises.git",
-                "reference": "7c69f28996b0a6920945dd20b3857e499d9ca96c"
+                "reference": "481557b130ef3790cf82b713667b43030dc9c957"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/promises/zipball/7c69f28996b0a6920945dd20b3857e499d9ca96c",
-                "reference": "7c69f28996b0a6920945dd20b3857e499d9ca96c",
+                "url": "https://api.github.com/repos/guzzle/promises/zipball/481557b130ef3790cf82b713667b43030dc9c957",
+                "reference": "481557b130ef3790cf82b713667b43030dc9c957",
                 "shasum": ""
             },
             "require": {
@@ -965,7 +965,7 @@
             },
             "require-dev": {
                 "bamarni/composer-bin-plugin": "^1.8.2",
-                "phpunit/phpunit": "^8.5.39 || ^9.6.20"
+                "phpunit/phpunit": "^8.5.44 || ^9.6.25"
             },
             "type": "library",
             "extra": {
@@ -1011,7 +1011,7 @@
             ],
             "support": {
                 "issues": "https://github.com/guzzle/promises/issues",
-                "source": "https://github.com/guzzle/promises/tree/2.2.0"
+                "source": "https://github.com/guzzle/promises/tree/2.3.0"
             },
             "funding": [
                 {
@@ -1027,7 +1027,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-03-27T13:27:01+00:00"
+            "time": "2025-08-22T14:34:08+00:00"
         },
         {
             "name": "guzzlehttp/psr7",
@@ -1147,16 +1147,16 @@
         },
         {
             "name": "guzzlehttp/uri-template",
-            "version": "v1.0.4",
+            "version": "v1.0.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/uri-template.git",
-                "reference": "30e286560c137526eccd4ce21b2de477ab0676d2"
+                "reference": "4f4bbd4e7172148801e76e3decc1e559bdee34e1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/uri-template/zipball/30e286560c137526eccd4ce21b2de477ab0676d2",
-                "reference": "30e286560c137526eccd4ce21b2de477ab0676d2",
+                "url": "https://api.github.com/repos/guzzle/uri-template/zipball/4f4bbd4e7172148801e76e3decc1e559bdee34e1",
+                "reference": "4f4bbd4e7172148801e76e3decc1e559bdee34e1",
                 "shasum": ""
             },
             "require": {
@@ -1165,7 +1165,7 @@
             },
             "require-dev": {
                 "bamarni/composer-bin-plugin": "^1.8.2",
-                "phpunit/phpunit": "^8.5.36 || ^9.6.15",
+                "phpunit/phpunit": "^8.5.44 || ^9.6.25",
                 "uri-template/tests": "1.0.0"
             },
             "type": "library",
@@ -1213,7 +1213,7 @@
             ],
             "support": {
                 "issues": "https://github.com/guzzle/uri-template/issues",
-                "source": "https://github.com/guzzle/uri-template/tree/v1.0.4"
+                "source": "https://github.com/guzzle/uri-template/tree/v1.0.5"
             },
             "funding": [
                 {
@@ -1229,7 +1229,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-02-03T10:55:03+00:00"
+            "time": "2025-08-22T14:27:06+00:00"
         },
         {
             "name": "inertiajs/inertia-laravel",
@@ -5311,85 +5311,6 @@
                 }
             ],
             "time": "2025-03-26T16:09:59+00:00"
-        },
-        {
-            "name": "spatie/laravel-multitenancy",
-            "version": "4.0.5",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/spatie/laravel-multitenancy.git",
-                "reference": "7b43b33a4e4194157949470a04effc64b8bac2a3"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/spatie/laravel-multitenancy/zipball/7b43b33a4e4194157949470a04effc64b8bac2a3",
-                "reference": "7b43b33a4e4194157949470a04effc64b8bac2a3",
-                "shasum": ""
-            },
-            "require": {
-                "illuminate/support": "^11.0|^12.0",
-                "php": "^8.2",
-                "spatie/laravel-package-tools": "^1.9"
-            },
-            "require-dev": {
-                "laravel/legacy-factories": "^1.0.4",
-                "laravel/octane": "^2.5|dev-develop",
-                "laravel/serializable-closure": "^1.1|^2.0",
-                "mockery/mockery": "^1.4",
-                "orchestra/testbench": "^9.0|^10.0",
-                "pestphp/pest": "^2.34|^3.7",
-                "spatie/valuestore": "^1.2"
-            },
-            "type": "library",
-            "extra": {
-                "laravel": {
-                    "aliases": {
-                        "Multitenancy": "Spatie\\Multitenancy\\MultitenancyFacade"
-                    },
-                    "providers": [
-                        "Spatie\\Multitenancy\\MultitenancyServiceProvider"
-                    ]
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Spatie\\Multitenancy\\": "src",
-                    "Spatie\\Multitenancy\\Database\\Factories\\": "database/factories"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Freek Van der Herten",
-                    "email": "freek@spatie.be",
-                    "homepage": "http://spatie.be",
-                    "role": "Developer"
-                }
-            ],
-            "description": "Make your Laravel app usable by multiple tenants",
-            "homepage": "https://github.com/spatie/laravel-multitenancy",
-            "keywords": [
-                "laravel-multitenancy",
-                "spatie"
-            ],
-            "support": {
-                "issues": "https://github.com/spatie/laravel-multitenancy/issues",
-                "source": "https://github.com/spatie/laravel-multitenancy/tree/4.0.5"
-            },
-            "funding": [
-                {
-                    "url": "https://spatie.be/open-source/support-us",
-                    "type": "custom"
-                },
-                {
-                    "url": "https://github.com/spatie",
-                    "type": "github"
-                }
-            ],
-            "time": "2025-05-12T09:56:03+00:00"
         },
         {
             "name": "spatie/laravel-notification-log",
@@ -10790,16 +10711,16 @@
         },
         {
             "name": "pestphp/pest",
-            "version": "v4.0.0",
+            "version": "v4.0.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/pestphp/pest.git",
-                "reference": "50960a96e94bdd2d42af82394e325d74be2a3ace"
+                "reference": "7f11ace329581ca168f99d9d7f70556c191d2be8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/pestphp/pest/zipball/50960a96e94bdd2d42af82394e325d74be2a3ace",
-                "reference": "50960a96e94bdd2d42af82394e325d74be2a3ace",
+                "url": "https://api.github.com/repos/pestphp/pest/zipball/7f11ace329581ca168f99d9d7f70556c191d2be8",
+                "reference": "7f11ace329581ca168f99d9d7f70556c191d2be8",
                 "shasum": ""
             },
             "require": {
@@ -10808,8 +10729,8 @@
                 "nunomaduro/termwind": "^2.3.1",
                 "pestphp/pest-plugin": "^4.0.0",
                 "pestphp/pest-plugin-arch": "^4.0.0",
-                "pestphp/pest-plugin-mutate": "^4.0.0",
-                "pestphp/pest-plugin-profanity": "^4.0.0",
+                "pestphp/pest-plugin-mutate": "^4.0.1",
+                "pestphp/pest-plugin-profanity": "^4.0.1",
                 "php": "^8.3.0",
                 "phpunit/phpunit": "^12.3.5",
                 "symfony/process": "^7.3.0"
@@ -10822,8 +10743,8 @@
             },
             "require-dev": {
                 "pestphp/pest-dev-tools": "^4.0.0",
-                "pestphp/pest-plugin-browser": "^4.0.0",
-                "pestphp/pest-plugin-type-coverage": "^4.0.1",
+                "pestphp/pest-plugin-browser": "^4.0.2",
+                "pestphp/pest-plugin-type-coverage": "^4.0.2",
                 "psy/psysh": "^0.12.10"
             },
             "bin": [
@@ -10890,7 +10811,7 @@
             ],
             "support": {
                 "issues": "https://github.com/pestphp/pest/issues",
-                "source": "https://github.com/pestphp/pest/tree/v4.0.0"
+                "source": "https://github.com/pestphp/pest/tree/v4.0.2"
             },
             "funding": [
                 {
@@ -10902,7 +10823,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2025-08-20T14:30:59+00:00"
+            "time": "2025-08-22T10:34:24+00:00"
         },
         {
             "name": "pestphp/pest-plugin",

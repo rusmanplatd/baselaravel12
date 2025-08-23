@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Spatie\Multitenancy\Models\Tenant;
 
 class Organization extends Model
 {
@@ -67,11 +66,6 @@ class Organization extends Model
     public function memberships(): HasMany
     {
         return $this->hasMany(OrganizationMembership::class);
-    }
-
-    public function tenant(): HasOne
-    {
-        return $this->hasOne(Tenant::class, 'name', 'organization_code');
     }
 
     public function oauthClients(): HasMany
@@ -147,7 +141,7 @@ class Organization extends Model
         return $this->belongsToMany(User::class, 'organization_memberships')
             ->withPivot([
                 'organization_unit_id',
-                'organization_position_id', 
+                'organization_position_id',
                 'membership_type',
                 'start_date',
                 'end_date',

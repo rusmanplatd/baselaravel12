@@ -12,9 +12,8 @@ This is a Laravel 12 + React fullstack application using:
 - **Database**: Postgresql (default), migrations in `database/migrations/`
 - **SSR**: Enabled via Inertia.js server-side rendering
 - **Authentication**: Laravel Passport for OAuth 2.0/OIDC, Laravel Breeze-style UI flows, WebAuthn/Passkeys support
-- **Extensions**: Multiple Spatie packages (permissions, activity logs, event sourcing, multitenancy)
+- **Extensions**: Multiple Spatie packages (permissions, activity logs, event sourcing)
 - **Organization Management**: Hierarchical organization structure with units, positions, and memberships
-- **Multi-tenancy**: Organization-based tenancy with Spatie multitenancy package
 
 ## Development Commands
 
