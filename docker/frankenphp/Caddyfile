@@ -1,0 +1,122 @@
+# FrankenPHP Caddyfile for production
+{
+    # Global options
+    auto_https off
+    admin off
+    persist_config off
+    
+    # Logging
+    log {
+        output stdout
+        format json
+        level INFO
+    }
+}
+
+# Main server block
+:80 {
+    # Set document root
+    root * /app/public
+    
+    # Enable PHP processing with FrankenPHP
+    php_fastcgi unix//var/run/php-fpm.sock {
+        root /app/public
+        split .php
+    }
+    
+    # Handle Laravel routes
+    try_files {path} {path}/ /index.php?{query}
+    
+    # Security headers
+    header {
+        # Remove server info
+        -Server
+        
+        # Security headers
+        X-Content-Type-Options nosniff
+        X-Frame-Options DENY
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy strict-origin-when-cross-origin
+        Permissions-Policy "camera=(), microphone=(), geolocation=()"
+        
+        # Content Security Policy
+        Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self'"
+    }
+    
+    # Static file handling with caching
+    @static {
+        file
+        path *.css *.js *.ico *.png *.jpg *.jpeg *.gif *.svg *.woff *.woff2 *.ttf *.eot *.webp *.avif
+    }
+    handle @static {
+        header Cache-Control "public, max-age=31536000, immutable"
+        header Vary "Accept-Encoding"
+    }
+    
+    # Handle storage files
+    @storage {
+        path /storage/*
+    }
+    handle @storage {
+        header Cache-Control "public, max-age=2592000"
+        file_server
+    }
+    
+    # Deny access to sensitive files
+    @sensitive {
+        path /.env* /composer.json /composer.lock /package.json /package-lock.json /.git/* /storage/logs/* /storage/framework/*
+    }
+    handle @sensitive {
+        error 404
+    }
+    
+    # PHP file handling
+    @php {
+        path *.php
+    }
+    handle @php {
+        php
+    }
+    
+    # Enable gzip compression
+    encode {
+        gzip 6
+        minimum_length 1000
+        match {
+            header Content-Type text/*
+            header Content-Type application/json*
+            header Content-Type application/javascript*
+            header Content-Type application/xhtml+xml*
+            header Content-Type application/atom+xml*
+            header Content-Type application/rss+xml*
+            header Content-Type application/xml*
+            header Content-Type image/svg+xml*
+        }
+    }
+    
+    # Rate limiting for auth endpoints
+    @auth {
+        path /login* /register* /password* /oauth* /api/auth*
+    }
+    handle @auth {
+        rate_limit {
+            zone auth {
+                key {remote_addr}
+                events 10
+                window 1m
+            }
+        }
+        php
+    }
+    
+    # Health check endpoint
+    handle /health {
+        respond "OK" 200
+    }
+    
+    # Logs
+    log {
+        output stdout
+        format json
+    }
+}

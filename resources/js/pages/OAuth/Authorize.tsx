@@ -46,7 +46,7 @@ export default function Authorize({ client, scopes, user, state, response_type, 
     scopes.map(scope => scope.id)
   )
 
-  const { post, processing } = useForm({
+  const approveForm = useForm({
     client_id: client.id,
     redirect_uri: client.redirect,
     scopes: selectedScopes,
@@ -56,22 +56,18 @@ export default function Authorize({ client, scopes, user, state, response_type, 
     code_challenge_method,
   })
 
-  const { delete: deny } = useForm({
+  const denyForm = useForm({
     redirect_uri: client.redirect,
     state,
   })
 
   const handleApprove = () => {
-    post(route('oauth.approve'), {
-      data: {
-        ...useForm().data,
-        scopes: selectedScopes,
-      }
-    })
+    approveForm.setData('scopes', selectedScopes)
+    approveForm.post(route('oauth.approve'))
   }
 
   const handleDeny = () => {
-    deny(route('oauth.deny'))
+    denyForm.delete(route('oauth.deny'))
   }
 
   const toggleScope = (scopeId: string) => {
@@ -163,15 +159,15 @@ export default function Authorize({ client, scopes, user, state, response_type, 
               <div className="flex space-x-3">
                 <Button
                   onClick={handleApprove}
-                  disabled={processing || selectedScopes.length === 0}
+                  disabled={approveForm.processing || selectedScopes.length === 0}
                   className="flex-1"
                 >
-                  {processing ? 'Authorizing...' : 'Authorize'}
+                  {approveForm.processing ? 'Authorizing...' : 'Authorize'}
                 </Button>
                 <Button
                   onClick={handleDeny}
                   variant="outline"
-                  disabled={processing}
+                  disabled={denyForm.processing}
                   className="flex-1"
                 >
                   Cancel

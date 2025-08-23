@@ -9,7 +9,7 @@ This is a Laravel 12 + React fullstack application using:
 - **Frontend**: React 19 with TypeScript, Vite for bundling
 - **UI Library**: shadcn/ui components with Radix UI primitives and Tailwind CSS v4
 - **Testing**: Pest (PHP) for backend, no frontend testing setup currently
-- **Database**: SQLite (default), migrations in `database/migrations/`
+- **Database**: Postgresql (default), migrations in `database/migrations/`
 - **SSR**: Enabled via Inertia.js server-side rendering
 - **Authentication**: Laravel Passport for OAuth 2.0/OIDC, Laravel Breeze-style UI flows, WebAuthn/Passkeys support
 - **Extensions**: Multiple Spatie packages (permissions, activity logs, event sourcing, multitenancy)

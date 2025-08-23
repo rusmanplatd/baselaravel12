@@ -1,0 +1,217 @@
+# Testing environment (CI/CD and local testing)
+services:
+  app-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: test
+    environment:
+      - APP_ENV=testing
+      - APP_DEBUG=true
+      - APP_KEY=base64:test-key-for-testing-only-not-secure
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres-test
+      - DB_PORT=5432
+      - DB_DATABASE=baselaravel12react_test
+      - DB_USERNAME=laravel
+      - DB_PASSWORD=test_secret
+      - REDIS_HOST=redis-test
+      - REDIS_PASSWORD=null
+      - REDIS_PORT=6379
+      - CACHE_DRIVER=array
+      - SESSION_DRIVER=array
+      - QUEUE_CONNECTION=sync
+      - MAIL_MAILER=array
+      - LOG_CHANNEL=stderr
+      - TELESCOPE_ENABLED=false
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+    networks:
+      - laravel-test
+    volumes:
+      - .:/app
+      - /app/vendor
+      - /app/node_modules
+    command: >
+      sh -c "php artisan migrate:fresh --seed --force &&
+             php artisan test --parallel --processes=4"
+
+  postgres-test:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: baselaravel12react_test
+      POSTGRES_USER: laravel
+      POSTGRES_PASSWORD: test_secret
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U laravel"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - laravel-test
+    tmpfs:
+      - /var/lib/postgresql/data
+
+  redis-test:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - laravel-test
+    tmpfs:
+      - /data
+
+  # Separate service for feature tests that need browser automation
+  app-browser-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: test
+    environment:
+      - APP_ENV=testing
+      - APP_DEBUG=true
+      - APP_URL=http://app-test
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres-test
+      - DB_PORT=5432
+      - DB_DATABASE=baselaravel12react_test
+      - DB_USERNAME=laravel
+      - DB_PASSWORD=test_secret
+      - REDIS_HOST=redis-test
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+      app-test:
+        condition: service_started
+    networks:
+      - laravel-test
+    volumes:
+      - .:/app
+      - /app/vendor
+      - /app/node_modules
+    profiles:
+      - browser-tests
+    command: php artisan dusk
+
+  # Service for running specific test suites
+  pest-unit:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: test
+    environment:
+      - APP_ENV=testing
+      - DB_CONNECTION=sqlite
+      - DB_DATABASE=:memory:
+      - CACHE_DRIVER=array
+      - SESSION_DRIVER=array
+      - QUEUE_CONNECTION=sync
+    networks:
+      - laravel-test
+    volumes:
+      - .:/app
+      - /app/vendor
+    profiles:
+      - unit-tests
+    command: php artisan test --testsuite=Unit --parallel --processes=4
+
+  pest-feature:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: test
+    environment:
+      - APP_ENV=testing
+      - APP_DEBUG=true
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres-test
+      - DB_PORT=5432
+      - DB_DATABASE=baselaravel12react_test
+      - DB_USERNAME=laravel
+      - DB_PASSWORD=test_secret
+      - REDIS_HOST=redis-test
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+    networks:
+      - laravel-test
+    volumes:
+      - .:/app
+      - /app/vendor
+    profiles:
+      - feature-tests
+    command: >
+      sh -c "php artisan migrate:fresh --seed --force &&
+             php artisan test --testsuite=Feature --parallel --processes=2"
+
+  # Code quality checks
+  pint:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: test
+    volumes:
+      - .:/app
+      - /app/vendor
+    networks:
+      - laravel-test
+    profiles:
+      - code-quality
+    command: ./vendor/bin/pint --test
+
+  phpstan:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: test
+    volumes:
+      - .:/app
+      - /app/vendor
+    networks:
+      - laravel-test
+    profiles:
+      - code-quality
+    command: ./vendor/bin/phpstan analyse
+
+  eslint:
+    image: node:22-alpine
+    working_dir: /app
+    volumes:
+      - .:/app
+      - /app/node_modules
+    networks:
+      - laravel-test
+    profiles:
+      - code-quality
+    command: npm run lint
+
+  typescript:
+    image: node:22-alpine
+    working_dir: /app
+    volumes:
+      - .:/app
+      - /app/node_modules
+    networks:
+      - laravel-test
+    profiles:
+      - code-quality
+    command: npm run types
+
+volumes:
+  postgres_test_data:
+
+networks:
+  laravel-test:
+    driver: bridge

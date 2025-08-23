@@ -1,0 +1,134 @@
+# FrankenPHP Caddyfile for local development
+{
+    # Global options
+    auto_https off
+    admin off
+    debug
+    
+    # Logging
+    log {
+        output stdout
+        format console
+        level DEBUG
+    }
+}
+
+# Main server for local development
+:80 {
+    # Set document root
+    root * /app/public
+    
+    # Enable PHP processing with FrankenPHP
+    php_fastcgi unix//var/run/php-fpm.sock {
+        root /app/public
+        split .php
+    }
+    
+    # Handle Laravel routes
+    try_files {path} {path}/ /index.php?{query}
+    
+    # Development headers (less restrictive)
+    header {
+        -Server
+        Access-Control-Allow-Origin "*"
+        Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+        Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+    }
+    
+    # Proxy Vite dev server requests for HMR
+    @vite {
+        path /resources/* /@vite/* /node_modules/*
+    }
+    handle @vite {
+        reverse_proxy localhost:5173
+    }
+    
+    # Handle hot reload WebSocket
+    @ws {
+        header Connection *Upgrade*
+        header Upgrade websocket
+    }
+    handle @ws {
+        reverse_proxy localhost:5173
+    }
+    
+    # Static file handling (no caching in development)
+    @static {
+        file
+        path *.css *.js *.ico *.png *.jpg *.jpeg *.gif *.svg *.woff *.woff2 *.ttf *.eot *.webp *.avif
+    }
+    handle @static {
+        header Cache-Control "no-cache, no-store, must-revalidate"
+    }
+    
+    # PHP file handling
+    @php {
+        path *.php
+    }
+    handle @php {
+        php
+    }
+    
+    # Health check endpoint
+    handle /health {
+        respond "OK - Development" 200
+    }
+    
+    # Enable file browsing for development (remove in production)
+    file_server browse
+    
+    # Development logging
+    log {
+        output stdout
+        format console
+    }
+}
+
+# HTTPS redirect for local development (optional)
+:443 {
+    # Same configuration as :80 but with TLS
+    tls internal
+    
+    root * /app/public
+    php_fastcgi unix//var/run/php-fpm.sock
+    try_files {path} {path}/ /index.php?{query}
+    
+    header {
+        -Server
+        Access-Control-Allow-Origin "*"
+        Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+        Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+    }
+    
+    @vite {
+        path /resources/* /@vite/* /node_modules/*
+    }
+    handle @vite {
+        reverse_proxy localhost:5173
+    }
+    
+    @ws {
+        header Connection *Upgrade*
+        header Upgrade websocket
+    }
+    handle @ws {
+        reverse_proxy localhost:5173
+    }
+    
+    @static {
+        file
+        path *.css *.js *.ico *.png *.jpg *.jpeg *.gif *.svg *.woff *.woff2 *.ttf *.eot *.webp *.avif
+    }
+    handle @static {
+        header Cache-Control "no-cache, no-store, must-revalidate"
+    }
+    
+    @php {
+        path *.php
+    }
+    handle @php {
+        php
+    }
+    
+    file_server browse
+}

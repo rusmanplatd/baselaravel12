@@ -1,0 +1,146 @@
+# Development environment (CI/CD deployment target)
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+      args:
+        BUILD_TARGET: ssr
+    restart: unless-stopped
+    environment:
+      - APP_ENV=development
+      - APP_DEBUG=true
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=baselaravel12react_dev
+      - DB_USERNAME=laravel
+      - DB_PASSWORD=${DB_PASSWORD:-dev_secret}
+      - REDIS_HOST=redis
+      - REDIS_PASSWORD=null
+      - REDIS_PORT=6379
+      - CACHE_DRIVER=redis
+      - SESSION_DRIVER=redis
+      - QUEUE_CONNECTION=redis
+      - LOG_CHANNEL=stack
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - laravel
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.app-dev.rule=Host(`dev.yourdomain.com`)"
+      - "traefik.http.routers.app-dev.tls=true"
+      - "traefik.http.routers.app-dev.tls.certresolver=letsencrypt"
+      - "traefik.http.services.app-dev.loadbalancer.server.port=80"
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: baselaravel12react_dev
+      POSTGRES_USER: laravel
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-dev_secret}
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U laravel"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - laravel
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_dev_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - laravel
+
+
+  ssr:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - SSR_PORT=13714
+    networks:
+      - laravel
+    command: node bootstrap/ssr/ssr.mjs
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    restart: unless-stopped
+    environment:
+      - APP_ENV=development
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=baselaravel12react_dev
+      - DB_USERNAME=laravel
+      - DB_PASSWORD=${DB_PASSWORD:-dev_secret}
+      - REDIS_HOST=redis
+      - QUEUE_CONNECTION=redis
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - laravel
+    command: php artisan queue:work --sleep=3 --tries=3
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    restart: unless-stopped
+    environment:
+      - APP_ENV=development
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=baselaravel12react_dev
+      - DB_USERNAME=laravel
+      - DB_PASSWORD=${DB_PASSWORD:-dev_secret}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - laravel
+    command: >
+      sh -c "while true; do
+        php artisan schedule:run
+        sleep 60
+      done"
+
+volumes:
+  postgres_dev_data:
+  redis_dev_data:
+
+networks:
+  laravel:
+    driver: bridge
+  traefik:
+    external: true
