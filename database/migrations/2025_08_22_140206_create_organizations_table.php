@@ -111,6 +111,7 @@ return new class extends Migration
 
         Schema::create('organization_positions', function (Blueprint $table) {
             $table->ulid('id')->primary();
+            $table->ulid('organization_id');
             $table->ulid('organization_unit_id');
             $table->string('position_code')->unique();
             $table->ulid('organization_position_level_id');
@@ -130,6 +131,7 @@ return new class extends Migration
 
             $table->foreign('created_by')->references('id')->on('sys_users');
             $table->foreign('updated_by')->references('id')->on('sys_users');
+            $table->foreign('organization_id')->references('id')->on('organizations')->onDelete('cascade');
             $table->foreign('organization_position_level_id')->references('id')->on('organization_position_levels');
 
             $table->foreign('organization_unit_id')->references('id')->on('organization_units')->onDelete('cascade');

@@ -24,8 +24,7 @@ export default function TenantSelect({ tenants, currentTenant }: Props) {
   const { post, processing } = useForm()
 
   const handleTenantSwitch = (organizationId: string) => {
-    post(route('tenant.switch'), {
-      data: { organization_id: organizationId },
+    post(route('tenant.switch', { organization_id: organizationId }), {
       preserveScroll: true,
     })
   }

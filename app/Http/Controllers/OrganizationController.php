@@ -32,7 +32,7 @@ class OrganizationController extends Controller
     public function index()
     {
         $organizations = Organization::query()
-            ->withCount(['departments', 'organizationUnits', 'childOrganizations'])
+            ->withCount(['organizationUnits', 'childOrganizations', 'memberships'])
             ->with(['parentOrganization'])
             ->orderBy('level')
             ->orderBy('name')
@@ -77,11 +77,11 @@ class OrganizationController extends Controller
     public function show(Organization $organization)
     {
         $organization->load([
-            'departments.jobPositions.jobLevel',
             'parentOrganization',
             'childOrganizations',
             'organizationUnits.positions.activeMemberships.user',
-            'memberships.user.organizationPosition',
+            'memberships.user',
+            'memberships.organizationPosition',
         ]);
 
         return Inertia::render('Organizations/Show', [

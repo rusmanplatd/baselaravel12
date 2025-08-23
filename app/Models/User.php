@@ -140,6 +140,14 @@ class User extends Authenticatable implements HasPasskeys
         return $this->hasMany(OrganizationMembership::class)->active();
     }
 
+    /**
+     * Alias for organizationMemberships for backwards compatibility
+     */
+    public function memberships(): HasMany
+    {
+        return $this->organizationMemberships();
+    }
+
     public function getCurrentOrganizations()
     {
         return $this->activeOrganizationMemberships()

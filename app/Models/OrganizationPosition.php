@@ -120,7 +120,11 @@ class OrganizationPosition extends Model
 
     public function getFullTitleAttribute(): string
     {
-        return $this->title.' - '.$this->organizationUnit->name;
+        if ($this->organizationUnit) {
+            return $this->title.' - '.$this->organizationUnit->name;
+        }
+
+        return $this->title;
     }
 
     public function scopeBoard($query)
@@ -157,8 +161,11 @@ class OrganizationPosition extends Model
 
     public function scopeAvailable($query)
     {
-        return $query->whereHas('activeMemberships', function ($q) {
-            $q->havingRaw('COUNT(*) < max_incumbents');
+        return $query->where(function ($q) {
+            $q->whereDoesntHave('activeMemberships')
+                ->orWhereHas('activeMemberships', function ($subQ) {
+                    $subQ->havingRaw('COUNT(*) < organization_positions.max_incumbents');
+                });
         });
     }
 }

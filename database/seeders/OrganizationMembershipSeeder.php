@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Models\Auth\Role;
 use App\Models\OrganizationMembership;
 use App\Models\User;
-use App\Models\Auth\Role;
 use Illuminate\Database\Seeder;
 
 class OrganizationMembershipSeeder extends Seeder
@@ -103,6 +103,11 @@ class OrganizationMembershipSeeder extends Seeder
         $testUser = User::where('email', 'test@example.com')->first();
         $johnSmith = User::where('email', 'john.smith@techcorp.com')->first();
         $janeDoe = User::where('email', 'jane.doe@techcorp.com')->first();
+
+        // Check if required users exist
+        if (! $testUser || ! $johnSmith || ! $janeDoe) {
+            throw new \Exception('Required users not found. Please run UserSeeder first.');
+        }
         $mikeJohnson = User::where('email', 'mike.johnson@techcorpsoftware.com')->first();
         $sarahWilson = User::where('email', 'sarah.wilson@techcorpsoftware.com')->first();
         $davidBrown = User::where('email', 'david.brown@techcorpdata.com')->first();
@@ -393,89 +398,89 @@ class OrganizationMembershipSeeder extends Seeder
     {
         // Get organization IDs from config
         $orgIds = config('seeder.organization_ids');
-        
+
         // Role assignments based on organizational hierarchy and responsibilities
         $roleAssignments = [
-            // C-Level Executives - Super Admin or Organization Admin roles  
+            // C-Level Executives - Super Admin or Organization Admin roles
             'john.smith@techcorp.com' => [
                 'roles' => ['Super Admin', 'organization-admin'],
                 'organization_ids' => [$orgIds['techcorp_holdings']],
-                'reason' => 'CEO of TechCorp Holdings - needs full system access'
+                'reason' => 'CEO of TechCorp Holdings - needs full system access',
             ],
             'jane.doe@techcorp.com' => [
                 'roles' => ['Admin', 'organization-admin'],
                 'organization_ids' => [$orgIds['techcorp_holdings']],
-                'reason' => 'CFO - needs organization administration access'
+                'reason' => 'CFO - needs organization administration access',
             ],
 
             // Managing Directors and CTOs - Admin/Manager role
             'mike.johnson@techcorpsoftware.com' => [
                 'roles' => ['Admin', 'organization-admin'],
                 'organization_ids' => [$orgIds['techcorp_software']],
-                'reason' => 'Managing Director of TechCorp Software'
+                'reason' => 'Managing Director of TechCorp Software',
             ],
             'sarah.wilson@techcorpsoftware.com' => [
                 'roles' => ['Admin', 'organization-admin'],
                 'organization_ids' => [$orgIds['techcorp_software']],
-                'reason' => 'CTO - needs technical and organizational oversight'
+                'reason' => 'CTO - needs technical and organizational oversight',
             ],
             'david.brown@techcorpdata.com' => [
                 'roles' => ['Admin', 'organization-admin'],
                 'organization_ids' => [$orgIds['techcorp_data']],
-                'reason' => 'Managing Director of TechCorp Data'
+                'reason' => 'Managing Director of TechCorp Data',
             ],
 
             // VPs and Senior Leadership - Manager role
             'robert.taylor@techcorpsoftware.com' => [
                 'roles' => ['Manager', 'manager'],
                 'organization_ids' => [$orgIds['techcorp_software']],
-                'reason' => 'VP of Engineering - manages engineering teams'
+                'reason' => 'VP of Engineering - manages engineering teams',
             ],
             'emily.davis@techcorpdata.com' => [
                 'roles' => ['Manager', 'manager'],
                 'organization_ids' => [$orgIds['techcorp_data']],
-                'reason' => 'Head of AI Research - manages research teams'
+                'reason' => 'Head of AI Research - manages research teams',
             ],
             'maria.rodriguez@techcorpsoftware.com' => [
                 'roles' => ['Manager', 'manager'],
                 'organization_ids' => [$orgIds['techcorp_software']],
-                'reason' => 'QA Manager - manages quality assurance processes'
+                'reason' => 'QA Manager - manages quality assurance processes',
             ],
 
             // Senior Developers and Team Leads - Manager role (for their teams)
             'lisa.anderson@techcorpsoftware.com' => [
                 'roles' => ['Manager', 'manager'],
                 'organization_ids' => [$orgIds['techcorp_software']],
-                'reason' => 'Senior Frontend Developer - technical team lead'
+                'reason' => 'Senior Frontend Developer - technical team lead',
             ],
             'jennifer.martinez@techcorpsoftware.com' => [
                 'roles' => ['Manager', 'manager'],
                 'organization_ids' => [$orgIds['techcorp_software']],
-                'reason' => 'Senior Backend Developer - technical team lead'
+                'reason' => 'Senior Backend Developer - technical team lead',
             ],
 
             // Regular employees - User/Employee role
             'michael.chen@techcorpsoftware.com' => [
                 'roles' => ['User', 'employee'],
                 'organization_ids' => [$orgIds['techcorp_software']],
-                'reason' => 'Frontend Developer'
+                'reason' => 'Frontend Developer',
             ],
             'alex.thompson@techcorpsoftware.com' => [
                 'roles' => ['User', 'employee'],
                 'organization_ids' => [$orgIds['techcorp_software']],
-                'reason' => 'Backend Developer'
+                'reason' => 'Backend Developer',
             ],
 
             // System users with special roles
             'test@example.com' => [
                 'roles' => ['User', 'consultant'],
                 'organization_ids' => [$orgIds['techcorp_software'], $orgIds['techcorp_cloud']],
-                'reason' => 'Technical consultant across multiple organizations'
+                'reason' => 'Technical consultant across multiple organizations',
             ],
             'admin@example.com' => [
                 'roles' => ['Super Admin'],
                 'organization_ids' => [$orgIds['techcorp_security']],
-                'reason' => 'Security administrator with cross-organization access'
+                'reason' => 'Security administrator with cross-organization access',
             ],
         ];
 
@@ -488,7 +493,7 @@ class OrganizationMembershipSeeder extends Seeder
 
         foreach ($roleAssignments as $email => $assignment) {
             $user = User::where('email', $email)->first();
-            if (!$user) {
+            if (! $user) {
                 continue;
             }
 
@@ -506,7 +511,7 @@ class OrganizationMembershipSeeder extends Seeder
                                 ->where('team_id', $defaultOrgId)
                                 ->first();
 
-                            if (!$existingAssignment) {
+                            if (! $existingAssignment) {
                                 \Illuminate\Support\Facades\DB::table('sys_model_has_roles')->insert([
                                     'role_id' => $role->id,
                                     'model_type' => 'App\Models\User',
@@ -517,13 +522,13 @@ class OrganizationMembershipSeeder extends Seeder
                         }
                     } else {
                         // Handle regular roles without teams
-                        if (!$user->hasRole($roleName)) {
+                        if (! $user->hasRole($roleName)) {
                             $user->assignRole($roleName);
                         }
                     }
                 } catch (\Exception $e) {
                     // Log the error but continue with other assignments
-                    \Log::warning("Failed to assign role '{$roleName}' to user '{$email}': " . $e->getMessage());
+                    \Log::warning("Failed to assign role '{$roleName}' to user '{$email}': ".$e->getMessage());
                 }
             }
 
@@ -563,12 +568,14 @@ class OrganizationMembershipSeeder extends Seeder
 
         foreach ($boardMembers as $membership) {
             $user = $membership->user;
-            if (!$user) continue;
+            if (! $user) {
+                continue;
+            }
 
             try {
                 // Try both naming conventions for board member role
                 $boardRolesToTry = ['board-member', 'Admin', 'Super Admin'];
-                
+
                 if ($defaultOrgId) {
                     foreach ($boardRolesToTry as $roleName) {
                         $role = Role::where('name', $roleName)->where('team_id', $defaultOrgId)->first();
@@ -580,7 +587,7 @@ class OrganizationMembershipSeeder extends Seeder
                                 ->where('team_id', $defaultOrgId)
                                 ->first();
 
-                            if (!$existingAssignment) {
+                            if (! $existingAssignment) {
                                 \Illuminate\Support\Facades\DB::table('sys_model_has_roles')->insert([
                                     'role_id' => $role->id,
                                     'model_type' => 'App\Models\User',
@@ -593,14 +600,14 @@ class OrganizationMembershipSeeder extends Seeder
                     }
                 } else {
                     foreach ($boardRolesToTry as $roleName) {
-                        if (Role::where('name', $roleName)->exists() && !$user->hasRole($roleName)) {
+                        if (Role::where('name', $roleName)->exists() && ! $user->hasRole($roleName)) {
                             $user->assignRole($roleName);
                             break;
                         }
                     }
                 }
             } catch (\Exception $e) {
-                \Log::warning("Failed to assign board-member role to user '{$user->email}': " . $e->getMessage());
+                \Log::warning("Failed to assign board-member role to user '{$user->email}': ".$e->getMessage());
             }
         }
     }

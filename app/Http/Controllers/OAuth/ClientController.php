@@ -58,8 +58,8 @@ class ClientController extends Controller
 
         $availableOrganizations = Auth::user()->memberships()
             ->active()
-            ->whereHas('organizationPosition', function ($q) {
-                $q->whereIn('position_level', ['c_level', 'vice_president', 'director', 'senior_manager', 'manager']);
+            ->whereHas('organizationPosition.organizationPositionLevel', function ($q) {
+                $q->whereIn('code', ['c_level', 'vice_president', 'director', 'senior_manager', 'manager']);
             })
             ->with('organization')
             ->get()
@@ -84,8 +84,8 @@ class ClientController extends Controller
         // Validate user has management access to the organization
         $userManagementOrgs = Auth::user()->memberships()
             ->active()
-            ->whereHas('organizationPosition', function ($q) {
-                $q->whereIn('position_level', ['c_level', 'vice_president', 'director', 'senior_manager', 'manager']);
+            ->whereHas('organizationPosition.organizationPositionLevel', function ($q) {
+                $q->whereIn('code', ['c_level', 'vice_president', 'director', 'senior_manager', 'manager']);
             })
             ->pluck('organization_id');
 
@@ -207,8 +207,8 @@ class ClientController extends Controller
     {
         $userManagementOrgs = Auth::user()->memberships()
             ->active()
-            ->whereHas('organizationPosition', function ($q) {
-                $q->whereIn('position_level', ['c_level', 'vice_president', 'director', 'senior_manager', 'manager']);
+            ->whereHas('organizationPosition.organizationPositionLevel', function ($q) {
+                $q->whereIn('code', ['c_level', 'vice_president', 'director', 'senior_manager', 'manager']);
             })
             ->pluck('organization_id');
 
@@ -232,8 +232,8 @@ class ClientController extends Controller
     {
         $userManagementOrgs = Auth::user()->memberships()
             ->active()
-            ->whereHas('organizationPosition', function ($q) {
-                $q->whereIn('position_level', ['c_level', 'vice_president', 'director', 'senior_manager', 'manager']);
+            ->whereHas('organizationPosition.organizationPositionLevel', function ($q) {
+                $q->whereIn('code', ['c_level', 'vice_president', 'director', 'senior_manager', 'manager']);
             })
             ->pluck('organization_id');
 

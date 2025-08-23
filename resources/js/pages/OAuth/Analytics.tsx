@@ -7,10 +7,8 @@ import {
   Activity, 
   Users, 
   Shield, 
-  AlertTriangle, 
   CheckCircle, 
   XCircle, 
-  TrendingUp,
   Globe,
   Clock,
   BarChart3

@@ -175,22 +175,22 @@ class OrganizationMembership extends Model
     public function scopeBoard($query)
     {
         return $query->where('membership_type', 'board_member')
-            ->orWhereHas('organizationPosition', function ($q) {
-                $q->where('position_level', 'board_member');
+            ->orWhereHas('organizationPosition.organizationPositionLevel', function ($q) {
+                $q->where('code', 'board_member');
             });
     }
 
     public function scopeExecutive($query)
     {
-        return $query->whereHas('organizationPosition', function ($q) {
-            $q->where('position_level', 'c_level');
+        return $query->whereHas('organizationPosition.organizationPositionLevel', function ($q) {
+            $q->where('code', 'c_level');
         });
     }
 
     public function scopeManagement($query)
     {
-        return $query->whereHas('organizationPosition', function ($q) {
-            $q->whereIn('position_level', [
+        return $query->whereHas('organizationPosition.organizationPositionLevel', function ($q) {
+            $q->whereIn('code', [
                 'c_level',
                 'vice_president',
                 'director',
