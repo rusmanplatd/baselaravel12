@@ -4,7 +4,7 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, Building, Users, TrendingUp, Briefcase, Network, UserCheck, Target, Shield } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, Building, Users, TrendingUp, Briefcase, Network, UserCheck, Target, Shield, KeyRound } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -65,6 +65,30 @@ const mainNavItems: NavItem[] = [
             {
                 title: 'Executives',
                 href: '/executives',
+            },
+        ],
+    },
+    {
+        title: 'User Management',
+        icon: Users,
+        items: [
+            {
+                title: 'All Users',
+                href: '/users',
+            },
+        ],
+    },
+    {
+        title: 'Access Control',
+        icon: KeyRound,
+        items: [
+            {
+                title: 'Roles',
+                href: '/roles',
+            },
+            {
+                title: 'Permissions',
+                href: '/permissions',
             },
         ],
     },

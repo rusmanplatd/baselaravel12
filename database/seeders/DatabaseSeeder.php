@@ -40,28 +40,28 @@ class DatabaseSeeder extends Seeder
 
         // Create some department-specific users
         $hrUsers = User::factory(5)->create([
-            'name' => fn() => fake()->name(),
-            'email' => fn() => fake()->unique()->safeEmail(),
+            'name' => fn () => fake()->name(),
+            'email' => fn () => fake()->unique()->safeEmail(),
         ]);
 
         $engineeringUsers = User::factory(15)->create([
-            'name' => fn() => fake()->name(),
-            'email' => fn() => fake()->unique()->safeEmail(),
+            'name' => fn () => fake()->name(),
+            'email' => fn () => fake()->unique()->safeEmail(),
         ]);
 
         $salesUsers = User::factory(8)->create([
-            'name' => fn() => fake()->name(),
-            'email' => fn() => fake()->unique()->safeEmail(),
+            'name' => fn () => fake()->name(),
+            'email' => fn () => fake()->unique()->safeEmail(),
         ]);
 
         $marketingUsers = User::factory(6)->create([
-            'name' => fn() => fake()->name(),
-            'email' => fn() => fake()->unique()->safeEmail(),
+            'name' => fn () => fake()->name(),
+            'email' => fn () => fake()->unique()->safeEmail(),
         ]);
 
         $financeUsers = User::factory(4)->create([
-            'name' => fn() => fake()->name(),
-            'email' => fn() => fake()->unique()->safeEmail(),
+            'name' => fn () => fake()->name(),
+            'email' => fn () => fake()->unique()->safeEmail(),
         ]);
 
         // Store the admin user ID for use in other seeders

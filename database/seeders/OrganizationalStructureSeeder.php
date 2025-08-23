@@ -99,7 +99,7 @@ class OrganizationalStructureSeeder extends Seeder
         $finSub->updatePath();
 
         // Helper function to add audit fields
-        $addAuditFields = function($data) use ($adminUserId) {
+        $addAuditFields = function ($data) use ($adminUserId) {
             return array_merge($data, [
                 'created_by' => $adminUserId,
                 'updated_by' => $adminUserId,

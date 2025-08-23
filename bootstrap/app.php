@@ -26,6 +26,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'mfa.verified' => \App\Http\Middleware\EnsureMfaVerified::class,
             'permission' => \App\Http\Middleware\CheckPermission::class,
+            'permission.check' => \App\Http\Middleware\CheckPermissionMiddleware::class,
+            'permission.dynamic' => \App\Http\Middleware\DynamicPermissionMiddleware::class,
             'role' => \App\Http\Middleware\CheckRole::class,
             'organization.access' => \App\Http\Middleware\CheckOrganizationAccess::class,
             'organization.context' => \App\Http\Middleware\OrganizationContext::class,

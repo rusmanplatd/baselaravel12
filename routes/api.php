@@ -32,9 +32,10 @@ Route::prefix('v1')->group(function () {
     Route::get('organizations/{organization}/roles', [\App\Http\Controllers\Api\OrganizationController::class, 'roles']);
     Route::post('organizations/{organization}/roles', [\App\Http\Controllers\Api\OrganizationController::class, 'createRole']);
 
-    // Global roles API
+    // Global roles and permissions API
     Route::apiResource('roles', \App\Http\Controllers\Api\RoleController::class);
-    Route::get('permissions', [\App\Http\Controllers\Api\RoleController::class, 'permissions']);
+    Route::apiResource('permissions', \App\Http\Controllers\Api\PermissionController::class);
+    Route::get('roles/permissions', [\App\Http\Controllers\Api\RoleController::class, 'permissions']);
 
     Route::apiResource('organization-units', \App\Http\Controllers\Api\OrganizationUnitController::class);
     Route::get('organization-units/hierarchy/tree', [\App\Http\Controllers\Api\OrganizationUnitController::class, 'getHierarchy']);

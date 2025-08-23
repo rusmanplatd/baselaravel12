@@ -347,7 +347,7 @@ class OAuthController extends Controller
     public function revoke(Request $request)
     {
         $token = $request->input('token');
-        if (!$token) {
+        if (! $token) {
             return response()->json(['error' => 'invalid_request'], 400);
         }
 

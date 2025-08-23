@@ -55,6 +55,19 @@ Route::middleware(['auth', 'verified', 'mfa.verified'])->group(function () {
     Route::get('board-members', [\App\Http\Controllers\OrganizationMembershipController::class, 'boardMembers'])->name('board-members.index');
     Route::get('executives', [\App\Http\Controllers\OrganizationMembershipController::class, 'executives'])->name('executives.index');
 
+    // User Management
+    Route::resource('users', \App\Http\Controllers\UserController::class)->except(['create', 'store']);
+    Route::post('users/{user}/assign-roles', [\App\Http\Controllers\UserController::class, 'assignRoles'])->name('users.assignRoles');
+
+    // Roles and Permissions
+    Route::resource('roles', \App\Http\Controllers\RoleController::class);
+    Route::delete('roles/bulk-delete', [\App\Http\Controllers\RoleController::class, 'bulkDelete'])->name('roles.bulkDelete');
+    Route::post('roles/bulk-assign-permissions', [\App\Http\Controllers\RoleController::class, 'bulkAssignPermissions'])->name('roles.bulkAssignPermissions');
+    
+    Route::resource('permissions', \App\Http\Controllers\PermissionController::class);
+    Route::delete('permissions/bulk-delete', [\App\Http\Controllers\PermissionController::class, 'bulkDelete'])->name('permissions.bulkDelete');
+    Route::post('permissions/bulk-create-by-pattern', [\App\Http\Controllers\PermissionController::class, 'bulkCreateByPattern'])->name('permissions.bulkCreateByPattern');
+
 });
 
 require __DIR__.'/webs/settings.php';
