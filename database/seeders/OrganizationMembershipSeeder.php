@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\OrganizationMembership;
 use App\Models\User;
+use App\Models\Auth\Role;
 use Illuminate\Database\Seeder;
 
 class OrganizationMembershipSeeder extends Seeder
@@ -379,6 +380,228 @@ class OrganizationMembershipSeeder extends Seeder
             $membershipData['created_by'] = $adminUserId;
             $membershipData['updated_by'] = $adminUserId;
             OrganizationMembership::create($membershipData);
+        }
+
+        // Assign roles and permissions based on organizational positions and membership types
+        $this->assignRolesAndPermissions($adminUserId);
+    }
+
+    /**
+     * Assign roles and permissions to users based on their organizational positions
+     */
+    private function assignRolesAndPermissions($adminUserId): void
+    {
+        // Get organization IDs from config
+        $orgIds = config('seeder.organization_ids');
+        
+        // Role assignments based on organizational hierarchy and responsibilities
+        $roleAssignments = [
+            // C-Level Executives - Super Admin or Organization Admin roles  
+            'john.smith@techcorp.com' => [
+                'roles' => ['Super Admin', 'organization-admin'],
+                'organization_ids' => [$orgIds['techcorp_holdings']],
+                'reason' => 'CEO of TechCorp Holdings - needs full system access'
+            ],
+            'jane.doe@techcorp.com' => [
+                'roles' => ['Admin', 'organization-admin'],
+                'organization_ids' => [$orgIds['techcorp_holdings']],
+                'reason' => 'CFO - needs organization administration access'
+            ],
+
+            // Managing Directors and CTOs - Admin/Manager role
+            'mike.johnson@techcorpsoftware.com' => [
+                'roles' => ['Admin', 'organization-admin'],
+                'organization_ids' => [$orgIds['techcorp_software']],
+                'reason' => 'Managing Director of TechCorp Software'
+            ],
+            'sarah.wilson@techcorpsoftware.com' => [
+                'roles' => ['Admin', 'organization-admin'],
+                'organization_ids' => [$orgIds['techcorp_software']],
+                'reason' => 'CTO - needs technical and organizational oversight'
+            ],
+            'david.brown@techcorpdata.com' => [
+                'roles' => ['Admin', 'organization-admin'],
+                'organization_ids' => [$orgIds['techcorp_data']],
+                'reason' => 'Managing Director of TechCorp Data'
+            ],
+
+            // VPs and Senior Leadership - Manager role
+            'robert.taylor@techcorpsoftware.com' => [
+                'roles' => ['Manager', 'manager'],
+                'organization_ids' => [$orgIds['techcorp_software']],
+                'reason' => 'VP of Engineering - manages engineering teams'
+            ],
+            'emily.davis@techcorpdata.com' => [
+                'roles' => ['Manager', 'manager'],
+                'organization_ids' => [$orgIds['techcorp_data']],
+                'reason' => 'Head of AI Research - manages research teams'
+            ],
+            'maria.rodriguez@techcorpsoftware.com' => [
+                'roles' => ['Manager', 'manager'],
+                'organization_ids' => [$orgIds['techcorp_software']],
+                'reason' => 'QA Manager - manages quality assurance processes'
+            ],
+
+            // Senior Developers and Team Leads - Manager role (for their teams)
+            'lisa.anderson@techcorpsoftware.com' => [
+                'roles' => ['Manager', 'manager'],
+                'organization_ids' => [$orgIds['techcorp_software']],
+                'reason' => 'Senior Frontend Developer - technical team lead'
+            ],
+            'jennifer.martinez@techcorpsoftware.com' => [
+                'roles' => ['Manager', 'manager'],
+                'organization_ids' => [$orgIds['techcorp_software']],
+                'reason' => 'Senior Backend Developer - technical team lead'
+            ],
+
+            // Regular employees - User/Employee role
+            'michael.chen@techcorpsoftware.com' => [
+                'roles' => ['User', 'employee'],
+                'organization_ids' => [$orgIds['techcorp_software']],
+                'reason' => 'Frontend Developer'
+            ],
+            'alex.thompson@techcorpsoftware.com' => [
+                'roles' => ['User', 'employee'],
+                'organization_ids' => [$orgIds['techcorp_software']],
+                'reason' => 'Backend Developer'
+            ],
+
+            // System users with special roles
+            'test@example.com' => [
+                'roles' => ['User', 'consultant'],
+                'organization_ids' => [$orgIds['techcorp_software'], $orgIds['techcorp_cloud']],
+                'reason' => 'Technical consultant across multiple organizations'
+            ],
+            'admin@example.com' => [
+                'roles' => ['Super Admin'],
+                'organization_ids' => [$orgIds['techcorp_security']],
+                'reason' => 'Security administrator with cross-organization access'
+            ],
+        ];
+
+        // Get default organization for role assignments
+        $defaultOrgId = null;
+        if (config('permission.teams', false)) {
+            $defaultOrg = \App\Models\Organization::where('organization_code', 'DEFAULT')->first();
+            $defaultOrgId = $defaultOrg?->id;
+        }
+
+        foreach ($roleAssignments as $email => $assignment) {
+            $user = User::where('email', $email)->first();
+            if (!$user) {
+                continue;
+            }
+
+            foreach ($assignment['roles'] as $roleName) {
+                try {
+                    // Handle team-based roles
+                    if ($defaultOrgId) {
+                        $role = Role::where('name', $roleName)->where('team_id', $defaultOrgId)->first();
+                        if ($role) {
+                            // Check if role assignment already exists to avoid duplicates
+                            $existingAssignment = \Illuminate\Support\Facades\DB::table('sys_model_has_roles')
+                                ->where('role_id', $role->id)
+                                ->where('model_type', 'App\Models\User')
+                                ->where('model_id', $user->id)
+                                ->where('team_id', $defaultOrgId)
+                                ->first();
+
+                            if (!$existingAssignment) {
+                                \Illuminate\Support\Facades\DB::table('sys_model_has_roles')->insert([
+                                    'role_id' => $role->id,
+                                    'model_type' => 'App\Models\User',
+                                    'model_id' => $user->id,
+                                    'team_id' => $defaultOrgId,
+                                ]);
+                            }
+                        }
+                    } else {
+                        // Handle regular roles without teams
+                        if (!$user->hasRole($roleName)) {
+                            $user->assignRole($roleName);
+                        }
+                    }
+                } catch (\Exception $e) {
+                    // Log the error but continue with other assignments
+                    \Log::warning("Failed to assign role '{$roleName}' to user '{$email}': " . $e->getMessage());
+                }
+            }
+
+            // Assign organization-specific permissions where needed
+            $this->assignOrganizationSpecificPermissions($user, $assignment['organization_ids']);
+        }
+
+        // Assign board member roles specifically
+        $this->assignBoardMemberRoles($adminUserId);
+    }
+
+    /**
+     * Assign organization-specific permissions to users
+     */
+    private function assignOrganizationSpecificPermissions(User $user, array $organizationIds): void
+    {
+        // This is where you could assign organization-specific permissions
+        // For now, roles handle most permissions, but you could add direct permissions here
+        // Example: $user->givePermissionTo('specific-permission', $organizationId);
+    }
+
+    /**
+     * Assign board member roles to users with board memberships
+     */
+    private function assignBoardMemberRoles($adminUserId): void
+    {
+        $defaultOrgId = null;
+        if (config('permission.teams', false)) {
+            $defaultOrg = \App\Models\Organization::where('organization_code', 'DEFAULT')->first();
+            $defaultOrgId = $defaultOrg?->id;
+        }
+
+        // Find all users with board member membership type
+        $boardMembers = OrganizationMembership::where('membership_type', 'board_member')
+            ->with('user')
+            ->get();
+
+        foreach ($boardMembers as $membership) {
+            $user = $membership->user;
+            if (!$user) continue;
+
+            try {
+                // Try both naming conventions for board member role
+                $boardRolesToTry = ['board-member', 'Admin', 'Super Admin'];
+                
+                if ($defaultOrgId) {
+                    foreach ($boardRolesToTry as $roleName) {
+                        $role = Role::where('name', $roleName)->where('team_id', $defaultOrgId)->first();
+                        if ($role) {
+                            $existingAssignment = \Illuminate\Support\Facades\DB::table('sys_model_has_roles')
+                                ->where('role_id', $role->id)
+                                ->where('model_type', 'App\Models\User')
+                                ->where('model_id', $user->id)
+                                ->where('team_id', $defaultOrgId)
+                                ->first();
+
+                            if (!$existingAssignment) {
+                                \Illuminate\Support\Facades\DB::table('sys_model_has_roles')->insert([
+                                    'role_id' => $role->id,
+                                    'model_type' => 'App\Models\User',
+                                    'model_id' => $user->id,
+                                    'team_id' => $defaultOrgId,
+                                ]);
+                            }
+                            break; // Only assign one role per board member
+                        }
+                    }
+                } else {
+                    foreach ($boardRolesToTry as $roleName) {
+                        if (Role::where('name', $roleName)->exists() && !$user->hasRole($roleName)) {
+                            $user->assignRole($roleName);
+                            break;
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                \Log::warning("Failed to assign board-member role to user '{$user->email}': " . $e->getMessage());
+            }
         }
     }
 }

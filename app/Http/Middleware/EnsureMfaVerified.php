@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\Response;
+use Inertia\Response as InertiaResponse;
 
 class EnsureMfaVerified
 {
@@ -16,7 +17,7 @@ class EnsureMfaVerified
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-    public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next): Response|InertiaResponse
     {
         $user = Auth::user();
 

@@ -18,13 +18,69 @@ class CheckPermission
 
         $user = Auth::user();
 
-        // Super admin bypass
-        if ($user->hasRole('super-admin')) {
+        // Super admin bypass - check for super admin roles with team context
+        $defaultOrg = \App\Models\Organization::where('organization_code', 'DEFAULT')->first();
+        
+        $isSuperAdmin = false;
+        if ($defaultOrg) {
+            // Check with team context
+            $isSuperAdmin = $user->hasRole('Super Admin', $defaultOrg->id) || 
+                           $user->hasRole('super-admin', $defaultOrg->id);
+        }
+        
+        // Also check without team context as fallback
+        if (!$isSuperAdmin) {
+            $isSuperAdmin = $user->hasRole('super-admin') || $user->hasRole('Super Admin');
+        }
+        
+        // Check by direct database query as final fallback
+        if (!$isSuperAdmin) {
+            $superAdminAssignments = \Illuminate\Support\Facades\DB::table('sys_model_has_roles')
+                ->join('sys_roles', 'sys_model_has_roles.role_id', '=', 'sys_roles.id')
+                ->where('sys_model_has_roles.model_type', 'App\Models\User')
+                ->where('sys_model_has_roles.model_id', $user->id)
+                ->whereIn('sys_roles.name', ['Super Admin', 'super-admin'])
+                ->exists();
+            
+            $isSuperAdmin = $superAdminAssignments;
+        }
+        
+        if ($isSuperAdmin) {
             return $next($request);
         }
 
         // Check if user has the required permission
-        if (! $user->can($permission)) {
+        // First try with team context if available
+        $hasPermission = false;
+        
+        if ($defaultOrg) {
+            // Set team context and check permission
+            $previousTeam = getPermissionsTeamId();
+            setPermissionsTeamId($defaultOrg->id);
+            $hasPermission = $user->can($permission);
+            setPermissionsTeamId($previousTeam);
+        }
+        
+        // Fallback to non-team permission check
+        if (!$hasPermission) {
+            $hasPermission = $user->can($permission);
+        }
+        
+        // Final fallback: check if user has permission through role assignments
+        if (!$hasPermission) {
+            $hasPermissionViaRole = \Illuminate\Support\Facades\DB::table('sys_model_has_roles')
+                ->join('sys_roles', 'sys_model_has_roles.role_id', '=', 'sys_roles.id')
+                ->join('sys_role_has_permissions', 'sys_roles.id', '=', 'sys_role_has_permissions.role_id')
+                ->join('sys_permissions', 'sys_role_has_permissions.permission_id', '=', 'sys_permissions.id')
+                ->where('sys_model_has_roles.model_type', 'App\Models\User')
+                ->where('sys_model_has_roles.model_id', $user->id)
+                ->where('sys_permissions.name', $permission)
+                ->exists();
+            
+            $hasPermission = $hasPermissionViaRole;
+        }
+        
+        if (! $hasPermission) {
             // Log permission denied
             ActivityLogService::logAuth('permission_denied', 'User attempted to access resource without permission', [
                 'required_permission' => $permission,

@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { PermissionGuard } from '@/components/permission-guard';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
@@ -84,10 +85,12 @@ export default function UsersIndex({ users, filters }: Props) {
                             Manage system users and their role assignments
                         </p>
                     </div>
-                    <Button disabled>
-                        <Users className="mr-2 h-4 w-4" />
-                        User management via registration
-                    </Button>
+                    <PermissionGuard permission="users.create">
+                        <Button disabled>
+                            <Users className="mr-2 h-4 w-4" />
+                            User management via registration
+                        </Button>
+                    </PermissionGuard>
                 </div>
 
                 <Card>
@@ -167,31 +170,37 @@ export default function UsersIndex({ users, filters }: Props) {
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        asChild
-                                                    >
-                                                        <Link href={route('users.show', user.id)}>
-                                                            <Eye className="h-4 w-4" />
-                                                        </Link>
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        asChild
-                                                    >
-                                                        <Link href={route('users.edit', user.id)}>
-                                                            <Edit className="h-4 w-4" />
-                                                        </Link>
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => handleDelete(user)}
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
+                                                    <PermissionGuard permission="users.read">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            asChild
+                                                        >
+                                                            <Link href={route('users.show', user.id)}>
+                                                                <Eye className="h-4 w-4" />
+                                                            </Link>
+                                                        </Button>
+                                                    </PermissionGuard>
+                                                    <PermissionGuard permission="users.update">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            asChild
+                                                        >
+                                                            <Link href={route('users.edit', user.id)}>
+                                                                <Edit className="h-4 w-4" />
+                                                            </Link>
+                                                        </Button>
+                                                    </PermissionGuard>
+                                                    <PermissionGuard permission="users.delete">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => handleDelete(user)}
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </PermissionGuard>
                                                 </div>
                                             </TableCell>
                                         </TableRow>

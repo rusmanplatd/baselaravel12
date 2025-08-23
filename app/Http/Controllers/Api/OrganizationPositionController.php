@@ -13,14 +13,15 @@ class OrganizationPositionController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = OrganizationPosition::with(['organizationUnit.organization', 'activeMemberships.user']);
+        $query = OrganizationPosition::with(['organizationUnit.organization', 'activeMemberships.user', 'organizationPositionLevel'])
+            ->leftJoin('organization_position_levels', 'organization_positions.organization_position_level_id', '=', 'organization_position_levels.id');
 
         if ($request->has('organization_unit_id')) {
-            $query->where('organization_unit_id', $request->organization_unit_id);
+            $query->where('organization_positions.organization_unit_id', $request->organization_unit_id);
         }
 
         if ($request->has('position_level')) {
-            $query->where('position_level', $request->position_level);
+            $query->where('organization_position_levels.hierarchy_level', $request->position_level);
         }
 
         if ($request->has('board_only') && $request->board_only) {
@@ -43,7 +44,10 @@ class OrganizationPositionController extends Controller
             $query->whereRaw('(SELECT COUNT(*) FROM organization_memberships WHERE organization_position_id = organization_positions.id AND status = "active") < max_incumbents');
         }
 
-        $positions = $query->orderBy('position_level')->orderBy('title')->get();
+        $positions = $query->select('organization_positions.*')
+            ->orderBy('organization_position_levels.hierarchy_level')
+            ->orderBy('organization_positions.title')
+            ->get();
 
         return response()->json($positions);
     }
@@ -93,7 +97,8 @@ class OrganizationPositionController extends Controller
     public function getAvailablePositions(Request $request): JsonResponse
     {
         $query = OrganizationPosition::whereRaw('(SELECT COUNT(*) FROM organization_memberships WHERE organization_position_id = organization_positions.id AND status = "active") < max_incumbents')
-            ->with(['organizationUnit.organization', 'activeMemberships.user']);
+            ->with(['organizationUnit.organization', 'activeMemberships.user', 'organizationPositionLevel'])
+            ->leftJoin('organization_position_levels', 'organization_positions.organization_position_level_id', '=', 'organization_position_levels.id');
 
         if ($request->has('organization_id')) {
             $query->whereHas('organizationUnit', function ($q) use ($request) {
@@ -102,10 +107,14 @@ class OrganizationPositionController extends Controller
         }
 
         if ($request->has('position_level')) {
-            $query->where('position_level', $request->position_level);
+            $query->where('organization_position_levels.hierarchy_level', $request->position_level);
         }
 
-        $positions = $query->active()->orderBy('position_level')->orderBy('title')->get();
+        $positions = $query->active()
+            ->select('organization_positions.*')
+            ->orderBy('organization_position_levels.hierarchy_level')
+            ->orderBy('organization_positions.title')
+            ->get();
 
         return response()->json($positions);
     }
@@ -124,8 +133,9 @@ class OrganizationPositionController extends Controller
             ], 400);
         }
 
-        $query = OrganizationPosition::where('position_level', $level)
-            ->with(['organizationUnit.organization', 'activeMemberships.user']);
+        $query = OrganizationPosition::with(['organizationUnit.organization', 'activeMemberships.user', 'organizationPositionLevel'])
+            ->leftJoin('organization_position_levels', 'organization_positions.organization_position_level_id', '=', 'organization_position_levels.id')
+            ->where('organization_position_levels.code', $level);
 
         if ($request->has('organization_id')) {
             $query->whereHas('organizationUnit', function ($q) use ($request) {
@@ -133,7 +143,10 @@ class OrganizationPositionController extends Controller
             });
         }
 
-        $positions = $query->active()->orderBy('title')->get();
+        $positions = $query->active()
+            ->select('organization_positions.*')
+            ->orderBy('organization_positions.title')
+            ->get();
 
         return response()->json($positions);
     }

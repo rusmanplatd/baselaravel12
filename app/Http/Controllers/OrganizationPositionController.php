@@ -22,18 +22,22 @@ class OrganizationPositionController extends Controller
     public function index(Request $request)
     {
         $query = OrganizationPosition::query()
-            ->with(['organizationUnit.organization', 'activeMemberships.user'])
-            ->withCount(['activeMemberships']);
+            ->with(['organizationUnit.organization', 'activeMemberships.user', 'organizationPositionLevel'])
+            ->withCount(['activeMemberships'])
+            ->leftJoin('organization_position_levels', 'organization_positions.organization_position_level_id', '=', 'organization_position_levels.id');
 
         if ($request->filled('organization_unit_id')) {
-            $query->where('organization_unit_id', $request->organization_unit_id);
+            $query->where('organization_positions.organization_unit_id', $request->organization_unit_id);
         }
 
         if ($request->filled('position_level')) {
-            $query->where('position_level', $request->position_level);
+            $query->where('organization_position_levels.hierarchy_level', $request->position_level);
         }
 
-        $positions = $query->orderBy('position_level')->orderBy('title')->paginate(10);
+        $positions = $query->select('organization_positions.*')
+            ->orderBy('organization_position_levels.hierarchy_level')
+            ->orderBy('organization_positions.title')
+            ->paginate(10);
 
         $organizationUnits = OrganizationUnit::with('organization')
             ->orderBy('name')
