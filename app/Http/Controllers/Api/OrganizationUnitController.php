@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\OrganizationUnit\StoreOrganizationUnitRequest;
+use App\Http\Requests\OrganizationUnit\UpdateOrganizationUnitRequest;
 use App\Models\OrganizationUnit;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -38,20 +40,8 @@ class OrganizationUnitController extends Controller
         return response()->json($units);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreOrganizationUnitRequest $request): JsonResponse
     {
-        $request->validate([
-            'organization_id' => 'required|exists:organizations,id',
-            'unit_code' => 'required|string|unique:organization_units',
-            'name' => 'required|string|max:255',
-            'unit_type' => 'required|in:board_of_commissioners,board_of_directors,executive_committee,audit_committee,risk_committee,nomination_committee,remuneration_committee,division,department,section,team,branch_office,representative_office',
-            'description' => 'nullable|string',
-            'parent_unit_id' => 'nullable|exists:organization_units,id',
-            'responsibilities' => 'nullable|array',
-            'authorities' => 'nullable|array',
-            'is_active' => 'boolean',
-            'sort_order' => 'integer|min:0',
-        ]);
 
         $unit = OrganizationUnit::create($request->all());
         $unit->load(['organization', 'parentUnit', 'childUnits']);
@@ -72,25 +62,8 @@ class OrganizationUnitController extends Controller
         return response()->json($organizationUnit);
     }
 
-    public function update(Request $request, OrganizationUnit $organizationUnit): JsonResponse
+    public function update(UpdateOrganizationUnitRequest $request, OrganizationUnit $organizationUnit): JsonResponse
     {
-        $request->validate([
-            'unit_code' => 'required|string|unique:organization_units,unit_code,'.$organizationUnit->id,
-            'name' => 'required|string|max:255',
-            'unit_type' => 'required|in:board_of_commissioners,board_of_directors,executive_committee,audit_committee,risk_committee,nomination_committee,remuneration_committee,division,department,section,team,branch_office,representative_office',
-            'description' => 'nullable|string',
-            'parent_unit_id' => 'nullable|exists:organization_units,id',
-            'responsibilities' => 'nullable|array',
-            'authorities' => 'nullable|array',
-            'is_active' => 'boolean',
-            'sort_order' => 'integer|min:0',
-        ]);
-
-        if ($request->parent_unit_id && $request->parent_unit_id == $organizationUnit->id) {
-            return response()->json([
-                'message' => 'Unit cannot be its own parent',
-            ], 400);
-        }
 
         $organizationUnit->update($request->all());
         $organizationUnit->load(['organization', 'parentUnit', 'childUnits']);

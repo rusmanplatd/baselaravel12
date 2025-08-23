@@ -3,16 +3,36 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Auth\Role;
+use App\Http\Requests\Api\StoreRoleRequest;
+use App\Http\Requests\Api\UpdateRoleRequest;
 use App\Models\Auth\Permission;
+use App\Models\Auth\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Knuckles\Scribe\Attributes\Authenticated;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\QueryParam;
+use Knuckles\Scribe\Attributes\Response as ScribeResponse;
 
+#[Group("Role & Permission Management")]
 class RoleController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    #[Endpoint(
+        title: "Get roles",
+        description: "Retrieve a paginated list of roles with their permissions, optionally filtered by organization"
+    )]
+    #[Authenticated]
+    #[QueryParam("organization_id", "integer", "Filter by organization/team ID", false, 1)]
+    #[QueryParam("search", "string", "Search roles by name", false, "admin")]
+    #[QueryParam("per_page", "integer", "Number of results per page", false, 15)]
+    #[ScribeResponse([
+        "data" => [
+            ["id" => 1, "name" => "admin", "permissions" => [["name" => "organization:admin"]]],
+            ["id" => 2, "name" => "member", "permissions" => [["name" => "organization:read"]]]
+        ],
+        "meta" => ["current_page" => 1, "total" => 2]
+    ])]
     public function index(Request $request)
     {
         $query = Role::with('permissions');
@@ -24,7 +44,7 @@ class RoleController extends Controller
 
         // Search by name
         if ($request->has('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%');
+            $query->where('name', 'like', '%'.$request->search.'%');
         }
 
         $roles = $query->paginate($request->get('per_page', 15));
@@ -32,28 +52,27 @@ class RoleController extends Controller
         return response()->json($roles);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    #[Endpoint(
+        title: "Create role",
+        description: "Create a new role with specified permissions"
+    )]
+    #[Authenticated]
+    #[ScribeResponse(["message" => "Role created successfully", "role" => ["id" => 1, "name" => "manager", "permissions" => []]], 201)]
+    #[ScribeResponse(["message" => "Role already exists for this team/guard combination"], 400)]
+    public function store(StoreRoleRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'team_id' => 'nullable|exists:organizations,id',
-            'permissions' => 'nullable|array',
-            'permissions.*' => 'string|exists:sys_permissions,name',
-        ]);
+        $validated = $request->validated();
 
         // Check if role already exists for this team/guard
         $existingRole = Role::where([
             'name' => $validated['name'],
             'team_id' => $validated['team_id'] ?? null,
-            'guard_name' => 'web'
+            'guard_name' => 'web',
         ])->first();
 
         if ($existingRole) {
             return response()->json([
-                'message' => 'Role already exists' . ($validated['team_id'] ? ' in this organization' : ' globally')
+                'message' => 'Role already exists'.($validated['team_id'] ? ' in this organization' : ' globally'),
             ], 400);
         }
 
@@ -69,7 +88,7 @@ class RoleController extends Controller
             'updated_by' => Auth::id(),
         ]);
 
-        if (!empty($validated['permissions'])) {
+        if (! empty($validated['permissions'])) {
             $role->givePermissionTo($validated['permissions']);
         }
 
@@ -79,7 +98,7 @@ class RoleController extends Controller
 
         return response()->json([
             'message' => 'Role created successfully',
-            'role' => $role->load('permissions')
+            'role' => $role->load('permissions'),
         ], 201);
     }
 
@@ -94,24 +113,20 @@ class RoleController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Role $role)
+    public function update(UpdateRoleRequest $request, Role $role)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'permissions' => 'nullable|array',
-            'permissions.*' => 'string|exists:sys_permissions,name',
-        ]);
+        $validated = $request->validated();
 
         // Check if another role with same name exists for this team/guard
         $existingRole = Role::where([
             'name' => $validated['name'],
             'team_id' => $role->team_id,
-            'guard_name' => 'web'
+            'guard_name' => 'web',
         ])->where('id', '!=', $role->id)->first();
 
         if ($existingRole) {
             return response()->json([
-                'message' => 'Role name already exists' . ($role->team_id ? ' in this organization' : ' globally')
+                'message' => 'Role name already exists'.($role->team_id ? ' in this organization' : ' globally'),
             ], 400);
         }
 
@@ -134,7 +149,7 @@ class RoleController extends Controller
 
         return response()->json([
             'message' => 'Role updated successfully',
-            'role' => $role->fresh()->load('permissions')
+            'role' => $role->fresh()->load('permissions'),
         ]);
     }
 
@@ -146,7 +161,7 @@ class RoleController extends Controller
         // Check if role is assigned to users
         if ($role->users()->count() > 0) {
             return response()->json([
-                'message' => 'Cannot delete role that is assigned to users'
+                'message' => 'Cannot delete role that is assigned to users',
             ], 400);
         }
 
@@ -161,6 +176,7 @@ class RoleController extends Controller
     public function permissions()
     {
         $permissions = Permission::orderBy('name')->get(['id', 'name']);
+
         return response()->json($permissions);
     }
 }

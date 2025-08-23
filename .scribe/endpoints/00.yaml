@@ -1,0 +1,2995 @@
+name: Endpoints
+description: ''
+endpoints:
+  -
+    httpMethods:
+      - GET
+    uri: api/user
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: api/v1/organization-units
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 200
+        content: '[{"id":"01k3ahgd7q224nvfd03a4gv88n","organization_id":"01k3ahgd3y0y9a6ca0k9v0259t","unit_code":"AI001","name":"AI Research Division","unit_type":"division","description":"Artificial intelligence research and development","parent_unit_id":null,"responsibilities":["AI research","Machine learning development","Algorithm optimization","AI product development"],"authorities":["Conduct research projects","Develop AI models","Publish research findings","Collaborate with academia"],"is_active":true,"sort_order":1,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","organization":{"id":"01k3ahgd3y0y9a6ca0k9v0259t","organization_code":"SUB002","organization_type":"subsidiary","parent_organization_id":"01k3ahgd2pxfkakcba63e337fv","name":"TechCorp Data","description":"Data analytics and AI solutions","address":"789 Data Drive, Analytics Park","phone":"+1-555-0300","email":"info@techcorpdata.com","website":"https:\/\/techcorpdata.com","is_active":true,"registration_number":"REG003","tax_number":"TAX003","governance_structure":{"board_size":5,"independent_directors":2,"committees":["audit","risk"]},"authorized_capital":"3000000.00","paid_capital":"2500000.00","establishment_date":"2021-06-15T00:00:00.000000Z","legal_status":"Private Limited Company","business_activities":"Data analytics, machine learning, AI consulting","contact_persons":{"managing_director":{"name":"David Brown","email":"md@techcorpdata.com"},"head_of_ai":{"name":"Emily Davis","email":"ai@techcorpdata.com"}},"level":1,"path":"01k3ahgd2pxfkakcba63e337fv\/01k3ahgd3y0y9a6ca0k9v0259t","created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"parent_unit":null,"child_units":[]},{"id":"01k3ahgd6b11gw0s93tp3rxz5y","organization_id":"01k3ahgd2pxfkakcba63e337fv","unit_code":"BOC001","name":"Board of Commissioners","unit_type":"board_of_commissioners","description":"Supervisory board responsible for oversight and strategic guidance","parent_unit_id":null,"responsibilities":["Strategic oversight","Risk management oversight","Appointment of board of directors","Approval of major corporate actions"],"authorities":["Approve annual budget","Appoint and dismiss directors","Approve major investments","Set executive compensation"],"is_active":true,"sort_order":1,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","organization":{"id":"01k3ahgd2pxfkakcba63e337fv","organization_code":"HC001","organization_type":"holding_company","parent_organization_id":null,"name":"TechCorp Holdings","description":"Main holding company for technology businesses","address":"123 Tech Street, Innovation District","phone":"+1-555-0100","email":"info@techcorp.com","website":"https:\/\/techcorp.com","is_active":true,"registration_number":"REG001","tax_number":"TAX001","governance_structure":{"board_size":7,"independent_directors":4,"committees":["audit","risk","nomination","remuneration"]},"authorized_capital":"10000000.00","paid_capital":"8500000.00","establishment_date":"2020-01-15T00:00:00.000000Z","legal_status":"Public Limited Company","business_activities":"Investment holding and management","contact_persons":{"ceo":{"name":"John Smith","email":"ceo@techcorp.com"},"cfo":{"name":"Jane Doe","email":"cfo@techcorp.com"}},"level":0,"path":"01k3ahgd2pxfkakcba63e337fv","created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"parent_unit":null,"child_units":[{"id":"01k3ahgd6nvm1ysj003zznhrz4","organization_id":"01k3ahgd2pxfkakcba63e337fv","unit_code":"AC001","name":"Audit Committee","unit_type":"audit_committee","description":"Committee responsible for financial reporting and audit oversight","parent_unit_id":"01k3ahgd6b11gw0s93tp3rxz5y","responsibilities":["Financial reporting oversight","Internal audit supervision","External auditor management","Compliance monitoring"],"authorities":["Review financial statements","Appoint internal auditors","Review audit findings","Recommend corrective actions"],"is_active":true,"sort_order":3,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},{"id":"01k3ahgd6s0h9v3gc08nhw9em3","organization_id":"01k3ahgd2pxfkakcba63e337fv","unit_code":"RC001","name":"Risk Committee","unit_type":"risk_committee","description":"Committee responsible for risk management oversight","parent_unit_id":"01k3ahgd6b11gw0s93tp3rxz5y","responsibilities":["Risk strategy oversight","Risk appetite setting","Risk monitoring","Crisis management"],"authorities":["Set risk policies","Review risk reports","Approve risk limits","Escalate major risks"],"is_active":true,"sort_order":4,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"}]},{"id":"01k3ahgd6x41jb3s6w1ekz6jra","organization_id":"01k3ahgd38c38bxcxseden9ja2","unit_code":"EXEC001","name":"Executive Office","unit_type":"department","description":"Executive leadership and strategic management","parent_unit_id":null,"responsibilities":["Strategic planning","Corporate governance","Stakeholder management","Executive decision making"],"authorities":["Set company direction","Approve major decisions","Represent company externally","Allocate resources"],"is_active":true,"sort_order":1,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","organization":{"id":"01k3ahgd38c38bxcxseden9ja2","organization_code":"SUB001","organization_type":"subsidiary","parent_organization_id":"01k3ahgd2pxfkakcba63e337fv","name":"TechCorp Software","description":"Software development and consulting services","address":"456 Software Ave, Tech City","phone":"+1-555-0200","email":"info@techcorpsoftware.com","website":"https:\/\/techcorpsoftware.com","is_active":true,"registration_number":"REG002","tax_number":"TAX002","governance_structure":{"board_size":5,"independent_directors":2,"committees":["audit","risk"]},"authorized_capital":"5000000.00","paid_capital":"4000000.00","establishment_date":"2021-03-01T00:00:00.000000Z","legal_status":"Private Limited Company","business_activities":"Software development, web applications, mobile apps","contact_persons":{"managing_director":{"name":"Mike Johnson","email":"md@techcorpsoftware.com"},"cto":{"name":"Sarah Wilson","email":"cto@techcorpsoftware.com"}},"level":1,"path":"01k3ahgd2pxfkakcba63e337fv\/01k3ahgd38c38bxcxseden9ja2","created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"parent_unit":null,"child_units":[]},{"id":"01k3ahgd7617t0tmr9jsk9x1fb","organization_id":"01k3ahgd38c38bxcxseden9ja2","unit_code":"FEND001","name":"Frontend Development Team","unit_type":"team","description":"User interface and user experience development","parent_unit_id":"01k3ahgd72vvytzzw7q4htmrd9","responsibilities":["UI\/UX development","Frontend architecture","User interaction design","Frontend testing"],"authorities":["Choose frontend frameworks","Design user interfaces","Implement frontend features","Optimize user experience"],"is_active":true,"sort_order":1,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","organization":{"id":"01k3ahgd38c38bxcxseden9ja2","organization_code":"SUB001","organization_type":"subsidiary","parent_organization_id":"01k3ahgd2pxfkakcba63e337fv","name":"TechCorp Software","description":"Software development and consulting services","address":"456 Software Ave, Tech City","phone":"+1-555-0200","email":"info@techcorpsoftware.com","website":"https:\/\/techcorpsoftware.com","is_active":true,"registration_number":"REG002","tax_number":"TAX002","governance_structure":{"board_size":5,"independent_directors":2,"committees":["audit","risk"]},"authorized_capital":"5000000.00","paid_capital":"4000000.00","establishment_date":"2021-03-01T00:00:00.000000Z","legal_status":"Private Limited Company","business_activities":"Software development, web applications, mobile apps","contact_persons":{"managing_director":{"name":"Mike Johnson","email":"md@techcorpsoftware.com"},"cto":{"name":"Sarah Wilson","email":"cto@techcorpsoftware.com"}},"level":1,"path":"01k3ahgd2pxfkakcba63e337fv\/01k3ahgd38c38bxcxseden9ja2","created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"parent_unit":{"id":"01k3ahgd72vvytzzw7q4htmrd9","organization_id":"01k3ahgd38c38bxcxseden9ja2","unit_code":"ENG001","name":"Engineering Division","unit_type":"division","description":"Software engineering and development","parent_unit_id":null,"responsibilities":["Software development","Technical architecture","Code quality assurance","Development methodology"],"authorities":["Define technical standards","Approve technical designs","Manage development teams","Release software products"],"is_active":true,"sort_order":2,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"child_units":[]},{"id":"01k3ahgd7agwyj7t6x83pked0q","organization_id":"01k3ahgd38c38bxcxseden9ja2","unit_code":"BEND001","name":"Backend Development Team","unit_type":"team","description":"Server-side development and API services","parent_unit_id":"01k3ahgd72vvytzzw7q4htmrd9","responsibilities":["API development","Database design","Server architecture","Backend testing"],"authorities":["Design database schemas","Implement business logic","Develop APIs","Optimize performance"],"is_active":true,"sort_order":2,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","organization":{"id":"01k3ahgd38c38bxcxseden9ja2","organization_code":"SUB001","organization_type":"subsidiary","parent_organization_id":"01k3ahgd2pxfkakcba63e337fv","name":"TechCorp Software","description":"Software development and consulting services","address":"456 Software Ave, Tech City","phone":"+1-555-0200","email":"info@techcorpsoftware.com","website":"https:\/\/techcorpsoftware.com","is_active":true,"registration_number":"REG002","tax_number":"TAX002","governance_structure":{"board_size":5,"independent_directors":2,"committees":["audit","risk"]},"authorized_capital":"5000000.00","paid_capital":"4000000.00","establishment_date":"2021-03-01T00:00:00.000000Z","legal_status":"Private Limited Company","business_activities":"Software development, web applications, mobile apps","contact_persons":{"managing_director":{"name":"Mike Johnson","email":"md@techcorpsoftware.com"},"cto":{"name":"Sarah Wilson","email":"cto@techcorpsoftware.com"}},"level":1,"path":"01k3ahgd2pxfkakcba63e337fv\/01k3ahgd38c38bxcxseden9ja2","created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"parent_unit":{"id":"01k3ahgd72vvytzzw7q4htmrd9","organization_id":"01k3ahgd38c38bxcxseden9ja2","unit_code":"ENG001","name":"Engineering Division","unit_type":"division","description":"Software engineering and development","parent_unit_id":null,"responsibilities":["Software development","Technical architecture","Code quality assurance","Development methodology"],"authorities":["Define technical standards","Approve technical designs","Manage development teams","Release software products"],"is_active":true,"sort_order":2,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"child_units":[]},{"id":"01k3ahgd6h94mgvsspwdksgzyv","organization_id":"01k3ahgd2pxfkakcba63e337fv","unit_code":"BOD001","name":"Board of Directors","unit_type":"board_of_directors","description":"Executive board responsible for day-to-day management","parent_unit_id":null,"responsibilities":["Corporate management","Strategic execution","Financial performance","Operational oversight"],"authorities":["Execute business strategy","Manage operations","Make operational decisions","Report to commissioners"],"is_active":true,"sort_order":2,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","organization":{"id":"01k3ahgd2pxfkakcba63e337fv","organization_code":"HC001","organization_type":"holding_company","parent_organization_id":null,"name":"TechCorp Holdings","description":"Main holding company for technology businesses","address":"123 Tech Street, Innovation District","phone":"+1-555-0100","email":"info@techcorp.com","website":"https:\/\/techcorp.com","is_active":true,"registration_number":"REG001","tax_number":"TAX001","governance_structure":{"board_size":7,"independent_directors":4,"committees":["audit","risk","nomination","remuneration"]},"authorized_capital":"10000000.00","paid_capital":"8500000.00","establishment_date":"2020-01-15T00:00:00.000000Z","legal_status":"Public Limited Company","business_activities":"Investment holding and management","contact_persons":{"ceo":{"name":"John Smith","email":"ceo@techcorp.com"},"cfo":{"name":"Jane Doe","email":"cfo@techcorp.com"}},"level":0,"path":"01k3ahgd2pxfkakcba63e337fv","created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"parent_unit":null,"child_units":[]},{"id":"01k3ahgd7tzm96vdd1qmn3xzt9","organization_id":"01k3ahgd3y0y9a6ca0k9v0259t","unit_code":"DATA001","name":"Data Analytics Department","unit_type":"department","description":"Data analysis and business intelligence","parent_unit_id":null,"responsibilities":["Data analysis","Business intelligence","Data visualization","Reporting and insights"],"authorities":["Access company data","Generate reports","Provide recommendations","Implement analytics solutions"],"is_active":true,"sort_order":2,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","organization":{"id":"01k3ahgd3y0y9a6ca0k9v0259t","organization_code":"SUB002","organization_type":"subsidiary","parent_organization_id":"01k3ahgd2pxfkakcba63e337fv","name":"TechCorp Data","description":"Data analytics and AI solutions","address":"789 Data Drive, Analytics Park","phone":"+1-555-0300","email":"info@techcorpdata.com","website":"https:\/\/techcorpdata.com","is_active":true,"registration_number":"REG003","tax_number":"TAX003","governance_structure":{"board_size":5,"independent_directors":2,"committees":["audit","risk"]},"authorized_capital":"3000000.00","paid_capital":"2500000.00","establishment_date":"2021-06-15T00:00:00.000000Z","legal_status":"Private Limited Company","business_activities":"Data analytics, machine learning, AI consulting","contact_persons":{"managing_director":{"name":"David Brown","email":"md@techcorpdata.com"},"head_of_ai":{"name":"Emily Davis","email":"ai@techcorpdata.com"}},"level":1,"path":"01k3ahgd2pxfkakcba63e337fv\/01k3ahgd3y0y9a6ca0k9v0259t","created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"parent_unit":null,"child_units":[]},{"id":"01k3ahgd72vvytzzw7q4htmrd9","organization_id":"01k3ahgd38c38bxcxseden9ja2","unit_code":"ENG001","name":"Engineering Division","unit_type":"division","description":"Software engineering and development","parent_unit_id":null,"responsibilities":["Software development","Technical architecture","Code quality assurance","Development methodology"],"authorities":["Define technical standards","Approve technical designs","Manage development teams","Release software products"],"is_active":true,"sort_order":2,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","organization":{"id":"01k3ahgd38c38bxcxseden9ja2","organization_code":"SUB001","organization_type":"subsidiary","parent_organization_id":"01k3ahgd2pxfkakcba63e337fv","name":"TechCorp Software","description":"Software development and consulting services","address":"456 Software Ave, Tech City","phone":"+1-555-0200","email":"info@techcorpsoftware.com","website":"https:\/\/techcorpsoftware.com","is_active":true,"registration_number":"REG002","tax_number":"TAX002","governance_structure":{"board_size":5,"independent_directors":2,"committees":["audit","risk"]},"authorized_capital":"5000000.00","paid_capital":"4000000.00","establishment_date":"2021-03-01T00:00:00.000000Z","legal_status":"Private Limited Company","business_activities":"Software development, web applications, mobile apps","contact_persons":{"managing_director":{"name":"Mike Johnson","email":"md@techcorpsoftware.com"},"cto":{"name":"Sarah Wilson","email":"cto@techcorpsoftware.com"}},"level":1,"path":"01k3ahgd2pxfkakcba63e337fv\/01k3ahgd38c38bxcxseden9ja2","created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"parent_unit":null,"child_units":[{"id":"01k3ahgd7617t0tmr9jsk9x1fb","organization_id":"01k3ahgd38c38bxcxseden9ja2","unit_code":"FEND001","name":"Frontend Development Team","unit_type":"team","description":"User interface and user experience development","parent_unit_id":"01k3ahgd72vvytzzw7q4htmrd9","responsibilities":["UI\/UX development","Frontend architecture","User interaction design","Frontend testing"],"authorities":["Choose frontend frameworks","Design user interfaces","Implement frontend features","Optimize user experience"],"is_active":true,"sort_order":1,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},{"id":"01k3ahgd7agwyj7t6x83pked0q","organization_id":"01k3ahgd38c38bxcxseden9ja2","unit_code":"BEND001","name":"Backend Development Team","unit_type":"team","description":"Server-side development and API services","parent_unit_id":"01k3ahgd72vvytzzw7q4htmrd9","responsibilities":["API development","Database design","Server architecture","Backend testing"],"authorities":["Design database schemas","Implement business logic","Develop APIs","Optimize performance"],"is_active":true,"sort_order":2,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"}]},{"id":"01k3ahgd6nvm1ysj003zznhrz4","organization_id":"01k3ahgd2pxfkakcba63e337fv","unit_code":"AC001","name":"Audit Committee","unit_type":"audit_committee","description":"Committee responsible for financial reporting and audit oversight","parent_unit_id":"01k3ahgd6b11gw0s93tp3rxz5y","responsibilities":["Financial reporting oversight","Internal audit supervision","External auditor management","Compliance monitoring"],"authorities":["Review financial statements","Appoint internal auditors","Review audit findings","Recommend corrective actions"],"is_active":true,"sort_order":3,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","organization":{"id":"01k3ahgd2pxfkakcba63e337fv","organization_code":"HC001","organization_type":"holding_company","parent_organization_id":null,"name":"TechCorp Holdings","description":"Main holding company for technology businesses","address":"123 Tech Street, Innovation District","phone":"+1-555-0100","email":"info@techcorp.com","website":"https:\/\/techcorp.com","is_active":true,"registration_number":"REG001","tax_number":"TAX001","governance_structure":{"board_size":7,"independent_directors":4,"committees":["audit","risk","nomination","remuneration"]},"authorized_capital":"10000000.00","paid_capital":"8500000.00","establishment_date":"2020-01-15T00:00:00.000000Z","legal_status":"Public Limited Company","business_activities":"Investment holding and management","contact_persons":{"ceo":{"name":"John Smith","email":"ceo@techcorp.com"},"cfo":{"name":"Jane Doe","email":"cfo@techcorp.com"}},"level":0,"path":"01k3ahgd2pxfkakcba63e337fv","created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"parent_unit":{"id":"01k3ahgd6b11gw0s93tp3rxz5y","organization_id":"01k3ahgd2pxfkakcba63e337fv","unit_code":"BOC001","name":"Board of Commissioners","unit_type":"board_of_commissioners","description":"Supervisory board responsible for oversight and strategic guidance","parent_unit_id":null,"responsibilities":["Strategic oversight","Risk management oversight","Appointment of board of directors","Approval of major corporate actions"],"authorities":["Approve annual budget","Appoint and dismiss directors","Approve major investments","Set executive compensation"],"is_active":true,"sort_order":1,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"child_units":[]},{"id":"01k3ahgd7ejcsgdrma1n847yq0","organization_id":"01k3ahgd38c38bxcxseden9ja2","unit_code":"QA001","name":"Quality Assurance Department","unit_type":"department","description":"Software testing and quality control","parent_unit_id":null,"responsibilities":["Test planning","Test execution","Bug reporting","Quality metrics"],"authorities":["Approve software releases","Define testing standards","Block defective releases","Report quality metrics"],"is_active":true,"sort_order":3,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","organization":{"id":"01k3ahgd38c38bxcxseden9ja2","organization_code":"SUB001","organization_type":"subsidiary","parent_organization_id":"01k3ahgd2pxfkakcba63e337fv","name":"TechCorp Software","description":"Software development and consulting services","address":"456 Software Ave, Tech City","phone":"+1-555-0200","email":"info@techcorpsoftware.com","website":"https:\/\/techcorpsoftware.com","is_active":true,"registration_number":"REG002","tax_number":"TAX002","governance_structure":{"board_size":5,"independent_directors":2,"committees":["audit","risk"]},"authorized_capital":"5000000.00","paid_capital":"4000000.00","establishment_date":"2021-03-01T00:00:00.000000Z","legal_status":"Private Limited Company","business_activities":"Software development, web applications, mobile apps","contact_persons":{"managing_director":{"name":"Mike Johnson","email":"md@techcorpsoftware.com"},"cto":{"name":"Sarah Wilson","email":"cto@techcorpsoftware.com"}},"level":1,"path":"01k3ahgd2pxfkakcba63e337fv\/01k3ahgd38c38bxcxseden9ja2","created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"parent_unit":null,"child_units":[]},{"id":"01k3ahgd7kd4g95dkq96mtknvn","organization_id":"01k3ahgd38c38bxcxseden9ja2","unit_code":"HR001","name":"Human Resources","unit_type":"department","description":"Human resource management and development","parent_unit_id":null,"responsibilities":["Talent acquisition","Employee development","Performance management","HR policy implementation"],"authorities":["Hire employees","Conduct performance reviews","Implement HR policies","Manage compensation"],"is_active":true,"sort_order":4,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","organization":{"id":"01k3ahgd38c38bxcxseden9ja2","organization_code":"SUB001","organization_type":"subsidiary","parent_organization_id":"01k3ahgd2pxfkakcba63e337fv","name":"TechCorp Software","description":"Software development and consulting services","address":"456 Software Ave, Tech City","phone":"+1-555-0200","email":"info@techcorpsoftware.com","website":"https:\/\/techcorpsoftware.com","is_active":true,"registration_number":"REG002","tax_number":"TAX002","governance_structure":{"board_size":5,"independent_directors":2,"committees":["audit","risk"]},"authorized_capital":"5000000.00","paid_capital":"4000000.00","establishment_date":"2021-03-01T00:00:00.000000Z","legal_status":"Private Limited Company","business_activities":"Software development, web applications, mobile apps","contact_persons":{"managing_director":{"name":"Mike Johnson","email":"md@techcorpsoftware.com"},"cto":{"name":"Sarah Wilson","email":"cto@techcorpsoftware.com"}},"level":1,"path":"01k3ahgd2pxfkakcba63e337fv\/01k3ahgd38c38bxcxseden9ja2","created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"parent_unit":null,"child_units":[]},{"id":"01k3ahgd6s0h9v3gc08nhw9em3","organization_id":"01k3ahgd2pxfkakcba63e337fv","unit_code":"RC001","name":"Risk Committee","unit_type":"risk_committee","description":"Committee responsible for risk management oversight","parent_unit_id":"01k3ahgd6b11gw0s93tp3rxz5y","responsibilities":["Risk strategy oversight","Risk appetite setting","Risk monitoring","Crisis management"],"authorities":["Set risk policies","Review risk reports","Approve risk limits","Escalate major risks"],"is_active":true,"sort_order":4,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","organization":{"id":"01k3ahgd2pxfkakcba63e337fv","organization_code":"HC001","organization_type":"holding_company","parent_organization_id":null,"name":"TechCorp Holdings","description":"Main holding company for technology businesses","address":"123 Tech Street, Innovation District","phone":"+1-555-0100","email":"info@techcorp.com","website":"https:\/\/techcorp.com","is_active":true,"registration_number":"REG001","tax_number":"TAX001","governance_structure":{"board_size":7,"independent_directors":4,"committees":["audit","risk","nomination","remuneration"]},"authorized_capital":"10000000.00","paid_capital":"8500000.00","establishment_date":"2020-01-15T00:00:00.000000Z","legal_status":"Public Limited Company","business_activities":"Investment holding and management","contact_persons":{"ceo":{"name":"John Smith","email":"ceo@techcorp.com"},"cfo":{"name":"Jane Doe","email":"cfo@techcorp.com"}},"level":0,"path":"01k3ahgd2pxfkakcba63e337fv","created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"parent_unit":{"id":"01k3ahgd6b11gw0s93tp3rxz5y","organization_id":"01k3ahgd2pxfkakcba63e337fv","unit_code":"BOC001","name":"Board of Commissioners","unit_type":"board_of_commissioners","description":"Supervisory board responsible for oversight and strategic guidance","parent_unit_id":null,"responsibilities":["Strategic oversight","Risk management oversight","Appointment of board of directors","Approval of major corporate actions"],"authorities":["Approve annual budget","Appoint and dismiss directors","Approve major investments","Set executive compensation"],"is_active":true,"sort_order":1,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"child_units":[]}]'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - POST
+    uri: api/v1/organization-units
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      organization_id:
+        name: organization_id
+        description: 'ID of the organization this unit belongs to. The <code>id</code> of an existing record in the organizations table.'
+        required: true
+        example: 1
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      unit_code:
+        name: unit_code
+        description: 'Unique code for the organization unit.'
+        required: true
+        example: HR-001
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      name:
+        name: name
+        description: 'Name of the organization unit. Must not be greater than 255 characters.'
+        required: true
+        example: 'Human Resources Department'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      unit_type:
+        name: unit_type
+        description: 'Type of organization unit.'
+        required: true
+        example: department
+        type: string
+        enumValues:
+          - board_of_commissioners
+          - board_of_directors
+          - executive_committee
+          - audit_committee
+          - risk_committee
+          - nomination_committee
+          - remuneration_committee
+          - division
+          - department
+          - section
+          - team
+          - branch_office
+          - representative_office
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      description:
+        name: description
+        description: 'Description of the organization unit.'
+        required: false
+        example: 'Handles employee relations and recruitment'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      parent_unit_id:
+        name: parent_unit_id
+        description: 'ID of parent organization unit (optional). The <code>id</code> of an existing record in the organization_units table.'
+        required: false
+        example: 1
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      responsibilities:
+        name: responsibilities
+        description: 'Array of responsibilities.'
+        required: false
+        example:
+          - 'Employee management'
+          - Recruitment
+        type: object
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      authorities:
+        name: authorities
+        description: 'Array of authorities.'
+        required: false
+        example:
+          - 'Hiring decisions'
+          - 'Policy enforcement'
+        type: object
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      is_active:
+        name: is_active
+        description: 'Whether the unit is active.'
+        required: false
+        example: false
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      sort_order:
+        name: sort_order
+        description: 'Sort order for display. Must be at least 0.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanBodyParameters:
+      organization_id: 1
+      unit_code: HR-001
+      name: 'Human Resources Department'
+      unit_type: department
+      description: 'Handles employee relations and recruitment'
+      parent_unit_id: 1
+      responsibilities:
+        - 'Employee management'
+        - Recruitment
+      authorities:
+        - 'Hiring decisions'
+        - 'Policy enforcement'
+      is_active: false
+      sort_order: 1
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/v1/organization-units/{id}'
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the organization unit.'
+        required: true
+        example: 01k3ahgd6b11gw0s93tp3rxz5y
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      id: 01k3ahgd6b11gw0s93tp3rxz5y
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 200
+        content: '{"id":"01k3ahgd6b11gw0s93tp3rxz5y","organization_id":"01k3ahgd2pxfkakcba63e337fv","unit_code":"BOC001","name":"Board of Commissioners","unit_type":"board_of_commissioners","description":"Supervisory board responsible for oversight and strategic guidance","parent_unit_id":null,"responsibilities":["Strategic oversight","Risk management oversight","Appointment of board of directors","Approval of major corporate actions"],"authorities":["Approve annual budget","Appoint and dismiss directors","Approve major investments","Set executive compensation"],"is_active":true,"sort_order":1,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","organization":{"id":"01k3ahgd2pxfkakcba63e337fv","organization_code":"HC001","organization_type":"holding_company","parent_organization_id":null,"name":"TechCorp Holdings","description":"Main holding company for technology businesses","address":"123 Tech Street, Innovation District","phone":"+1-555-0100","email":"info@techcorp.com","website":"https:\/\/techcorp.com","is_active":true,"registration_number":"REG001","tax_number":"TAX001","governance_structure":{"board_size":7,"independent_directors":4,"committees":["audit","risk","nomination","remuneration"]},"authorized_capital":"10000000.00","paid_capital":"8500000.00","establishment_date":"2020-01-15T00:00:00.000000Z","legal_status":"Public Limited Company","business_activities":"Investment holding and management","contact_persons":{"ceo":{"name":"John Smith","email":"ceo@techcorp.com"},"cfo":{"name":"Jane Doe","email":"cfo@techcorp.com"}},"level":0,"path":"01k3ahgd2pxfkakcba63e337fv","created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"parent_unit":null,"child_units":[{"id":"01k3ahgd6nvm1ysj003zznhrz4","organization_id":"01k3ahgd2pxfkakcba63e337fv","unit_code":"AC001","name":"Audit Committee","unit_type":"audit_committee","description":"Committee responsible for financial reporting and audit oversight","parent_unit_id":"01k3ahgd6b11gw0s93tp3rxz5y","responsibilities":["Financial reporting oversight","Internal audit supervision","External auditor management","Compliance monitoring"],"authorities":["Review financial statements","Appoint internal auditors","Review audit findings","Recommend corrective actions"],"is_active":true,"sort_order":3,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","positions":[]},{"id":"01k3ahgd6s0h9v3gc08nhw9em3","organization_id":"01k3ahgd2pxfkakcba63e337fv","unit_code":"RC001","name":"Risk Committee","unit_type":"risk_committee","description":"Committee responsible for risk management oversight","parent_unit_id":"01k3ahgd6b11gw0s93tp3rxz5y","responsibilities":["Risk strategy oversight","Risk appetite setting","Risk monitoring","Crisis management"],"authorities":["Set risk policies","Review risk reports","Approve risk limits","Escalate major risks"],"is_active":true,"sort_order":4,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","positions":[]}],"positions":[{"id":"01k3ahgd85gtq5jaencdx3wxmb","organization_unit_id":"01k3ahgd6b11gw0s93tp3rxz5y","position_code":"POS001","organization_position_level_id":"01k3ahgd0k990naes55gq52hfn","title":"Chairman of Board of Commissioners","job_description":"Lead the board of commissioners and ensure effective governance oversight","qualifications":["Minimum 15 years of executive experience","Strong leadership and governance experience","Understanding of corporate governance principles","Board certification preferred"],"responsibilities":["Chair board meetings","Provide strategic oversight","Ensure compliance with regulations","Evaluate board performance"],"min_salary":"500000.00","max_salary":"800000.00","is_active":true,"max_incumbents":1,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","active_memberships":[]},{"id":"01k3ahgd8a68771czkbkam85a3","organization_unit_id":"01k3ahgd6b11gw0s93tp3rxz5y","position_code":"POS002","organization_position_level_id":"01k3ahgd0k990naes55gq52hfn","title":"Commissioner","job_description":"Provide governance oversight and strategic guidance","qualifications":["Minimum 10 years of senior management experience","Relevant industry knowledge","Strong analytical and strategic thinking skills","Board experience preferred"],"responsibilities":["Participate in board meetings","Review strategic plans","Monitor risk management","Ensure regulatory compliance"],"min_salary":"300000.00","max_salary":"500000.00","is_active":true,"max_incumbents":4,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","active_memberships":[]}],"memberships":[]}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - PUT
+      - PATCH
+    uri: 'api/v1/organization-units/{id}'
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the organization unit.'
+        required: true
+        example: 01k3ahgd6b11gw0s93tp3rxz5y
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      id: 01k3ahgd6b11gw0s93tp3rxz5y
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      unit_code:
+        name: unit_code
+        description: 'Unique code for the organization unit.'
+        required: true
+        example: HR-001
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      name:
+        name: name
+        description: 'Name of the organization unit. Must not be greater than 255 characters.'
+        required: true
+        example: 'Human Resources Department'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      unit_type:
+        name: unit_type
+        description: 'Type of organization unit.'
+        required: true
+        example: department
+        type: string
+        enumValues:
+          - board_of_commissioners
+          - board_of_directors
+          - executive_committee
+          - audit_committee
+          - risk_committee
+          - nomination_committee
+          - remuneration_committee
+          - division
+          - department
+          - section
+          - team
+          - branch_office
+          - representative_office
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      description:
+        name: description
+        description: 'Description of the organization unit.'
+        required: false
+        example: 'Handles employee relations and recruitment'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      parent_unit_id:
+        name: parent_unit_id
+        description: 'ID of parent organization unit (optional). The <code>id</code> of an existing record in the organization_units table.'
+        required: false
+        example: 1
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      responsibilities:
+        name: responsibilities
+        description: 'Array of responsibilities.'
+        required: false
+        example:
+          - 'Employee management'
+          - Recruitment
+        type: object
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      authorities:
+        name: authorities
+        description: 'Array of authorities.'
+        required: false
+        example:
+          - 'Hiring decisions'
+          - 'Policy enforcement'
+        type: object
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      is_active:
+        name: is_active
+        description: 'Whether the unit is active.'
+        required: false
+        example: false
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      sort_order:
+        name: sort_order
+        description: 'Sort order for display. Must be at least 0.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanBodyParameters:
+      unit_code: HR-001
+      name: 'Human Resources Department'
+      unit_type: department
+      description: 'Handles employee relations and recruitment'
+      parent_unit_id: 1
+      responsibilities:
+        - 'Employee management'
+        - Recruitment
+      authorities:
+        - 'Hiring decisions'
+        - 'Policy enforcement'
+      is_active: false
+      sort_order: 1
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - DELETE
+    uri: 'api/v1/organization-units/{id}'
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the organization unit.'
+        required: true
+        example: 01k3ahgd6b11gw0s93tp3rxz5y
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      id: 01k3ahgd6b11gw0s93tp3rxz5y
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: api/v1/organization-units/hierarchy/tree
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 400
+        content: '{"message":"organization_id is required"}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/v1/organization-units/type/{type}'
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      type:
+        name: type
+        description: 'The type.'
+        required: true
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      type: architecto
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 400
+        content: '{"message":"Invalid type. Must be governance or operational"}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: api/v1/organization-position-levels
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Display a listing of the resource.'
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 200
+        content: '{"data":[{"id":"01k3ahgd0k990naes55gq52hfn","code":"board_member","name":"Board Member","description":"Board of directors\/commissioners member","hierarchy_level":1,"is_active":true,"sort_order":1,"created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01K3AHGD0HCPGVQ2YHBD42C867","updated_by":"01K3AHGD0HCPGVQ2YHBD42C867","organization_positions_count":2},{"id":"01k3ahgd0txgyfe2hhhgpgptmw","code":"c_level","name":"C-Level","description":"Chief executive positions (CEO, CTO, CFO, etc.)","hierarchy_level":2,"is_active":true,"sort_order":2,"created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01K3AHGD0HCPGVQ2YHBD42C867","updated_by":"01K3AHGD0HCPGVQ2YHBD42C867","organization_positions_count":4},{"id":"01k3ahgd108v9qyyem04dv0n00","code":"vice_president","name":"Vice President","description":"Vice president level positions","hierarchy_level":3,"is_active":true,"sort_order":3,"created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01K3AHGD0HCPGVQ2YHBD42C867","updated_by":"01K3AHGD0HCPGVQ2YHBD42C867","organization_positions_count":1},{"id":"01k3ahgd161cajfnyy5nn43ddg","code":"director","name":"Director","description":"Director level positions","hierarchy_level":4,"is_active":true,"sort_order":4,"created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01K3AHGD0HCPGVQ2YHBD42C867","updated_by":"01K3AHGD0HCPGVQ2YHBD42C867","organization_positions_count":1},{"id":"01k3ahgd1c3avm20mtzbyv1zas","code":"senior_manager","name":"Senior Manager","description":"Senior management positions","hierarchy_level":5,"is_active":true,"sort_order":5,"created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01K3AHGD0HCPGVQ2YHBD42C867","updated_by":"01K3AHGD0HCPGVQ2YHBD42C867","organization_positions_count":0},{"id":"01k3ahgd1hb29v5gmwsk01ntwc","code":"manager","name":"Manager","description":"Management positions","hierarchy_level":6,"is_active":true,"sort_order":6,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01K3AHGD0HCPGVQ2YHBD42C867","updated_by":"01K3AHGD0HCPGVQ2YHBD42C867","organization_positions_count":1},{"id":"01k3ahgd1psz47cgwy1c7mrpx4","code":"assistant_manager","name":"Assistant Manager","description":"Assistant management positions","hierarchy_level":7,"is_active":true,"sort_order":7,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01K3AHGD0HCPGVQ2YHBD42C867","updated_by":"01K3AHGD0HCPGVQ2YHBD42C867","organization_positions_count":0},{"id":"01k3ahgd1w4grvn90j7n3wtnj5","code":"supervisor","name":"Supervisor","description":"Supervisory positions","hierarchy_level":8,"is_active":true,"sort_order":8,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01K3AHGD0HCPGVQ2YHBD42C867","updated_by":"01K3AHGD0HCPGVQ2YHBD42C867","organization_positions_count":0},{"id":"01k3ahgd21jf54ft67k9wcy7sy","code":"senior_staff","name":"Senior Staff","description":"Senior staff positions","hierarchy_level":9,"is_active":true,"sort_order":9,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01K3AHGD0HCPGVQ2YHBD42C867","updated_by":"01K3AHGD0HCPGVQ2YHBD42C867","organization_positions_count":2},{"id":"01k3ahgd26zx9f3d9fp6qq342n","code":"staff","name":"Staff","description":"Staff positions","hierarchy_level":10,"is_active":true,"sort_order":10,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01K3AHGD0HCPGVQ2YHBD42C867","updated_by":"01K3AHGD0HCPGVQ2YHBD42C867","organization_positions_count":4},{"id":"01k3ahgd2bp5f4nyvantyfj3vq","code":"junior_staff","name":"Junior Staff","description":"Junior staff positions","hierarchy_level":11,"is_active":true,"sort_order":11,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01K3AHGD0HCPGVQ2YHBD42C867","updated_by":"01K3AHGD0HCPGVQ2YHBD42C867","organization_positions_count":0}],"message":"Organization position levels retrieved successfully"}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - POST
+    uri: api/v1/organization-position-levels
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Store a newly created resource in storage.'
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      code:
+        name: code
+        description: 'Unique code for the position level. Must not be greater than 255 characters.'
+        required: true
+        example: L1
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      name:
+        name: name
+        description: 'Name of the position level. Must not be greater than 255 characters.'
+        required: true
+        example: 'Entry Level'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      description:
+        name: description
+        description: 'Description of the position level.'
+        required: false
+        example: 'Entry level positions for new hires'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      hierarchy_level:
+        name: hierarchy_level
+        description: 'Hierarchical level number. Must be at least 1.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      is_active:
+        name: is_active
+        description: 'Whether the position level is active.'
+        required: false
+        example: false
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      sort_order:
+        name: sort_order
+        description: 'Sort order for display.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanBodyParameters:
+      code: L1
+      name: 'Entry Level'
+      description: 'Entry level positions for new hires'
+      hierarchy_level: 1
+      is_active: false
+      sort_order: 1
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/v1/organization-position-levels/{id}'
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Display the specified resource.'
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the organization position level.'
+        required: true
+        example: 01k3ahgd0k990naes55gq52hfn
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      id: 01k3ahgd0k990naes55gq52hfn
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 200
+        content: '{"data":{"id":"01k3ahgd0k990naes55gq52hfn","code":"board_member","name":"Board Member","description":"Board of directors\/commissioners member","hierarchy_level":1,"is_active":true,"sort_order":1,"created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01K3AHGD0HCPGVQ2YHBD42C867","updated_by":"01K3AHGD0HCPGVQ2YHBD42C867","organization_positions":[{"id":"01k3ahgd85gtq5jaencdx3wxmb","organization_unit_id":"01k3ahgd6b11gw0s93tp3rxz5y","position_code":"POS001","organization_position_level_id":"01k3ahgd0k990naes55gq52hfn","title":"Chairman of Board of Commissioners","job_description":"Lead the board of commissioners and ensure effective governance oversight","qualifications":["Minimum 15 years of executive experience","Strong leadership and governance experience","Understanding of corporate governance principles","Board certification preferred"],"responsibilities":["Chair board meetings","Provide strategic oversight","Ensure compliance with regulations","Evaluate board performance"],"min_salary":"500000.00","max_salary":"800000.00","is_active":true,"max_incumbents":1,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","organization_unit":{"id":"01k3ahgd6b11gw0s93tp3rxz5y","organization_id":"01k3ahgd2pxfkakcba63e337fv","unit_code":"BOC001","name":"Board of Commissioners","unit_type":"board_of_commissioners","description":"Supervisory board responsible for oversight and strategic guidance","parent_unit_id":null,"responsibilities":["Strategic oversight","Risk management oversight","Appointment of board of directors","Approval of major corporate actions"],"authorities":["Approve annual budget","Appoint and dismiss directors","Approve major investments","Set executive compensation"],"is_active":true,"sort_order":1,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"}},{"id":"01k3ahgd8a68771czkbkam85a3","organization_unit_id":"01k3ahgd6b11gw0s93tp3rxz5y","position_code":"POS002","organization_position_level_id":"01k3ahgd0k990naes55gq52hfn","title":"Commissioner","job_description":"Provide governance oversight and strategic guidance","qualifications":["Minimum 10 years of senior management experience","Relevant industry knowledge","Strong analytical and strategic thinking skills","Board experience preferred"],"responsibilities":["Participate in board meetings","Review strategic plans","Monitor risk management","Ensure regulatory compliance"],"min_salary":"300000.00","max_salary":"500000.00","is_active":true,"max_incumbents":4,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","organization_unit":{"id":"01k3ahgd6b11gw0s93tp3rxz5y","organization_id":"01k3ahgd2pxfkakcba63e337fv","unit_code":"BOC001","name":"Board of Commissioners","unit_type":"board_of_commissioners","description":"Supervisory board responsible for oversight and strategic guidance","parent_unit_id":null,"responsibilities":["Strategic oversight","Risk management oversight","Appointment of board of directors","Approval of major corporate actions"],"authorities":["Approve annual budget","Appoint and dismiss directors","Approve major investments","Set executive compensation"],"is_active":true,"sort_order":1,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"}}]},"message":"Organization position level retrieved successfully"}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - PUT
+      - PATCH
+    uri: 'api/v1/organization-position-levels/{id}'
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Update the specified resource in storage.'
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the organization position level.'
+        required: true
+        example: 01k3ahgd0k990naes55gq52hfn
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      id: 01k3ahgd0k990naes55gq52hfn
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      code:
+        name: code
+        description: 'Unique code for the position level. Must not be greater than 255 characters.'
+        required: true
+        example: L1
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      name:
+        name: name
+        description: 'Name of the position level. Must not be greater than 255 characters.'
+        required: true
+        example: 'Entry Level'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      description:
+        name: description
+        description: 'Description of the position level.'
+        required: false
+        example: 'Entry level positions for new hires'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      hierarchy_level:
+        name: hierarchy_level
+        description: 'Hierarchical level number. Must be at least 1.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      is_active:
+        name: is_active
+        description: 'Whether the position level is active.'
+        required: false
+        example: false
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      sort_order:
+        name: sort_order
+        description: 'Sort order for display.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanBodyParameters:
+      code: L1
+      name: 'Entry Level'
+      description: 'Entry level positions for new hires'
+      hierarchy_level: 1
+      is_active: false
+      sort_order: 1
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - DELETE
+    uri: 'api/v1/organization-position-levels/{id}'
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Remove the specified resource from storage.'
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the organization position level.'
+        required: true
+        example: 01k3ahgd0k990naes55gq52hfn
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      id: 01k3ahgd0k990naes55gq52hfn
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: api/v1/organization-position-levels/active
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get active organization position levels.'
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 404
+        content: |-
+          {
+              "message": "No query results for model [App\\Models\\OrganizationPositionLevel] active"
+          }
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: api/v1/organization-position-levels/hierarchy
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get organization position levels by hierarchy.'
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 404
+        content: |-
+          {
+              "message": "No query results for model [App\\Models\\OrganizationPositionLevel] hierarchy"
+          }
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: api/v1/organization-positions
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 500
+        content: |-
+          {
+              "message": "Server Error"
+          }
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - POST
+    uri: api/v1/organization-positions
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      organization_unit_id:
+        name: organization_unit_id
+        description: 'ID of the organization unit this position belongs to. The <code>id</code> of an existing record in the organization_units table.'
+        required: true
+        example: 1
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      position_code:
+        name: position_code
+        description: 'Unique code for the position.'
+        required: true
+        example: HR-DIR-001
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      title:
+        name: title
+        description: 'Title of the position. Must not be greater than 255 characters.'
+        required: true
+        example: 'HR Director'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      position_level:
+        name: position_level
+        description: 'Level of the position in organizational hierarchy.'
+        required: true
+        example: director
+        type: string
+        enumValues:
+          - board_member
+          - c_level
+          - vice_president
+          - director
+          - senior_manager
+          - manager
+          - assistant_manager
+          - supervisor
+          - senior_staff
+          - staff
+          - junior_staff
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      job_description:
+        name: job_description
+        description: 'Detailed job description.'
+        required: false
+        example: 'Responsible for managing HR operations and strategy'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      qualifications:
+        name: qualifications
+        description: 'Array of required qualifications.'
+        required: false
+        example:
+          - 'Bachelor degree in HR'
+          - 'Minimum 5 years experience'
+        type: object
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      responsibilities:
+        name: responsibilities
+        description: 'Array of key responsibilities.'
+        required: false
+        example:
+          - 'Team management'
+          - 'Strategic planning'
+        type: object
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      min_salary:
+        name: min_salary
+        description: 'Minimum salary for this position. Must be at least 0.'
+        required: false
+        example: 50000.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      max_salary:
+        name: max_salary
+        description: 'Maximum salary for this position. Must be at least 0.'
+        required: false
+        example: 80000.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      is_active:
+        name: is_active
+        description: 'Whether the position is active.'
+        required: false
+        example: false
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      max_incumbents:
+        name: max_incumbents
+        description: 'Maximum number of people who can hold this position. Must be at least 1.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanBodyParameters:
+      organization_unit_id: 1
+      position_code: HR-DIR-001
+      title: 'HR Director'
+      position_level: director
+      job_description: 'Responsible for managing HR operations and strategy'
+      qualifications:
+        - 'Bachelor degree in HR'
+        - 'Minimum 5 years experience'
+      responsibilities:
+        - 'Team management'
+        - 'Strategic planning'
+      min_salary: 50000.0
+      max_salary: 80000.0
+      is_active: false
+      max_incumbents: 1
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/v1/organization-positions/{id}'
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the organization position.'
+        required: true
+        example: 01k3ahgd85gtq5jaencdx3wxmb
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      id: 01k3ahgd85gtq5jaencdx3wxmb
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 200
+        content: '{"id":"01k3ahgd85gtq5jaencdx3wxmb","organization_unit_id":"01k3ahgd6b11gw0s93tp3rxz5y","position_code":"POS001","organization_position_level_id":"01k3ahgd0k990naes55gq52hfn","title":"Chairman of Board of Commissioners","job_description":"Lead the board of commissioners and ensure effective governance oversight","qualifications":["Minimum 15 years of executive experience","Strong leadership and governance experience","Understanding of corporate governance principles","Board certification preferred"],"responsibilities":["Chair board meetings","Provide strategic oversight","Ensure compliance with regulations","Evaluate board performance"],"min_salary":"500000.00","max_salary":"800000.00","is_active":true,"max_incumbents":1,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","organization_unit":{"id":"01k3ahgd6b11gw0s93tp3rxz5y","organization_id":"01k3ahgd2pxfkakcba63e337fv","unit_code":"BOC001","name":"Board of Commissioners","unit_type":"board_of_commissioners","description":"Supervisory board responsible for oversight and strategic guidance","parent_unit_id":null,"responsibilities":["Strategic oversight","Risk management oversight","Appointment of board of directors","Approval of major corporate actions"],"authorities":["Approve annual budget","Appoint and dismiss directors","Approve major investments","Set executive compensation"],"is_active":true,"sort_order":1,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","organization":{"id":"01k3ahgd2pxfkakcba63e337fv","organization_code":"HC001","organization_type":"holding_company","parent_organization_id":null,"name":"TechCorp Holdings","description":"Main holding company for technology businesses","address":"123 Tech Street, Innovation District","phone":"+1-555-0100","email":"info@techcorp.com","website":"https:\/\/techcorp.com","is_active":true,"registration_number":"REG001","tax_number":"TAX001","governance_structure":{"board_size":7,"independent_directors":4,"committees":["audit","risk","nomination","remuneration"]},"authorized_capital":"10000000.00","paid_capital":"8500000.00","establishment_date":"2020-01-15T00:00:00.000000Z","legal_status":"Public Limited Company","business_activities":"Investment holding and management","contact_persons":{"ceo":{"name":"John Smith","email":"ceo@techcorp.com"},"cfo":{"name":"Jane Doe","email":"cfo@techcorp.com"}},"level":0,"path":"01k3ahgd2pxfkakcba63e337fv","created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"}},"active_memberships":[],"memberships":[]}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - PUT
+      - PATCH
+    uri: 'api/v1/organization-positions/{id}'
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the organization position.'
+        required: true
+        example: 01k3ahgd85gtq5jaencdx3wxmb
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      id: 01k3ahgd85gtq5jaencdx3wxmb
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      position_code:
+        name: position_code
+        description: 'Unique code for the position.'
+        required: true
+        example: HR-DIR-001
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      title:
+        name: title
+        description: 'Title of the position. Must not be greater than 255 characters.'
+        required: true
+        example: 'HR Director'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      position_level:
+        name: position_level
+        description: 'Level of the position in organizational hierarchy.'
+        required: true
+        example: director
+        type: string
+        enumValues:
+          - board_member
+          - c_level
+          - vice_president
+          - director
+          - senior_manager
+          - manager
+          - assistant_manager
+          - supervisor
+          - senior_staff
+          - staff
+          - junior_staff
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      job_description:
+        name: job_description
+        description: 'Detailed job description.'
+        required: false
+        example: 'Responsible for managing HR operations and strategy'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      qualifications:
+        name: qualifications
+        description: 'Array of required qualifications.'
+        required: false
+        example:
+          - 'Bachelor degree in HR'
+          - 'Minimum 5 years experience'
+        type: object
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      responsibilities:
+        name: responsibilities
+        description: 'Array of key responsibilities.'
+        required: false
+        example:
+          - 'Team management'
+          - 'Strategic planning'
+        type: object
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      min_salary:
+        name: min_salary
+        description: 'Minimum salary for this position. Must be at least 0.'
+        required: false
+        example: 50000.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      max_salary:
+        name: max_salary
+        description: 'Maximum salary for this position. Must be at least 0.'
+        required: false
+        example: 80000.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      is_active:
+        name: is_active
+        description: 'Whether the position is active.'
+        required: false
+        example: false
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      max_incumbents:
+        name: max_incumbents
+        description: 'Maximum number of people who can hold this position. Must be at least 1.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanBodyParameters:
+      position_code: HR-DIR-001
+      title: 'HR Director'
+      position_level: director
+      job_description: 'Responsible for managing HR operations and strategy'
+      qualifications:
+        - 'Bachelor degree in HR'
+        - 'Minimum 5 years experience'
+      responsibilities:
+        - 'Team management'
+        - 'Strategic planning'
+      min_salary: 50000.0
+      max_salary: 80000.0
+      is_active: false
+      max_incumbents: 1
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - DELETE
+    uri: 'api/v1/organization-positions/{id}'
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the organization position.'
+        required: true
+        example: 01k3ahgd85gtq5jaencdx3wxmb
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      id: 01k3ahgd85gtq5jaencdx3wxmb
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: api/v1/organization-positions/available
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 404
+        content: |-
+          {
+              "message": "No query results for model [App\\Models\\OrganizationPosition] available"
+          }
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/v1/organization-positions/level/{level}'
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      level:
+        name: level
+        description: 'The level.'
+        required: true
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      level: architecto
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 400
+        content: '{"message":"Invalid position level"}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/v1/organization-positions/{organizationPosition_id}/incumbents'
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      organizationPosition_id:
+        name: organizationPosition_id
+        description: 'The ID of the organizationPosition.'
+        required: true
+        example: 01k3ahgd85gtq5jaencdx3wxmb
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      organizationPosition_id: 01k3ahgd85gtq5jaencdx3wxmb
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 200
+        content: '{"position":"Chairman of Board of Commissioners","max_incumbents":1,"current_incumbents":0,"available_slots":1,"incumbents":[]}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: api/v1/organization-memberships
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 200
+        content: '[{"id":"01k3ahgffw63x0k6eg7rx124se","user_id":"01k3ahgcdg9dzsh45sdpbcff64","organization_id":"01k3ahgd38c38bxcxseden9ja2","organization_unit_id":"01k3ahgd72vvytzzw7q4htmrd9","organization_position_id":null,"membership_type":"consultant","start_date":"2024-01-01T00:00:00.000000Z","end_date":"2024-12-31T00:00:00.000000Z","status":"active","additional_roles":["technical_advisory","code_review"],"created_at":"2025-08-22T21:03:12.000000Z","updated_at":"2025-08-22T21:03:12.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","user":{"id":"01k3ahgcdg9dzsh45sdpbcff64","name":"Test User","email":"test@example.com","email_verified_at":"2025-08-23T04:03:09.000000Z","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":null,"updated_by":null},"organization":{"id":"01k3ahgd38c38bxcxseden9ja2","organization_code":"SUB001","organization_type":"subsidiary","parent_organization_id":"01k3ahgd2pxfkakcba63e337fv","name":"TechCorp Software","description":"Software development and consulting services","address":"456 Software Ave, Tech City","phone":"+1-555-0200","email":"info@techcorpsoftware.com","website":"https:\/\/techcorpsoftware.com","is_active":true,"registration_number":"REG002","tax_number":"TAX002","governance_structure":{"board_size":5,"independent_directors":2,"committees":["audit","risk"]},"authorized_capital":"5000000.00","paid_capital":"4000000.00","establishment_date":"2021-03-01T00:00:00.000000Z","legal_status":"Private Limited Company","business_activities":"Software development, web applications, mobile apps","contact_persons":{"managing_director":{"name":"Mike Johnson","email":"md@techcorpsoftware.com"},"cto":{"name":"Sarah Wilson","email":"cto@techcorpsoftware.com"}},"level":1,"path":"01k3ahgd2pxfkakcba63e337fv\/01k3ahgd38c38bxcxseden9ja2","created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization_unit":{"id":"01k3ahgd72vvytzzw7q4htmrd9","organization_id":"01k3ahgd38c38bxcxseden9ja2","unit_code":"ENG001","name":"Engineering Division","unit_type":"division","description":"Software engineering and development","parent_unit_id":null,"responsibilities":["Software development","Technical architecture","Code quality assurance","Development methodology"],"authorities":["Define technical standards","Approve technical designs","Manage development teams","Release software products"],"is_active":true,"sort_order":2,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization_position":null},{"id":"01k3ahgffdc86axx81npw0gwf7","user_id":"01k3ahgfctw5yv4vnjyaxmtmy4","organization_id":"01k3ahgd38c38bxcxseden9ja2","organization_unit_id":"01k3ahgd7agwyj7t6x83pked0q","organization_position_id":"01k3ahgd9jb70rjba8hw9zpzny","membership_type":"employee","start_date":"2022-02-01T00:00:00.000000Z","end_date":null,"status":"active","additional_roles":["api_development","integration"],"created_at":"2025-08-22T21:03:12.000000Z","updated_at":"2025-08-22T21:03:12.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","user":{"id":"01k3ahgfctw5yv4vnjyaxmtmy4","name":"Alex Thompson","email":"alex.thompson@techcorpsoftware.com","email_verified_at":"2025-08-23T04:03:12.000000Z","created_at":"2025-08-22T21:03:12.000000Z","updated_at":"2025-08-22T21:03:12.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization":{"id":"01k3ahgd38c38bxcxseden9ja2","organization_code":"SUB001","organization_type":"subsidiary","parent_organization_id":"01k3ahgd2pxfkakcba63e337fv","name":"TechCorp Software","description":"Software development and consulting services","address":"456 Software Ave, Tech City","phone":"+1-555-0200","email":"info@techcorpsoftware.com","website":"https:\/\/techcorpsoftware.com","is_active":true,"registration_number":"REG002","tax_number":"TAX002","governance_structure":{"board_size":5,"independent_directors":2,"committees":["audit","risk"]},"authorized_capital":"5000000.00","paid_capital":"4000000.00","establishment_date":"2021-03-01T00:00:00.000000Z","legal_status":"Private Limited Company","business_activities":"Software development, web applications, mobile apps","contact_persons":{"managing_director":{"name":"Mike Johnson","email":"md@techcorpsoftware.com"},"cto":{"name":"Sarah Wilson","email":"cto@techcorpsoftware.com"}},"level":1,"path":"01k3ahgd2pxfkakcba63e337fv\/01k3ahgd38c38bxcxseden9ja2","created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization_unit":{"id":"01k3ahgd7agwyj7t6x83pked0q","organization_id":"01k3ahgd38c38bxcxseden9ja2","unit_code":"BEND001","name":"Backend Development Team","unit_type":"team","description":"Server-side development and API services","parent_unit_id":"01k3ahgd72vvytzzw7q4htmrd9","responsibilities":["API development","Database design","Server architecture","Backend testing"],"authorities":["Design database schemas","Implement business logic","Develop APIs","Optimize performance"],"is_active":true,"sort_order":2,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization_position":{"id":"01k3ahgd9jb70rjba8hw9zpzny","organization_unit_id":"01k3ahgd7agwyj7t6x83pked0q","position_code":"POS011","organization_position_level_id":"01k3ahgd26zx9f3d9fp6qq342n","title":"Backend Developer","job_description":"Develop and maintain backend services and APIs","qualifications":["Computer Science degree or equivalent experience","Minimum 2 years of backend development experience","Proficiency in PHP, Laravel, and database technologies","Understanding of RESTful API design"],"responsibilities":["Implement business logic","Develop REST APIs","Write database queries","Ensure code quality and testing"],"min_salary":"85000.00","max_salary":"125000.00","is_active":true,"max_incumbents":5,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"}},{"id":"01k3ahgff5ez4nnypfvxnjranq","user_id":"01k3ahgfcc1vhk253np3mm3xg3","organization_id":"01k3ahgd38c38bxcxseden9ja2","organization_unit_id":"01k3ahgd7617t0tmr9jsk9x1fb","organization_position_id":"01k3ahgd9ahwkbk06q491zfnym","membership_type":"employee","start_date":"2022-01-15T00:00:00.000000Z","end_date":null,"status":"active","additional_roles":["component_development","testing"],"created_at":"2025-08-22T21:03:12.000000Z","updated_at":"2025-08-22T21:03:12.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","user":{"id":"01k3ahgfcc1vhk253np3mm3xg3","name":"Michael Chen","email":"michael.chen@techcorpsoftware.com","email_verified_at":"2025-08-23T04:03:11.000000Z","created_at":"2025-08-22T21:03:12.000000Z","updated_at":"2025-08-22T21:03:12.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization":{"id":"01k3ahgd38c38bxcxseden9ja2","organization_code":"SUB001","organization_type":"subsidiary","parent_organization_id":"01k3ahgd2pxfkakcba63e337fv","name":"TechCorp Software","description":"Software development and consulting services","address":"456 Software Ave, Tech City","phone":"+1-555-0200","email":"info@techcorpsoftware.com","website":"https:\/\/techcorpsoftware.com","is_active":true,"registration_number":"REG002","tax_number":"TAX002","governance_structure":{"board_size":5,"independent_directors":2,"committees":["audit","risk"]},"authorized_capital":"5000000.00","paid_capital":"4000000.00","establishment_date":"2021-03-01T00:00:00.000000Z","legal_status":"Private Limited Company","business_activities":"Software development, web applications, mobile apps","contact_persons":{"managing_director":{"name":"Mike Johnson","email":"md@techcorpsoftware.com"},"cto":{"name":"Sarah Wilson","email":"cto@techcorpsoftware.com"}},"level":1,"path":"01k3ahgd2pxfkakcba63e337fv\/01k3ahgd38c38bxcxseden9ja2","created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization_unit":{"id":"01k3ahgd7617t0tmr9jsk9x1fb","organization_id":"01k3ahgd38c38bxcxseden9ja2","unit_code":"FEND001","name":"Frontend Development Team","unit_type":"team","description":"User interface and user experience development","parent_unit_id":"01k3ahgd72vvytzzw7q4htmrd9","responsibilities":["UI\/UX development","Frontend architecture","User interaction design","Frontend testing"],"authorities":["Choose frontend frameworks","Design user interfaces","Implement frontend features","Optimize user experience"],"is_active":true,"sort_order":1,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization_position":{"id":"01k3ahgd9ahwkbk06q491zfnym","organization_unit_id":"01k3ahgd7617t0tmr9jsk9x1fb","position_code":"POS009","organization_position_level_id":"01k3ahgd26zx9f3d9fp6qq342n","title":"Frontend Developer","job_description":"Develop and maintain frontend applications","qualifications":["Computer Science degree or equivalent experience","Minimum 2 years of frontend development experience","Proficiency in HTML, CSS, JavaScript, and React","Understanding of responsive design principles"],"responsibilities":["Implement UI components","Collaborate with designers and backend developers","Write clean, maintainable code","Participate in code reviews"],"min_salary":"80000.00","max_salary":"120000.00","is_active":true,"max_incumbents":5,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"}},{"id":"01k3ahgffrn0bwzqfbgk0jthhs","user_id":"01k3ahgfbpjhssg8awdvcr3593","organization_id":"01k3ahgd3y0y9a6ca0k9v0259t","organization_unit_id":"01k3ahgd7q224nvfd03a4gv88n","organization_position_id":null,"membership_type":"employee","start_date":"2021-07-01T00:00:00.000000Z","end_date":null,"status":"active","additional_roles":["head_of_ai","research_leadership"],"created_at":"2025-08-22T21:03:12.000000Z","updated_at":"2025-08-22T21:03:12.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","user":{"id":"01k3ahgfbpjhssg8awdvcr3593","name":"Emily Davis","email":"emily.davis@techcorpdata.com","email_verified_at":"2025-08-23T04:03:11.000000Z","created_at":"2025-08-22T21:03:12.000000Z","updated_at":"2025-08-22T21:03:12.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization":{"id":"01k3ahgd3y0y9a6ca0k9v0259t","organization_code":"SUB002","organization_type":"subsidiary","parent_organization_id":"01k3ahgd2pxfkakcba63e337fv","name":"TechCorp Data","description":"Data analytics and AI solutions","address":"789 Data Drive, Analytics Park","phone":"+1-555-0300","email":"info@techcorpdata.com","website":"https:\/\/techcorpdata.com","is_active":true,"registration_number":"REG003","tax_number":"TAX003","governance_structure":{"board_size":5,"independent_directors":2,"committees":["audit","risk"]},"authorized_capital":"3000000.00","paid_capital":"2500000.00","establishment_date":"2021-06-15T00:00:00.000000Z","legal_status":"Private Limited Company","business_activities":"Data analytics, machine learning, AI consulting","contact_persons":{"managing_director":{"name":"David Brown","email":"md@techcorpdata.com"},"head_of_ai":{"name":"Emily Davis","email":"ai@techcorpdata.com"}},"level":1,"path":"01k3ahgd2pxfkakcba63e337fv\/01k3ahgd3y0y9a6ca0k9v0259t","created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization_unit":{"id":"01k3ahgd7q224nvfd03a4gv88n","organization_id":"01k3ahgd3y0y9a6ca0k9v0259t","unit_code":"AI001","name":"AI Research Division","unit_type":"division","description":"Artificial intelligence research and development","parent_unit_id":null,"responsibilities":["AI research","Machine learning development","Algorithm optimization","AI product development"],"authorities":["Conduct research projects","Develop AI models","Publish research findings","Collaborate with academia"],"is_active":true,"sort_order":1,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization_position":null},{"id":"01k3ahgffh8054n2jfvdb1zp5w","user_id":"01k3ahgfd1chnj9bqxbdgfesc8","organization_id":"01k3ahgd38c38bxcxseden9ja2","organization_unit_id":"01k3ahgd7ejcsgdrma1n847yq0","organization_position_id":"01k3ahgd9qgjvege6cqt709pe4","membership_type":"employee","start_date":"2021-07-01T00:00:00.000000Z","end_date":null,"status":"active","additional_roles":["process_definition","quality_metrics"],"created_at":"2025-08-22T21:03:12.000000Z","updated_at":"2025-08-22T21:03:12.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","user":{"id":"01k3ahgfd1chnj9bqxbdgfesc8","name":"Maria Rodriguez","email":"maria.rodriguez@techcorpsoftware.com","email_verified_at":"2025-08-23T04:03:12.000000Z","created_at":"2025-08-22T21:03:12.000000Z","updated_at":"2025-08-22T21:03:12.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization":{"id":"01k3ahgd38c38bxcxseden9ja2","organization_code":"SUB001","organization_type":"subsidiary","parent_organization_id":"01k3ahgd2pxfkakcba63e337fv","name":"TechCorp Software","description":"Software development and consulting services","address":"456 Software Ave, Tech City","phone":"+1-555-0200","email":"info@techcorpsoftware.com","website":"https:\/\/techcorpsoftware.com","is_active":true,"registration_number":"REG002","tax_number":"TAX002","governance_structure":{"board_size":5,"independent_directors":2,"committees":["audit","risk"]},"authorized_capital":"5000000.00","paid_capital":"4000000.00","establishment_date":"2021-03-01T00:00:00.000000Z","legal_status":"Private Limited Company","business_activities":"Software development, web applications, mobile apps","contact_persons":{"managing_director":{"name":"Mike Johnson","email":"md@techcorpsoftware.com"},"cto":{"name":"Sarah Wilson","email":"cto@techcorpsoftware.com"}},"level":1,"path":"01k3ahgd2pxfkakcba63e337fv\/01k3ahgd38c38bxcxseden9ja2","created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization_unit":{"id":"01k3ahgd7ejcsgdrma1n847yq0","organization_id":"01k3ahgd38c38bxcxseden9ja2","unit_code":"QA001","name":"Quality Assurance Department","unit_type":"department","description":"Software testing and quality control","parent_unit_id":null,"responsibilities":["Test planning","Test execution","Bug reporting","Quality metrics"],"authorities":["Approve software releases","Define testing standards","Block defective releases","Report quality metrics"],"is_active":true,"sort_order":3,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization_position":{"id":"01k3ahgd9qgjvege6cqt709pe4","organization_unit_id":"01k3ahgd7ejcsgdrma1n847yq0","position_code":"POS012","organization_position_level_id":"01k3ahgd1hb29v5gmwsk01ntwc","title":"QA Manager","job_description":"Lead quality assurance processes and team","qualifications":["Computer Science degree or equivalent experience","Minimum 5 years of QA experience","Strong knowledge of testing methodologies","Leadership and team management skills"],"responsibilities":["Define testing strategies","Manage QA team","Ensure product quality","Implement QA processes"],"min_salary":"100000.00","max_salary":"150000.00","is_active":true,"max_incumbents":1,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"}},{"id":"01k3ahgffmg6acjpsrtg9s7rws","user_id":"01k3ahgfbfpb4v8pchgbdynhcp","organization_id":"01k3ahgd3y0y9a6ca0k9v0259t","organization_unit_id":null,"organization_position_id":null,"membership_type":"employee","start_date":"2021-06-15T00:00:00.000000Z","end_date":null,"status":"active","additional_roles":["managing_director","ai_strategy"],"created_at":"2025-08-22T21:03:12.000000Z","updated_at":"2025-08-22T21:03:12.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","user":{"id":"01k3ahgfbfpb4v8pchgbdynhcp","name":"David Brown","email":"david.brown@techcorpdata.com","email_verified_at":"2025-08-23T04:03:11.000000Z","created_at":"2025-08-22T21:03:12.000000Z","updated_at":"2025-08-22T21:03:12.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization":{"id":"01k3ahgd3y0y9a6ca0k9v0259t","organization_code":"SUB002","organization_type":"subsidiary","parent_organization_id":"01k3ahgd2pxfkakcba63e337fv","name":"TechCorp Data","description":"Data analytics and AI solutions","address":"789 Data Drive, Analytics Park","phone":"+1-555-0300","email":"info@techcorpdata.com","website":"https:\/\/techcorpdata.com","is_active":true,"registration_number":"REG003","tax_number":"TAX003","governance_structure":{"board_size":5,"independent_directors":2,"committees":["audit","risk"]},"authorized_capital":"3000000.00","paid_capital":"2500000.00","establishment_date":"2021-06-15T00:00:00.000000Z","legal_status":"Private Limited Company","business_activities":"Data analytics, machine learning, AI consulting","contact_persons":{"managing_director":{"name":"David Brown","email":"md@techcorpdata.com"},"head_of_ai":{"name":"Emily Davis","email":"ai@techcorpdata.com"}},"level":1,"path":"01k3ahgd2pxfkakcba63e337fv\/01k3ahgd3y0y9a6ca0k9v0259t","created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization_unit":null,"organization_position":null},{"id":"01k3ahgff93tjcyd72eas8msbw","user_id":"01k3ahgfckzqpafd34g18jm245","organization_id":"01k3ahgd38c38bxcxseden9ja2","organization_unit_id":"01k3ahgd7agwyj7t6x83pked0q","organization_position_id":"01k3ahgd9ez9ddc35xsdbg57rm","membership_type":"employee","start_date":"2021-06-01T00:00:00.000000Z","end_date":null,"status":"active","additional_roles":["system_architecture","database_design"],"created_at":"2025-08-22T21:03:12.000000Z","updated_at":"2025-08-22T21:03:12.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","user":{"id":"01k3ahgfckzqpafd34g18jm245","name":"Jennifer Martinez","email":"jennifer.martinez@techcorpsoftware.com","email_verified_at":"2025-08-23T04:03:11.000000Z","created_at":"2025-08-22T21:03:12.000000Z","updated_at":"2025-08-22T21:03:12.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization":{"id":"01k3ahgd38c38bxcxseden9ja2","organization_code":"SUB001","organization_type":"subsidiary","parent_organization_id":"01k3ahgd2pxfkakcba63e337fv","name":"TechCorp Software","description":"Software development and consulting services","address":"456 Software Ave, Tech City","phone":"+1-555-0200","email":"info@techcorpsoftware.com","website":"https:\/\/techcorpsoftware.com","is_active":true,"registration_number":"REG002","tax_number":"TAX002","governance_structure":{"board_size":5,"independent_directors":2,"committees":["audit","risk"]},"authorized_capital":"5000000.00","paid_capital":"4000000.00","establishment_date":"2021-03-01T00:00:00.000000Z","legal_status":"Private Limited Company","business_activities":"Software development, web applications, mobile apps","contact_persons":{"managing_director":{"name":"Mike Johnson","email":"md@techcorpsoftware.com"},"cto":{"name":"Sarah Wilson","email":"cto@techcorpsoftware.com"}},"level":1,"path":"01k3ahgd2pxfkakcba63e337fv\/01k3ahgd38c38bxcxseden9ja2","created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization_unit":{"id":"01k3ahgd7agwyj7t6x83pked0q","organization_id":"01k3ahgd38c38bxcxseden9ja2","unit_code":"BEND001","name":"Backend Development Team","unit_type":"team","description":"Server-side development and API services","parent_unit_id":"01k3ahgd72vvytzzw7q4htmrd9","responsibilities":["API development","Database design","Server architecture","Backend testing"],"authorities":["Design database schemas","Implement business logic","Develop APIs","Optimize performance"],"is_active":true,"sort_order":2,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization_position":{"id":"01k3ahgd9ez9ddc35xsdbg57rm","organization_unit_id":"01k3ahgd7agwyj7t6x83pked0q","position_code":"POS010","organization_position_level_id":"01k3ahgd21jf54ft67k9wcy7sy","title":"Senior Backend Developer","job_description":"Lead backend development and system architecture","qualifications":["Computer Science degree or equivalent experience","Minimum 5 years of backend development experience","Expertise in PHP, Laravel, databases, and API development","Strong system design and architecture skills"],"responsibilities":["Design and implement backend systems","Develop and maintain APIs","Optimize database performance","Mentor junior developers"],"min_salary":"125000.00","max_salary":"185000.00","is_active":true,"max_incumbents":3,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"}},{"id":"01k3ahgff0kxdbrkz96953rsat","user_id":"01k3ahgfc5ds3qg9ybgqmcb34p","organization_id":"01k3ahgd38c38bxcxseden9ja2","organization_unit_id":"01k3ahgd7617t0tmr9jsk9x1fb","organization_position_id":"01k3ahgd978fzteh233gh855eq","membership_type":"employee","start_date":"2021-05-01T00:00:00.000000Z","end_date":null,"status":"active","additional_roles":["ui_architecture","mentoring"],"created_at":"2025-08-22T21:03:12.000000Z","updated_at":"2025-08-22T21:03:12.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","user":{"id":"01k3ahgfc5ds3qg9ybgqmcb34p","name":"Lisa Anderson","email":"lisa.anderson@techcorpsoftware.com","email_verified_at":"2025-08-23T04:03:11.000000Z","created_at":"2025-08-22T21:03:12.000000Z","updated_at":"2025-08-22T21:03:12.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization":{"id":"01k3ahgd38c38bxcxseden9ja2","organization_code":"SUB001","organization_type":"subsidiary","parent_organization_id":"01k3ahgd2pxfkakcba63e337fv","name":"TechCorp Software","description":"Software development and consulting services","address":"456 Software Ave, Tech City","phone":"+1-555-0200","email":"info@techcorpsoftware.com","website":"https:\/\/techcorpsoftware.com","is_active":true,"registration_number":"REG002","tax_number":"TAX002","governance_structure":{"board_size":5,"independent_directors":2,"committees":["audit","risk"]},"authorized_capital":"5000000.00","paid_capital":"4000000.00","establishment_date":"2021-03-01T00:00:00.000000Z","legal_status":"Private Limited Company","business_activities":"Software development, web applications, mobile apps","contact_persons":{"managing_director":{"name":"Mike Johnson","email":"md@techcorpsoftware.com"},"cto":{"name":"Sarah Wilson","email":"cto@techcorpsoftware.com"}},"level":1,"path":"01k3ahgd2pxfkakcba63e337fv\/01k3ahgd38c38bxcxseden9ja2","created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization_unit":{"id":"01k3ahgd7617t0tmr9jsk9x1fb","organization_id":"01k3ahgd38c38bxcxseden9ja2","unit_code":"FEND001","name":"Frontend Development Team","unit_type":"team","description":"User interface and user experience development","parent_unit_id":"01k3ahgd72vvytzzw7q4htmrd9","responsibilities":["UI\/UX development","Frontend architecture","User interaction design","Frontend testing"],"authorities":["Choose frontend frameworks","Design user interfaces","Implement frontend features","Optimize user experience"],"is_active":true,"sort_order":1,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization_position":{"id":"01k3ahgd978fzteh233gh855eq","organization_unit_id":"01k3ahgd7617t0tmr9jsk9x1fb","position_code":"POS008","organization_position_level_id":"01k3ahgd21jf54ft67k9wcy7sy","title":"Senior Frontend Developer","job_description":"Lead frontend development and mentor team members","qualifications":["Computer Science degree or equivalent experience","Minimum 5 years of frontend development experience","Expertise in React, TypeScript, and modern frontend technologies","Strong problem-solving and communication skills"],"responsibilities":["Develop complex frontend features","Mentor junior developers","Define frontend architecture","Ensure code quality and best practices"],"min_salary":"120000.00","max_salary":"180000.00","is_active":true,"max_incumbents":3,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"}},{"id":"01k3ahgfewgfqcdsdnz1wbmcmb","user_id":"01k3ahgfby1kzh6m5exc2q53bs","organization_id":"01k3ahgd38c38bxcxseden9ja2","organization_unit_id":"01k3ahgd72vvytzzw7q4htmrd9","organization_position_id":"01k3ahgd91pc5p0h9n582jm5t7","membership_type":"employee","start_date":"2021-04-01T00:00:00.000000Z","end_date":null,"status":"active","additional_roles":["team_leadership","process_improvement"],"created_at":"2025-08-22T21:03:12.000000Z","updated_at":"2025-08-22T21:03:12.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","user":{"id":"01k3ahgfby1kzh6m5exc2q53bs","name":"Robert Taylor","email":"robert.taylor@techcorpsoftware.com","email_verified_at":"2025-08-23T04:03:11.000000Z","created_at":"2025-08-22T21:03:12.000000Z","updated_at":"2025-08-22T21:03:12.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization":{"id":"01k3ahgd38c38bxcxseden9ja2","organization_code":"SUB001","organization_type":"subsidiary","parent_organization_id":"01k3ahgd2pxfkakcba63e337fv","name":"TechCorp Software","description":"Software development and consulting services","address":"456 Software Ave, Tech City","phone":"+1-555-0200","email":"info@techcorpsoftware.com","website":"https:\/\/techcorpsoftware.com","is_active":true,"registration_number":"REG002","tax_number":"TAX002","governance_structure":{"board_size":5,"independent_directors":2,"committees":["audit","risk"]},"authorized_capital":"5000000.00","paid_capital":"4000000.00","establishment_date":"2021-03-01T00:00:00.000000Z","legal_status":"Private Limited Company","business_activities":"Software development, web applications, mobile apps","contact_persons":{"managing_director":{"name":"Mike Johnson","email":"md@techcorpsoftware.com"},"cto":{"name":"Sarah Wilson","email":"cto@techcorpsoftware.com"}},"level":1,"path":"01k3ahgd2pxfkakcba63e337fv\/01k3ahgd38c38bxcxseden9ja2","created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization_unit":{"id":"01k3ahgd72vvytzzw7q4htmrd9","organization_id":"01k3ahgd38c38bxcxseden9ja2","unit_code":"ENG001","name":"Engineering Division","unit_type":"division","description":"Software engineering and development","parent_unit_id":null,"responsibilities":["Software development","Technical architecture","Code quality assurance","Development methodology"],"authorities":["Define technical standards","Approve technical designs","Manage development teams","Release software products"],"is_active":true,"sort_order":2,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization_position":{"id":"01k3ahgd91pc5p0h9n582jm5t7","organization_unit_id":"01k3ahgd72vvytzzw7q4htmrd9","position_code":"POS007","organization_position_level_id":"01k3ahgd108v9qyyem04dv0n00","title":"Vice President of Engineering","job_description":"Lead engineering organization and technical excellence","qualifications":["Computer Science or Engineering degree","Minimum 8 years of engineering management experience","Strong technical leadership skills","Experience scaling engineering teams"],"responsibilities":["Lead engineering organization","Drive technical excellence","Manage engineering teams","Define development processes"],"min_salary":"250000.00","max_salary":"400000.00","is_active":true,"max_incumbents":1,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"}},{"id":"01k3ahgfer0xbryw8zmex237yr","user_id":"01k3ahgfb76rvk7k16ktnb96gk","organization_id":"01k3ahgd38c38bxcxseden9ja2","organization_unit_id":"01k3ahgd6x41jb3s6w1ekz6jra","organization_position_id":"01k3ahgd8w9pws2hr4de24r83s","membership_type":"employee","start_date":"2021-03-15T00:00:00.000000Z","end_date":null,"status":"active","additional_roles":["innovation","technical_strategy"],"created_at":"2025-08-22T21:03:12.000000Z","updated_at":"2025-08-22T21:03:12.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","user":{"id":"01k3ahgfb76rvk7k16ktnb96gk","name":"Sarah Wilson","email":"sarah.wilson@techcorpsoftware.com","email_verified_at":"2025-08-23T04:03:10.000000Z","created_at":"2025-08-22T21:03:12.000000Z","updated_at":"2025-08-22T21:03:12.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization":{"id":"01k3ahgd38c38bxcxseden9ja2","organization_code":"SUB001","organization_type":"subsidiary","parent_organization_id":"01k3ahgd2pxfkakcba63e337fv","name":"TechCorp Software","description":"Software development and consulting services","address":"456 Software Ave, Tech City","phone":"+1-555-0200","email":"info@techcorpsoftware.com","website":"https:\/\/techcorpsoftware.com","is_active":true,"registration_number":"REG002","tax_number":"TAX002","governance_structure":{"board_size":5,"independent_directors":2,"committees":["audit","risk"]},"authorized_capital":"5000000.00","paid_capital":"4000000.00","establishment_date":"2021-03-01T00:00:00.000000Z","legal_status":"Private Limited Company","business_activities":"Software development, web applications, mobile apps","contact_persons":{"managing_director":{"name":"Mike Johnson","email":"md@techcorpsoftware.com"},"cto":{"name":"Sarah Wilson","email":"cto@techcorpsoftware.com"}},"level":1,"path":"01k3ahgd2pxfkakcba63e337fv\/01k3ahgd38c38bxcxseden9ja2","created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization_unit":{"id":"01k3ahgd6x41jb3s6w1ekz6jra","organization_id":"01k3ahgd38c38bxcxseden9ja2","unit_code":"EXEC001","name":"Executive Office","unit_type":"department","description":"Executive leadership and strategic management","parent_unit_id":null,"responsibilities":["Strategic planning","Corporate governance","Stakeholder management","Executive decision making"],"authorities":["Set company direction","Approve major decisions","Represent company externally","Allocate resources"],"is_active":true,"sort_order":1,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization_position":{"id":"01k3ahgd8w9pws2hr4de24r83s","organization_unit_id":"01k3ahgd6x41jb3s6w1ekz6jra","position_code":"POS006","organization_position_level_id":"01k3ahgd0txgyfe2hhhgpgptmw","title":"Chief Technology Officer","job_description":"Lead technology strategy and innovation","qualifications":["Computer Science or Engineering degree","Minimum 10 years of technology leadership experience","Strong technical and management skills","Experience with enterprise software development"],"responsibilities":["Define technology strategy","Lead engineering teams","Drive technical innovation","Ensure technology excellence"],"min_salary":"350000.00","max_salary":"600000.00","is_active":true,"max_incumbents":1,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"}},{"id":"01k3ahgfekaq57sjppwnmqt4gg","user_id":"01k3ahgfb0hpqj1y3q9185cb6s","organization_id":"01k3ahgd38c38bxcxseden9ja2","organization_unit_id":"01k3ahgd6x41jb3s6w1ekz6jra","organization_position_id":"01k3ahgd8rsgrz4mas66c1mcgf","membership_type":"employee","start_date":"2021-03-01T00:00:00.000000Z","end_date":null,"status":"active","additional_roles":["business_development","client_relations"],"created_at":"2025-08-22T21:03:12.000000Z","updated_at":"2025-08-22T21:03:12.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","user":{"id":"01k3ahgfb0hpqj1y3q9185cb6s","name":"Mike Johnson","email":"mike.johnson@techcorpsoftware.com","email_verified_at":"2025-08-23T04:03:10.000000Z","created_at":"2025-08-22T21:03:12.000000Z","updated_at":"2025-08-22T21:03:12.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization":{"id":"01k3ahgd38c38bxcxseden9ja2","organization_code":"SUB001","organization_type":"subsidiary","parent_organization_id":"01k3ahgd2pxfkakcba63e337fv","name":"TechCorp Software","description":"Software development and consulting services","address":"456 Software Ave, Tech City","phone":"+1-555-0200","email":"info@techcorpsoftware.com","website":"https:\/\/techcorpsoftware.com","is_active":true,"registration_number":"REG002","tax_number":"TAX002","governance_structure":{"board_size":5,"independent_directors":2,"committees":["audit","risk"]},"authorized_capital":"5000000.00","paid_capital":"4000000.00","establishment_date":"2021-03-01T00:00:00.000000Z","legal_status":"Private Limited Company","business_activities":"Software development, web applications, mobile apps","contact_persons":{"managing_director":{"name":"Mike Johnson","email":"md@techcorpsoftware.com"},"cto":{"name":"Sarah Wilson","email":"cto@techcorpsoftware.com"}},"level":1,"path":"01k3ahgd2pxfkakcba63e337fv\/01k3ahgd38c38bxcxseden9ja2","created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization_unit":{"id":"01k3ahgd6x41jb3s6w1ekz6jra","organization_id":"01k3ahgd38c38bxcxseden9ja2","unit_code":"EXEC001","name":"Executive Office","unit_type":"department","description":"Executive leadership and strategic management","parent_unit_id":null,"responsibilities":["Strategic planning","Corporate governance","Stakeholder management","Executive decision making"],"authorities":["Set company direction","Approve major decisions","Represent company externally","Allocate resources"],"is_active":true,"sort_order":1,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization_position":{"id":"01k3ahgd8rsgrz4mas66c1mcgf","organization_unit_id":"01k3ahgd6x41jb3s6w1ekz6jra","position_code":"POS005","organization_position_level_id":"01k3ahgd0txgyfe2hhhgpgptmw","title":"Managing Director","job_description":"Lead TechCorp Software operations and strategic execution","qualifications":["Advanced degree in business or technology","Minimum 12 years of software industry experience","Strong leadership and management skills","Proven track record in business growth"],"responsibilities":["Execute business strategy","Manage day-to-day operations","Lead management team","Drive revenue growth"],"min_salary":"400000.00","max_salary":"700000.00","is_active":true,"max_incumbents":1,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"}},{"id":"01k3ahgfedxsyr884rzzhafwa6","user_id":"01k3ahgfasbsh1xp27bx6wy9pq","organization_id":"01k3ahgd2pxfkakcba63e337fv","organization_unit_id":"01k3ahgd6h94mgvsspwdksgzyv","organization_position_id":"01k3ahgd8j3cgapgs5ypb4d39z","membership_type":"board_member","start_date":"2020-02-01T00:00:00.000000Z","end_date":null,"status":"active","additional_roles":["financial_oversight","risk_management"],"created_at":"2025-08-22T21:03:12.000000Z","updated_at":"2025-08-22T21:03:12.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","user":{"id":"01k3ahgfasbsh1xp27bx6wy9pq","name":"Jane Doe","email":"jane.doe@techcorp.com","email_verified_at":"2025-08-23T04:03:10.000000Z","created_at":"2025-08-22T21:03:12.000000Z","updated_at":"2025-08-22T21:03:12.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization":{"id":"01k3ahgd2pxfkakcba63e337fv","organization_code":"HC001","organization_type":"holding_company","parent_organization_id":null,"name":"TechCorp Holdings","description":"Main holding company for technology businesses","address":"123 Tech Street, Innovation District","phone":"+1-555-0100","email":"info@techcorp.com","website":"https:\/\/techcorp.com","is_active":true,"registration_number":"REG001","tax_number":"TAX001","governance_structure":{"board_size":7,"independent_directors":4,"committees":["audit","risk","nomination","remuneration"]},"authorized_capital":"10000000.00","paid_capital":"8500000.00","establishment_date":"2020-01-15T00:00:00.000000Z","legal_status":"Public Limited Company","business_activities":"Investment holding and management","contact_persons":{"ceo":{"name":"John Smith","email":"ceo@techcorp.com"},"cfo":{"name":"Jane Doe","email":"cfo@techcorp.com"}},"level":0,"path":"01k3ahgd2pxfkakcba63e337fv","created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization_unit":{"id":"01k3ahgd6h94mgvsspwdksgzyv","organization_id":"01k3ahgd2pxfkakcba63e337fv","unit_code":"BOD001","name":"Board of Directors","unit_type":"board_of_directors","description":"Executive board responsible for day-to-day management","parent_unit_id":null,"responsibilities":["Corporate management","Strategic execution","Financial performance","Operational oversight"],"authorities":["Execute business strategy","Manage operations","Make operational decisions","Report to commissioners"],"is_active":true,"sort_order":2,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization_position":{"id":"01k3ahgd8j3cgapgs5ypb4d39z","organization_unit_id":"01k3ahgd6h94mgvsspwdksgzyv","position_code":"POS004","organization_position_level_id":"01k3ahgd0txgyfe2hhhgpgptmw","title":"Chief Financial Officer","job_description":"Manage financial strategy and operations","qualifications":["CPA or equivalent professional certification","Minimum 12 years of finance experience","Experience in public companies preferred","Strong analytical and strategic skills"],"responsibilities":["Oversee financial planning and analysis","Manage investor relations","Ensure regulatory compliance","Lead finance team"],"min_salary":"600000.00","max_salary":"1000000.00","is_active":true,"max_incumbents":1,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"}},{"id":"01k3ahgfe5595rkvqzvxrdrg5t","user_id":"01k3ahgfaja8jn926d2bx33dcd","organization_id":"01k3ahgd2pxfkakcba63e337fv","organization_unit_id":"01k3ahgd6h94mgvsspwdksgzyv","organization_position_id":"01k3ahgd8ea6hxx4dmkpecwrk1","membership_type":"board_member","start_date":"2020-01-15T00:00:00.000000Z","end_date":null,"status":"active","additional_roles":["strategic_planning","investor_relations"],"created_at":"2025-08-22T21:03:12.000000Z","updated_at":"2025-08-22T21:03:12.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","user":{"id":"01k3ahgfaja8jn926d2bx33dcd","name":"John Smith","email":"john.smith@techcorp.com","email_verified_at":"2025-08-23T04:03:10.000000Z","created_at":"2025-08-22T21:03:12.000000Z","updated_at":"2025-08-22T21:03:12.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization":{"id":"01k3ahgd2pxfkakcba63e337fv","organization_code":"HC001","organization_type":"holding_company","parent_organization_id":null,"name":"TechCorp Holdings","description":"Main holding company for technology businesses","address":"123 Tech Street, Innovation District","phone":"+1-555-0100","email":"info@techcorp.com","website":"https:\/\/techcorp.com","is_active":true,"registration_number":"REG001","tax_number":"TAX001","governance_structure":{"board_size":7,"independent_directors":4,"committees":["audit","risk","nomination","remuneration"]},"authorized_capital":"10000000.00","paid_capital":"8500000.00","establishment_date":"2020-01-15T00:00:00.000000Z","legal_status":"Public Limited Company","business_activities":"Investment holding and management","contact_persons":{"ceo":{"name":"John Smith","email":"ceo@techcorp.com"},"cfo":{"name":"Jane Doe","email":"cfo@techcorp.com"}},"level":0,"path":"01k3ahgd2pxfkakcba63e337fv","created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization_unit":{"id":"01k3ahgd6h94mgvsspwdksgzyv","organization_id":"01k3ahgd2pxfkakcba63e337fv","unit_code":"BOD001","name":"Board of Directors","unit_type":"board_of_directors","description":"Executive board responsible for day-to-day management","parent_unit_id":null,"responsibilities":["Corporate management","Strategic execution","Financial performance","Operational oversight"],"authorities":["Execute business strategy","Manage operations","Make operational decisions","Report to commissioners"],"is_active":true,"sort_order":2,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization_position":{"id":"01k3ahgd8ea6hxx4dmkpecwrk1","organization_unit_id":"01k3ahgd6h94mgvsspwdksgzyv","position_code":"POS003","organization_position_level_id":"01k3ahgd0txgyfe2hhhgpgptmw","title":"Chief Executive Officer","job_description":"Lead the organization and execute strategic initiatives","qualifications":["MBA or equivalent advanced degree","Minimum 15 years of executive experience","Proven track record in technology industry","Strong leadership and communication skills"],"responsibilities":["Develop and execute corporate strategy","Lead executive team","Represent company to stakeholders","Drive business growth and profitability"],"min_salary":"800000.00","max_salary":"1500000.00","is_active":true,"max_incumbents":1,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"}}]'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - POST
+    uri: api/v1/organization-memberships
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      user_id:
+        name: user_id
+        description: 'ID of the user to create membership for. The <code>id</code> of an existing record in the users table.'
+        required: true
+        example: 1
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      organization_id:
+        name: organization_id
+        description: 'ID of the organization. The <code>id</code> of an existing record in the organizations table.'
+        required: true
+        example: 1
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      organization_unit_id:
+        name: organization_unit_id
+        description: 'ID of the organization unit (optional). The <code>id</code> of an existing record in the organization_units table.'
+        required: false
+        example: 1
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      organization_position_id:
+        name: organization_position_id
+        description: 'ID of the organization position (optional). The <code>id</code> of an existing record in the organization_positions table.'
+        required: false
+        example: 1
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      membership_type:
+        name: membership_type
+        description: 'Type of membership.'
+        required: true
+        example: employee
+        type: string
+        enumValues:
+          - employee
+          - board_member
+          - consultant
+          - contractor
+          - intern
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      start_date:
+        name: start_date
+        description: 'Start date of membership. Must be a valid date.'
+        required: true
+        example: '2024-01-01'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      end_date:
+        name: end_date
+        description: 'End date of membership (optional). Must be a valid date. Must be a date after <code>start_date</code>.'
+        required: false
+        example: '2024-12-31'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      status:
+        name: status
+        description: 'Status of the membership.'
+        required: true
+        example: active
+        type: string
+        enumValues:
+          - active
+          - inactive
+          - terminated
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      additional_roles:
+        name: additional_roles
+        description: 'Array of additional role IDs (optional).'
+        required: false
+        example:
+          - 1
+          - 2
+        type: object
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+    cleanBodyParameters:
+      user_id: 1
+      organization_id: 1
+      organization_unit_id: 1
+      organization_position_id: 1
+      membership_type: employee
+      start_date: '2024-01-01'
+      end_date: '2024-12-31'
+      status: active
+      additional_roles:
+        - 1
+        - 2
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/v1/organization-memberships/{id}'
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the organization membership.'
+        required: true
+        example: 01k3ahgfe5595rkvqzvxrdrg5t
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      id: 01k3ahgfe5595rkvqzvxrdrg5t
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 200
+        content: '{"id":"01k3ahgfe5595rkvqzvxrdrg5t","user_id":"01k3ahgfaja8jn926d2bx33dcd","organization_id":"01k3ahgd2pxfkakcba63e337fv","organization_unit_id":"01k3ahgd6h94mgvsspwdksgzyv","organization_position_id":"01k3ahgd8ea6hxx4dmkpecwrk1","membership_type":"board_member","start_date":"2020-01-15T00:00:00.000000Z","end_date":null,"status":"active","additional_roles":["strategic_planning","investor_relations"],"created_at":"2025-08-22T21:03:12.000000Z","updated_at":"2025-08-22T21:03:12.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","user":{"id":"01k3ahgfaja8jn926d2bx33dcd","name":"John Smith","email":"john.smith@techcorp.com","email_verified_at":"2025-08-23T04:03:10.000000Z","created_at":"2025-08-22T21:03:12.000000Z","updated_at":"2025-08-22T21:03:12.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization":{"id":"01k3ahgd2pxfkakcba63e337fv","organization_code":"HC001","organization_type":"holding_company","parent_organization_id":null,"name":"TechCorp Holdings","description":"Main holding company for technology businesses","address":"123 Tech Street, Innovation District","phone":"+1-555-0100","email":"info@techcorp.com","website":"https:\/\/techcorp.com","is_active":true,"registration_number":"REG001","tax_number":"TAX001","governance_structure":{"board_size":7,"independent_directors":4,"committees":["audit","risk","nomination","remuneration"]},"authorized_capital":"10000000.00","paid_capital":"8500000.00","establishment_date":"2020-01-15T00:00:00.000000Z","legal_status":"Public Limited Company","business_activities":"Investment holding and management","contact_persons":{"ceo":{"name":"John Smith","email":"ceo@techcorp.com"},"cfo":{"name":"Jane Doe","email":"cfo@techcorp.com"}},"level":0,"path":"01k3ahgd2pxfkakcba63e337fv","created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization_unit":{"id":"01k3ahgd6h94mgvsspwdksgzyv","organization_id":"01k3ahgd2pxfkakcba63e337fv","unit_code":"BOD001","name":"Board of Directors","unit_type":"board_of_directors","description":"Executive board responsible for day-to-day management","parent_unit_id":null,"responsibilities":["Corporate management","Strategic execution","Financial performance","Operational oversight"],"authorities":["Execute business strategy","Manage operations","Make operational decisions","Report to commissioners"],"is_active":true,"sort_order":2,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization_position":{"id":"01k3ahgd8ea6hxx4dmkpecwrk1","organization_unit_id":"01k3ahgd6h94mgvsspwdksgzyv","position_code":"POS003","organization_position_level_id":"01k3ahgd0txgyfe2hhhgpgptmw","title":"Chief Executive Officer","job_description":"Lead the organization and execute strategic initiatives","qualifications":["MBA or equivalent advanced degree","Minimum 15 years of executive experience","Proven track record in technology industry","Strong leadership and communication skills"],"responsibilities":["Develop and execute corporate strategy","Lead executive team","Represent company to stakeholders","Drive business growth and profitability"],"min_salary":"800000.00","max_salary":"1500000.00","is_active":true,"max_incumbents":1,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"}}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - PUT
+      - PATCH
+    uri: 'api/v1/organization-memberships/{id}'
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the organization membership.'
+        required: true
+        example: 01k3ahgfe5595rkvqzvxrdrg5t
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      id: 01k3ahgfe5595rkvqzvxrdrg5t
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      organization_unit_id:
+        name: organization_unit_id
+        description: 'ID of the organization unit (optional). The <code>id</code> of an existing record in the organization_units table.'
+        required: false
+        example: 1
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      organization_position_id:
+        name: organization_position_id
+        description: 'ID of the organization position (optional). The <code>id</code> of an existing record in the organization_positions table.'
+        required: false
+        example: 1
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      membership_type:
+        name: membership_type
+        description: 'Type of membership.'
+        required: true
+        example: employee
+        type: string
+        enumValues:
+          - employee
+          - board_member
+          - consultant
+          - contractor
+          - intern
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      start_date:
+        name: start_date
+        description: 'Start date of membership. Must be a valid date.'
+        required: true
+        example: '2024-01-01'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      end_date:
+        name: end_date
+        description: 'End date of membership (optional). Must be a valid date. Must be a date after <code>start_date</code>.'
+        required: false
+        example: '2024-12-31'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      status:
+        name: status
+        description: 'Status of the membership.'
+        required: true
+        example: active
+        type: string
+        enumValues:
+          - active
+          - inactive
+          - terminated
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      additional_roles:
+        name: additional_roles
+        description: 'Array of additional role IDs (optional).'
+        required: false
+        example:
+          - 1
+          - 2
+        type: object
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+    cleanBodyParameters:
+      organization_unit_id: 1
+      organization_position_id: 1
+      membership_type: employee
+      start_date: '2024-01-01'
+      end_date: '2024-12-31'
+      status: active
+      additional_roles:
+        - 1
+        - 2
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - DELETE
+    uri: 'api/v1/organization-memberships/{id}'
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the organization membership.'
+        required: true
+        example: 01k3ahgfe5595rkvqzvxrdrg5t
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      id: 01k3ahgfe5595rkvqzvxrdrg5t
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - POST
+    uri: 'api/v1/organization-memberships/{organizationMembership_id}/activate'
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      organizationMembership_id:
+        name: organizationMembership_id
+        description: 'The ID of the organizationMembership.'
+        required: true
+        example: 01k3ahgfe5595rkvqzvxrdrg5t
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      organizationMembership_id: 01k3ahgfe5595rkvqzvxrdrg5t
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - POST
+    uri: 'api/v1/organization-memberships/{organizationMembership_id}/deactivate'
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      organizationMembership_id:
+        name: organizationMembership_id
+        description: 'The ID of the organizationMembership.'
+        required: true
+        example: 01k3ahgfe5595rkvqzvxrdrg5t
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      organizationMembership_id: 01k3ahgfe5595rkvqzvxrdrg5t
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - POST
+    uri: 'api/v1/organization-memberships/{organizationMembership_id}/terminate'
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      organizationMembership_id:
+        name: organizationMembership_id
+        description: 'The ID of the organizationMembership.'
+        required: true
+        example: 01k3ahgfe5595rkvqzvxrdrg5t
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      organizationMembership_id: 01k3ahgfe5595rkvqzvxrdrg5t
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      end_date:
+        name: end_date
+        description: 'Termination date for the membership (optional, defaults to current date). Must be a valid date.'
+        required: false
+        example: '2024-12-31'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+    cleanBodyParameters:
+      end_date: '2024-12-31'
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/v1/users/{user_id}/memberships'
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      user_id:
+        name: user_id
+        description: 'The ID of the user.'
+        required: true
+        example: 01k3ahgcdg9dzsh45sdpbcff64
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      user_id: 01k3ahgcdg9dzsh45sdpbcff64
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 200
+        content: '[{"id":"01k3ahgffw63x0k6eg7rx124se","user_id":"01k3ahgcdg9dzsh45sdpbcff64","organization_id":"01k3ahgd38c38bxcxseden9ja2","organization_unit_id":"01k3ahgd72vvytzzw7q4htmrd9","organization_position_id":null,"membership_type":"consultant","start_date":"2024-01-01T00:00:00.000000Z","end_date":"2024-12-31T00:00:00.000000Z","status":"active","additional_roles":["technical_advisory","code_review"],"created_at":"2025-08-22T21:03:12.000000Z","updated_at":"2025-08-22T21:03:12.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","organization":{"id":"01k3ahgd38c38bxcxseden9ja2","organization_code":"SUB001","organization_type":"subsidiary","parent_organization_id":"01k3ahgd2pxfkakcba63e337fv","name":"TechCorp Software","description":"Software development and consulting services","address":"456 Software Ave, Tech City","phone":"+1-555-0200","email":"info@techcorpsoftware.com","website":"https:\/\/techcorpsoftware.com","is_active":true,"registration_number":"REG002","tax_number":"TAX002","governance_structure":{"board_size":5,"independent_directors":2,"committees":["audit","risk"]},"authorized_capital":"5000000.00","paid_capital":"4000000.00","establishment_date":"2021-03-01T00:00:00.000000Z","legal_status":"Private Limited Company","business_activities":"Software development, web applications, mobile apps","contact_persons":{"managing_director":{"name":"Mike Johnson","email":"md@techcorpsoftware.com"},"cto":{"name":"Sarah Wilson","email":"cto@techcorpsoftware.com"}},"level":1,"path":"01k3ahgd2pxfkakcba63e337fv\/01k3ahgd38c38bxcxseden9ja2","created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization_unit":{"id":"01k3ahgd72vvytzzw7q4htmrd9","organization_id":"01k3ahgd38c38bxcxseden9ja2","unit_code":"ENG001","name":"Engineering Division","unit_type":"division","description":"Software engineering and development","parent_unit_id":null,"responsibilities":["Software development","Technical architecture","Code quality assurance","Development methodology"],"authorities":["Define technical standards","Approve technical designs","Manage development teams","Release software products"],"is_active":true,"sort_order":2,"created_at":"2025-08-22T21:03:10.000000Z","updated_at":"2025-08-22T21:03:10.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64"},"organization_position":null}]'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/v1/organizations/{organization_id}/memberships'
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      organization_id:
+        name: organization_id
+        description: 'The ID of the organization.'
+        required: true
+        example: 01k3ahgcgwbgdzwmy8an85afk4
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      organization_id: 01k3ahgcgwbgdzwmy8an85afk4
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 200
+        content: '[]'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: api/v1/board-members
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 500
+        content: |-
+          {
+              "message": "Server Error"
+          }
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: api/v1/executives
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: ''
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 500
+        content: |-
+          {
+              "message": "Server Error"
+          }
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: api/v1/auth/webauthn/options
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get authentication options for WebAuthn login'
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 200
+        content: '{"challenge":"qQS6opzNjk+c5u2gk2J8b8L5e6TinvCdnfHxtwaCics=","timeout":60000,"rpId":"localhost","allowCredentials":[],"userVerification":"preferred"}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - POST
+    uri: api/v1/auth/webauthn/authenticate
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Authenticate using WebAuthn (passwordless login)'
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: api/v1/auth/webauthn/capabilities
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get WebAuthn capabilities and user agent info'
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 200
+        content: '{"webauthn_supported":true,"platform_authenticator":null,"cross_platform_authenticator":null,"user_agent":"Symfony","server_capabilities":{"resident_keys":true,"user_verification":"preferred","attestation":"none","algorithms":["RS256","ES256"]}}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: api/v1/auth/webauthn/health
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Test WebAuthn connectivity and server readiness'
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 200
+        content: '{"status":"healthy","webauthn_server":"operational","timestamp":"2025-08-23T08:49:03.336221Z","services":{"registration":"available","authentication":"available","management":"available"},"challenge_generation":true}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: api/v1/webauthn
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get all passkeys for the authenticated user'
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: api/v1/webauthn/register/options
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get registration options for creating a new passkey'
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - POST
+    uri: api/v1/webauthn/register
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Register a new passkey'
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - PUT
+    uri: 'api/v1/webauthn/{passkey_id}'
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Update passkey name'
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      passkey_id:
+        name: passkey_id
+        description: 'The ID of the passkey.'
+        required: true
+        example: 16
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      passkey_id: 16
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      name:
+        name: name
+        description: 'Friendly name for the passkey/WebAuthn credential. Must not be greater than 255 characters.'
+        required: true
+        example: 'My iPhone Touch ID'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanBodyParameters:
+      name: 'My iPhone Touch ID'
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - DELETE
+    uri: 'api/v1/webauthn/{passkey_id}'
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Delete a passkey'
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      passkey_id:
+        name: passkey_id
+        description: 'The ID of the passkey.'
+        required: true
+        example: 16
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      passkey_id: 16
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: api/v1/webauthn/statistics
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: "Get usage statistics for user's passkeys"
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: api/organization-position-levels
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get organization position levels for API/select options.'
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 401
+        content: '{"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+          set-cookie: 'XSRF-TOKEN=eyJpdiI6IkZhN1ZHK3JHbEdCL05zaVRVWE5uY3c9PSIsInZhbHVlIjoiU1RjLzFENlpCRUtvRndob3Vza1dtL2drd1A5WityUWdCazg4a2xTOVlxZ2Uyd3JCczZrSWl1a0g1eDNNc3htSGJmYVB1bFVyaFdZaXBpaUVoL2tNWFVLNDNuTUhaN0Q5bVBTbmF2dDNoMC9xZ1BTa3FrL1Z5TTlncGROVUpXRW4iLCJtYWMiOiI3ODlkMTRhZjg2MzBhMWY1MzIzMzg0ZmVkODA5NGU4MWEzNjY5NTIyMzY0OTU1NDlhMzNkNjQxMDlmMDNmZjgwIiwidGFnIjoiIn0%3D; expires=Sat, 23 Aug 2025 10:49:03 GMT; Max-Age=7200; path=/; samesite=lax; laravel_session=eyJpdiI6Imp4a1VRZWpXSkdJVW0vOVgyZWJ2bXc9PSIsInZhbHVlIjoiZFhLT3RtVUJTcG9SR0tFZ2huaVhOZTIwY3N3djRFWTY3R0pndlNlTlVIZzhydWxNdGpTY0FGV0UzZW1xbC96ZnQwNVN2QWxDVWt3R0JKdEZBNEJPZGdNbCtrZnVJc0RIV1NURURHMlBCQkxsN0RyUnFzUUxJYlV4M3V2d2ZvWlgiLCJtYWMiOiI1NDFkMTIwYzZjNTkzNTQ2OTc3ZDU1MzMxNmY4OTJhZGI0NWI3MTg2ZGFjNWY3YzVkMDFlMDczZTY4ZjY4MDYyIiwidGFnIjoiIn0%3D; expires=Sat, 23 Aug 2025 10:49:03 GMT; Max-Age=7200; path=/; httponly; samesite=lax'
+        description: null
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []

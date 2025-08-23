@@ -3,9 +3,10 @@
 namespace App\Http\Controllers\OAuth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\OAuth\StoreClientRequest;
+use App\Http\Requests\OAuth\UpdateClientRequest;
 use App\Models\Organization;
 use App\Services\ActivityLogService;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -77,19 +78,8 @@ class ClientController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreClientRequest $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'redirect_uris' => 'required|array|min:1',
-            'redirect_uris.*' => 'required|url',
-            'organization_id' => 'required|exists:organizations,id', // Now required
-            'client_type' => 'required|in:public,confidential',
-            'allowed_scopes' => 'sometimes|array',
-            'description' => 'sometimes|string|max:1000',
-            'website' => 'sometimes|url',
-            'logo_url' => 'sometimes|url',
-        ]);
 
         // Validate user has management access to the organization
         $userManagementOrgs = Auth::user()->memberships()
@@ -182,20 +172,11 @@ class ClientController extends Controller
         ]);
     }
 
-    public function update(Request $request, $clientId)
+    public function update(UpdateClientRequest $request, $clientId)
     {
         $client = Client::where('id', $clientId)
             ->where('user_id', Auth::id())
             ->firstOrFail();
-
-        $request->validate([
-            'name' => 'sometimes|string|max:255',
-            'redirect_uris' => 'sometimes|array|min:1',
-            'redirect_uris.*' => 'required|url',
-            'description' => 'sometimes|string|max:1000',
-            'website' => 'sometimes|url',
-            'logo_url' => 'sometimes|url',
-        ]);
 
         $updateData = $request->only(['name', 'description', 'website', 'logo_url']);
 

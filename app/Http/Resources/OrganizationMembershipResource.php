@@ -27,7 +27,7 @@ class OrganizationMembershipResource extends JsonResource
             'additional_roles' => $this->additional_roles,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
-            
+
             // Computed attributes
             'duration' => $this->duration,
             'duration_in_years' => $this->duration_in_years,
@@ -38,7 +38,7 @@ class OrganizationMembershipResource extends JsonResource
             'is_executive_membership' => $this->isExecutiveMembership(),
             'is_management_membership' => $this->isManagementMembership(),
             'full_position_title' => $this->full_position_title,
-            
+
             // Related models (when loaded)
             'user' => new UserResource($this->whenLoaded('user')),
             'organization' => new OrganizationResource($this->whenLoaded('organization')),

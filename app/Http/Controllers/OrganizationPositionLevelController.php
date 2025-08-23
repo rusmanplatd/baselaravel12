@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\OrganizationPositionLevel\StoreOrganizationPositionLevelRequest;
+use App\Http\Requests\OrganizationPositionLevel\UpdateOrganizationPositionLevelRequest;
 use App\Models\OrganizationPositionLevel;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class OrganizationPositionLevelController extends Controller
@@ -33,16 +33,9 @@ class OrganizationPositionLevelController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreOrganizationPositionLevelRequest $request)
     {
-        $validated = $request->validate([
-            'code' => 'required|string|max:255|unique:organization_position_levels',
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'hierarchy_level' => 'required|integer|min:1',
-            'is_active' => 'boolean',
-            'sort_order' => 'required|integer',
-        ]);
+        $validated = $request->validated();
 
         OrganizationPositionLevel::create([
             ...$validated,
@@ -79,16 +72,9 @@ class OrganizationPositionLevelController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, OrganizationPositionLevel $organizationPositionLevel)
+    public function update(UpdateOrganizationPositionLevelRequest $request, OrganizationPositionLevel $organizationPositionLevel)
     {
-        $validated = $request->validate([
-            'code' => ['required', 'string', 'max:255', Rule::unique('organization_position_levels')->ignore($organizationPositionLevel)],
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'hierarchy_level' => 'required|integer|min:1',
-            'is_active' => 'boolean',
-            'sort_order' => 'required|integer',
-        ]);
+        $validated = $request->validated();
 
         $organizationPositionLevel->update([
             ...$validated,

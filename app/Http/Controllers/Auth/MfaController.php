@@ -3,6 +3,10 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\MfaDisableRequest;
+use App\Http\Requests\Auth\MfaSetupRequest;
+use App\Http\Requests\Auth\MfaVerifyRequest;
+use App\Http\Requests\Auth\RegenerateBackupCodesRequest;
 use App\Services\ActivityLogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -52,12 +56,8 @@ class MfaController extends Controller
         ]);
     }
 
-    public function confirm(Request $request): JsonResponse
+    public function confirm(MfaSetupRequest $request): JsonResponse
     {
-        $request->validate([
-            'code' => 'required|string|size:6',
-            'password' => 'required|string',
-        ]);
 
         $user = Auth::user();
 
@@ -98,11 +98,8 @@ class MfaController extends Controller
         ]);
     }
 
-    public function disable(Request $request): JsonResponse
+    public function disable(MfaDisableRequest $request): JsonResponse
     {
-        $request->validate([
-            'password' => 'required|string',
-        ]);
 
         $user = Auth::user();
 
@@ -133,11 +130,8 @@ class MfaController extends Controller
         return response()->json(['success' => true]);
     }
 
-    public function verify(Request $request): JsonResponse
+    public function verify(MfaVerifyRequest $request): JsonResponse
     {
-        $request->validate([
-            'code' => 'required|string',
-        ]);
 
         $user = Auth::user();
 
@@ -178,11 +172,9 @@ class MfaController extends Controller
         ]);
     }
 
-    public function regenerateBackupCodes(Request $request): JsonResponse
+    public function regenerateBackupCodes(RegenerateBackupCodesRequest $request): JsonResponse
     {
-        $request->validate([
-            'password' => 'required|string',
-        ]);
+        $validated = $request->validated();
 
         $user = Auth::user();
 

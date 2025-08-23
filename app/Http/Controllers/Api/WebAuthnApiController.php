@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\WebAuthn\UpdatePasskeyRequest;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -160,11 +161,8 @@ class WebAuthnApiController extends Controller
     /**
      * Update passkey name
      */
-    public function update(Request $request, Passkey $passkey): JsonResponse
+    public function update(UpdatePasskeyRequest $request, Passkey $passkey): JsonResponse
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-        ]);
 
         $user = $request->user();
 

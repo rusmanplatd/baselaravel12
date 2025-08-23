@@ -3,17 +3,36 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\UpdatePasswordRequest;
+use App\Http\Requests\Api\UpdateSecuritySettingsRequest;
+use App\Http\Requests\Api\RevokeSessionsRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
+use Knuckles\Scribe\Attributes\Authenticated;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\Response as ScribeResponse;
 
+#[Group("User Security")]
 class UserSecurityController extends Controller
 {
-    /**
-     * Get comprehensive security profile for the user
-     */
+    #[Endpoint(
+        title: "Get security profile",
+        description: "Get a comprehensive security profile for the authenticated user including authentication methods, security score, and recommendations"
+    )]
+    #[Authenticated]
+    #[ScribeResponse([
+        "user" => ["id" => 1, "name" => "John Doe", "email" => "john@example.com"],
+        "authentication_methods" => [
+            "password" => ["enabled" => true],
+            "mfa" => ["enabled" => true, "totp_enabled" => true],
+            "webauthn" => ["enabled" => true, "passkey_count" => 2]
+        ],
+        "security_score" => 85,
+        "recommendations" => []
+    ])]
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -87,26 +106,26 @@ class UserSecurityController extends Controller
         ]);
     }
 
-    /**
-     * Update user password
-     */
-    public function updatePassword(Request $request): JsonResponse
+    #[Endpoint(
+        title: "Update password",
+        description: "Update the user's password with current password verification"
+    )]
+    #[Authenticated]
+    #[ScribeResponse(["message" => "Password updated successfully", "updated_at" => "2024-01-15T10:30:00Z"], 200)]
+    public function updatePassword(UpdatePasswordRequest $request): JsonResponse
     {
-        $request->validate([
-            'current_password' => 'required|string',
-            'password' => ['required', 'confirmed', Password::defaults()],
-        ]);
+        $validated = $request->validated();
 
         $user = $request->user();
 
-        if (! Hash::check($request->current_password, $user->password)) {
+        if (! Hash::check($validated['current_password'], $user->password)) {
             throw ValidationException::withMessages([
                 'current_password' => ['The provided password is incorrect.'],
             ]);
         }
 
         $user->update([
-            'password' => Hash::make($request->password),
+            'password' => Hash::make($validated['password']),
         ]);
 
         return response()->json([
@@ -154,23 +173,20 @@ class UserSecurityController extends Controller
     /**
      * Update security settings
      */
-    public function updateSettings(Request $request): JsonResponse
+    public function updateSettings(UpdateSecuritySettingsRequest $request): JsonResponse
     {
-        $request->validate([
-            'mfa_required' => 'boolean',
-            'password' => 'required|string', // Require password for security setting changes
-        ]);
+        $validated = $request->validated();
 
         $user = $request->user();
 
-        if (! Hash::check($request->password, $user->password)) {
+        if (! Hash::check($validated['password'], $user->password)) {
             throw ValidationException::withMessages([
                 'password' => ['The provided password is incorrect.'],
             ]);
         }
 
-        if ($request->has('mfa_required')) {
-            if (! $user->hasMfaEnabled() && $request->boolean('mfa_required')) {
+        if (isset($validated['mfa_required'])) {
+            if (! $user->hasMfaEnabled() && $validated['mfa_required']) {
                 return response()->json([
                     'error' => 'Cannot require MFA when MFA is not enabled',
                     'code' => 'MFA_NOT_ENABLED',
@@ -179,7 +195,7 @@ class UserSecurityController extends Controller
 
             $user->mfaSettings()->updateOrCreate(
                 ['user_id' => $user->id],
-                ['mfa_required' => $request->boolean('mfa_required')]
+                ['mfa_required' => $validated['mfa_required']]
             );
         }
 
@@ -215,15 +231,13 @@ class UserSecurityController extends Controller
     /**
      * Revoke all sessions except current
      */
-    public function revokeSessions(Request $request): JsonResponse
+    public function revokeSessions(RevokeSessionsRequest $request): JsonResponse
     {
-        $request->validate([
-            'password' => 'required|string',
-        ]);
+        $validated = $request->validated();
 
         $user = $request->user();
 
-        if (! Hash::check($request->password, $user->password)) {
+        if (! Hash::check($validated['password'], $user->password)) {
             throw ValidationException::withMessages([
                 'password' => ['The provided password is incorrect.'],
             ]);

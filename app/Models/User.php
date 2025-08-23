@@ -5,9 +5,9 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -159,12 +159,12 @@ class User extends Authenticatable implements HasPasskeys
         return $this->belongsToMany(Organization::class, 'organization_memberships')
             ->withPivot([
                 'organization_unit_id',
-                'organization_position_id', 
+                'organization_position_id',
                 'membership_type',
                 'start_date',
                 'end_date',
                 'status',
-                'additional_roles'
+                'additional_roles',
             ])
             ->withTimestamps();
     }
@@ -200,6 +200,7 @@ class User extends Authenticatable implements HasPasskeys
         setPermissionsTeamId($organization->id);
         $result = $this->hasRole($roleName);
         setPermissionsTeamId(null);
+
         return $result;
     }
 
@@ -213,6 +214,7 @@ class User extends Authenticatable implements HasPasskeys
         setPermissionsTeamId($organization->id);
         $permissions = $this->getAllPermissions();
         setPermissionsTeamId(null);
+
         return $permissions;
     }
 
@@ -221,6 +223,7 @@ class User extends Authenticatable implements HasPasskeys
         setPermissionsTeamId($organization->id);
         $result = $this->can($permission);
         setPermissionsTeamId(null);
+
         return $result;
     }
 

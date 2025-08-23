@@ -21,7 +21,7 @@ class RoleResource extends JsonResource
             'team_id' => $this->team_id,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
-            
+
             // Permissions (when loaded)
             'permissions' => $this->whenLoaded('permissions', function () {
                 return $this->permissions->map(function ($permission) {
@@ -32,10 +32,10 @@ class RoleResource extends JsonResource
                     ];
                 });
             }),
-            
+
             // Users count (when loaded)
             'users_count' => $this->whenCounted('users'),
-            
+
             // Organization (when team_id is set)
             'organization' => $this->when($this->team_id, function () {
                 return [

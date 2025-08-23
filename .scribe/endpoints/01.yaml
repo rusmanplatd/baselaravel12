@@ -1,0 +1,822 @@
+name: 'Organization Management'
+description: ''
+endpoints:
+  -
+    httpMethods:
+      - GET
+    uri: api/v1/organizations
+    metadata:
+      groupName: 'Organization Management'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get organizations'
+      description: 'Retrieve a paginated list of organizations with optional filtering and relationships'
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      organization_type:
+        name: organization_type
+        description: 'Filter by organization type'
+        required: false
+        example: holding_company
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      parent_organization_id:
+        name: parent_organization_id
+        description: 'Filter by parent organization ID'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      hierarchy_root:
+        name: hierarchy_root
+        description: 'Show only root organizations (no parent)'
+        required: false
+        example: true
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      include:
+        name: include
+        description: 'Include relationships (comma-separated: departments,parent,children,units)'
+        required: false
+        example: 'departments,children'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      per_page:
+        name: per_page
+        description: 'Number of results per page'
+        required: false
+        example: 15
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanQueryParameters:
+      organization_type: holding_company
+      parent_organization_id: 1
+      hierarchy_root: true
+      include: 'departments,children'
+      per_page: 15
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 200
+        content: '{"data":{"id":1,"name":"Acme Corp","organization_type":"holding_company"},"meta":{"current_page":1}}'
+        headers: []
+        description: ''
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - POST
+    uri: api/v1/organizations
+    metadata:
+      groupName: 'Organization Management'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Create organization'
+      description: 'Create a new organization with hierarchical structure support'
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 201
+        content: '{"id":1,"name":"New Organization","organization_type":"division","created_at":"2024-01-15T10:30:00Z"}'
+        headers: []
+        description: ''
+        custom: []
+      -
+        status: 400
+        content: '{"message":"Organization cannot be its own parent"}'
+        headers: []
+        description: ''
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/v1/organizations/{id}'
+    metadata:
+      groupName: 'Organization Management'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get organization details'
+      description: 'Retrieve detailed information about a specific organization'
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the organization.'
+        required: true
+        example: 01k3ahgcgwbgdzwmy8an85afk4
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      id: 01k3ahgcgwbgdzwmy8an85afk4
+    queryParameters:
+      include:
+        name: include
+        description: 'Include relationships (comma-separated: departments)'
+        required: false
+        example: departments
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanQueryParameters:
+      include: departments
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 200
+        content: '{"id":1,"name":"Acme Corp","organization_type":"holding_company"}'
+        headers: []
+        description: ''
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - PUT
+      - PATCH
+    uri: 'api/v1/organizations/{id}'
+    metadata:
+      groupName: 'Organization Management'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Update organization'
+      description: 'Update an existing organization with validation to prevent circular hierarchies'
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the organization.'
+        required: true
+        example: 01k3ahgcgwbgdzwmy8an85afk4
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      id: 01k3ahgcgwbgdzwmy8an85afk4
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 200
+        content: '{"id":1,"name":"Updated Organization","organization_type":"division","updated_at":"2024-01-15T10:30:00Z"}'
+        headers: []
+        description: ''
+        custom: []
+      -
+        status: 400
+        content: '{"message":"Organization cannot be its own parent"}'
+        headers: []
+        description: ''
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - DELETE
+    uri: 'api/v1/organizations/{id}'
+    metadata:
+      groupName: 'Organization Management'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Delete organization'
+      description: 'Delete an organization after validating no dependencies exist'
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the organization.'
+        required: true
+        example: 01k3ahgcgwbgdzwmy8an85afk4
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      id: 01k3ahgcgwbgdzwmy8an85afk4
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 200
+        content: '{"message":"Organization deleted successfully"}'
+        headers: []
+        description: ''
+        custom: []
+      -
+        status: 400
+        content: '{"message":"Cannot delete organization with child organizations. Please reassign or delete child organizations first."}'
+        headers: []
+        description: ''
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: api/v1/organizations/hierarchy/tree
+    metadata:
+      groupName: 'Organization Management'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get organization hierarchy'
+      description: 'Retrieve the complete organizational hierarchy tree starting from root organizations'
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 200
+        content: '[{"id":1,"name":"Root Corp","children":[{"id":2,"name":"Division A","children":[]}]}]'
+        headers: []
+        description: ''
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/v1/organizations/type/{type}'
+    metadata:
+      groupName: 'Organization Management'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get organizations by type'
+      description: 'Retrieve organizations filtered by their organizational type'
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      type:
+        name: type
+        description: 'The type.'
+        required: true
+        example: architecto
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      type: architecto
+    queryParameters:
+      type:
+        name: type
+        description: 'Organization type'
+        required: true
+        example: holding_company
+        type: string
+        enumValues:
+          - holding_company
+          - subsidiary
+          - division
+          - branch
+          - department
+          - unit
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanQueryParameters:
+      type: holding_company
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 200
+        content: '{"data":[{"id":1,"name":"Acme Holdings","organization_type":"holding_company"}]}'
+        headers: []
+        description: ''
+        custom: []
+      -
+        status: 400
+        content: '{"message":"Invalid organization type"}'
+        headers: []
+        description: ''
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/v1/organizations/{organization_id}/members'
+    metadata:
+      groupName: 'Organization Management'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get organization members'
+      description: 'Retrieve a paginated list of members in an organization with their roles'
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      organization_id:
+        name: organization_id
+        description: 'The ID of the organization.'
+        required: true
+        example: 01k3ahgcgwbgdzwmy8an85afk4
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      organization_id: 01k3ahgcgwbgdzwmy8an85afk4
+    queryParameters:
+      status:
+        name: status
+        description: 'Filter by membership status'
+        required: false
+        example: active
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      per_page:
+        name: per_page
+        description: 'Number of results per page'
+        required: false
+        example: 15
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanQueryParameters:
+      status: active
+      per_page: 15
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 200
+        content: '{"data":{"id":1,"name":"John Doe","email":"john@example.com"},"meta":{"current_page":1}}'
+        headers: []
+        description: ''
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - POST
+    uri: 'api/v1/organizations/{organization_id}/members'
+    metadata:
+      groupName: 'Organization Management'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Add member to organization'
+      description: 'Add a user as a member to an organization with optional role assignments'
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      organization_id:
+        name: organization_id
+        description: 'The ID of the organization.'
+        required: true
+        example: 01k3ahgcgwbgdzwmy8an85afk4
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      organization_id: 01k3ahgcgwbgdzwmy8an85afk4
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 201
+        content: '{"message":"Member added successfully","membership":{"id":1,"user_id":1,"organization_id":1}}'
+        headers: []
+        description: ''
+        custom: []
+      -
+        status: 400
+        content: '{"message":"User is already an active member of this organization"}'
+        headers: []
+        description: ''
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - PUT
+    uri: 'api/v1/organizations/{organization_id}/members/{membership_id}'
+    metadata:
+      groupName: 'Organization Management'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Update organization membership'
+      description: 'Update an existing organization membership including role assignments'
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      organization_id:
+        name: organization_id
+        description: 'The ID of the organization.'
+        required: true
+        example: 01k3ahgcgwbgdzwmy8an85afk4
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      membership_id:
+        name: membership_id
+        description: 'The ID of the membership.'
+        required: true
+        example: 01k3ahgfe5595rkvqzvxrdrg5t
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      organization_id: 01k3ahgcgwbgdzwmy8an85afk4
+      membership_id: 01k3ahgfe5595rkvqzvxrdrg5t
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 200
+        content: '{"message":"Membership updated successfully","membership":{"id":1,"status":"active"}}'
+        headers: []
+        description: ''
+        custom: []
+      -
+        status: 404
+        content: '{"message":"Membership not found in this organization"}'
+        headers: []
+        description: ''
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - DELETE
+    uri: 'api/v1/organizations/{organization_id}/members/{membership_id}'
+    metadata:
+      groupName: 'Organization Management'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Remove member from organization'
+      description: 'Remove a member from an organization and revoke all associated roles'
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      organization_id:
+        name: organization_id
+        description: 'The ID of the organization.'
+        required: true
+        example: 01k3ahgcgwbgdzwmy8an85afk4
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      membership_id:
+        name: membership_id
+        description: 'The ID of the membership.'
+        required: true
+        example: 01k3ahgfe5595rkvqzvxrdrg5t
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      organization_id: 01k3ahgcgwbgdzwmy8an85afk4
+      membership_id: 01k3ahgfe5595rkvqzvxrdrg5t
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 200
+        content: '{"message":"Member removed successfully"}'
+        headers: []
+        description: ''
+        custom: []
+      -
+        status: 404
+        content: '{"message":"Membership not found in this organization"}'
+        headers: []
+        description: ''
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/v1/organizations/{organization_id}/roles'
+    metadata:
+      groupName: 'Organization Management'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get organization roles'
+      description: 'Retrieve all roles defined for a specific organization'
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      organization_id:
+        name: organization_id
+        description: 'The ID of the organization.'
+        required: true
+        example: 01k3ahgcgwbgdzwmy8an85afk4
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      organization_id: 01k3ahgcgwbgdzwmy8an85afk4
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 200
+        content: '[{"id":1,"name":"admin","permissions":[{"name":"organization:admin"}]},{"id":2,"name":"member","permissions":[{"name":"organization:read"}]}]'
+        headers: []
+        description: ''
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - POST
+    uri: 'api/v1/organizations/{organization_id}/roles'
+    metadata:
+      groupName: 'Organization Management'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Create organization role'
+      description: 'Create a new role within an organization with specific permissions'
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      organization_id:
+        name: organization_id
+        description: 'The ID of the organization.'
+        required: true
+        example: 01k3ahgcgwbgdzwmy8an85afk4
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      organization_id: 01k3ahgcgwbgdzwmy8an85afk4
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 201
+        content: '{"message":"Role created successfully","role":{"id":1,"name":"manager","permissions":[]}}'
+        headers: []
+        description: ''
+        custom: []
+      -
+        status: 400
+        content: '{"message":"Role already exists in this organization"}'
+        headers: []
+        description: ''
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []

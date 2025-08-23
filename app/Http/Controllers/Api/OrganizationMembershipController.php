@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\StoreOrganizationMembershipRequest;
+use App\Http\Requests\Api\UpdateOrganizationMembershipRequest;
+use App\Http\Requests\Api\TerminateOrganizationMembershipRequest;
 use App\Models\Organization;
 use App\Models\OrganizationMembership;
 use App\Models\OrganizationPosition;
@@ -67,19 +70,9 @@ class OrganizationMembershipController extends Controller
         return response()->json($memberships);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreOrganizationMembershipRequest $request): JsonResponse
     {
-        $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'organization_id' => 'required|exists:organizations,id',
-            'organization_unit_id' => 'nullable|exists:organization_units,id',
-            'organization_position_id' => 'nullable|exists:organization_positions,id',
-            'membership_type' => 'required|in:employee,board_member,consultant,contractor,intern',
-            'start_date' => 'required|date',
-            'end_date' => 'nullable|date|after:start_date',
-            'status' => 'required|in:active,inactive,terminated',
-            'additional_roles' => 'nullable|array',
-        ]);
+        $validated = $request->validated();
 
         if ($request->organization_position_id) {
             $position = OrganizationPosition::find($request->organization_position_id);
@@ -102,7 +95,7 @@ class OrganizationMembershipController extends Controller
             }
         }
 
-        $membership = OrganizationMembership::create($request->all());
+        $membership = OrganizationMembership::create($validated);
         $membership->load(['user', 'organization', 'organizationUnit', 'organizationPosition']);
 
         return response()->json($membership, 201);
@@ -120,17 +113,9 @@ class OrganizationMembershipController extends Controller
         return response()->json($organizationMembership);
     }
 
-    public function update(Request $request, OrganizationMembership $organizationMembership): JsonResponse
+    public function update(UpdateOrganizationMembershipRequest $request, OrganizationMembership $organizationMembership): JsonResponse
     {
-        $request->validate([
-            'organization_unit_id' => 'nullable|exists:organization_units,id',
-            'organization_position_id' => 'nullable|exists:organization_positions,id',
-            'membership_type' => 'required|in:employee,board_member,consultant,contractor,intern',
-            'start_date' => 'required|date',
-            'end_date' => 'nullable|date|after:start_date',
-            'status' => 'required|in:active,inactive,terminated',
-            'additional_roles' => 'nullable|array',
-        ]);
+        $validated = $request->validated();
 
         if ($request->organization_position_id && $request->organization_position_id != $organizationMembership->organization_position_id) {
             $position = OrganizationPosition::find($request->organization_position_id);
@@ -154,7 +139,7 @@ class OrganizationMembershipController extends Controller
             }
         }
 
-        $organizationMembership->update($request->all());
+        $organizationMembership->update($validated);
         $organizationMembership->load(['user', 'organization', 'organizationUnit', 'organizationPosition']);
 
         return response()->json($organizationMembership);
@@ -192,13 +177,11 @@ class OrganizationMembershipController extends Controller
         return response()->json($organizationMembership);
     }
 
-    public function terminate(Request $request, OrganizationMembership $organizationMembership): JsonResponse
+    public function terminate(TerminateOrganizationMembershipRequest $request, OrganizationMembership $organizationMembership): JsonResponse
     {
-        $request->validate([
-            'end_date' => 'nullable|date',
-        ]);
+        $validated = $request->validated();
 
-        $endDate = $request->end_date ? Carbon::parse($request->end_date) : null;
+        $endDate = $validated['end_date'] ? Carbon::parse($validated['end_date']) : null;
         $organizationMembership->terminate($endDate);
         $organizationMembership->load(['user', 'organization', 'organizationUnit', 'organizationPosition']);
 

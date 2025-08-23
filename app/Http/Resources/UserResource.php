@@ -21,7 +21,7 @@ class UserResource extends JsonResource
             'email_verified_at' => $this->email_verified_at,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
-            
+
             // Organization-specific data (when loaded via pivot)
             'membership' => $this->whenPivotLoaded('organization_memberships', function () {
                 return [
@@ -38,10 +38,10 @@ class UserResource extends JsonResource
                     'updated_at' => $this->pivot->updated_at,
                 ];
             }),
-            
+
             // Roles (when loaded)
             'roles' => RoleResource::collection($this->whenLoaded('roles')),
-            
+
             // Organizations (when loaded)
             'organizations' => OrganizationResource::collection($this->whenLoaded('organizations')),
         ];

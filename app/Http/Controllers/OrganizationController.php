@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Organization;
-use App\Models\User;
-use App\Models\OrganizationMembership;
+use App\Http\Requests\Organization\AddMemberRequest;
+use App\Http\Requests\Organization\CreateRoleRequest;
+use App\Http\Requests\Organization\StoreOrganizationRequest;
+use App\Http\Requests\Organization\UpdateMemberRequest;
+use App\Http\Requests\Organization\UpdateOrganizationRequest;
 use App\Models\Auth\Role;
+use App\Models\Organization;
+use App\Models\OrganizationMembership;
+use App\Models\User;
 use App\Services\ActivityLogService;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
@@ -50,27 +54,9 @@ class OrganizationController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreOrganizationRequest $request)
     {
-        $validated = $request->validate([
-            'organization_code' => 'nullable|string|unique:organizations',
-            'name' => 'required|string|max:255',
-            'organization_type' => 'required|in:holding_company,subsidiary,division,branch,department,unit',
-            'parent_organization_id' => 'nullable|exists:organizations,id',
-            'description' => 'nullable|string',
-            'address' => 'nullable|string|max:500',
-            'phone' => 'nullable|string|max:20',
-            'email' => 'nullable|email|max:255',
-            'website' => 'nullable|url|max:255',
-            'registration_number' => 'nullable|string|max:100',
-            'tax_number' => 'nullable|string|max:100',
-            'authorized_capital' => 'nullable|numeric|min:0',
-            'paid_capital' => 'nullable|numeric|min:0',
-            'establishment_date' => 'nullable|date',
-            'legal_status' => 'nullable|string|max:100',
-            'business_activities' => 'nullable|string',
-            'is_active' => 'boolean',
-        ]);
+        $validated = $request->validated();
 
         $organization = Organization::create($validated);
 
@@ -116,32 +102,9 @@ class OrganizationController extends Controller
         ]);
     }
 
-    public function update(Request $request, Organization $organization)
+    public function update(UpdateOrganizationRequest $request, Organization $organization)
     {
-        $validated = $request->validate([
-            'organization_code' => 'nullable|string|unique:organizations,organization_code,'.$organization->id,
-            'name' => 'required|string|max:255',
-            'organization_type' => 'required|in:holding_company,subsidiary,division,branch,department,unit',
-            'parent_organization_id' => 'nullable|exists:organizations,id',
-            'description' => 'nullable|string',
-            'address' => 'nullable|string|max:500',
-            'phone' => 'nullable|string|max:20',
-            'email' => 'nullable|email|max:255',
-            'website' => 'nullable|url|max:255',
-            'registration_number' => 'nullable|string|max:100',
-            'tax_number' => 'nullable|string|max:100',
-            'authorized_capital' => 'nullable|numeric|min:0',
-            'paid_capital' => 'nullable|numeric|min:0',
-            'establishment_date' => 'nullable|date',
-            'legal_status' => 'nullable|string|max:100',
-            'business_activities' => 'nullable|string',
-            'is_active' => 'boolean',
-        ]);
-
-        if (isset($validated['parent_organization_id']) && $validated['parent_organization_id'] == $organization->id) {
-            return redirect()->back()
-                ->withErrors(['parent_organization_id' => 'Organization cannot be its own parent']);
-        }
+        $validated = $request->validated();
 
         $oldParentId = $organization->parent_organization_id;
         $oldData = $organization->toArray();
@@ -236,22 +199,15 @@ class OrganizationController extends Controller
     /**
      * Add member to organization
      */
-    public function addMember(Request $request, Organization $organization)
+    public function addMember(AddMemberRequest $request, Organization $organization)
     {
-        $validated = $request->validate([
-            'user_id' => 'required|exists:sys_users,id',
-            'membership_type' => 'required|string|in:employee,contractor,board_member,executive',
-            'start_date' => 'required|date',
-            'end_date' => 'nullable|date|after:start_date',
-            'roles' => 'nullable|array',
-            'roles.*' => 'string',
-        ]);
+        $validated = $request->validated();
 
         // Check if user is already a member
         $existingMembership = OrganizationMembership::where([
             'user_id' => $validated['user_id'],
             'organization_id' => $organization->id,
-            'status' => 'active'
+            'status' => 'active',
         ])->first();
 
         if ($existingMembership) {
@@ -267,7 +223,7 @@ class OrganizationController extends Controller
         $membership = OrganizationMembership::create($validated);
 
         // Assign roles if provided
-        if (!empty($validated['roles'])) {
+        if (! empty($validated['roles'])) {
             $user = User::find($validated['user_id']);
             foreach ($validated['roles'] as $roleName) {
                 $user->assignRoleInOrganization($roleName, $organization);
@@ -281,20 +237,13 @@ class OrganizationController extends Controller
     /**
      * Update organization membership
      */
-    public function updateMember(Request $request, Organization $organization, OrganizationMembership $membership)
+    public function updateMember(UpdateMemberRequest $request, Organization $organization, OrganizationMembership $membership)
     {
         if ($membership->organization_id !== $organization->id) {
             abort(404, 'Membership not found in this organization');
         }
 
-        $validated = $request->validate([
-            'membership_type' => 'required|string|in:employee,contractor,board_member,executive',
-            'start_date' => 'required|date',
-            'end_date' => 'nullable|date|after:start_date',
-            'status' => 'required|in:active,inactive,terminated',
-            'roles' => 'nullable|array',
-            'roles.*' => 'string',
-        ]);
+        $validated = $request->validated();
 
         $validated['updated_by'] = Auth::id();
         $membership->update($validated);
@@ -302,13 +251,13 @@ class OrganizationController extends Controller
         // Update roles if provided
         if (isset($validated['roles'])) {
             $user = $membership->user;
-            
+
             // Remove existing roles in this organization
             $existingRoles = $user->getRolesInOrganization($organization)->get();
             foreach ($existingRoles as $role) {
                 $user->removeRoleFromOrganization($role->name, $organization);
             }
-            
+
             // Assign new roles
             foreach ($validated['roles'] as $roleName) {
                 $user->assignRoleInOrganization($roleName, $organization);
@@ -329,7 +278,7 @@ class OrganizationController extends Controller
         }
 
         $user = $membership->user;
-        
+
         // Remove all roles in this organization
         $existingRoles = $user->getRolesInOrganization($organization)->get();
         foreach ($existingRoles as $role) {
@@ -360,19 +309,15 @@ class OrganizationController extends Controller
     /**
      * Create organization role
      */
-    public function createRole(Request $request, Organization $organization)
+    public function createRole(CreateRoleRequest $request, Organization $organization)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'permissions' => 'nullable|array',
-            'permissions.*' => 'string|exists:sys_permissions,name',
-        ]);
+        $validated = $request->validated();
 
         // Check if role already exists for this organization
         $existingRole = Role::where([
             'name' => $validated['name'],
             'team_id' => $organization->id,
-            'guard_name' => 'web'
+            'guard_name' => 'web',
         ])->first();
 
         if ($existingRole) {
@@ -390,7 +335,7 @@ class OrganizationController extends Controller
             'updated_by' => Auth::id(),
         ]);
 
-        if (!empty($validated['permissions'])) {
+        if (! empty($validated['permissions'])) {
             $role->givePermissionTo($validated['permissions']);
         }
 

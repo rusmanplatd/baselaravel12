@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\OAuth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\OAuth\ApproveRequest;
+use App\Http\Requests\OAuth\AuthorizeRequest;
+use App\Http\Requests\OAuth\IntrospectRequest;
 use App\Models\OAuthAuditLog;
 use App\Models\OAuthScope;
 use App\Models\Organization;
@@ -12,22 +15,30 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
+use Knuckles\Scribe\Attributes\Authenticated;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\QueryParam;
+use Knuckles\Scribe\Attributes\Response as ScribeResponse;
 use Laravel\Passport\Client;
 use Laravel\Passport\Passport;
 
+#[Group("OAuth 2.0 & OpenID Connect")]
 class OAuthController extends Controller
 {
-    public function authorize(Request $request)
+    #[Endpoint(
+        title: "OAuth 2.0 Authorization",
+        description: "Initiate OAuth 2.0 authorization flow with organization-scoped clients"
+    )]
+    #[Authenticated]
+    #[QueryParam("client_id", "string", "OAuth client ID", true, "9a5d7f8e-1234-5678-9abc-def012345678")]
+    #[QueryParam("redirect_uri", "string", "Redirect URI registered with the client", true, "https://example.com/callback")]
+    #[QueryParam("response_type", "string", "OAuth response type", true, "code")]
+    #[QueryParam("scope", "string", "Requested scopes (space-separated)", false, "openid profile organization:read")]
+    #[QueryParam("state", "string", "CSRF protection state parameter", false, "random-state-string")]
+    #[ScribeResponse(null, 302, headers: ["Location" => "https://example.com/callback?code=auth_code&state=random-state-string"])]
+    public function authorize(AuthorizeRequest $request)
     {
-        $request->validate([
-            'client_id' => 'required|string',
-            'redirect_uri' => 'required|url',
-            'response_type' => 'required|in:code,token',
-            'scope' => 'sometimes|string',
-            'state' => 'sometimes|string',
-            'code_challenge' => 'sometimes|string|min:43|max:128',
-            'code_challenge_method' => 'sometimes|string|in:plain,S256',
-        ]);
 
         if (! Auth::check()) {
             return redirect()->route('login')->with('oauth_request', $request->all());
@@ -123,17 +134,8 @@ class OAuthController extends Controller
         ]);
     }
 
-    public function approve(Request $request)
+    public function approve(ApproveRequest $request)
     {
-        $request->validate([
-            'client_id' => 'required|string',
-            'redirect_uri' => 'required|url',
-            'scopes' => 'required|array',
-            'state' => 'sometimes|string',
-            'response_type' => 'required|in:code,token',
-            'code_challenge' => 'sometimes|string|min:43|max:128',
-            'code_challenge_method' => 'sometimes|string|in:plain,S256',
-        ]);
 
         $client = Client::with('organization')->findOrFail($request->client_id);
 
@@ -299,11 +301,9 @@ class OAuthController extends Controller
         ]);
     }
 
-    public function introspect(Request $request)
+    public function introspect(IntrospectRequest $request)
     {
-        $request->validate([
-            'token' => 'required|string',
-        ]);
+        $validated = $request->validated();
 
         $token = DB::table('oauth_access_tokens')
             ->where('id', $request->token)

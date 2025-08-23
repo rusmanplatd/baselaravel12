@@ -3,16 +3,33 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\MfaDisableRequest;
+use App\Http\Requests\Auth\MfaSetupRequest;
+use App\Http\Requests\Auth\MfaVerifyRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Knuckles\Scribe\Attributes\Authenticated;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\Response as ScribeResponse;
 
+#[Group("Multi-Factor Authentication")]
 class MfaApiController extends Controller
 {
-    /**
-     * Get MFA status for the authenticated user
-     */
+    #[Endpoint(
+        title: "Get MFA status",
+        description: "Retrieve the current MFA configuration status for the authenticated user"
+    )]
+    #[Authenticated]
+    #[ScribeResponse([
+        "mfa_enabled" => true,
+        "totp_enabled" => true,
+        "backup_codes_count" => 8,
+        "created_at" => "2024-01-15T10:30:00Z",
+        "confirmed_at" => "2024-01-15T10:35:00Z"
+    ])]
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -27,9 +44,17 @@ class MfaApiController extends Controller
         ]);
     }
 
-    /**
-     * Enable MFA for the authenticated user
-     */
+    #[Endpoint(
+        title: "Initialize MFA setup",
+        description: "Start the MFA setup process by generating a TOTP secret and QR code"
+    )]
+    #[Authenticated]
+    #[ScribeResponse([
+        "message" => "MFA setup initiated",
+        "secret" => "JBSWY3DPEHPK3PXP",
+        "qr_code_url" => "otpauth://totp/Example:user@example.com?secret=JBSWY3DPEHPK3PXP&issuer=Example"
+    ], 201)]
+    #[ScribeResponse(["error" => "MFA is already enabled", "code" => "MFA_ALREADY_ENABLED"], 400)]
     public function store(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -65,12 +90,8 @@ class MfaApiController extends Controller
     /**
      * Confirm and fully enable MFA
      */
-    public function update(Request $request): JsonResponse
+    public function update(MfaSetupRequest $request): JsonResponse
     {
-        $request->validate([
-            'code' => 'required|string|size:6',
-            'password' => 'required|string',
-        ]);
 
         $user = $request->user();
 
@@ -112,11 +133,8 @@ class MfaApiController extends Controller
     /**
      * Disable MFA for the authenticated user
      */
-    public function destroy(Request $request): JsonResponse
+    public function destroy(MfaDisableRequest $request): JsonResponse
     {
-        $request->validate([
-            'password' => 'required|string',
-        ]);
 
         $user = $request->user();
 
@@ -150,11 +168,8 @@ class MfaApiController extends Controller
     /**
      * Verify MFA code
      */
-    public function verify(Request $request): JsonResponse
+    public function verify(MfaVerifyRequest $request): JsonResponse
     {
-        $request->validate([
-            'code' => 'required|string',
-        ]);
 
         $user = $request->user();
 
@@ -198,11 +213,8 @@ class MfaApiController extends Controller
     /**
      * Regenerate backup codes
      */
-    public function regenerateBackupCodes(Request $request): JsonResponse
+    public function regenerateBackupCodes(MfaDisableRequest $request): JsonResponse
     {
-        $request->validate([
-            'password' => 'required|string',
-        ]);
 
         $user = $request->user();
 

@@ -21,11 +21,11 @@ class OrganizationContext
     {
         // Get organization from route parameter
         $organization = $request->route('organization');
-        
+
         if ($organization instanceof Organization) {
             // Set the team context for permissions
             setPermissionsTeamId($organization->id);
-            
+
             // Add organization to request for easy access
             $request->merge(['current_organization' => $organization]);
         }

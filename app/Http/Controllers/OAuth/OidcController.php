@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\OAuth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\OAuth\OidcTokenRequest;
 use App\Models\OAuthAuditLog;
 use App\Models\Organization;
 use App\Services\JwtService;
@@ -19,15 +20,8 @@ class OidcController extends Controller
         $this->jwtService = $jwtService;
     }
 
-    public function token(Request $request)
+    public function token(OidcTokenRequest $request)
     {
-        $request->validate([
-            'grant_type' => 'required|string',
-            'client_id' => 'required|string',
-            'code' => 'required_if:grant_type,authorization_code',
-            'redirect_uri' => 'required_if:grant_type,authorization_code',
-            'code_verifier' => 'sometimes|string',
-        ]);
 
         if ($request->grant_type === 'authorization_code') {
             return $this->handleAuthorizationCodeGrant($request);

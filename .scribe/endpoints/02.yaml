@@ -1,0 +1,375 @@
+name: 'Role & Permission Management'
+description: ''
+endpoints:
+  -
+    httpMethods:
+      - GET
+    uri: api/v1/roles
+    metadata:
+      groupName: 'Role & Permission Management'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get roles'
+      description: 'Retrieve a paginated list of roles with their permissions, optionally filtered by organization'
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      organization_id:
+        name: organization_id
+        description: 'Filter by organization/team ID'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      search:
+        name: search
+        description: 'Search roles by name'
+        required: false
+        example: admin
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      per_page:
+        name: per_page
+        description: 'Number of results per page'
+        required: false
+        example: 15
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanQueryParameters:
+      organization_id: 1
+      search: admin
+      per_page: 15
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 200
+        content: '{"data":[{"id":1,"name":"admin","permissions":[{"name":"organization:admin"}]},{"id":2,"name":"member","permissions":[{"name":"organization:read"}]}],"meta":{"current_page":1,"total":2}}'
+        headers: []
+        description: ''
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - POST
+    uri: api/v1/roles
+    metadata:
+      groupName: 'Role & Permission Management'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Create role'
+      description: 'Create a new role with specified permissions'
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      name:
+        name: name
+        description: 'The name of the role. Must not be greater than 255 characters.'
+        required: true
+        example: manager
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      team_id:
+        name: team_id
+        description: 'The organization/team ID this role belongs to (optional). The <code>id</code> of an existing record in the organizations table.'
+        required: false
+        example: 1
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+      permissions:
+        name: permissions
+        description: 'The <code>name</code> of an existing record in the sys_permissions table.'
+        required: false
+        example:
+          - architecto
+        type: 'string[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanBodyParameters:
+      name: manager
+      team_id: 1
+      permissions:
+        - architecto
+    fileParameters: []
+    responses:
+      -
+        status: 201
+        content: '{"message":"Role created successfully","role":{"id":1,"name":"manager","permissions":[]}}'
+        headers: []
+        description: ''
+        custom: []
+      -
+        status: 400
+        content: '{"message":"Role already exists for this team\/guard combination"}'
+        headers: []
+        description: ''
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/v1/roles/{id}'
+    metadata:
+      groupName: 'Role & Permission Management'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Display the specified resource.'
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the role.'
+        required: true
+        example: 01k3ahgcrh158fp8ze1zv7v9dm
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      id: 01k3ahgcrh158fp8ze1zv7v9dm
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 200
+        content: '{"id":"01k3ahgcrh158fp8ze1zv7v9dm","team_id":"01k3ahgcgwbgdzwmy8an85afk4","name":"Super Admin","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","permissions":[{"id":"01k3ahgch7wxbk8trvdjkxxy0n","name":"view users","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgch7wxbk8trvdjkxxy0n"}},{"id":"01k3ahgchrfcmxgmy2mjjzvxv4","name":"create users","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgchrfcmxgmy2mjjzvxv4"}},{"id":"01k3ahgcj3dycqhbqc46f6c2r3","name":"edit users","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgcj3dycqhbqc46f6c2r3"}},{"id":"01k3ahgcjde0khrayg497ayfvg","name":"delete users","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgcjde0khrayg497ayfvg"}},{"id":"01k3ahgcjpdy8gs9q47yyysgpc","name":"view organizations","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgcjpdy8gs9q47yyysgpc"}},{"id":"01k3ahgcjz3g809h3v9jgccnxr","name":"create organizations","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgcjz3g809h3v9jgccnxr"}},{"id":"01k3ahgck9tahg0z3nb9t11cwy","name":"edit organizations","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgck9tahg0z3nb9t11cwy"}},{"id":"01k3ahgckj32svw6gzzhyz6q43","name":"delete organizations","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgckj32svw6gzzhyz6q43"}},{"id":"01k3ahgckvs01gzba6nxk8ghh5","name":"view organization units","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgckvs01gzba6nxk8ghh5"}},{"id":"01k3ahgcm3q6gh2yja4pcmt1wn","name":"create organization units","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgcm3q6gh2yja4pcmt1wn"}},{"id":"01k3ahgcmca4hhfswc5n0bwd54","name":"edit organization units","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgcmca4hhfswc5n0bwd54"}},{"id":"01k3ahgcmnq9zh4b6sbzpra8kd","name":"delete organization units","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgcmnq9zh4b6sbzpra8kd"}},{"id":"01k3ahgcmynqvax2z5jbapbqm5","name":"view organization positions","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgcmynqvax2z5jbapbqm5"}},{"id":"01k3ahgcn7dg8s2eeqjb41krdr","name":"create organization positions","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgcn7dg8s2eeqjb41krdr"}},{"id":"01k3ahgcnf9ga2jgnszt3ywwbe","name":"edit organization positions","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgcnf9ga2jgnszt3ywwbe"}},{"id":"01k3ahgcnrj2se0c0cmwj5wkbf","name":"delete organization positions","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgcnrj2se0c0cmwj5wkbf"}},{"id":"01k3ahgcp0cwgczct5f6983rk8","name":"view organization memberships","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgcp0cwgczct5f6983rk8"}},{"id":"01k3ahgcp99x5zsa9fb6w8em0n","name":"create organization memberships","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgcp99x5zsa9fb6w8em0n"}},{"id":"01k3ahgcpj0vxzncc76qd62enp","name":"edit organization memberships","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgcpj0vxzncc76qd62enp"}},{"id":"01k3ahgcpvvshkcemzfcxetpay","name":"delete organization memberships","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgcpvvshkcemzfcxetpay"}},{"id":"01k3ahgcq4a8yc6gs9ytw04rhz","name":"view system settings","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgcq4a8yc6gs9ytw04rhz"}},{"id":"01k3ahgcqd27c9kbhsxd3wbewg","name":"edit system settings","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgcqd27c9kbhsxd3wbewg"}},{"id":"01k3ahgcqntpr39b0wak3d5a3z","name":"view audit logs","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgcqntpr39b0wak3d5a3z"}},{"id":"01k3ahgcqywx6e2aq65va4hkfm","name":"manage roles","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgcqywx6e2aq65va4hkfm"}},{"id":"01k3ahgcr6nxx4h59t6bc9xyx5","name":"manage permissions","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgcr6nxx4h59t6bc9xyx5"}}],"users":[{"id":"01k3ahgcdg9dzsh45sdpbcff64","name":"Test User","email":"test@example.com","email_verified_at":"2025-08-23T04:03:09.000000Z","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":null,"updated_by":null,"pivot":{"model_type":"App\\Models\\User","role_id":"01k3ahgcrh158fp8ze1zv7v9dm","model_id":"01k3ahgcdg9dzsh45sdpbcff64"}}]}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - PUT
+      - PATCH
+    uri: 'api/v1/roles/{id}'
+    metadata:
+      groupName: 'Role & Permission Management'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Update the specified resource in storage.'
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the role.'
+        required: true
+        example: 01k3ahgcrh158fp8ze1zv7v9dm
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      id: 01k3ahgcrh158fp8ze1zv7v9dm
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      name:
+        name: name
+        description: 'The name of the role. Must not be greater than 255 characters.'
+        required: true
+        example: manager
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      permissions:
+        name: permissions
+        description: 'The <code>name</code> of an existing record in the sys_permissions table.'
+        required: false
+        example:
+          - architecto
+        type: 'string[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanBodyParameters:
+      name: manager
+      permissions:
+        - architecto
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - DELETE
+    uri: 'api/v1/roles/{id}'
+    metadata:
+      groupName: 'Role & Permission Management'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Remove the specified resource from storage.'
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the role.'
+        required: true
+        example: 01k3ahgcrh158fp8ze1zv7v9dm
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      id: 01k3ahgcrh158fp8ze1zv7v9dm
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: api/v1/permissions
+    metadata:
+      groupName: 'Role & Permission Management'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get all available permissions'
+      description: ''
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 200
+        content: '[{"id":"01k3ahgcp99x5zsa9fb6w8em0n","name":"create organization memberships"},{"id":"01k3ahgcn7dg8s2eeqjb41krdr","name":"create organization positions"},{"id":"01k3ahgcjz3g809h3v9jgccnxr","name":"create organizations"},{"id":"01k3ahgcm3q6gh2yja4pcmt1wn","name":"create organization units"},{"id":"01k3ahgchrfcmxgmy2mjjzvxv4","name":"create users"},{"id":"01k3ahgcpvvshkcemzfcxetpay","name":"delete organization memberships"},{"id":"01k3ahgcnrj2se0c0cmwj5wkbf","name":"delete organization positions"},{"id":"01k3ahgckj32svw6gzzhyz6q43","name":"delete organizations"},{"id":"01k3ahgcmnq9zh4b6sbzpra8kd","name":"delete organization units"},{"id":"01k3ahgcjde0khrayg497ayfvg","name":"delete users"},{"id":"01k3ahgcpj0vxzncc76qd62enp","name":"edit organization memberships"},{"id":"01k3ahgcnf9ga2jgnszt3ywwbe","name":"edit organization positions"},{"id":"01k3ahgck9tahg0z3nb9t11cwy","name":"edit organizations"},{"id":"01k3ahgcmca4hhfswc5n0bwd54","name":"edit organization units"},{"id":"01k3ahgcqd27c9kbhsxd3wbewg","name":"edit system settings"},{"id":"01k3ahgcj3dycqhbqc46f6c2r3","name":"edit users"},{"id":"01k3ahgcr6nxx4h59t6bc9xyx5","name":"manage permissions"},{"id":"01k3ahgcqywx6e2aq65va4hkfm","name":"manage roles"},{"id":"01k3ahgcqntpr39b0wak3d5a3z","name":"view audit logs"},{"id":"01k3ahgcp0cwgczct5f6983rk8","name":"view organization memberships"},{"id":"01k3ahgcmynqvax2z5jbapbqm5","name":"view organization positions"},{"id":"01k3ahgcjpdy8gs9q47yyysgpc","name":"view organizations"},{"id":"01k3ahgckvs01gzba6nxk8ghh5","name":"view organization units"},{"id":"01k3ahgcq4a8yc6gs9ytw04rhz","name":"view system settings"},{"id":"01k3ahgch7wxbk8trvdjkxxy0n","name":"view users"}]'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+        description: null
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []

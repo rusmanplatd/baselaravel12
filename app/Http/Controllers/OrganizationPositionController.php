@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\OrganizationPosition\StoreOrganizationPositionRequest;
+use App\Http\Requests\OrganizationPosition\UpdateOrganizationPositionRequest;
 use App\Models\OrganizationPosition;
 use App\Models\OrganizationUnit;
 use Illuminate\Http\Request;
@@ -55,21 +57,9 @@ class OrganizationPositionController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreOrganizationPositionRequest $request)
     {
-        $validated = $request->validate([
-            'organization_unit_id' => 'required|exists:organization_units,id',
-            'position_code' => 'required|string|unique:organization_positions',
-            'title' => 'required|string|max:255',
-            'position_level' => 'required|in:board_member,c_level,vice_president,director,senior_manager,manager,assistant_manager,supervisor,senior_staff,staff,junior_staff',
-            'job_description' => 'nullable|string',
-            'qualifications' => 'nullable|array',
-            'responsibilities' => 'nullable|array',
-            'min_salary' => 'nullable|numeric|min:0',
-            'max_salary' => 'nullable|numeric|min:0|gte:min_salary',
-            'is_active' => 'boolean',
-            'max_incumbents' => 'integer|min:1',
-        ]);
+        $validated = $request->validated();
 
         OrganizationPosition::create($validated);
 
@@ -102,20 +92,9 @@ class OrganizationPositionController extends Controller
         ]);
     }
 
-    public function update(Request $request, OrganizationPosition $organizationPosition)
+    public function update(UpdateOrganizationPositionRequest $request, OrganizationPosition $organizationPosition)
     {
-        $validated = $request->validate([
-            'position_code' => 'required|string|unique:organization_positions,position_code,'.$organizationPosition->id,
-            'title' => 'required|string|max:255',
-            'position_level' => 'required|in:board_member,c_level,vice_president,director,senior_manager,manager,assistant_manager,supervisor,senior_staff,staff,junior_staff',
-            'job_description' => 'nullable|string',
-            'qualifications' => 'nullable|array',
-            'responsibilities' => 'nullable|array',
-            'min_salary' => 'nullable|numeric|min:0',
-            'max_salary' => 'nullable|numeric|min:0|gte:min_salary',
-            'is_active' => 'boolean',
-            'max_incumbents' => 'integer|min:1',
-        ]);
+        $validated = $request->validated();
 
         $organizationPosition->update($validated);
 

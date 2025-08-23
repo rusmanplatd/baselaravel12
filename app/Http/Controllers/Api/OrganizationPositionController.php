@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\OrganizationPosition\StoreOrganizationPositionRequest;
+use App\Http\Requests\OrganizationPosition\UpdateOrganizationPositionRequest;
 use App\Models\OrganizationPosition;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -46,21 +48,8 @@ class OrganizationPositionController extends Controller
         return response()->json($positions);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreOrganizationPositionRequest $request): JsonResponse
     {
-        $request->validate([
-            'organization_unit_id' => 'required|exists:organization_units,id',
-            'position_code' => 'required|string|unique:organization_positions',
-            'title' => 'required|string|max:255',
-            'position_level' => 'required|in:board_member,c_level,vice_president,director,senior_manager,manager,assistant_manager,supervisor,senior_staff,staff,junior_staff',
-            'job_description' => 'nullable|string',
-            'qualifications' => 'nullable|array',
-            'responsibilities' => 'nullable|array',
-            'min_salary' => 'nullable|numeric|min:0',
-            'max_salary' => 'nullable|numeric|min:0|gte:min_salary',
-            'is_active' => 'boolean',
-            'max_incumbents' => 'integer|min:1',
-        ]);
 
         $position = OrganizationPosition::create($request->all());
         $position->load(['organizationUnit.organization', 'activeMemberships.user']);
@@ -79,20 +68,8 @@ class OrganizationPositionController extends Controller
         return response()->json($organizationPosition);
     }
 
-    public function update(Request $request, OrganizationPosition $organizationPosition): JsonResponse
+    public function update(UpdateOrganizationPositionRequest $request, OrganizationPosition $organizationPosition): JsonResponse
     {
-        $request->validate([
-            'position_code' => 'required|string|unique:organization_positions,position_code,'.$organizationPosition->id,
-            'title' => 'required|string|max:255',
-            'position_level' => 'required|in:board_member,c_level,vice_president,director,senior_manager,manager,assistant_manager,supervisor,senior_staff,staff,junior_staff',
-            'job_description' => 'nullable|string',
-            'qualifications' => 'nullable|array',
-            'responsibilities' => 'nullable|array',
-            'min_salary' => 'nullable|numeric|min:0',
-            'max_salary' => 'nullable|numeric|min:0|gte:min_salary',
-            'is_active' => 'boolean',
-            'max_incumbents' => 'integer|min:1',
-        ]);
 
         $organizationPosition->update($request->all());
         $organizationPosition->load(['organizationUnit.organization', 'activeMemberships.user']);
