@@ -59,7 +59,7 @@ export default function PermissionsIndex({ permissions, guardNames, filters }: P
                 preserveScroll: true,
             });
         }, 500),
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+         
         [filters]
     );
 

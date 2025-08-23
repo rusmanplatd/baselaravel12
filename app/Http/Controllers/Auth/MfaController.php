@@ -39,6 +39,9 @@ class MfaController extends Controller
 
         $secret = $user->generateTotpSecret();
         $qrCodeUrl = $user->getTotpQrCodeUrl($secret);
+        
+        // Generate QR code as base64 data URL
+        $qrCodeImage = $user->getTotpQrCodeImage($secret);
 
         $mfaSettings = $user->mfaSettings()->firstOrCreate([
             'user_id' => $user->id,
@@ -53,6 +56,7 @@ class MfaController extends Controller
             'success' => true,
             'secret' => $secret,
             'qr_code_url' => $qrCodeUrl,
+            'qr_code_image' => $qrCodeImage,
         ]);
     }
 

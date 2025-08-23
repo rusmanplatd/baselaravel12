@@ -43,12 +43,8 @@ class AuthenticatedSessionController extends Controller
             'has_mfa' => $user->hasMfaEnabled(),
         ], $user);
 
-        // Check if user has MFA enabled
-        if ($user->hasMfaEnabled()) {
-            // Don't mark MFA as verified yet - they need to complete the challenge
-            return redirect()->route('mfa.setup'); // This will be caught by middleware
-        }
-
+        // Always redirect to intended route
+        // If user has MFA enabled, the mfa.verified middleware will catch it and show challenge
         return redirect()->intended(route('dashboard', absolute: false));
     }
 

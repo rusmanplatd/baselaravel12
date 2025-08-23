@@ -66,7 +66,7 @@ export default function RolesIndex({ roles, organizations, filters }: Props) {
                 preserveScroll: true,
             });
         }, 500),
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+         
         [filters]
     );
 

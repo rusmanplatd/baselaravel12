@@ -74,8 +74,14 @@ class WebAuthnController extends Controller
 
             $request->session()->regenerate();
 
+            // If user has TOTP MFA enabled, they still need to verify it
+            // WebAuthn is a separate form of authentication, not a replacement for TOTP MFA
+            $requiresMfaChallenge = $user->hasMfaEnabled();
+
             return response()->json([
                 'success' => true,
+                'requires_mfa' => $requiresMfaChallenge,
+                'redirect_url' => $requiresMfaChallenge ? null : route('dashboard'),
                 'user' => [
                     'id' => $user->id,
                     'name' => $user->name,

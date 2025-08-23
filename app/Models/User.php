@@ -93,6 +93,32 @@ class User extends Authenticatable implements HasPasskeys
         );
     }
 
+    public function getTotpQrCodeImage(string $secret): string
+    {
+        $companyName = config('app.name');
+        $companyEmail = $this->email;
+
+        // Generate QR code URL first
+        $google2fa = app(Google2FA::class);
+        $qrCodeUrl = $google2fa->getQRCodeUrl(
+            $companyName,
+            $companyEmail,
+            $secret
+        );
+
+        // Generate QR code image as SVG using BaconQrCode
+        $renderer = new \BaconQrCode\Renderer\ImageRenderer(
+            new \BaconQrCode\Renderer\RendererStyle\RendererStyle(200),
+            new \BaconQrCode\Renderer\Image\SvgImageBackEnd()
+        );
+        
+        $writer = new \BaconQrCode\Writer($renderer);
+        $svg = $writer->writeString($qrCodeUrl);
+        
+        // Convert SVG to data URL
+        return 'data:image/svg+xml;base64,' . base64_encode($svg);
+    }
+
     public function verifyTotpCode(string $code): bool
     {
         if (! $this->mfaSettings || ! $this->mfaSettings->totp_secret) {

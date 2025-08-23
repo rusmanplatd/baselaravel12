@@ -41,8 +41,14 @@ export default function WebAuthnLogin({ onSuccess }: WebAuthnLoginProps) {
                 if (onSuccess) {
                     onSuccess();
                 } else {
-                    // Redirect to dashboard or intended page
-                    router.visit('/dashboard');
+                    // Check if MFA is required
+                    if (result.requires_mfa) {
+                        // User needs to complete MFA challenge
+                        router.visit('/dashboard'); // This will be intercepted by MFA middleware
+                    } else {
+                        // Direct login to dashboard
+                        router.visit(result.redirect_url || '/dashboard');
+                    }
                 }
             } else {
                 setError(result.error || 'Authentication failed');

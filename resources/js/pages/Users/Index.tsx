@@ -57,7 +57,7 @@ export default function UsersIndex({ users, filters }: Props) {
                 preserveScroll: true,
             });
         }, 500),
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+         
         [filters]
     );
 

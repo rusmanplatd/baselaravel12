@@ -21,4 +21,16 @@ Route::middleware('auth')->group(function () {
     Route::get('settings/appearance', function () {
         return Inertia::render('settings/appearance');
     })->name('appearance');
+
+    Route::get('settings/security', function () {
+        $user = auth()->user();
+        $mfaSettings = $user->mfaSettings;
+        $passkeys = $user->passkeys()->select(['id', 'name', 'created_at'])->get();
+        
+        return Inertia::render('settings/security', [
+            'mfaEnabled' => $mfaSettings?->hasMfaEnabled() ?? false,
+            'hasBackupCodes' => $mfaSettings?->hasBackupCodes() ?? false,
+            'passkeys' => $passkeys,
+        ]);
+    })->name('security');
 });
