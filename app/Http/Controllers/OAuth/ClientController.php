@@ -4,6 +4,7 @@ namespace App\Http\Controllers\OAuth;
 
 use App\Http\Controllers\Controller;
 use App\Models\Organization;
+use App\Services\ActivityLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -18,6 +19,12 @@ class ClientController extends Controller
     public function __construct(ClientRepository $clients)
     {
         $this->clients = $clients;
+
+        $this->middleware('permission:oauth.client.view')->only(['index', 'show']);
+        $this->middleware('permission:oauth.client.create')->only(['store']);
+        $this->middleware('permission:oauth.client.edit')->only(['update']);
+        $this->middleware('permission:oauth.client.delete')->only(['destroy']);
+        $this->middleware('permission:oauth.client.regenerate')->only(['regenerateSecret']);
     }
 
     public function index()
@@ -139,6 +146,14 @@ class ClientController extends Controller
             $client->update(['allowed_scopes' => json_encode($defaultScopes)]);
         }
 
+        // Log OAuth client creation
+        ActivityLogService::logOAuth('client_created', 'OAuth client created: '.$client->name, [
+            'client_id' => $client->id,
+            'client_name' => $client->name,
+            'organization_id' => $request->organization_id,
+            'client_type' => $request->client_type,
+        ]);
+
         return response()->json([
             'id' => $client->id,
             'name' => $client->name,
@@ -190,6 +205,13 @@ class ClientController extends Controller
 
         $client->update($updateData);
 
+        // Log OAuth client update
+        ActivityLogService::logOAuth('client_updated', 'OAuth client updated: '.$client->name, [
+            'client_id' => $client->id,
+            'client_name' => $client->name,
+            'changes' => array_keys($updateData),
+        ]);
+
         return response()->json([
             'id' => $client->id,
             'name' => $client->name,
@@ -214,6 +236,12 @@ class ClientController extends Controller
             ->where('id', $clientId)
             ->firstOrFail();
 
+        // Log OAuth client revocation
+        ActivityLogService::logOAuth('client_revoked', 'OAuth client revoked: '.$client->name, [
+            'client_id' => $client->id,
+            'client_name' => $client->name,
+        ]);
+
         $client->update(['revoked' => true]);
 
         return response()->json(['message' => 'Client revoked successfully']);
@@ -232,6 +260,12 @@ class ClientController extends Controller
             ->whereIn('organization_id', $userManagementOrgs)
             ->where('id', $clientId)
             ->firstOrFail();
+
+        // Log OAuth client secret regeneration
+        ActivityLogService::logOAuth('client_secret_regenerated', 'OAuth client secret regenerated: '.$client->name, [
+            'client_id' => $client->id,
+            'client_name' => $client->name,
+        ]);
 
         $client->update(['secret' => Str::random(40)]);
 

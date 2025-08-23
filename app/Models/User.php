@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -151,5 +152,89 @@ class User extends Authenticatable implements HasPasskeys
         return $this->activeOrganizationMemberships()
             ->management()
             ->exists();
+    }
+
+    public function organizations(): BelongsToMany
+    {
+        return $this->belongsToMany(Organization::class, 'organization_memberships')
+            ->withPivot([
+                'organization_unit_id',
+                'organization_position_id', 
+                'membership_type',
+                'start_date',
+                'end_date',
+                'status',
+                'additional_roles'
+            ])
+            ->withTimestamps();
+    }
+
+    public function activeOrganizations(): BelongsToMany
+    {
+        return $this->organizations()
+            ->wherePivot('status', 'active')
+            ->wherePivot('start_date', '<=', now())
+            ->where(function ($query) {
+                $query->wherePivotNull('end_date')
+                    ->orWherePivot('end_date', '>=', now());
+            });
+    }
+
+    public function assignRoleInOrganization(string $roleName, Organization $organization): void
+    {
+        // Use setPermissionsTeamId for team context in assignments
+        setPermissionsTeamId($organization->id);
+        $this->assignRole($roleName);
+        setPermissionsTeamId(null);
+    }
+
+    public function removeRoleFromOrganization(string $roleName, Organization $organization): void
+    {
+        setPermissionsTeamId($organization->id);
+        $this->removeRole($roleName);
+        setPermissionsTeamId(null);
+    }
+
+    public function hasRoleInOrganization(string $roleName, Organization $organization): bool
+    {
+        setPermissionsTeamId($organization->id);
+        $result = $this->hasRole($roleName);
+        setPermissionsTeamId(null);
+        return $result;
+    }
+
+    public function getRolesInOrganization(Organization $organization)
+    {
+        return $this->roles()->where('sys_roles.team_id', $organization->id);
+    }
+
+    public function getPermissionsInOrganization(Organization $organization)
+    {
+        setPermissionsTeamId($organization->id);
+        $permissions = $this->getAllPermissions();
+        setPermissionsTeamId(null);
+        return $permissions;
+    }
+
+    public function canInOrganization(string $permission, Organization $organization): bool
+    {
+        setPermissionsTeamId($organization->id);
+        $result = $this->can($permission);
+        setPermissionsTeamId(null);
+        return $result;
+    }
+
+    public function givePermissionToInOrganization(string $permission, Organization $organization): void
+    {
+        setPermissionsTeamId($organization->id);
+        $this->givePermissionTo($permission);
+        setPermissionsTeamId(null);
+    }
+
+    public function revokePermissionFromOrganization(string $permission, Organization $organization): void
+    {
+        setPermissionsTeamId($organization->id);
+        $this->revokePermissionTo($permission);
+        setPermissionsTeamId(null);
     }
 }

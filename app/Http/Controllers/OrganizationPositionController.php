@@ -9,6 +9,14 @@ use Inertia\Inertia;
 
 class OrganizationPositionController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:position.view')->only(['index', 'show']);
+        $this->middleware('permission:position.create')->only(['create', 'store']);
+        $this->middleware('permission:position.edit')->only(['edit', 'update']);
+        $this->middleware('permission:position.delete')->only(['destroy']);
+    }
+
     public function index(Request $request)
     {
         $query = OrganizationPosition::query()

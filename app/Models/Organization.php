@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Spatie\Multitenancy\Models\Tenant;
 
 class Organization extends Model
@@ -35,6 +36,8 @@ class Organization extends Model
         'level',
         'path',
         'is_active',
+        'created_by',
+        'updated_by',
     ];
 
     protected $casts = [
@@ -137,6 +140,32 @@ class Organization extends Model
             'domain' => strtolower($this->organization_code).'.example.com',
             'database' => 'tenant_'.strtolower($this->organization_code),
         ]);
+    }
+
+    public function users(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'organization_memberships')
+            ->withPivot([
+                'organization_unit_id',
+                'organization_position_id', 
+                'membership_type',
+                'start_date',
+                'end_date',
+                'status',
+                'additional_roles'
+            ])
+            ->withTimestamps();
+    }
+
+    public function activeUsers(): BelongsToMany
+    {
+        return $this->users()
+            ->wherePivot('status', 'active')
+            ->wherePivot('start_date', '<=', now())
+            ->where(function ($query) {
+                $query->wherePivotNull('end_date')
+                    ->orWherePivot('end_date', '>=', now());
+            });
     }
 
     public function getAvailableOAuthScopes(): array

@@ -25,8 +25,36 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'mfa.verified' => \App\Http\Middleware\EnsureMfaVerified::class,
+            'permission' => \App\Http\Middleware\CheckPermission::class,
+            'role' => \App\Http\Middleware\CheckRole::class,
+            'organization.access' => \App\Http\Middleware\CheckOrganizationAccess::class,
+            'organization.context' => \App\Http\Middleware\OrganizationContext::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        $exceptions->render(function (Throwable $e, $request) {
+            // Enhanced error handling with activity logging
+            if ($request->is('api/*')) {
+                return null; // Let default API error handling work
+            }
+
+            // Log the exception for monitoring
+            if (app()->bound('ActivityLogService')) {
+                try {
+                    \App\Services\ActivityLogService::logSystem('exception_occurred', 'Application exception: '.get_class($e), [
+                        'exception_class' => get_class($e),
+                        'message' => $e->getMessage(),
+                        'file' => $e->getFile(),
+                        'line' => $e->getLine(),
+                        'url' => $request->url(),
+                        'method' => $request->method(),
+                        'user_agent' => $request->userAgent(),
+                    ]);
+                } catch (\Exception $logException) {
+                    // Silently fail if logging fails to avoid infinite loops
+                }
+            }
+
+            return null; // Continue with default error handling
+        });
     })->create();

@@ -10,6 +10,11 @@ use Inertia\Inertia;
 
 class AnalyticsController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:oauth.analytics.view');
+    }
+
     public function dashboard()
     {
         $stats = $this->getOverallStats();

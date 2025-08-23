@@ -7,12 +7,24 @@ use App\Models\OrganizationMembership;
 use App\Models\OrganizationPosition;
 use App\Models\OrganizationUnit;
 use App\Models\User;
+use App\Services\ActivityLogService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class OrganizationMembershipController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:membership.view')->only(['index', 'show', 'boardMembers', 'executives']);
+        $this->middleware('permission:membership.create')->only(['create', 'store']);
+        $this->middleware('permission:membership.edit')->only(['edit', 'update']);
+        $this->middleware('permission:membership.delete')->only(['destroy']);
+        $this->middleware('permission:membership.activate')->only(['activate']);
+        $this->middleware('permission:membership.deactivate')->only(['deactivate']);
+        $this->middleware('permission:membership.terminate')->only(['terminate']);
+    }
+
     public function index(Request $request)
     {
         $query = OrganizationMembership::query()
@@ -97,7 +109,17 @@ class OrganizationMembershipController extends Controller
             }
         }
 
-        OrganizationMembership::create($validated);
+        $membership = OrganizationMembership::create($validated);
+        $membership->load(['user', 'organization', 'organizationPosition']);
+
+        // Log membership creation
+        ActivityLogService::logOrganization('membership_created', 'Organization membership created for '.$membership->user->name, [
+            'user_name' => $membership->user->name,
+            'user_email' => $membership->user->email,
+            'organization_name' => $membership->organization->name,
+            'membership_type' => $membership->membership_type,
+            'position_title' => $membership->organizationPosition?->title,
+        ], $membership);
 
         return redirect()->route('organization-memberships.index')
             ->with('success', 'Organization membership created successfully.');
@@ -167,7 +189,16 @@ class OrganizationMembershipController extends Controller
             }
         }
 
+        $oldData = $organizationMembership->toArray();
         $organizationMembership->update($validated);
+        $organizationMembership->load(['user', 'organization', 'organizationPosition']);
+
+        // Log membership update
+        ActivityLogService::logOrganization('membership_updated', 'Organization membership updated for '.$organizationMembership->user->name, [
+            'user_name' => $organizationMembership->user->name,
+            'organization_name' => $organizationMembership->organization->name,
+            'changes' => array_diff_assoc($validated, $oldData),
+        ], $organizationMembership);
 
         return redirect()->route('organization-memberships.index')
             ->with('success', 'Organization membership updated successfully.');
@@ -175,6 +206,15 @@ class OrganizationMembershipController extends Controller
 
     public function destroy(OrganizationMembership $organizationMembership)
     {
+        // Log membership deletion before deleting
+        $organizationMembership->load(['user', 'organization']);
+        ActivityLogService::logOrganization('membership_deleted', 'Organization membership deleted for '.$organizationMembership->user->name, [
+            'user_name' => $organizationMembership->user->name,
+            'user_email' => $organizationMembership->user->email,
+            'organization_name' => $organizationMembership->organization->name,
+            'membership_type' => $organizationMembership->membership_type,
+        ], $organizationMembership);
+
         $organizationMembership->delete();
 
         return redirect()->route('organization-memberships.index')
@@ -192,6 +232,13 @@ class OrganizationMembershipController extends Controller
         }
 
         $organizationMembership->activate();
+        $organizationMembership->load(['user', 'organization']);
+
+        // Log membership activation
+        ActivityLogService::logOrganization('membership_activated', 'Organization membership activated for '.$organizationMembership->user->name, [
+            'user_name' => $organizationMembership->user->name,
+            'organization_name' => $organizationMembership->organization->name,
+        ], $organizationMembership);
 
         return redirect()->back()
             ->with('success', 'Membership activated successfully.');
@@ -199,6 +246,14 @@ class OrganizationMembershipController extends Controller
 
     public function deactivate(OrganizationMembership $organizationMembership)
     {
+        $organizationMembership->load(['user', 'organization']);
+
+        // Log membership deactivation
+        ActivityLogService::logOrganization('membership_deactivated', 'Organization membership deactivated for '.$organizationMembership->user->name, [
+            'user_name' => $organizationMembership->user->name,
+            'organization_name' => $organizationMembership->organization->name,
+        ], $organizationMembership);
+
         $organizationMembership->deactivate();
 
         return redirect()->back()
@@ -212,6 +267,15 @@ class OrganizationMembershipController extends Controller
         ]);
 
         $endDate = $validated['end_date'] ? Carbon::parse($validated['end_date']) : null;
+        $organizationMembership->load(['user', 'organization']);
+
+        // Log membership termination
+        ActivityLogService::logOrganization('membership_terminated', 'Organization membership terminated for '.$organizationMembership->user->name, [
+            'user_name' => $organizationMembership->user->name,
+            'organization_name' => $organizationMembership->organization->name,
+            'end_date' => $endDate?->toDateString(),
+        ], $organizationMembership);
+
         $organizationMembership->terminate($endDate);
 
         return redirect()->back()

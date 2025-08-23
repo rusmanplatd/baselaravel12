@@ -21,6 +21,8 @@ class OrganizationMembership extends Model
         'end_date',
         'status',
         'additional_roles',
+        'created_by',
+        'updated_by',
     ];
 
     protected $casts = [

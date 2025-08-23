@@ -4,9 +4,14 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\OrganizationResource;
+use App\Http\Resources\UserResource;
 use App\Models\Organization;
+use App\Models\User;
+use App\Models\OrganizationMembership;
+use App\Models\Auth\Role;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
 
 class OrganizationController extends Controller
 {
@@ -81,6 +86,9 @@ class OrganizationController extends Controller
             'is_active' => 'boolean',
         ]);
 
+        $validated['created_by'] = Auth::id();
+        $validated['updated_by'] = Auth::id();
+
         $organization = Organization::create($validated);
 
         if ($organization->parent_organization_id) {
@@ -137,6 +145,8 @@ class OrganizationController extends Controller
                 'message' => 'Organization cannot be its own parent',
             ], 400);
         }
+
+        $validated['updated_by'] = Auth::id();
 
         $oldParentId = $organization->parent_organization_id;
         $organization->update($validated);
@@ -202,5 +212,201 @@ class OrganizationController extends Controller
             ->get();
 
         return OrganizationResource::collection($organizations);
+    }
+
+    /**
+     * Get organization members
+     */
+    public function members(Organization $organization, Request $request)
+    {
+        $query = $organization->users()
+            ->with(['roles' => function ($roleQuery) use ($organization) {
+                $roleQuery->where('team_id', $organization->id);
+            }]);
+
+        if ($request->has('status')) {
+            $query->wherePivot('status', $request->status);
+        } else {
+            $query->wherePivot('status', 'active');
+        }
+
+        $members = $query->paginate($request->get('per_page', 15));
+
+        return UserResource::collection($members);
+    }
+
+    /**
+     * Add member to organization
+     */
+    public function addMember(Request $request, Organization $organization)
+    {
+        $validated = $request->validate([
+            'user_id' => 'required|exists:sys_users,id',
+            'membership_type' => 'required|string|in:employee,contractor,board_member,executive',
+            'organization_unit_id' => 'nullable|exists:organization_units,id',
+            'organization_position_id' => 'nullable|exists:organization_positions,id',
+            'start_date' => 'required|date',
+            'end_date' => 'nullable|date|after:start_date',
+            'status' => 'required|in:active,inactive,terminated',
+            'roles' => 'nullable|array',
+            'roles.*' => 'string',
+        ]);
+
+        // Check if user is already a member
+        $existingMembership = OrganizationMembership::where([
+            'user_id' => $validated['user_id'],
+            'organization_id' => $organization->id,
+            'status' => 'active'
+        ])->first();
+
+        if ($existingMembership) {
+            return response()->json([
+                'message' => 'User is already an active member of this organization'
+            ], 400);
+        }
+
+        $validated['organization_id'] = $organization->id;
+        $validated['created_by'] = Auth::id() ?? 1; // Default for testing
+        $validated['updated_by'] = Auth::id() ?? 1; // Default for testing
+
+        $membership = OrganizationMembership::create($validated);
+
+        // Assign roles if provided
+        if (!empty($validated['roles'])) {
+            $user = User::find($validated['user_id']);
+            foreach ($validated['roles'] as $roleName) {
+                $user->assignRoleInOrganization($roleName, $organization);
+            }
+        }
+
+        return response()->json([
+            'message' => 'Member added successfully',
+            'membership' => $membership->load('user', 'organization')
+        ], 201);
+    }
+
+    /**
+     * Update organization membership
+     */
+    public function updateMember(Request $request, Organization $organization, OrganizationMembership $membership)
+    {
+        if ($membership->organization_id !== $organization->id) {
+            return response()->json(['message' => 'Membership not found in this organization'], 404);
+        }
+
+        $validated = $request->validate([
+            'membership_type' => 'required|string|in:employee,contractor,board_member,executive',
+            'organization_unit_id' => 'nullable|exists:organization_units,id',
+            'organization_position_id' => 'nullable|exists:organization_positions,id',
+            'start_date' => 'required|date',
+            'end_date' => 'nullable|date|after:start_date',
+            'status' => 'required|in:active,inactive,terminated',
+            'roles' => 'nullable|array',
+            'roles.*' => 'string',
+        ]);
+
+        $validated['updated_by'] = Auth::id();
+        $membership->update($validated);
+
+        // Update roles if provided
+        if (isset($validated['roles'])) {
+            $user = $membership->user;
+            
+            // Remove existing roles in this organization
+            $existingRoles = $user->getRolesInOrganization($organization)->get();
+            foreach ($existingRoles as $role) {
+                $user->removeRoleFromOrganization($role->name, $organization);
+            }
+            
+            // Assign new roles
+            foreach ($validated['roles'] as $roleName) {
+                $user->assignRoleInOrganization($roleName, $organization);
+            }
+        }
+
+        return response()->json([
+            'message' => 'Membership updated successfully',
+            'membership' => $membership->fresh()->load('user', 'organization')
+        ]);
+    }
+
+    /**
+     * Remove member from organization
+     */
+    public function removeMember(Organization $organization, OrganizationMembership $membership)
+    {
+        if ($membership->organization_id !== $organization->id) {
+            return response()->json(['message' => 'Membership not found in this organization'], 404);
+        }
+
+        $user = $membership->user;
+        
+        // Remove all roles in this organization
+        $existingRoles = $user->getRolesInOrganization($organization)->get();
+        foreach ($existingRoles as $role) {
+            $user->removeRoleFromOrganization($role->name, $organization);
+        }
+
+        $membership->delete();
+
+        return response()->json(['message' => 'Member removed successfully']);
+    }
+
+    /**
+     * Get organization roles
+     */
+    public function roles(Organization $organization)
+    {
+        $roles = Role::where('team_id', $organization->id)
+            ->with('permissions')
+            ->get();
+
+        return response()->json($roles);
+    }
+
+    /**
+     * Create organization role
+     */
+    public function createRole(Request $request, Organization $organization)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'permissions' => 'nullable|array',
+            'permissions.*' => 'string|exists:sys_permissions,name',
+        ]);
+
+        // Check if role already exists for this organization
+        $existingRole = Role::where([
+            'name' => $validated['name'],
+            'team_id' => $organization->id,
+            'guard_name' => 'web'
+        ])->first();
+
+        if ($existingRole) {
+            return response()->json([
+                'message' => 'Role already exists in this organization'
+            ], 400);
+        }
+
+        setPermissionsTeamId($organization->id);
+
+        $role = Role::create([
+            'name' => $validated['name'],
+            'guard_name' => 'web',
+            'team_id' => $organization->id,
+            'created_by' => Auth::id() ?? 1, // Default for testing
+            'updated_by' => Auth::id() ?? 1, // Default for testing
+        ]);
+
+        if (!empty($validated['permissions'])) {
+            $role->givePermissionTo($validated['permissions']);
+        }
+
+        setPermissionsTeamId(null);
+
+        return response()->json([
+            'message' => 'Role created successfully',
+            'role' => $role->load('permissions')
+        ], 201);
     }
 }

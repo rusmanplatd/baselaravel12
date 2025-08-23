@@ -15,6 +15,20 @@ Route::prefix('v1')->group(function () {
     Route::apiResource('organizations', \App\Http\Controllers\Api\OrganizationController::class);
     Route::get('organizations/hierarchy/tree', [\App\Http\Controllers\Api\OrganizationController::class, 'getHierarchy']);
     Route::get('organizations/type/{type}', [\App\Http\Controllers\Api\OrganizationController::class, 'getByType']);
+    
+    // Organization member management
+    Route::get('organizations/{organization}/members', [\App\Http\Controllers\Api\OrganizationController::class, 'members']);
+    Route::post('organizations/{organization}/members', [\App\Http\Controllers\Api\OrganizationController::class, 'addMember']);
+    Route::put('organizations/{organization}/members/{membership}', [\App\Http\Controllers\Api\OrganizationController::class, 'updateMember']);
+    Route::delete('organizations/{organization}/members/{membership}', [\App\Http\Controllers\Api\OrganizationController::class, 'removeMember']);
+    
+    // Organization role management
+    Route::get('organizations/{organization}/roles', [\App\Http\Controllers\Api\OrganizationController::class, 'roles']);
+    Route::post('organizations/{organization}/roles', [\App\Http\Controllers\Api\OrganizationController::class, 'createRole']);
+    
+    // Global roles API
+    Route::apiResource('roles', \App\Http\Controllers\Api\RoleController::class);
+    Route::get('permissions', [\App\Http\Controllers\Api\RoleController::class, 'permissions']);
 
     Route::apiResource('organization-units', \App\Http\Controllers\Api\OrganizationUnitController::class);
     Route::get('organization-units/hierarchy/tree', [\App\Http\Controllers\Api\OrganizationUnitController::class, 'getHierarchy']);

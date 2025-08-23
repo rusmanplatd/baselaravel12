@@ -9,6 +9,14 @@ use Inertia\Inertia;
 
 class OrganizationUnitController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:unit.view')->only(['index', 'show', 'governance', 'operational']);
+        $this->middleware('permission:unit.create')->only(['create', 'store']);
+        $this->middleware('permission:unit.edit')->only(['edit', 'update']);
+        $this->middleware('permission:unit.delete')->only(['destroy']);
+    }
+
     public function index(Request $request)
     {
         $query = OrganizationUnit::query()

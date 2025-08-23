@@ -15,6 +15,18 @@ Route::middleware(['auth', 'verified', 'mfa.verified'])->group(function () {
     // Organizations
     Route::resource('organizations', \App\Http\Controllers\OrganizationController::class);
     Route::get('organizations-hierarchy', [\App\Http\Controllers\OrganizationController::class, 'hierarchy'])->name('organizations.hierarchy');
+    
+    // Organization member management
+    Route::middleware('organization.context')->group(function () {
+        Route::get('organizations/{organization}/members', [\App\Http\Controllers\OrganizationController::class, 'members'])->name('organizations.members');
+        Route::post('organizations/{organization}/members', [\App\Http\Controllers\OrganizationController::class, 'addMember'])->name('organizations.members.add');
+        Route::put('organizations/{organization}/members/{membership}', [\App\Http\Controllers\OrganizationController::class, 'updateMember'])->name('organizations.members.update');
+        Route::delete('organizations/{organization}/members/{membership}', [\App\Http\Controllers\OrganizationController::class, 'removeMember'])->name('organizations.members.remove');
+        
+        // Organization role management
+        Route::get('organizations/{organization}/roles', [\App\Http\Controllers\OrganizationController::class, 'roles'])->name('organizations.roles');
+        Route::post('organizations/{organization}/roles', [\App\Http\Controllers\OrganizationController::class, 'createRole'])->name('organizations.roles.create');
+    });
 
     // Organization Units
     Route::resource('organization-units', \App\Http\Controllers\OrganizationUnitController::class);

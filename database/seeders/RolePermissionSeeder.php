@@ -15,6 +15,32 @@ class RolePermissionSeeder extends Seeder
         // Get admin user ID for created_by/updated_by
         $adminUserId = config('seeder.admin_user_id', 1);
 
+        // Create a default organization if teams are enabled and no organizations exist
+        $defaultOrgId = null;
+        if (config('permission.teams', false)) {
+            $defaultOrg = \App\Models\Organization::firstOrCreate([
+                'organization_code' => 'DEFAULT',
+                'name' => 'Default Organization',
+            ], [
+                'organization_type' => 'holding_company',
+                'parent_organization_id' => null,
+                'description' => 'Default organization for system roles',
+                'address' => 'System Default',
+                'phone' => '+1-000-0000',
+                'email' => 'system@default.com',
+                'website' => 'https://default.com',
+                'registration_number' => 'DEFAULT001',
+                'tax_number' => 'TAX_DEFAULT',
+                'establishment_date' => now()->format('Y-m-d'),
+                'legal_status' => 'System Default',
+                'business_activities' => 'System administration',
+                'is_active' => true,
+                'created_by' => $adminUserId,
+                'updated_by' => $adminUserId,
+            ]);
+            $defaultOrgId = $defaultOrg->id;
+        }
+
         $permissions = [
             // User management
             'view users',
@@ -53,26 +79,48 @@ class RolePermissionSeeder extends Seeder
         ];
 
         foreach ($permissions as $permission) {
-            Permission::create([
+            Permission::firstOrCreate([
                 'name' => $permission,
+                'guard_name' => 'web',
+            ], [
                 'created_by' => $adminUserId,
                 'updated_by' => $adminUserId,
             ]);
         }
 
-        $superAdminRole = Role::create([
+        $superAdminRoleData = [
             'name' => 'Super Admin',
+            'guard_name' => 'web',
+        ];
+        $superAdminRoleAttributes = [
             'created_by' => $adminUserId,
             'updated_by' => $adminUserId,
-        ]);
-        $superAdminRole->givePermissionTo(Permission::all());
+        ];
 
-        $adminRole = Role::create([
+        if ($defaultOrgId) {
+            $superAdminRoleData['team_id'] = $defaultOrgId;
+            $superAdminRoleAttributes['team_id'] = $defaultOrgId;
+        }
+
+        $superAdminRole = Role::firstOrCreate($superAdminRoleData, $superAdminRoleAttributes);
+        $superAdminRole->syncPermissions(Permission::all());
+
+        $adminRoleData = [
             'name' => 'Admin',
+            'guard_name' => 'web',
+        ];
+        $adminRoleAttributes = [
             'created_by' => $adminUserId,
             'updated_by' => $adminUserId,
-        ]);
-        $adminRole->givePermissionTo([
+        ];
+
+        if ($defaultOrgId) {
+            $adminRoleData['team_id'] = $defaultOrgId;
+            $adminRoleAttributes['team_id'] = $defaultOrgId;
+        }
+
+        $adminRole = Role::firstOrCreate($adminRoleData, $adminRoleAttributes);
+        $adminRole->syncPermissions([
             'view users',
             'create users',
             'edit users',
@@ -91,12 +139,22 @@ class RolePermissionSeeder extends Seeder
             'view system settings',
         ]);
 
-        $managerRole = Role::create([
+        $managerRoleData = [
             'name' => 'Manager',
+            'guard_name' => 'web',
+        ];
+        $managerRoleAttributes = [
             'created_by' => $adminUserId,
             'updated_by' => $adminUserId,
-        ]);
-        $managerRole->givePermissionTo([
+        ];
+
+        if ($defaultOrgId) {
+            $managerRoleData['team_id'] = $defaultOrgId;
+            $managerRoleAttributes['team_id'] = $defaultOrgId;
+        }
+
+        $managerRole = Role::firstOrCreate($managerRoleData, $managerRoleAttributes);
+        $managerRole->syncPermissions([
             'view users',
             'view organizations',
             'view organization units',
@@ -106,12 +164,22 @@ class RolePermissionSeeder extends Seeder
             'edit organization memberships',
         ]);
 
-        $userRole = Role::create([
+        $userRoleData = [
             'name' => 'User',
+            'guard_name' => 'web',
+        ];
+        $userRoleAttributes = [
             'created_by' => $adminUserId,
             'updated_by' => $adminUserId,
-        ]);
-        $userRole->givePermissionTo([
+        ];
+
+        if ($defaultOrgId) {
+            $userRoleData['team_id'] = $defaultOrgId;
+            $userRoleAttributes['team_id'] = $defaultOrgId;
+        }
+
+        $userRole = Role::firstOrCreate($userRoleData, $userRoleAttributes);
+        $userRole->syncPermissions([
             'view organizations',
             'view organization units',
             'view organization positions',

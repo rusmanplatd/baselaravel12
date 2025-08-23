@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Services\ActivityLogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -85,6 +86,12 @@ class MfaController extends Controller
             'backup_codes_used' => 0,
         ]);
 
+        // Log MFA enable
+        ActivityLogService::logAuth('mfa_enabled', 'User enabled multi-factor authentication', [
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ], $user);
+
         return response()->json([
             'success' => true,
             'backup_codes' => $backupCodes,
@@ -117,6 +124,12 @@ class MfaController extends Controller
             'backup_codes_used' => 0,
         ]);
 
+        // Log MFA disable
+        ActivityLogService::logAuth('mfa_disabled', 'User disabled multi-factor authentication', [
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ], $user);
+
         return response()->json(['success' => true]);
     }
 
@@ -137,11 +150,25 @@ class MfaController extends Controller
         if (strlen($code) === 6 && $user->verifyTotpCode($code)) {
             $request->session()->put('mfa_verified', true);
 
+            // Log successful MFA verification
+            ActivityLogService::logAuth('mfa_verified', 'User successfully verified MFA using TOTP', [
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'method' => 'totp',
+            ], $user);
+
             return response()->json(['success' => true]);
         }
 
         if (strlen($code) === 8 && $this->verifyBackupCode($user, $code)) {
             $request->session()->put('mfa_verified', true);
+
+            // Log successful MFA verification with backup code
+            ActivityLogService::logAuth('mfa_verified', 'User successfully verified MFA using backup code', [
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'method' => 'backup_code',
+            ], $user);
 
             return response()->json(['success' => true]);
         }

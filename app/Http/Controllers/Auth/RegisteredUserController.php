@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\ActivityLogService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -43,6 +44,14 @@ class RegisteredUserController extends Controller
         ]);
 
         event(new Registered($user));
+
+        // Log user registration
+        ActivityLogService::logAuth('register', 'New user registered', [
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'email' => $user->email,
+            'name' => $user->name,
+        ], $user);
 
         Auth::login($user);
 

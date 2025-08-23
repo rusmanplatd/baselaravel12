@@ -56,9 +56,60 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // Assign roles to demo users
-        $testUser->assignRole('Super Admin');
-        $adminUser->assignRole('Admin');
-        $managerUser->assignRole('Manager');
-        $regularUser->assignRole('User');
+        // Get the default organization ID if teams are enabled
+        $defaultOrgId = null;
+        if (config('permission.teams', false)) {
+            $defaultOrg = \App\Models\Organization::where('organization_code', 'DEFAULT')->first();
+            $defaultOrgId = $defaultOrg?->id;
+        }
+
+        if ($defaultOrgId) {
+            // When teams are enabled, we need to manually assign roles with team context
+            $superAdminRole = \App\Models\Auth\Role::where('name', 'Super Admin')->where('team_id', $defaultOrgId)->first();
+            $adminRole = \App\Models\Auth\Role::where('name', 'Admin')->where('team_id', $defaultOrgId)->first();
+            $managerRole = \App\Models\Auth\Role::where('name', 'Manager')->where('team_id', $defaultOrgId)->first();
+            $userRole = \App\Models\Auth\Role::where('name', 'User')->where('team_id', $defaultOrgId)->first();
+
+            if ($superAdminRole) {
+                \Illuminate\Support\Facades\DB::table('sys_model_has_roles')->insert([
+                    'role_id' => $superAdminRole->id,
+                    'model_type' => 'App\Models\User',
+                    'model_id' => $testUser->id,
+                    'team_id' => $defaultOrgId,
+                ]);
+            }
+
+            if ($adminRole) {
+                \Illuminate\Support\Facades\DB::table('sys_model_has_roles')->insert([
+                    'role_id' => $adminRole->id,
+                    'model_type' => 'App\Models\User',
+                    'model_id' => $adminUser->id,
+                    'team_id' => $defaultOrgId,
+                ]);
+            }
+
+            if ($managerRole) {
+                \Illuminate\Support\Facades\DB::table('sys_model_has_roles')->insert([
+                    'role_id' => $managerRole->id,
+                    'model_type' => 'App\Models\User',
+                    'model_id' => $managerUser->id,
+                    'team_id' => $defaultOrgId,
+                ]);
+            }
+
+            if ($userRole) {
+                \Illuminate\Support\Facades\DB::table('sys_model_has_roles')->insert([
+                    'role_id' => $userRole->id,
+                    'model_type' => 'App\Models\User',
+                    'model_id' => $regularUser->id,
+                    'team_id' => $defaultOrgId,
+                ]);
+            }
+        } else {
+            $testUser->assignRole('Super Admin');
+            $adminUser->assignRole('Admin');
+            $managerUser->assignRole('Manager');
+            $regularUser->assignRole('User');
+        }
     }
 }
