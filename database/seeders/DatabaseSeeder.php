@@ -72,12 +72,14 @@ class DatabaseSeeder extends Seeder
             SystemUserSeeder::class,
             PermissionSeeder::class,
             RolePermissionSeeder::class,
+            IndustrySpecificPermissionsSeeder::class,
         ]);
 
         // Organizational structure seeders
         $this->call([
             OrganizationPositionLevelSeeder::class,
             OrganizationSeeder::class,
+            OrganizationVariantsSeeder::class,
             OrganizationUnitSeeder::class,
             OrganizationPositionSeeder::class,
             OrganizationMembershipSeeder::class,

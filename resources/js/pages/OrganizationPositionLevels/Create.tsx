@@ -14,6 +14,13 @@ import {
 import { Save, ArrowLeft } from 'lucide-react'
 import AppLayout from '@/layouts/app-layout'
 import { Link } from '@inertiajs/react'
+import { type BreadcrumbItem } from '@/types'
+
+const breadcrumbs: BreadcrumbItem[] = [
+  { title: 'Dashboard', href: '/dashboard' },
+  { title: 'Position Levels', href: '/organization-position-levels' },
+  { title: 'Create', href: '/organization-position-levels/create' },
+];
 
 export default function Create() {
   const { data, setData, post, processing, errors } = useForm({
@@ -31,7 +38,7 @@ export default function Create() {
   }
 
   return (
-    <AppLayout>
+    <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Create Organization Position Level" />
 
       <div className="space-y-6">

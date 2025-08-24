@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/card'
 import { Plus, Edit, Trash2 } from 'lucide-react'
 import AppLayout from '@/layouts/app-layout'
+import { type BreadcrumbItem } from '@/types'
 
 interface OrganizationPositionLevel {
   id: string
@@ -34,6 +35,11 @@ interface Props {
   organizationPositionLevels: OrganizationPositionLevel[]
 }
 
+const breadcrumbs: BreadcrumbItem[] = [
+  { title: 'Dashboard', href: '/dashboard' },
+  { title: 'Position Levels', href: '/organization-position-levels' },
+];
+
 export default function Index({ organizationPositionLevels }: Props) {
   const handleDelete = (id: string) => {
     if (confirm('Are you sure you want to delete this organization position level?')) {
@@ -42,7 +48,7 @@ export default function Index({ organizationPositionLevels }: Props) {
   }
 
   return (
-    <AppLayout>
+    <AppLayout breadcrumbs={breadcrumbs}>
       <Head title="Organization Position Levels" />
 
       <div className="space-y-6">

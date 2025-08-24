@@ -14,6 +14,7 @@ import {
 import { Save, ArrowLeft } from 'lucide-react'
 import AppLayout from '@/layouts/app-layout'
 import { Link } from '@inertiajs/react'
+import { type BreadcrumbItem } from '@/types'
 
 interface OrganizationPositionLevel {
   id: string
@@ -28,6 +29,12 @@ interface OrganizationPositionLevel {
 interface Props {
   organizationPositionLevel: OrganizationPositionLevel
 }
+
+const breadcrumbs = (level: OrganizationPositionLevel): BreadcrumbItem[] => [
+  { title: 'Dashboard', href: '/dashboard' },
+  { title: 'Position Levels', href: '/organization-position-levels' },
+  { title: level.name, href: `/organization-position-levels/${level.id}/edit` },
+];
 
 export default function Edit({ organizationPositionLevel }: Props) {
   const { data, setData, put, processing, errors } = useForm({
@@ -45,7 +52,7 @@ export default function Edit({ organizationPositionLevel }: Props) {
   }
 
   return (
-    <AppLayout>
+    <AppLayout breadcrumbs={breadcrumbs(organizationPositionLevel)}>
       <Head title={`Edit ${organizationPositionLevel.name}`} />
 
       <div className="space-y-6">

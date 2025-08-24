@@ -19,6 +19,7 @@ import {
 import { ArrowLeft, Edit } from 'lucide-react'
 import AppLayout from '@/layouts/app-layout'
 import { Link } from '@inertiajs/react'
+import { type BreadcrumbItem } from '@/types'
 
 interface OrganizationPosition {
   id: string
@@ -45,9 +46,15 @@ interface Props {
   organizationPositionLevel: OrganizationPositionLevel
 }
 
+const breadcrumbs = (level: OrganizationPositionLevel): BreadcrumbItem[] => [
+  { title: 'Dashboard', href: '/dashboard' },
+  { title: 'Position Levels', href: '/organization-position-levels' },
+  { title: level.name, href: `/organization-position-levels/${level.id}` },
+];
+
 export default function Show({ organizationPositionLevel }: Props) {
   return (
-    <AppLayout>
+    <AppLayout breadcrumbs={breadcrumbs(organizationPositionLevel)}>
       <Head title={organizationPositionLevel.name} />
 
       <div className="space-y-6">
