@@ -132,20 +132,20 @@ class PermissionController extends Controller
         ]);
 
         $permissionIds = $request->input('permissions');
-        
+
         DB::transaction(function () use ($permissionIds) {
             $permissions = Permission::whereIn('id', $permissionIds)->get();
-            
+
             foreach ($permissions as $permission) {
                 // Check if permission is assigned to roles
                 if ($permission->roles()->count() > 0) {
                     continue; // Skip permissions that are assigned to roles
                 }
-                
+
                 ActivityLogService::log('permission', 'bulk_deleted', $permission->id, [
                     'permission_name' => $permission->name,
                 ]);
-                
+
                 $permission->delete();
             }
         });
@@ -167,22 +167,22 @@ class PermissionController extends Controller
         $resources = $request->input('resources');
         $actions = $request->input('actions');
         $guardName = $request->input('guard_name', 'web');
-        
+
         $createdCount = 0;
-        
+
         DB::transaction(function () use ($resources, $actions, $guardName, &$createdCount) {
             foreach ($resources as $resource) {
                 foreach ($actions as $action) {
                     $permissionName = "{$action} {$resource}";
-                    
+
                     $permission = Permission::firstOrCreate([
                         'name' => $permissionName,
                         'guard_name' => $guardName,
                     ]);
-                    
+
                     if ($permission->wasRecentlyCreated) {
                         $createdCount++;
-                        
+
                         ActivityLogService::log('permission', 'bulk_created', $permission->id, [
                             'permission_name' => $permission->name,
                             'guard_name' => $permission->guard_name,

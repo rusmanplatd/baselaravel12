@@ -7,7 +7,7 @@ Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');
 
-Route::middleware(['auth', 'verified', 'mfa.verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'mfa.verified', 'trusted.device', 'session.tracking'])->group(function () {
     // Tenant management routes (before tenant middleware)
     Route::get('tenant/select', [\App\Http\Controllers\TenantController::class, 'select'])->name('tenant.select');
     Route::post('tenant/switch', [\App\Http\Controllers\TenantController::class, 'switch'])->name('tenant.switch');
@@ -18,6 +18,16 @@ Route::middleware(['auth', 'verified', 'mfa.verified'])->group(function () {
     Route::get('dashboard', function () {
         return Inertia::render('dashboard');
     })->name('dashboard');
+
+    Route::get('chat', function () {
+        return Inertia::render('chat');
+    })->name('chat');
+
+    Route::get('chat/join/{inviteCode}', function (string $inviteCode) {
+        return Inertia::render('chat', [
+            'inviteCode' => $inviteCode,
+        ]);
+    })->name('chat.join');
 
     // Organizations
     Route::resource('organizations', \App\Http\Controllers\OrganizationController::class);
@@ -63,7 +73,7 @@ Route::middleware(['auth', 'verified', 'mfa.verified'])->group(function () {
     Route::resource('roles', \App\Http\Controllers\RoleController::class);
     Route::delete('roles/bulk-delete', [\App\Http\Controllers\RoleController::class, 'bulkDelete'])->name('roles.bulkDelete');
     Route::post('roles/bulk-assign-permissions', [\App\Http\Controllers\RoleController::class, 'bulkAssignPermissions'])->name('roles.bulkAssignPermissions');
-    
+
     Route::resource('permissions', \App\Http\Controllers\PermissionController::class);
     Route::delete('permissions/bulk-delete', [\App\Http\Controllers\PermissionController::class, 'bulkDelete'])->name('permissions.bulkDelete');
     Route::post('permissions/bulk-create-by-pattern', [\App\Http\Controllers\PermissionController::class, 'bulkCreateByPattern'])->name('permissions.bulkCreateByPattern');

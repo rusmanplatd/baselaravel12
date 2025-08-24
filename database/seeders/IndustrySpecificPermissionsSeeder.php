@@ -387,7 +387,7 @@ class IndustrySpecificPermissionsSeeder extends Seeder
 
         foreach ($allRolePermissions as $roleName => $permissions) {
             $roles = Role::where('name', $roleName)->get();
-            
+
             foreach ($roles as $role) {
                 $permissionObjects = Permission::whereIn('name', $permissions)->get();
                 $role->syncPermissions($permissionObjects->pluck('name')->toArray());

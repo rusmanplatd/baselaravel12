@@ -61,7 +61,7 @@ class HandleInertiaRequests extends Middleware
      */
     private function getUserPermissions($user): \Illuminate\Support\Collection
     {
-        if (!$user) {
+        if (! $user) {
             return collect();
         }
 
@@ -69,20 +69,20 @@ class HandleInertiaRequests extends Middleware
         if (config('permission.teams', false)) {
             // Get the default organization for team context
             $defaultOrg = \App\Models\Organization::where('organization_code', 'DEFAULT')->first();
-            
+
             if ($defaultOrg) {
                 $permissions = $user->getAllPermissions($defaultOrg->id);
                 if ($permissions->count() > 0) {
                     return $permissions->pluck('name');
                 }
             }
-            
+
             // Also try without team context as fallback
             $permissions = $user->getAllPermissions();
             if ($permissions->count() > 0) {
                 return $permissions->pluck('name');
             }
-            
+
             // If still no permissions, collect permissions from all team contexts
             $allPermissions = collect();
             $teamRoles = \Illuminate\Support\Facades\DB::table('sys_model_has_roles')
@@ -90,7 +90,7 @@ class HandleInertiaRequests extends Middleware
                 ->where('model_id', $user->id)
                 ->whereNotNull('team_id')
                 ->get();
-            
+
             foreach ($teamRoles as $teamRole) {
                 $role = \App\Models\Auth\Role::find($teamRole->role_id);
                 if ($role) {
@@ -98,7 +98,7 @@ class HandleInertiaRequests extends Middleware
                     $allPermissions = $allPermissions->merge($rolePermissions);
                 }
             }
-            
+
             return $allPermissions->unique();
         }
 
@@ -111,7 +111,7 @@ class HandleInertiaRequests extends Middleware
      */
     private function getUserRoles($user): \Illuminate\Support\Collection
     {
-        if (!$user) {
+        if (! $user) {
             return collect();
         }
 
@@ -119,20 +119,20 @@ class HandleInertiaRequests extends Middleware
         if (config('permission.teams', false)) {
             // Get the default organization for team context
             $defaultOrg = \App\Models\Organization::where('organization_code', 'DEFAULT')->first();
-            
+
             if ($defaultOrg) {
                 $roles = $user->getRoleNames($defaultOrg->id);
                 if ($roles->count() > 0) {
                     return $roles;
                 }
             }
-            
+
             // Also try without team context as fallback
             $roles = $user->getRoleNames();
             if ($roles->count() > 0) {
                 return $roles;
             }
-            
+
             // If still no roles, collect roles from all team contexts
             $allRoles = collect();
             $teamRoles = \Illuminate\Support\Facades\DB::table('sys_model_has_roles')
@@ -140,14 +140,14 @@ class HandleInertiaRequests extends Middleware
                 ->where('model_id', $user->id)
                 ->whereNotNull('team_id')
                 ->get();
-            
+
             foreach ($teamRoles as $teamRole) {
                 $role = \App\Models\Auth\Role::find($teamRole->role_id);
                 if ($role) {
                     $allRoles->push($role->name);
                 }
             }
-            
+
             return $allRoles->unique();
         }
 

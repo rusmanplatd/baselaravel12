@@ -152,20 +152,20 @@ class RoleController extends Controller
         ]);
 
         $roleIds = $request->input('roles');
-        
+
         DB::transaction(function () use ($roleIds) {
             $roles = Role::whereIn('id', $roleIds)->get();
-            
+
             foreach ($roles as $role) {
                 // Check if role has users
                 if ($role->users()->count() > 0) {
                     continue; // Skip roles that have users assigned
                 }
-                
+
                 ActivityLogService::log('role', 'bulk_deleted', $role->id, [
                     'role_name' => $role->name,
                 ]);
-                
+
                 $role->delete();
             }
         });
@@ -185,14 +185,14 @@ class RoleController extends Controller
 
         $roleIds = $request->input('roles');
         $permissionNames = $request->input('permissions');
-        
+
         DB::transaction(function () use ($roleIds, $permissionNames) {
             $roles = Role::whereIn('id', $roleIds)->get();
             $permissions = Permission::whereIn('name', $permissionNames)->get();
-            
+
             foreach ($roles as $role) {
                 $role->syncPermissions($permissions);
-                
+
                 ActivityLogService::log('role', 'bulk_permissions_assigned', $role->id, [
                     'role_name' => $role->name,
                     'permissions_count' => count($permissionNames),

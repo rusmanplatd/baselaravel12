@@ -7,8 +7,8 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
-use Symfony\Component\HttpFoundation\Response;
 use Inertia\Response as InertiaResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 class EnsureMfaVerified
 {

@@ -21,7 +21,7 @@ class PermissionFactory extends Factory
     {
         $resource = $this->faker->randomElement(['users', 'roles', 'permissions', 'organizations', 'posts', 'files']);
         $action = $this->faker->randomElement(['view', 'create', 'edit', 'delete']);
-        
+
         return [
             'name' => "{$action} {$resource}",
             'guard_name' => 'web',

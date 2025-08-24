@@ -39,7 +39,7 @@ class MfaController extends Controller
 
         $secret = $user->generateTotpSecret();
         $qrCodeUrl = $user->getTotpQrCodeUrl($secret);
-        
+
         // Generate QR code as base64 data URL
         $qrCodeImage = $user->getTotpQrCodeImage($secret);
 

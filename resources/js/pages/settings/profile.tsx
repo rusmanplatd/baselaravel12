@@ -1,7 +1,9 @@
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Transition } from '@headlessui/react';
-import { Form, Head, Link, usePage } from '@inertiajs/react';
+import { Form, Head, Link, usePage, router } from '@inertiajs/react';
+import { useState, useCallback } from 'react';
 
+import { AvatarUpload } from '@/components/avatar-upload';
 import DeleteUser from '@/components/delete-user';
 import HeadingSmall from '@/components/heading-small';
 import InputError from '@/components/input-error';
@@ -20,6 +22,65 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: boolean; status?: string }) {
     const { auth } = usePage<SharedData>().props;
+    const [avatarUploading, setAvatarUploading] = useState(false);
+
+    const handleAvatarUpload = useCallback(async (file: File) => {
+        setAvatarUploading(true);
+        
+        const formData = new FormData();
+        formData.append('avatar', file);
+
+        try {
+            const response = await fetch(route('profile.avatar.upload'), {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+                credentials: 'same-origin',
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Failed to upload avatar');
+            }
+
+            // Redirect to profile page to update the avatar
+            router.visit(route('profile.edit'));
+        } catch (error) {
+            console.error('Avatar upload error:', error);
+            throw error;
+        } finally {
+            setAvatarUploading(false);
+        }
+    }, []);
+
+    const handleAvatarDelete = useCallback(async () => {
+        try {
+            const response = await fetch(route('profile.avatar.delete'), {
+                method: 'DELETE',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+                credentials: 'same-origin',
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Failed to delete avatar');
+            }
+
+            // Redirect to profile page to update the avatar
+            router.visit(route('profile.edit'));
+        } catch (error) {
+            console.error('Avatar delete error:', error);
+            throw error;
+        }
+    }, []);
+
+    const avatarUrl = auth.user.avatar ? `/storage/${auth.user.avatar}` : undefined;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -27,6 +88,17 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
 
             <SettingsLayout>
                 <div className="space-y-6">
+                    <HeadingSmall title="Profile picture" description="Upload or change your profile picture" />
+                    
+                    <AvatarUpload
+                        currentAvatar={avatarUrl}
+                        userName={auth.user.name}
+                        onUpload={handleAvatarUpload}
+                        onDelete={handleAvatarDelete}
+                        disabled={avatarUploading}
+                        size="lg"
+                    />
+                    
                     <HeadingSmall title="Profile information" description="Update your name and email address" />
 
                     <Form

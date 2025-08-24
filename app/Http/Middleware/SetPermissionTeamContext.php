@@ -21,7 +21,7 @@ class SetPermissionTeamContext
         if (config('permission.teams', false)) {
             // Get the default organization for team context
             $defaultOrg = Organization::where('organization_code', 'DEFAULT')->first();
-            
+
             if ($defaultOrg) {
                 // Set the team context for permissions
                 setPermissionsTeamId($defaultOrg->id);

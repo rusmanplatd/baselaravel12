@@ -5,7 +5,6 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 
 class DynamicPermissionMiddleware
@@ -15,14 +14,14 @@ class DynamicPermissionMiddleware
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-    public function handle(Request $request, Closure $next, string $resource = null): Response
+    public function handle(Request $request, Closure $next, ?string $resource = null): Response
     {
         if (! Auth::check()) {
             return redirect()->route('login');
         }
 
         $user = Auth::user();
-        
+
         // If no specific resource is provided, try to infer from route
         if (! $resource) {
             $resource = $this->inferResourceFromRoute($request);
@@ -66,14 +65,14 @@ class DynamicPermissionMiddleware
     private function inferResourceFromRoute(Request $request): string
     {
         $routeName = $request->route()->getName();
-        
+
         if (! $routeName) {
             return 'resource';
         }
 
         // Extract resource from route name (e.g., 'roles.index' -> 'roles')
         $parts = explode('.', $routeName);
-        
+
         return $parts[0] ?? 'resource';
     }
 

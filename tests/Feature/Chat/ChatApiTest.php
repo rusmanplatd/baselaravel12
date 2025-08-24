@@ -1,0 +1,792 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Models\Chat\Conversation;
+use App\Models\Chat\EncryptionKey;
+use App\Models\Chat\Message;
+use App\Models\Chat\Participant;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Storage;
+
+uses(RefreshDatabase::class);
+
+beforeEach(function () {
+    $this->user = User::factory()->create();
+    $this->otherUser = User::factory()->create();
+    $this->thirdUser = User::factory()->create();
+
+    Storage::fake('chat-files');
+    Event::fake();
+    // Skip Broadcasting::fake() as it's not needed for these tests
+});
+
+describe('Authentication and Authorization', function () {
+    it('requires authentication for all chat endpoints', function () {
+        $endpoints = [
+            ['GET', '/api/conversations'],
+            ['POST', '/api/conversations'],
+            ['GET', '/api/conversations/test-id'],
+            ['PUT', '/api/conversations/test-id'],
+            ['DELETE', '/api/conversations/test-id'],
+            ['GET', '/api/conversations/test-id/messages'],
+            ['POST', '/api/conversations/test-id/messages'],
+            ['POST', '/api/conversations/test-id/participants'],
+            ['GET', '/api/chat/encryption/keys'],
+            ['POST', '/api/chat/encryption/keys'],
+        ];
+
+        foreach ($endpoints as [$method, $url]) {
+            $response = $this->call($method, $url);
+            $response->assertStatus(401);
+        }
+    });
+
+    it('prevents access to conversations user is not part of', function () {
+        $this->actingAs($this->user);
+
+        $conversation = Conversation::factory()->create([
+            'created_by' => $this->otherUser->id,
+        ]);
+
+        // Add only otherUser as participant
+        Participant::create([
+            'conversation_id' => $conversation->id,
+            'user_id' => $this->otherUser->id,
+            'role' => 'member',
+        ]);
+
+        $response = $this->getJson("/api/conversations/{$conversation->id}");
+        $response->assertStatus(403);
+
+        $response = $this->getJson("/api/conversations/{$conversation->id}/messages");
+        $response->assertStatus(403);
+    });
+});
+
+describe('Conversation Management API', function () {
+    it('can create direct conversation', function () {
+        $this->actingAs($this->user);
+
+        $response = $this->postJson('/api/conversations', [
+            'type' => 'direct',
+            'participant_ids' => [$this->otherUser->id],
+        ]);
+
+        $response->assertStatus(201);
+        $response->assertJsonStructure([
+            'id',
+            'type',
+            'created_by',
+            'created_at',
+            'participants' => [
+                '*' => ['user_id', 'role', 'user' => ['id', 'name']],
+            ],
+        ]);
+
+        $conversationId = $response->json('id');
+
+        $this->assertDatabaseHas('chat_conversations', [
+            'id' => $conversationId,
+            'type' => 'direct',
+            'created_by' => $this->user->id,
+        ]);
+
+        $this->assertDatabaseHas('chat_participants', [
+            'conversation_id' => $conversationId,
+            'user_id' => $this->user->id,
+            'role' => 'member',
+        ]);
+
+        $this->assertDatabaseHas('chat_participants', [
+            'conversation_id' => $conversationId,
+            'user_id' => $this->otherUser->id,
+            'role' => 'member',
+        ]);
+    });
+
+    it('can create group conversation', function () {
+        $this->actingAs($this->user);
+
+        $response = $this->postJson('/api/conversations', [
+            'type' => 'group',
+            'name' => 'Project Team Chat',
+            'participant_ids' => [$this->otherUser->id, $this->thirdUser->id],
+        ]);
+
+        $response->assertStatus(201);
+        $response->assertJson([
+            'type' => 'group',
+            'name' => 'Project Team Chat',
+        ]);
+
+        $conversationId = $response->json('id');
+
+        // Creator should be admin, others members
+        $this->assertDatabaseHas('chat_participants', [
+            'conversation_id' => $conversationId,
+            'user_id' => $this->user->id,
+            'role' => 'admin',
+        ]);
+
+        $this->assertDatabaseHas('chat_participants', [
+            'conversation_id' => $conversationId,
+            'user_id' => $this->otherUser->id,
+            'role' => 'member',
+        ]);
+    });
+
+    it('prevents duplicate direct conversations', function () {
+        $this->actingAs($this->user);
+
+        // Create first conversation
+        $response1 = $this->postJson('/api/conversations', [
+            'type' => 'direct',
+            'participant_ids' => [$this->otherUser->id],
+        ]);
+
+        $response1->assertStatus(201);
+
+        // Try to create another direct conversation with same user
+        $response2 = $this->postJson('/api/conversations', [
+            'type' => 'direct',
+            'participant_ids' => [$this->otherUser->id],
+        ]);
+
+        $response2->assertStatus(422);
+        $response2->assertJsonValidationErrors(['participant_ids']);
+    });
+
+    it('validates conversation creation', function () {
+        $this->actingAs($this->user);
+
+        // Test invalid type
+        $response = $this->postJson('/api/conversations', [
+            'type' => 'invalid',
+            'participant_ids' => [$this->otherUser->id],
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['type']);
+
+        // Test missing participants for direct conversation
+        $response = $this->postJson('/api/conversations', [
+            'type' => 'direct',
+            'participant_ids' => [],
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['participant_ids']);
+
+        // Test missing name for group conversation
+        $response = $this->postJson('/api/conversations', [
+            'type' => 'group',
+            'participant_ids' => [$this->otherUser->id],
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['name']);
+    });
+
+    it('can list user conversations', function () {
+        $this->actingAs($this->user);
+
+        // Create multiple conversations
+        $conversation1 = Conversation::factory()->create([
+            'type' => 'direct',
+            'created_by' => $this->user->id,
+        ]);
+
+        $conversation2 = Conversation::factory()->create([
+            'type' => 'group',
+            'name' => 'Team Chat',
+            'created_by' => $this->otherUser->id,
+        ]);
+
+        // Add user as participant to both
+        foreach ([$conversation1, $conversation2] as $conversation) {
+            Participant::create([
+                'conversation_id' => $conversation->id,
+                'user_id' => $this->user->id,
+                'role' => 'member',
+            ]);
+        }
+
+        $response = $this->getJson('/api/conversations');
+
+        $response->assertStatus(200);
+        $response->assertJsonCount(2, 'data');
+
+        $conversationIds = array_column($response->json('data'), 'id');
+        expect($conversationIds)->toContain($conversation1->id);
+        expect($conversationIds)->toContain($conversation2->id);
+    });
+
+    it('can update conversation', function () {
+        $this->actingAs($this->user);
+
+        $conversation = Conversation::factory()->create([
+            'type' => 'group',
+            'name' => 'Old Name',
+            'created_by' => $this->user->id,
+        ]);
+
+        Participant::create([
+            'conversation_id' => $conversation->id,
+            'user_id' => $this->user->id,
+            'role' => 'admin',
+        ]);
+
+        $response = $this->putJson("/api/conversations/{$conversation->id}", [
+            'name' => 'New Team Name',
+            'description' => 'Updated description',
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'name' => 'New Team Name',
+            'description' => 'Updated description',
+        ]);
+
+        $this->assertDatabaseHas('chat_conversations', [
+            'id' => $conversation->id,
+            'name' => 'New Team Name',
+        ]);
+    });
+
+    it('can delete conversation', function () {
+        $this->actingAs($this->user);
+
+        $conversation = Conversation::factory()->create([
+            'created_by' => $this->user->id,
+        ]);
+
+        Participant::create([
+            'conversation_id' => $conversation->id,
+            'user_id' => $this->user->id,
+            'role' => 'admin',
+        ]);
+
+        $response = $this->deleteJson("/api/conversations/{$conversation->id}");
+
+        $response->assertStatus(204);
+
+        $this->assertSoftDeleted('chat_conversations', [
+            'id' => $conversation->id,
+        ]);
+    });
+});
+
+describe('Message API', function () {
+    beforeEach(function () {
+        $this->conversation = Conversation::factory()->create([
+            'type' => 'direct',
+            'created_by' => $this->user->id,
+        ]);
+
+        Participant::create([
+            'conversation_id' => $this->conversation->id,
+            'user_id' => $this->user->id,
+            'role' => 'member',
+        ]);
+
+        Participant::create([
+            'conversation_id' => $this->conversation->id,
+            'user_id' => $this->otherUser->id,
+            'role' => 'member',
+        ]);
+    });
+
+    it('can send text message', function () {
+        $this->actingAs($this->user);
+
+        $response = $this->postJson("/api/conversations/{$this->conversation->id}/messages", [
+            'content' => 'Hello, this is a test message!',
+            'type' => 'text',
+        ]);
+
+        $response->assertStatus(201);
+        $response->assertJson([
+            'content' => 'Hello, this is a test message!',
+            'type' => 'text',
+            'sender_id' => $this->user->id,
+        ]);
+
+        $this->assertDatabaseHas('chat_messages', [
+            'conversation_id' => $this->conversation->id,
+            'sender_id' => $this->user->id,
+            'type' => 'text',
+        ]);
+    });
+
+    it('can send file message', function () {
+        $this->actingAs($this->user);
+
+        $file = UploadedFile::fake()->image('photo.jpg');
+
+        $response = $this->postJson("/api/conversations/{$this->conversation->id}/messages", [
+            'type' => 'file',
+            'file' => $file,
+        ]);
+
+        $response->assertStatus(201);
+        $response->assertJsonStructure([
+            'id',
+            'type',
+            'file_name',
+            'file_size',
+            'mime_type',
+            'file_url',
+        ]);
+
+        expect($response->json('type'))->toBe('file');
+        expect($response->json('file_name'))->toBe('photo.jpg');
+
+        // Verify file is stored
+        $message = Message::find($response->json('id'));
+        Storage::disk('chat-files')->assertExists($message->file_path);
+    });
+
+    it('can reply to message', function () {
+        $this->actingAs($this->user);
+
+        // Create original message
+        $originalMessage = Message::create([
+            'conversation_id' => $this->conversation->id,
+            'sender_id' => $this->otherUser->id,
+            'content' => 'Original message',
+            'type' => 'text',
+        ]);
+
+        $response = $this->postJson("/api/conversations/{$this->conversation->id}/messages", [
+            'content' => 'This is a reply',
+            'type' => 'text',
+            'reply_to_id' => $originalMessage->id,
+        ]);
+
+        $response->assertStatus(201);
+        $response->assertJson([
+            'reply_to_id' => $originalMessage->id,
+        ]);
+
+        $response->assertJsonStructure([
+            'reply_to' => ['id', 'content', 'sender' => ['name']],
+        ]);
+    });
+
+    it('can edit message', function () {
+        $this->actingAs($this->user);
+
+        $message = Message::create([
+            'conversation_id' => $this->conversation->id,
+            'sender_id' => $this->user->id,
+            'content' => 'Original content',
+            'type' => 'text',
+        ]);
+
+        $response = $this->putJson("/api/messages/{$message->id}", [
+            'content' => 'Updated content',
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'content' => 'Updated content',
+        ]);
+
+        expect($response->json('edited_at'))->not()->toBeNull();
+    });
+
+    it('can delete message', function () {
+        $this->actingAs($this->user);
+
+        $message = Message::create([
+            'conversation_id' => $this->conversation->id,
+            'sender_id' => $this->user->id,
+            'content' => 'Message to delete',
+            'type' => 'text',
+        ]);
+
+        $response = $this->deleteJson("/api/messages/{$message->id}");
+
+        $response->assertStatus(204);
+
+        $this->assertSoftDeleted('chat_messages', [
+            'id' => $message->id,
+        ]);
+    });
+
+    it('can search messages', function () {
+        $this->actingAs($this->user);
+
+        Message::create([
+            'conversation_id' => $this->conversation->id,
+            'sender_id' => $this->user->id,
+            'content' => 'Laravel is awesome for backend development',
+            'type' => 'text',
+        ]);
+
+        Message::create([
+            'conversation_id' => $this->conversation->id,
+            'sender_id' => $this->user->id,
+            'content' => 'React makes frontend development easy',
+            'type' => 'text',
+        ]);
+
+        $response = $this->getJson("/api/conversations/{$this->conversation->id}/messages/search?q=Laravel");
+
+        $response->assertStatus(200);
+        expect($response->json('data'))->toHaveCount(1);
+        expect($response->json('data.0.content'))->toContain('Laravel');
+    });
+});
+
+describe('Participant Management API', function () {
+    beforeEach(function () {
+        $this->conversation = Conversation::factory()->create([
+            'type' => 'group',
+            'name' => 'Test Group',
+            'created_by' => $this->user->id,
+        ]);
+
+        Participant::create([
+            'conversation_id' => $this->conversation->id,
+            'user_id' => $this->user->id,
+            'role' => 'admin',
+        ]);
+    });
+
+    it('can add participants to group conversation', function () {
+        $this->actingAs($this->user);
+
+        $response = $this->postJson("/api/conversations/{$this->conversation->id}/participants", [
+            'user_ids' => [$this->otherUser->id, $this->thirdUser->id],
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJsonCount(3, 'participants'); // Original user + 2 new
+
+        $this->assertDatabaseHas('chat_participants', [
+            'conversation_id' => $this->conversation->id,
+            'user_id' => $this->otherUser->id,
+            'role' => 'member',
+        ]);
+    });
+
+    it('can update participant role', function () {
+        $this->actingAs($this->user);
+
+        // Add participant first
+        Participant::create([
+            'conversation_id' => $this->conversation->id,
+            'user_id' => $this->otherUser->id,
+            'role' => 'member',
+        ]);
+
+        $response = $this->putJson("/api/conversations/{$this->conversation->id}/participants/{$this->otherUser->id}", [
+            'role' => 'admin',
+        ]);
+
+        $response->assertStatus(200);
+
+        $this->assertDatabaseHas('chat_participants', [
+            'conversation_id' => $this->conversation->id,
+            'user_id' => $this->otherUser->id,
+            'role' => 'admin',
+        ]);
+    });
+
+    it('can remove participant from group', function () {
+        $this->actingAs($this->user);
+
+        // Add participant first
+        Participant::create([
+            'conversation_id' => $this->conversation->id,
+            'user_id' => $this->otherUser->id,
+            'role' => 'member',
+        ]);
+
+        $response = $this->deleteJson("/api/conversations/{$this->conversation->id}/participants/{$this->otherUser->id}");
+
+        $response->assertStatus(204);
+
+        $this->assertDatabaseMissing('chat_participants', [
+            'conversation_id' => $this->conversation->id,
+            'user_id' => $this->otherUser->id,
+        ]);
+    });
+
+    it('prevents non-admin from managing participants', function () {
+        // Add otherUser as regular member
+        Participant::create([
+            'conversation_id' => $this->conversation->id,
+            'user_id' => $this->otherUser->id,
+            'role' => 'member',
+        ]);
+
+        $this->actingAs($this->otherUser);
+
+        $response = $this->postJson("/api/conversations/{$this->conversation->id}/participants", [
+            'user_ids' => [$this->thirdUser->id],
+        ]);
+
+        $response->assertStatus(403);
+    });
+});
+
+describe('Encryption Key Management API', function () {
+    it('can generate encryption keys for user', function () {
+        $this->actingAs($this->user);
+
+        $response = $this->postJson('/api/chat/encryption/keys', [
+            'password' => 'user-password-123',
+        ]);
+
+        $response->assertStatus(201);
+        $response->assertJsonStructure([
+            'public_key',
+            'encrypted_private_key',
+        ]);
+
+        expect($response->json('public_key'))->toContain('BEGIN PUBLIC KEY');
+        expect($response->json('encrypted_private_key'))->toBeString();
+    });
+
+    it('can retrieve user encryption keys', function () {
+        $this->actingAs($this->user);
+
+        // Create test conversation and keys
+        $conversation = Conversation::factory()->create();
+        Participant::create([
+            'conversation_id' => $conversation->id,
+            'user_id' => $this->user->id,
+            'role' => 'member',
+        ]);
+
+        EncryptionKey::create([
+            'conversation_id' => $conversation->id,
+            'user_id' => $this->user->id,
+            'public_key' => 'test-public-key',
+            'encrypted_private_key' => 'test-encrypted-private-key',
+            'symmetric_key' => 'test-symmetric-key',
+            'version' => 1,
+        ]);
+
+        $response = $this->getJson('/api/chat/encryption/keys');
+
+        $response->assertStatus(200);
+        $response->assertJsonStructure([
+            '*' => [
+                'conversation_id',
+                'public_key',
+                'encrypted_private_key',
+                'version',
+            ],
+        ]);
+
+        expect($response->json())->toHaveCount(1);
+    });
+
+    it('can update encryption keys', function () {
+        $this->actingAs($this->user);
+
+        $conversation = Conversation::factory()->create();
+        Participant::create([
+            'conversation_id' => $conversation->id,
+            'user_id' => $this->user->id,
+            'role' => 'member',
+        ]);
+
+        $existingKey = EncryptionKey::create([
+            'conversation_id' => $conversation->id,
+            'user_id' => $this->user->id,
+            'public_key' => 'old-public-key',
+            'encrypted_private_key' => 'old-encrypted-private-key',
+            'symmetric_key' => 'old-symmetric-key',
+            'version' => 1,
+        ]);
+
+        $response = $this->putJson("/api/chat/encryption/keys/{$existingKey->id}", [
+            'public_key' => 'new-public-key',
+            'encrypted_private_key' => 'new-encrypted-private-key',
+            'symmetric_key' => 'new-symmetric-key',
+        ]);
+
+        $response->assertStatus(200);
+
+        $existingKey->refresh();
+        expect($existingKey->version)->toBe(2);
+        expect($existingKey->public_key)->toBe('new-public-key');
+    });
+});
+
+describe('Real-time Features', function () {
+    beforeEach(function () {
+        $this->conversation = Conversation::factory()->create([
+            'type' => 'direct',
+            'created_by' => $this->user->id,
+        ]);
+
+        Participant::create([
+            'conversation_id' => $this->conversation->id,
+            'user_id' => $this->user->id,
+            'role' => 'member',
+        ]);
+
+        Participant::create([
+            'conversation_id' => $this->conversation->id,
+            'user_id' => $this->otherUser->id,
+            'role' => 'member',
+        ]);
+    });
+
+    it('broadcasts message when sent', function () {
+        $this->actingAs($this->user);
+
+        Broadcasting::fake();
+
+        $response = $this->postJson("/api/conversations/{$this->conversation->id}/messages", [
+            'content' => 'Hello everyone!',
+            'type' => 'text',
+        ]);
+
+        $response->assertStatus(201);
+
+        Broadcasting::assertBroadcasted(\App\Events\MessageSent::class);
+    });
+
+    it('can update typing indicator', function () {
+        $this->actingAs($this->user);
+
+        Broadcasting::fake();
+
+        $response = $this->postJson("/api/conversations/{$this->conversation->id}/typing", [
+            'is_typing' => true,
+        ]);
+
+        $response->assertStatus(200);
+
+        Broadcasting::assertBroadcasted(\App\Events\UserTyping::class);
+    });
+
+    it('can update presence status', function () {
+        $this->actingAs($this->user);
+
+        Broadcasting::fake();
+
+        $response = $this->postJson('/api/chat/presence', [
+            'status' => 'online',
+        ]);
+
+        $response->assertStatus(200);
+
+        Broadcasting::assertBroadcasted(\App\Events\PresenceUpdated::class);
+    });
+});
+
+describe('Rate Limiting', function () {
+    beforeEach(function () {
+        $this->conversation = Conversation::factory()->create([
+            'created_by' => $this->user->id,
+        ]);
+
+        Participant::create([
+            'conversation_id' => $this->conversation->id,
+            'user_id' => $this->user->id,
+            'role' => 'member',
+        ]);
+    });
+
+    it('applies rate limiting to message sending', function () {
+        $this->actingAs($this->user);
+
+        // Send messages rapidly
+        for ($i = 0; $i < 65; $i++) {
+            $response = $this->postJson("/api/conversations/{$this->conversation->id}/messages", [
+                'content' => "Message {$i}",
+                'type' => 'text',
+            ]);
+
+            if ($i < 60) {
+                expect($response->status())->toBeLessThan(400);
+            } else {
+                // Should be rate limited after 60 messages
+                $response->assertStatus(429);
+                break;
+            }
+        }
+    });
+
+    it('applies rate limiting to conversation creation', function () {
+        $this->actingAs($this->user);
+
+        // Create conversations rapidly
+        for ($i = 0; $i < 12; $i++) {
+            $targetUser = User::factory()->create();
+
+            $response = $this->postJson('/api/conversations', [
+                'type' => 'direct',
+                'participant_ids' => [$targetUser->id],
+            ]);
+
+            if ($i < 10) {
+                expect($response->status())->toBeLessThan(400);
+            } else {
+                // Should be rate limited after 10 conversations
+                $response->assertStatus(429);
+                break;
+            }
+        }
+    });
+});
+
+describe('File Download API', function () {
+    beforeEach(function () {
+        $this->conversation = Conversation::factory()->create([
+            'created_by' => $this->user->id,
+        ]);
+
+        Participant::create([
+            'conversation_id' => $this->conversation->id,
+            'user_id' => $this->user->id,
+            'role' => 'member',
+        ]);
+    });
+
+    it('can download file with valid token', function () {
+        $this->actingAs($this->user);
+
+        // Upload file first
+        $file = UploadedFile::fake()->create('document.pdf', 100, 'application/pdf');
+
+        $uploadResponse = $this->postJson("/api/conversations/{$this->conversation->id}/messages", [
+            'type' => 'file',
+            'file' => $file,
+        ]);
+
+        $uploadResponse->assertStatus(201);
+
+        $fileUrl = $uploadResponse->json('file_url');
+
+        // Download file
+        $response = $this->get($fileUrl);
+
+        $response->assertStatus(200);
+        $response->assertHeader('Content-Type', 'application/pdf');
+        $response->assertHeader('Content-Disposition');
+    });
+
+    it('rejects expired download tokens', function () {
+        // This would require mocking time or creating an expired token
+        // Implementation depends on how download tokens are generated
+        $this->markTestSkipped('Requires time mocking for expired token testing');
+    });
+
+    it('rejects invalid download tokens', function () {
+        $response = $this->get('/api/chat/files/download/invalid-path?token=invalid&expires='.(time() + 3600));
+
+        $response->assertStatus(403);
+    });
+});

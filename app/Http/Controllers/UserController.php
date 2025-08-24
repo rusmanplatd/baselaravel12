@@ -26,7 +26,7 @@ class UserController extends Controller
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
                 $q->where('name', 'like', '%'.$request->search.'%')
-                  ->orWhere('email', 'like', '%'.$request->search.'%');
+                    ->orWhere('email', 'like', '%'.$request->search.'%');
             });
         }
 
@@ -66,7 +66,7 @@ class UserController extends Controller
         ]);
 
         $roles = $request->input('roles', []);
-        
+
         $user->syncRoles($roles);
 
         ActivityLogService::log('user', 'roles_updated', $user->id, [
@@ -86,7 +86,7 @@ class UserController extends Controller
 
         // Remove all roles before deletion
         $user->syncRoles([]);
-        
+
         $user->delete();
 
         ActivityLogService::log('user', 'deleted', $user->id, [

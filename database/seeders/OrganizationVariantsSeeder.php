@@ -2,13 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\Models\Organization;
-use App\Models\OrganizationUnit;
-use App\Models\OrganizationPosition;
-use App\Models\OrganizationMembership;
-use App\Models\User;
 use App\Models\Auth\Role;
-use App\Models\Auth\Permission;
+use App\Models\Organization;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 

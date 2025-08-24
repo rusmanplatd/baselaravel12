@@ -67,7 +67,7 @@ class PermissionSeeder extends Seeder
             'position.level.create' => 'Create organization position levels',
             'position.level.edit' => 'Edit organization position levels',
             'position.level.delete' => 'Delete organization position levels',
-            
+
             // Alternative permission names for organization position levels (used by form requests)
             'create organization position levels' => 'Create organization position levels',
             'edit organization position levels' => 'Edit organization position levels',
@@ -104,7 +104,7 @@ class PermissionSeeder extends Seeder
             'manage permissions' => 'Manage permissions (full access)',
             'assign permissions' => 'Assign permissions to roles',
             'revoke permissions' => 'Revoke permissions from roles',
-            
+
             // Legacy role and permission names (keeping for backward compatibility)
             'role.view' => 'View roles',
             'role.create' => 'Create roles',

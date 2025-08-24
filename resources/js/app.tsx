@@ -5,6 +5,11 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 import { initializeTheme } from './hooks/use-appearance';
 
+// Load session test utilities in development
+if (import.meta.env.DEV) {
+    import('./utils/sessionTestUtils');
+}
+
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
 createInertiaApp({

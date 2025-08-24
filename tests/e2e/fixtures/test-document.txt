@@ -1,0 +1,11 @@
+This is a test document for file upload testing.
+
+It contains multiple lines of text to simulate a real document.
+
+Features to test:
+- File upload
+- File download
+- File preview
+- File sharing in chat
+
+This document is used in the Playwright tests for the chat file upload functionality.

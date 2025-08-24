@@ -108,7 +108,7 @@ Tests are located in:
 - `tests/Unit/` - unit tests
 
 ### Database
-- Uses SQLite by default (`database/database.sqlite`)
+- Uses pgsql by default
 - Extensive migration set including:
   - OAuth 2.0/OIDC tables (Passport) with organization-scoped clients
   - Organization hierarchy tables (organizations, units, positions, memberships)

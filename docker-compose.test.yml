@@ -111,7 +111,7 @@ services:
       target: test
     environment:
       - APP_ENV=testing
-      - DB_CONNECTION=sqlite
+      - DB_CONNECTION=pgsql
       - DB_DATABASE=:memory:
       - CACHE_DRIVER=array
       - SESSION_DRIVER=array

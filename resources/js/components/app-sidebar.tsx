@@ -4,7 +4,7 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, Building, Users, Network, UserCheck, Target, Shield, KeyRound, Award } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, Building, Users, Network, UserCheck, Target, Shield, KeyRound, Award, MessageCircle } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -12,6 +12,11 @@ const mainNavItems: NavItem[] = [
         title: 'Dashboard',
         href: '/dashboard',
         icon: LayoutGrid,
+    },
+    {
+        title: 'Chat',
+        href: '/chat',
+        icon: MessageCircle,
     },
     {
         title: 'Organizations',
@@ -53,16 +58,16 @@ const mainNavItems: NavItem[] = [
         ],
     },
     {
-        title: 'Positions',
-        href: '/organization-positions',
-        icon: Target,
-        permission: 'position.view',
-    },
-    {
         title: 'Position Levels',
         href: '/organization-position-levels',
         icon: Award,
         permission: 'position.level.view',
+    },
+    {
+        title: 'Positions',
+        href: '/organization-positions',
+        icon: Target,
+        permission: 'position.view',
     },
     {
         title: 'Memberships',

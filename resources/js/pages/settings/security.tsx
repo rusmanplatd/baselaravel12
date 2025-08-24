@@ -7,7 +7,7 @@ import SettingsLayout from '@/layouts/settings/layout';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { route } from 'ziggy-js';
-import { Smartphone, Key, Copy, CheckCircle, AlertTriangle, Download } from 'lucide-react';
+import { Smartphone, Key, Copy, CheckCircle, AlertTriangle, Download, Shield, Activity, ExternalLink } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -540,6 +540,60 @@ export default function Security({ mfaEnabled, hasBackupCodes, passkeys }: Secur
                         </CardContent>
                     </Card>
                 )}
+
+                {/* Device and Session Management */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <Shield className="h-5 w-5" />
+                            Device & Session Management
+                        </CardTitle>
+                        <CardDescription>
+                            Manage your trusted devices and monitor active sessions for enhanced security.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="p-4 border rounded-lg">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Shield className="h-4 w-4 text-blue-600" />
+                                    <h4 className="font-medium">Trusted Devices</h4>
+                                </div>
+                                <p className="text-sm text-muted-foreground mb-3">
+                                    Manage devices you trust and don't require additional verification.
+                                </p>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => router.visit(route('security.trusted-devices'))}
+                                    className="w-full"
+                                >
+                                    <ExternalLink className="h-4 w-4 mr-2" />
+                                    Manage Trusted Devices
+                                </Button>
+                            </div>
+
+                            <div className="p-4 border rounded-lg">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Activity className="h-4 w-4 text-green-600" />
+                                    <h4 className="font-medium">Active Sessions</h4>
+                                </div>
+                                <p className="text-sm text-muted-foreground mb-3">
+                                    Monitor and manage your active login sessions across devices.
+                                </p>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => router.visit(route('security.sessions'))}
+                                    className="w-full"
+                                >
+                                    <ExternalLink className="h-4 w-4 mr-2" />
+                                    View Active Sessions
+                                </Button>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
 
                 {/* WebAuthn / Passkeys */}
                 <Card>

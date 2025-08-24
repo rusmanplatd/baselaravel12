@@ -17,6 +17,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
+        $middleware->validateCsrfTokens(except: ['api/*']);
+
         $middleware->web(append: [
             HandleAppearance::class,
             \App\Http\Middleware\SetPermissionTeamContext::class,
@@ -32,6 +34,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\CheckRole::class,
             'organization.access' => \App\Http\Middleware\CheckOrganizationAccess::class,
             'organization.context' => \App\Http\Middleware\OrganizationContext::class,
+            'trusted.device' => \App\Http\Middleware\TrustedDeviceMiddleware::class,
+            'session.tracking' => \App\Http\Middleware\SessionTrackingMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

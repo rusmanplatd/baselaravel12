@@ -9,7 +9,7 @@ use Spatie\Multitenancy\Models\Tenant;
 class OAuthAuditLog extends Model
 {
     protected $table = 'oauth_audit_logs';
-    
+
     protected $fillable = [
         'event_type',
         'client_id',
