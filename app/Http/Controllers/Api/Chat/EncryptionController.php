@@ -363,13 +363,37 @@ class EncryptionController extends Controller
                                 'is_active' => true,
                             ]);
                         } else {
+                            // Get or create a device for this user (for backward compatibility)
+                            $device = \App\Models\UserDevice::where('user_id', $user->id)
+                                ->where('is_trusted', true)
+                                ->first();
+                            
+                            if (!$device) {
+                                $device = \App\Models\UserDevice::create([
+                                    'user_id' => $user->id,
+                                    'device_name' => 'Backup Restore Device',
+                                    'device_type' => 'web',
+                                    'device_fingerprint' => 'restore-' . $user->id . '-' . uniqid(),
+                                    'platform_info' => json_encode(['os' => 'web', 'browser' => 'restore']),
+                                    'public_key' => $user->public_key ?? $keyData['public_key'] ?? null,
+                                    'is_trusted' => true,
+                                    'device_capabilities' => json_encode(['messaging', 'encryption']),
+                                    'security_level' => 'medium',
+                                ]);
+                            }
+
                             // Create new encryption key record
                             EncryptionKey::create([
                                 'conversation_id' => $conversation->id,
                                 'user_id' => $user->id,
+                                'device_id' => $device->id,
+                                'device_fingerprint' => $device->device_fingerprint,
                                 'encrypted_key' => $conversationData['encrypted_key'],
                                 'public_key' => $user->public_key ?? $keyData['public_key'] ?? null,
                                 'is_active' => true,
+                                'key_version' => 1,
+                                'algorithm' => 'RSA-OAEP',
+                                'key_strength' => 4096,
                             ]);
                         }
 
@@ -517,7 +541,10 @@ class EncryptionController extends Controller
             // Match encrypted keys with participants by public key
             foreach ($validated['encrypted_keys'] as $keyData) {
                 $participant = $participants->first(function ($p) use ($keyData) {
-                    return $p->user->public_key === $keyData['publicKey'];
+                    // Normalize whitespace for comparison
+                    $userKey = trim(preg_replace('/\s+/', ' ', $p->user->public_key ?? ''));
+                    $providedKey = trim(preg_replace('/\s+/', ' ', $keyData['publicKey']));
+                    return $userKey === $providedKey;
                 });
 
                 if (! $participant) {
@@ -530,18 +557,38 @@ class EncryptionController extends Controller
                 }
 
                 try {
-                    // Create or update encryption key for this participant
-                    EncryptionKey::updateOrCreate(
-                        [
-                            'conversation_id' => $conversation->id,
+                    // Get or create a device for this user (for backward compatibility)
+                    $device = \App\Models\UserDevice::where('user_id', $participant->user_id)
+                        ->where('is_trusted', true)
+                        ->first();
+                    
+                    if (!$device) {
+                        $device = \App\Models\UserDevice::create([
                             'user_id' => $participant->user_id,
-                        ],
-                        [
-                            'encrypted_key' => $keyData['encryptedKey'],
+                            'device_name' => 'Legacy Device',
+                            'device_type' => 'web',
+                            'device_fingerprint' => 'legacy-' . $participant->user_id . '-' . uniqid(),
+                            'platform_info' => json_encode(['os' => 'web', 'browser' => 'legacy']),
                             'public_key' => $keyData['publicKey'],
-                            'is_active' => true,
-                        ]
-                    );
+                            'is_trusted' => true,
+                            'device_capabilities' => json_encode(['messaging', 'encryption']),
+                            'security_level' => 'medium',
+                        ]);
+                    }
+
+                    // Create encryption key for this participant's device
+                    EncryptionKey::create([
+                        'conversation_id' => $conversation->id,
+                        'user_id' => $participant->user_id,
+                        'device_id' => $device->id,
+                        'device_fingerprint' => $device->device_fingerprint,
+                        'encrypted_key' => $keyData['encryptedKey'],
+                        'public_key' => $keyData['publicKey'],
+                        'is_active' => true,
+                        'key_version' => 1,
+                        'algorithm' => 'RSA-OAEP',
+                        'key_strength' => 4096,
+                    ]);
 
                     $successCount++;
 
