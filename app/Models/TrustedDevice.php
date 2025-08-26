@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -62,9 +62,9 @@ class TrustedDevice extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function sessions()
+    public function sessions(): HasMany
     {
-        return DB::table('sessions')->where('trusted_device_id', $this->id);
+        return $this->hasMany(Session::class, 'trusted_device_id');
     }
 
     public function scopeActive($query)

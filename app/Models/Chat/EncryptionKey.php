@@ -155,49 +155,4 @@ class EncryptionKey extends Model
         $this->update(['is_active' => false]);
     }
 
-    /**
-     * Legacy method for backward compatibility with tests.
-     * Creates a key for the user's primary trusted device.
-     */
-    public static function createForUser(
-        string $conversationId,
-        string $userId,
-        string $symmetricKey,
-        string $publicKey
-    ): self {
-        // For backward compatibility, create a temporary device if none exists
-        $device = \App\Models\UserDevice::where('user_id', $userId)
-            ->where('is_trusted', true)
-            ->first();
-
-        if (! $device) {
-            // Create a default device for testing
-            $device = \App\Models\UserDevice::create([
-                'user_id' => $userId,
-                'device_name' => 'Test Device',
-                'device_type' => 'desktop',
-                'device_fingerprint' => 'test-'.uniqid(),
-                'platform_info' => json_encode(['os' => 'test', 'browser' => 'test']),
-                'public_key' => $publicKey,
-                'is_trusted' => true,
-                'device_capabilities' => json_encode(['messaging', 'encryption']),
-                'security_level' => 'high',
-            ]);
-        }
-
-        $encryptionService = app(\App\Services\ChatEncryptionService::class);
-
-        return self::create([
-            'conversation_id' => $conversationId,
-            'user_id' => $userId,
-            'device_id' => $device->id,
-            'device_fingerprint' => $device->device_fingerprint,
-            'encrypted_key' => $encryptionService->encryptSymmetricKey($symmetricKey, $publicKey),
-            'public_key' => $publicKey,
-            'key_version' => 1,
-            'algorithm' => 'RSA-OAEP',
-            'key_strength' => 4096,
-            'is_active' => true,
-        ]);
-    }
 }

@@ -180,17 +180,15 @@ class ConversationController extends Controller
         $this->authorize('update', $conversation);
 
         $validated = $request->validate([
-            'user_ids' => 'required_without:user_id|array',
+            'user_ids' => 'required|array',
             'user_ids.*' => 'exists:sys_users,id',
-            'user_id' => 'required_without:user_ids|exists:sys_users,id', // For backward compatibility
         ]);
 
         if ($conversation->type === 'direct') {
             return response()->json(['error' => 'Cannot add participants to direct conversations'], 422);
         }
 
-        // Handle both single user_id and multiple user_ids for backward compatibility
-        $userIds = $validated['user_ids'] ?? [$validated['user_id']];
+        $userIds = $validated['user_ids'];
 
         return DB::transaction(function () use ($conversation, $userIds) {
             $addedParticipants = [];
@@ -235,11 +233,18 @@ class ConversationController extends Controller
 
                             $userKeyPair = $this->getUserKeyPair($userId);
 
-                            EncryptionKey::createForUser(
+                            // Get user's device for key creation
+                            $userDevice = \App\Models\UserDevice::where('user_id', $userId)
+                                ->where('is_trusted', true)
+                                ->firstOrFail();
+
+                            EncryptionKey::createForDevice(
                                 $conversation->id,
                                 $userId,
+                                $userDevice->id,
                                 $symmetricKey,
-                                $userKeyPair['public_key']
+                                $userKeyPair['public_key'],
+                                $userDevice->device_fingerprint
                             );
                         } catch (\Exception $e) {
                             // Log encryption setup error but don't fail the participant addition
@@ -510,11 +515,18 @@ class ConversationController extends Controller
 
                 $userKeyPair = $this->getUserKeyPair(auth()->id());
 
-                EncryptionKey::createForUser(
+                // Get user's device for key creation
+                $userDevice = \App\Models\UserDevice::where('user_id', auth()->id())
+                    ->where('is_trusted', true)
+                    ->firstOrFail();
+
+                EncryptionKey::createForDevice(
                     $conversation->id,
                     auth()->id(),
+                    $userDevice->id,
                     $symmetricKey,
-                    $userKeyPair['public_key']
+                    $userKeyPair['public_key'],
+                    $userDevice->device_fingerprint
                 );
             }
 

@@ -14,7 +14,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Facades\DB;
 use Laravel\Passport\HasApiTokens;
 use PragmaRX\Google2FA\Google2FA;
 use Spatie\Activitylog\LogOptions;
@@ -353,16 +352,14 @@ class User extends Authenticatable implements HasPasskeys
         return $this->hasMany(TrustedDevice::class)->active();
     }
 
-    public function sessions()
+    public function sessions(): HasMany
     {
-        return DB::table('sessions')->where('user_id', $this->id);
+        return $this->hasMany(Session::class);
     }
 
-    public function activeSessions()
+    public function activeSessions(): HasMany
     {
-        return DB::table('sessions')
-            ->where('user_id', $this->id)
-            ->where('is_active', true);
+        return $this->hasMany(Session::class)->active();
     }
 
     public function getTrustedDeviceByToken(string $token): ?TrustedDevice
@@ -373,12 +370,11 @@ class User extends Authenticatable implements HasPasskeys
             ->first();
     }
 
-    public function getCurrentSession(string $sessionId): ?object
+    public function getCurrentSession(string $sessionId): ?Session
     {
-        return DB::table('sessions')
+        return $this->sessions()
             ->where('id', $sessionId)
-            ->where('user_id', $this->id)
-            ->where('is_active', true)
+            ->active()
             ->first();
     }
 

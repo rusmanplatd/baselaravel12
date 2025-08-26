@@ -399,24 +399,10 @@ class EncryptionController extends Controller
                                 'is_active' => true,
                             ]);
                         } else {
-                            // Get or create a device for this user (for backward compatibility)
+                            // Get the user's primary trusted device
                             $device = \App\Models\UserDevice::where('user_id', $user->id)
                                 ->where('is_trusted', true)
-                                ->first();
-
-                            if (!$device) {
-                                $device = \App\Models\UserDevice::create([
-                                    'user_id' => $user->id,
-                                    'device_name' => 'Backup Restore Device',
-                                    'device_type' => 'web',
-                                    'device_fingerprint' => 'restore-' . $user->id . '-' . uniqid(),
-                                    'platform_info' => json_encode(['os' => 'web', 'browser' => 'restore']),
-                                    'public_key' => $user->public_key ?? $keyData['public_key'] ?? null,
-                                    'is_trusted' => true,
-                                    'device_capabilities' => json_encode(['messaging', 'encryption']),
-                                    'security_level' => 'medium',
-                                ]);
-                            }
+                                ->firstOrFail();
 
                             // Create new encryption key record
                             EncryptionKey::create([
@@ -594,24 +580,10 @@ class EncryptionController extends Controller
                 }
 
                 try {
-                    // Get or create a device for this user (for backward compatibility)
+                    // Get the user's primary trusted device
                     $device = \App\Models\UserDevice::where('user_id', $participant->user_id)
                         ->where('is_trusted', true)
-                        ->first();
-
-                    if (!$device) {
-                        $device = \App\Models\UserDevice::create([
-                            'user_id' => $participant->user_id,
-                            'device_name' => 'Legacy Device',
-                            'device_type' => 'web',
-                            'device_fingerprint' => 'legacy-' . $participant->user_id . '-' . uniqid(),
-                            'platform_info' => json_encode(['os' => 'web', 'browser' => 'legacy']),
-                            'public_key' => $keyData['publicKey'],
-                            'is_trusted' => true,
-                            'device_capabilities' => json_encode(['messaging', 'encryption']),
-                            'security_level' => 'medium',
-                        ]);
-                    }
+                        ->firstOrFail();
 
                     // Create encryption key for this participant's device
                     EncryptionKey::create([
@@ -987,7 +959,6 @@ class EncryptionController extends Controller
             'encrypted_private_key.salt' => 'required|string',
             'encrypted_private_key.hmac' => 'required|string',
             'encrypted_private_key.auth_data' => 'required|string',
-            'symmetric_key' => 'nullable|string', // For backward compatibility
         ]);
 
         try {

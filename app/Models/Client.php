@@ -14,7 +14,6 @@ class Client extends PassportClient
         'name',
         'secret',
         'provider',
-        'redirect',  // Use redirect for compatibility, maps to redirect_uris
         'redirect_uris',
         'grant_types',
         'revoked',
@@ -38,23 +37,6 @@ class Client extends PassportClient
     protected $hidden = [
         'secret',
     ];
-
-    /**
-     * Get the redirect attribute (compatibility with Passport).
-     * Passport expects 'redirect' but our database has 'redirect_uris'.
-     */
-    public function getRedirectAttribute()
-    {
-        return is_string($this->redirect_uris) ? json_decode($this->redirect_uris, true) : $this->redirect_uris;
-    }
-
-    /**
-     * Set the redirect attribute (compatibility with Passport).
-     */
-    public function setRedirectAttribute($value)
-    {
-        $this->attributes['redirect_uris'] = is_array($value) ? json_encode($value) : $value;
-    }
 
     /**
      * Get the organization that owns this OAuth client.

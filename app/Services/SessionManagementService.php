@@ -2,10 +2,10 @@
 
 namespace App\Services;
 
+use App\Models\Session as SessionModel;
 use App\Models\TrustedDevice;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 use Jenssegers\Agent\Agent;
 
@@ -39,15 +39,13 @@ class SessionManagementService
         ];
 
         // Update the existing session record with additional data
-        DB::table('sessions')
-            ->where('id', Session::getId())
+        SessionModel::where('id', Session::getId())
             ->update($sessionData);
     }
 
     public function updateSessionActivity(string $sessionId, ?TrustedDevice $trustedDevice = null): void
     {
-        DB::table('sessions')
-            ->where('id', $sessionId)
+        SessionModel::where('id', $sessionId)
             ->where('is_active', true)
             ->update([
                 'last_activity' => now()->timestamp,
@@ -58,14 +56,15 @@ class SessionManagementService
 
     public function terminateSession(string $sessionId, User $user): bool
     {
-        $updated = DB::table('sessions')
-            ->where('id', $sessionId)
+        $session = SessionModel::where('id', $sessionId)
             ->where('user_id', $user->id)
-            ->update(['is_active' => false]);
+            ->first();
 
-        if (! $updated) {
+        if (! $session) {
             return false;
         }
+
+        $session->terminate();
 
         // If terminating current session, invalidate the session
         if ($sessionId === Session::getId()) {
@@ -78,8 +77,7 @@ class SessionManagementService
 
     public function terminateAllSessions(User $user, ?string $exceptSessionId = null): int
     {
-        $query = DB::table('sessions')
-            ->where('user_id', $user->id)
+        $query = SessionModel::where('user_id', $user->id)
             ->where('is_active', true);
 
         if ($exceptSessionId) {
@@ -91,43 +89,25 @@ class SessionManagementService
 
     public function getUserSessions(User $user): \Illuminate\Support\Collection
     {
-        return DB::table('sessions')
-            ->leftJoin('trusted_devices', 'sessions.trusted_device_id', '=', 'trusted_devices.id')
-            ->where('sessions.user_id', $user->id)
-            ->orderBy('sessions.last_activity', 'desc')
-            ->select([
-                'sessions.*',
-                'trusted_devices.device_name',
-                'trusted_devices.device_token',
-                'trusted_devices.is_active as device_active',
-            ])
+        return SessionModel::with('trustedDevice')
+            ->where('user_id', $user->id)
+            ->orderBy('last_activity', 'desc')
             ->get()
             ->map(function ($session) {
-                $session->metadata = $session->metadata ? json_decode($session->metadata, true) : null;
                 $session->last_activity_formatted = \Carbon\Carbon::createFromTimestamp($session->last_activity);
-
                 return $session;
             });
     }
 
     public function getActiveSessions(User $user): \Illuminate\Support\Collection
     {
-        return DB::table('sessions')
-            ->leftJoin('trusted_devices', 'sessions.trusted_device_id', '=', 'trusted_devices.id')
-            ->where('sessions.user_id', $user->id)
-            ->where('sessions.is_active', true)
-            ->orderBy('sessions.last_activity', 'desc')
-            ->select([
-                'sessions.*',
-                'trusted_devices.device_name',
-                'trusted_devices.device_token',
-                'trusted_devices.is_active as device_active',
-            ])
+        return SessionModel::with('trustedDevice')
+            ->active()
+            ->forUser($user->id)
+            ->recent()
             ->get()
             ->map(function ($session) {
-                $session->metadata = $session->metadata ? json_decode($session->metadata, true) : null;
                 $session->last_activity_formatted = \Carbon\Carbon::createFromTimestamp($session->last_activity);
-
                 return $session;
             });
     }
@@ -137,44 +117,37 @@ class SessionManagementService
         $sessionLifetime = config('session.lifetime', 120); // minutes
         $cutoff = now()->subMinutes($sessionLifetime)->timestamp;
 
-        return DB::table('sessions')
-            ->where('last_activity', '<', $cutoff)
+        return SessionModel::where('last_activity', '<', $cutoff)
             ->where('is_active', true)
             ->update(['is_active' => false]);
     }
 
     public function getSessionStats(User $user): array
     {
-        $activeSessions = DB::table('sessions')
-            ->where('user_id', $user->id)
-            ->where('is_active', true)
+        $activeSessions = SessionModel::active()
+            ->forUser($user->id)
             ->count();
 
-        $totalSessions = DB::table('sessions')
-            ->where('user_id', $user->id)
+        $totalSessions = SessionModel::forUser($user->id)
             ->count();
 
-        $trustedDeviceSessions = DB::table('sessions')
-            ->where('user_id', $user->id)
-            ->where('is_active', true)
+        $trustedDeviceSessions = SessionModel::active()
+            ->forUser($user->id)
             ->whereNotNull('trusted_device_id')
             ->count();
 
-        $recentLogins = DB::table('sessions')
-            ->where('user_id', $user->id)
+        $recentLogins = SessionModel::forUser($user->id)
             ->where('login_at', '>=', now()->subDays(7))
             ->count();
 
-        $uniqueIPs = DB::table('sessions')
-            ->where('user_id', $user->id)
-            ->where('is_active', true)
+        $uniqueIPs = SessionModel::active()
+            ->forUser($user->id)
             ->distinct()
             ->count('ip_address');
 
-        $deviceTypes = DB::table('sessions')
-            ->where('user_id', $user->id)
-            ->where('is_active', true)
-            ->select('device_type', DB::raw('count(*) as count'))
+        $deviceTypes = SessionModel::active()
+            ->forUser($user->id)
+            ->selectRaw('device_type, count(*) as count')
             ->groupBy('device_type')
             ->pluck('count', 'device_type')
             ->toArray();
@@ -197,26 +170,15 @@ class SessionManagementService
 
     public function getSessionById(string $sessionId): ?object
     {
-        return DB::table('sessions')
-            ->leftJoin('trusted_devices', 'sessions.trusted_device_id', '=', 'trusted_devices.id')
-            ->leftJoin('sys_users', 'sessions.user_id', '=', 'sys_users.id')
-            ->where('sessions.id', $sessionId)
-            ->select([
-                'sessions.*',
-                'trusted_devices.device_name',
-                'trusted_devices.device_token',
-                'trusted_devices.is_active as device_active',
-                'sys_users.name as user_name',
-                'sys_users.email as user_email',
-            ])
+        return SessionModel::with(['trustedDevice', 'user:id,name,email'])
+            ->where('id', $sessionId)
             ->first();
     }
 
     public function validateSession(Request $request, User $user): bool
     {
         $sessionId = Session::getId();
-        $session = DB::table('sessions')
-            ->where('id', $sessionId)
+        $session = SessionModel::where('id', $sessionId)
             ->where('user_id', $user->id)
             ->where('is_active', true)
             ->first();
@@ -240,8 +202,7 @@ class SessionManagementService
         $detectionWindowDays = $alertConfig['detection_window_days'] ?? 7;
         $locationThreshold = $alertConfig['multiple_locations_threshold'] ?? 3;
 
-        $recentSessions = DB::table('sessions')
-            ->where('user_id', $user->id)
+        $recentSessions = SessionModel::forUser($user->id)
             ->where('login_at', '>=', now()->subDays($detectionWindowDays))
             ->get();
 
@@ -266,9 +227,8 @@ class SessionManagementService
         }
 
         // Check for sessions without trusted devices
-        $untrustedSessions = DB::table('sessions')
-            ->where('user_id', $user->id)
-            ->where('is_active', true)
+        $untrustedSessions = SessionModel::active()
+            ->forUser($user->id)
             ->whereNull('trusted_device_id')
             ->count();
 
