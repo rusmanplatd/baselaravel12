@@ -47,6 +47,14 @@ describe('Authentication and Authorization', function () {
                 'Content-Type' => 'application/json',
             ])->call($method, $url);
             
+            // Debug information
+            if ($response->getStatusCode() !== 401) {
+                echo "Debug - URL: $url, Method: $method\n";
+                echo "Status: " . $response->getStatusCode() . "\n";
+                echo "Headers: " . json_encode($response->headers->all()) . "\n";
+                echo "Content: " . $response->getContent() . "\n";
+            }
+            
             // API routes use Passport auth, so they return 401 Unauthorized when unauthenticated
             $response->assertStatus(401);
         }

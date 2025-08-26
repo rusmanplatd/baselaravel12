@@ -25,8 +25,18 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
         ]);
+        
+        $middleware->api(prepend: [
+            // Ensure API routes don't get the default auth middleware
+        ]);
+
+        $middleware->replace(
+            \Illuminate\Auth\Middleware\Authenticate::class,
+            \App\Http\Middleware\Authenticate::class
+        );
 
         $middleware->alias([
+            'auth' => \App\Http\Middleware\Authenticate::class,
             'mfa.verified' => \App\Http\Middleware\EnsureMfaVerified::class,
             'permission' => \App\Http\Middleware\CheckPermission::class,
             'permission.check' => \App\Http\Middleware\CheckPermissionMiddleware::class,
