@@ -35,7 +35,7 @@ class ClientFactory extends Factory
             'organization_id' => Organization::factory(),
             'allowed_scopes' => json_encode(['openid', 'profile', 'email']),
             'client_type' => 'public',
-            'user_access_scope' => 'organization_members',
+            'user_access_scope' => 'organization_members',  // Default to most restrictive
             'user_access_rules' => null,
             'last_used_at' => null,
         ];

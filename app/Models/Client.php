@@ -14,6 +14,7 @@ class Client extends PassportClient
         'name',
         'secret',
         'provider',
+        'redirect',  // Use redirect for compatibility, maps to redirect_uris
         'redirect_uris',
         'grant_types',
         'revoked',
@@ -27,7 +28,8 @@ class Client extends PassportClient
 
     protected $casts = [
         'revoked' => 'bool',
-        'redirect' => 'array',  // Passport expects this field name
+        'redirect_uris' => 'json',  // Database field
+        'grant_types' => 'json',    // Database field  
         'allowed_scopes' => 'array',
         'user_access_rules' => 'array',
         'last_used_at' => 'datetime',
@@ -67,15 +69,16 @@ class Client extends PassportClient
      */
     public function userHasAccess(User $user): bool
     {
+        // All OAuth clients must have organization association
+        if (!$this->organization_id) {
+            return false;
+        }
+
         switch ($this->user_access_scope) {
             case 'all_users':
                 return true;
 
             case 'organization_members':
-                if (!$this->organization_id) {
-                    return false;
-                }
-                
                 return $user->memberships()
                     ->active()
                     ->where('organization_id', $this->organization_id)
@@ -85,15 +88,8 @@ class Client extends PassportClient
                 return $this->checkCustomAccessRules($user);
 
             default:
-                // Default to organization_members for backward compatibility
-                if (!$this->organization_id) {
-                    return false;
-                }
-                
-                return $user->memberships()
-                    ->active()
-                    ->where('organization_id', $this->organization_id)
-                    ->exists();
+                // No default fallback - access scope must be explicitly set
+                return false;
         }
     }
 
@@ -186,34 +182,33 @@ class Client extends PassportClient
                 return 'Any registered user can access this OAuth client';
 
             case 'organization_members':
-                return $this->organization 
-                    ? "Only members of {$this->organization->name} can access this OAuth client"
-                    : 'Only organization members can access this OAuth client';
+                return "Only members of {$this->organization->name} can access this OAuth client";
 
             case 'custom':
                 $rulesCount = $this->user_access_rules ? count($this->user_access_rules) : 0;
                 return "Access is controlled by {$rulesCount} custom rule(s)";
 
             default:
-                return 'Access scope not configured';
+                return 'Access scope not configured - client is disabled';
         }
     }
 
     /**
      * Scope query to only include clients accessible by a specific user.
+     * Note: Custom rules require individual evaluation via userHasAccess() method.
      */
     public function scopeAccessibleBy($query, User $user)
     {
-        return $query->where(function ($q) use ($user) {
-            // All users scope
-            $q->where('user_access_scope', 'all_users')
-              // Or organization members where user is a member
-              ->orWhere(function ($subQuery) use ($user) {
-                  $subQuery->where('user_access_scope', 'organization_members')
-                           ->whereIn('organization_id', $user->memberships()->active()->pluck('organization_id'));
-              })
-              // Custom rules would need to be handled separately due to complexity
-              ->orWhere('user_access_scope', 'custom');
-        });
+        $userOrgIds = $user->memberships()->active()->pluck('organization_id');
+
+        return $query->whereNotNull('organization_id')
+                    ->where(function ($q) use ($userOrgIds) {
+                        $q->where('user_access_scope', 'all_users')
+                          ->orWhere(function ($subQuery) use ($userOrgIds) {
+                              $subQuery->where('user_access_scope', 'organization_members')
+                                       ->whereIn('organization_id', $userOrgIds);
+                          })
+                          ->orWhere('user_access_scope', 'custom');
+                    });
     }
 }

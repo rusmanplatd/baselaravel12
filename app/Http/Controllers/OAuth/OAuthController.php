@@ -46,7 +46,11 @@ class OAuthController extends Controller
 
         $client = Client::with('organization')->where('id', $request->client_id)->first();
 
-        if (! $client || ! in_array($request->redirect_uri, json_decode($client->redirect_uris))) {
+        $redirectUris = is_string($client->redirect_uris) 
+            ? json_decode($client->redirect_uris, true) 
+            : $client->redirect_uris;
+
+        if (! $client || ! in_array($request->redirect_uri, $redirectUris)) {
             OAuthAuditLog::logError('authorize', 'invalid_client', 'Client authentication failed', [
                 'client_id' => $request->client_id,
                 'redirect_uri' => $request->redirect_uri,
@@ -374,17 +378,12 @@ class OAuthController extends Controller
 
     private function getAvailableScopes($organization = null)
     {
-        $scopes = OAuthScope::all()->keyBy('identifier')->map(function ($scope) {
+        return OAuthScope::all()->keyBy('identifier')->map(function ($scope) {
             return [
                 'name' => $scope->name,
                 'description' => $scope->description,
             ];
         })->toArray();
-
-        // All scopes are now available - filtering happens at validation level
-        // No legacy non-organization clients supported
-
-        return $scopes;
     }
 
     private function scopesMatch($existingScopes, $requestedScopes)

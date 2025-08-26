@@ -15,7 +15,7 @@ return new class extends Migration
             // Add user_access_scope field to control who can access this OAuth client
             // Options: 'all_users', 'organization_members', 'custom'
             $table->enum('user_access_scope', ['all_users', 'organization_members', 'custom'])
-                ->default('organization_members')
+                ->nullable(false)
                 ->after('client_type')
                 ->comment('Controls which users can access this OAuth client');
             

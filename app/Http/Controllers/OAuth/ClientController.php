@@ -32,16 +32,9 @@ class ClientController extends Controller
     {
         $userOrganizations = Auth::user()->memberships()->active()->pluck('organization_id');
 
-        // Show clients based on user's management permissions or accessible clients
-        $clients = Client::where(function ($query) use ($userOrganizations) {
-                // Organization-associated clients where user has membership
-                $query->whereNotNull('organization_id')
-                      ->whereIn('organization_id', $userOrganizations);
-            })
-            ->orWhere(function ($query) {
-                // All-users clients
-                $query->where('user_access_scope', 'all_users');
-            })
+        // Only show organization-associated clients where user has membership
+        $clients = Client::whereNotNull('organization_id')
+            ->whereIn('organization_id', $userOrganizations)
             ->with('organization')
             ->orderBy('created_at', 'desc')
             ->get()
@@ -58,7 +51,7 @@ class ClientController extends Controller
                         'code' => $client->organization->organization_code,
                     ] : null,
                     'client_type' => $client->client_type ?? 'public',
-                    'user_access_scope' => $client->user_access_scope ?? 'organization_members',
+                    'user_access_scope' => $client->user_access_scope,
                     'access_scope_description' => $client->getAccessScopeDescription(),
                     'last_used_at' => $client->last_used_at?->toDateTimeString(),
                     'created_at' => $client->created_at->toDateTimeString(),
@@ -128,11 +121,11 @@ class ClientController extends Controller
             $client->update(['logo_url' => $request->logo_url]);
         }
 
-        // Organization ID is now required and already validated
+        // Organization ID and access scope are required
         $updateData = [
             'organization_id' => $request->organization_id,
             'client_type' => $request->client_type,
-            'user_access_scope' => $request->user_access_scope ?? 'organization_members',
+            'user_access_scope' => $request->user_access_scope,
         ];
 
         // Handle custom access rules if provided
@@ -186,7 +179,7 @@ class ClientController extends Controller
             'website' => $client->website,
             'logo_url' => $client->logo_url,
             'revoked' => $client->revoked,
-            'user_access_scope' => $client->user_access_scope ?? 'organization_members',
+            'user_access_scope' => $client->user_access_scope,
             'user_access_rules' => $client->user_access_rules,
             'access_scope_description' => $client->getAccessScopeDescription(),
             'created_at' => $client->created_at->toDateTimeString(),
@@ -277,5 +270,4 @@ class ClientController extends Controller
         ]);
     }
 
-    // Public registration removed - all clients must be organization-associated
 }

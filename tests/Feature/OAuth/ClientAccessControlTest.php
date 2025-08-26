@@ -272,6 +272,22 @@ class ClientAccessControlTest extends TestCase
         $this->assertFalse($accessibleClients->contains('id', $otherOrgClient->id));
     }
 
+    public function test_client_validation_requires_user_access_scope()
+    {
+        $this->actingAs($this->user);
+
+        $response = $this->postJson('/api/oauth/clients', [
+            'name' => 'Test Client',
+            'redirect_uris' => ['https://example.com/callback'],
+            'organization_id' => $this->organization->id,
+            'client_type' => 'public',
+            // Missing user_access_scope - should fail validation
+        ]);
+
+        $response->assertStatus(422)
+                 ->assertJsonValidationErrors(['user_access_scope']);
+    }
+
     public function test_client_validation_for_custom_rules()
     {
         $this->actingAs($this->user);
@@ -306,5 +322,16 @@ class ClientAccessControlTest extends TestCase
 
         $response->assertStatus(422)
                  ->assertJsonValidationErrors(['user_access_rules.email_domains.0']);
+    }
+
+    public function test_client_without_organization_is_rejected()
+    {
+        $client = Client::factory()->create([
+            'organization_id' => null,  // No organization
+            'user_access_scope' => 'all_users',
+        ]);
+
+        $this->assertFalse($client->userHasAccess($this->user));
+        $this->assertFalse($client->userHasAccess($this->otherUser));
     }
 }

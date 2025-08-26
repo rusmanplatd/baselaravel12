@@ -30,7 +30,6 @@ class OAuthScopesSeeder extends Seeder
                 'description' => 'Access your email address',
                 'is_default' => true,
             ],
-            // Legacy read/write scopes removed - use organization/tenant scopes
             [
                 'identifier' => 'organization:read',
                 'name' => 'Organization Read',
@@ -143,6 +142,5 @@ class OAuthScopesSeeder extends Seeder
         }
 
         $this->command->info('OAuth scopes seeded successfully.');
-        $this->command->info('Added organization and tenant-specific scopes.');
     }
 }

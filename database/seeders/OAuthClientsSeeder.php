@@ -15,21 +15,24 @@ class OAuthClientsSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create sample organizations and users for testing
-        $organization = Organization::firstOrCreate([
-            'organization_code' => 'SAMPLE_ORG',
-        ], [
-            'name' => 'Sample Organization',
-            'organization_type' => 'corporate',
-            'is_active' => true,
-        ]);
-
+        // Create sample user first
         $user = User::firstOrCreate([
             'email' => 'admin@example.com',
         ], [
             'name' => 'OAuth Admin',
             'password' => bcrypt('password'),
             'email_verified_at' => now(),
+        ]);
+
+        // Create sample organization
+        $organization = Organization::firstOrCreate([
+            'organization_code' => 'SAMPLE_ORG',
+        ], [
+            'name' => 'Sample Organization',
+            'organization_type' => 'holding_company',
+            'is_active' => true,
+            'created_by' => $user->id,
+            'updated_by' => $user->id,
         ]);
 
         // Sample OAuth clients with different access scopes
