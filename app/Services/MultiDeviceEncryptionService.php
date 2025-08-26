@@ -1060,9 +1060,111 @@ class MultiDeviceEncryptionService
 
     private function getCacheKeysByPattern(string $pattern): array
     {
-        // This is a simplified implementation
-        // In production, you might want to use Redis KEYS command or similar
-        // Note: This is not efficient for large datasets
-        return [];
+        $cacheDriver = Cache::getStore();
+        $keys = [];
+
+        try {
+            // Handle different cache drivers
+            switch (get_class($cacheDriver)) {
+                case \Illuminate\Cache\RedisStore::class:
+                    // Use Redis SCAN for better performance than KEYS
+                    $redis = $cacheDriver->connection();
+                    $prefix = $cacheDriver->getPrefix();
+                    $searchPattern = $prefix . str_replace('*', '*', $pattern);
+                    
+                    // Use SCAN instead of KEYS for production performance
+                    $cursor = 0;
+                    do {
+                        $result = $redis->scan($cursor, [
+                            'MATCH' => $searchPattern,
+                            'COUNT' => 100
+                        ]);
+                        
+                        if ($result !== false) {
+                            $cursor = $result[0];
+                            $matchedKeys = $result[1];
+                            
+                            foreach ($matchedKeys as $key) {
+                                // Remove prefix to get the cache key
+                                $keys[] = $prefix ? substr($key, strlen($prefix)) : $key;
+                            }
+                        }
+                    } while ($cursor !== 0);
+                    break;
+
+                case \Illuminate\Cache\DatabaseStore::class:
+                    // Query the database cache table
+                    $connection = $cacheDriver->getConnection();
+                    $table = $cacheDriver->getTable();
+                    $prefix = $cacheDriver->getPrefix();
+                    
+                    $likePattern = str_replace('*', '%', $prefix . $pattern);
+                    
+                    $results = $connection->table($table)
+                        ->where('key', 'LIKE', $likePattern)
+                        ->where('expiration', '>', time())
+                        ->pluck('key');
+                    
+                    foreach ($results as $key) {
+                        // Remove prefix to get the cache key
+                        $keys[] = $prefix ? substr($key, strlen($prefix)) : $key;
+                    }
+                    break;
+
+                case \Illuminate\Cache\FileStore::class:
+                    // For file cache, we need to scan the file system
+                    $directory = $cacheDriver->getDirectory();
+                    $prefix = $cacheDriver->getPrefix();
+                    
+                    // Convert cache pattern to file pattern
+                    $filePattern = str_replace(['*', '/'], ['*', DIRECTORY_SEPARATOR], $pattern);
+                    $searchPath = $directory . DIRECTORY_SEPARATOR . $prefix . $filePattern;
+                    
+                    $files = glob($searchPath);
+                    foreach ($files as $file) {
+                        $filename = basename($file);
+                        // Remove prefix and file extension to get cache key
+                        $key = $prefix ? substr($filename, strlen($prefix)) : $filename;
+                        $keys[] = $key;
+                    }
+                    break;
+
+                case \Illuminate\Cache\ArrayStore::class:
+                    // For array store (testing), iterate through stored keys
+                    $reflection = new \ReflectionClass($cacheDriver);
+                    $storageProperty = $reflection->getProperty('storage');
+                    $storageProperty->setAccessible(true);
+                    $storage = $storageProperty->getValue($cacheDriver);
+                    
+                    $prefix = $cacheDriver->getPrefix();
+                    $regexPattern = '/^' . preg_quote($prefix, '/') . str_replace('*', '.*', preg_quote($pattern, '/')) . '$/';
+                    
+                    foreach (array_keys($storage) as $key) {
+                        if (preg_match($regexPattern, $key)) {
+                            // Remove prefix to get the cache key
+                            $keys[] = $prefix ? substr($key, strlen($prefix)) : $key;
+                        }
+                    }
+                    break;
+
+                default:
+                    // For other cache drivers, fall back to empty array
+                    // Log a warning for unsupported cache driver
+                    \Log::warning('getCacheKeysByPattern: Unsupported cache driver', [
+                        'driver' => get_class($cacheDriver),
+                        'pattern' => $pattern,
+                    ]);
+                    break;
+            }
+        } catch (\Exception $e) {
+            // Log error and return empty array to prevent breaking the application
+            \Log::error('Error in getCacheKeysByPattern', [
+                'pattern' => $pattern,
+                'error' => $e->getMessage(),
+                'driver' => get_class($cacheDriver),
+            ]);
+        }
+
+        return $keys;
     }
 }

@@ -54,7 +54,7 @@ class ChatFileService
 
             // Encrypt file contents
             $fileContents = file_get_contents($file->getRealPath());
-            
+
             // Handle empty files
             if ($fileContents === false) {
                 throw new ChatFileException('Could not read file contents');
@@ -62,7 +62,7 @@ class ChatFileService
             if ($fileContents === '') {
                 $fileContents = ' '; // Add minimal content for empty files to avoid encryption validation
             }
-            
+
             $encryptionResult = $this->encryptFileContents($fileContents, $symmetricKey);
 
             // Store encrypted file
@@ -263,16 +263,98 @@ class ChatFileService
     private function generateThumbnail(UploadedFile $file, string $conversationId, string $symmetricKey): ?string
     {
         try {
-            // Simple thumbnail generation - in production you'd want to use a proper image library
             $thumbnailPath = "chat/files/thumbnails/".Str::uuid().'_thumb.jpg';
+            $fullThumbnailPath = Storage::disk('public')->path($thumbnailPath);
+            
+            // Create thumbnail directory if it doesn't exist
+            $thumbnailDir = dirname($fullThumbnailPath);
+            if (!is_dir($thumbnailDir)) {
+                mkdir($thumbnailDir, 0755, true);
+            }
 
-            // For now, just return the path - implement actual thumbnail generation based on your needs
+            // Try to use Intervention Image if available, otherwise fallback to GD
+            if (class_exists(\Intervention\Image\ImageManagerStatic::class)) {
+                $image = \Intervention\Image\ImageManagerStatic::make($file->getPathname());
+                $image->fit(200, 200, function ($constraint) {
+                    $constraint->upsize();
+                });
+                $image->save($fullThumbnailPath, 80);
+            } elseif (extension_loaded('gd')) {
+                $this->generateThumbnailWithGD($file, $fullThumbnailPath);
+            } else {
+                Log::warning('No image processing library available for thumbnail generation');
+                return null;
+            }
+
+            // Encrypt the thumbnail if needed (optional for thumbnails)
+            // For now, we'll store thumbnails unencrypted for performance
+            // but you could encrypt them similar to the main file
+            
             return $thumbnailPath;
         } catch (\Exception $e) {
-            Log::warning('Thumbnail generation failed', ['error' => $e->getMessage()]);
+            Log::warning('Thumbnail generation failed', [
+                'error' => $e->getMessage(),
+                'file' => $file->getClientOriginalName(),
+            ]);
 
             return null;
         }
+    }
+
+    private function generateThumbnailWithGD(UploadedFile $file, string $outputPath): void
+    {
+        $imageInfo = getimagesize($file->getPathname());
+        if (!$imageInfo) {
+            throw new \Exception('Cannot read image information');
+        }
+
+        [$width, $height, $type] = $imageInfo;
+        
+        // Create image resource from file
+        $source = match ($type) {
+            IMAGETYPE_JPEG => imagecreatefromjpeg($file->getPathname()),
+            IMAGETYPE_PNG => imagecreatefrompng($file->getPathname()),
+            IMAGETYPE_GIF => imagecreatefromgif($file->getPathname()),
+            IMAGETYPE_WEBP => imagecreatefromwebp($file->getPathname()),
+            default => throw new \Exception('Unsupported image type'),
+        };
+
+        if (!$source) {
+            throw new \Exception('Cannot create image resource');
+        }
+
+        // Calculate thumbnail dimensions (max 200x200, maintain aspect ratio)
+        $thumbWidth = 200;
+        $thumbHeight = 200;
+        
+        $ratio = min($thumbWidth / $width, $thumbHeight / $height);
+        $newWidth = (int) ($width * $ratio);
+        $newHeight = (int) ($height * $ratio);
+
+        // Create thumbnail image
+        $thumbnail = imagecreatetruecolor($newWidth, $newHeight);
+        
+        // Handle PNG transparency
+        if ($type === IMAGETYPE_PNG) {
+            imagealphablending($thumbnail, false);
+            imagesavealpha($thumbnail, true);
+            $transparent = imagecolorallocatealpha($thumbnail, 255, 255, 255, 127);
+            imagefill($thumbnail, 0, 0, $transparent);
+        }
+
+        // Resize image
+        imagecopyresampled(
+            $thumbnail, $source,
+            0, 0, 0, 0,
+            $newWidth, $newHeight, $width, $height
+        );
+
+        // Save thumbnail as JPEG
+        imagejpeg($thumbnail, $outputPath, 80);
+
+        // Clean up resources
+        imagedestroy($source);
+        imagedestroy($thumbnail);
     }
 
     private function getThumbnailPath(string $filePath): string
@@ -287,7 +369,7 @@ class ChatFileService
         // Remove dangerous characters and path traversal attempts
         $sanitized = preg_replace('/[^a-zA-Z0-9._-]/', '_', $fileName);
         $sanitized = str_replace(['../', '../', '..\\', '..'], '', $sanitized);
-        
+
         // Truncate if too long but preserve extension
         if (strlen($sanitized) > 255) {
             $extension = pathinfo($sanitized, PATHINFO_EXTENSION);
@@ -295,7 +377,7 @@ class ChatFileService
             $maxNameLength = 255 - strlen($extension) - 1;
             $sanitized = substr($name, 0, $maxNameLength) . '.' . $extension;
         }
-        
+
         return $sanitized;
     }
 

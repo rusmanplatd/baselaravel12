@@ -1,8 +1,8 @@
-import { 
-  EncryptedMessageData, 
-  KeyPair, 
-  EncryptionOptions, 
-  DecryptionResult 
+import {
+  EncryptedMessageData,
+  KeyPair,
+  EncryptionOptions,
+  DecryptionResult
 } from '@/types/chat';
 
 /**
@@ -71,7 +71,7 @@ export class ChatEncryption {
     try {
       const publicKey = await this.importPublicKeyFromPem(publicKeyPem);
       const keyBytes = await window.crypto.subtle.exportKey('raw', symmetricKey);
-      
+
       const encrypted = await window.crypto.subtle.encrypt(
         {
           name: 'RSA-OAEP',
@@ -97,7 +97,7 @@ export class ChatEncryption {
     try {
       const privateKey = await this.importPrivateKeyFromPem(privateKeyPem);
       const encryptedBytes = this.base64ToArrayBuffer(encryptedKey);
-      
+
       const decryptedBytes = await window.crypto.subtle.decrypt(
         {
           name: 'RSA-OAEP',
@@ -371,7 +371,7 @@ export class ChatEncryption {
     options: EncryptionOptions = {}
   ): Promise<Array<{ id: string; encrypted: EncryptedMessageData | null; error?: string }>> {
     const results = [];
-    
+
     for (const message of messages) {
       try {
         const encrypted = await this.encryptMessage(message.content, symmetricKey, options);
@@ -382,7 +382,7 @@ export class ChatEncryption {
         results.push({ id: message.id, encrypted: null, error: errorMessage });
       }
     }
-    
+
     return results;
   }
 
@@ -395,7 +395,7 @@ export class ChatEncryption {
     options: EncryptionOptions = {}
   ): Promise<Array<{ id: string; decrypted: DecryptionResult | null; error?: string }>> {
     const results = [];
-    
+
     for (const message of messages) {
       try {
         const decrypted = await this.decryptMessage(message.encrypted, symmetricKey, options);
@@ -406,7 +406,7 @@ export class ChatEncryption {
         results.push({ id: message.id, decrypted: null, error: errorMessage });
       }
     }
-    
+
     return results;
   }
 
@@ -423,7 +423,7 @@ export class ChatEncryption {
 
     const salt = this.generateSalt();
     const derivedKey = await this.deriveKeyFromPassword(password, salt);
-    
+
     const backupData = {
       version: '2.0',
       created_at: new Date().toISOString(),
@@ -432,7 +432,7 @@ export class ChatEncryption {
     };
 
     const encrypted = await this.encryptMessage(JSON.stringify(backupData), derivedKey);
-    
+
     return btoa(JSON.stringify({
       salt,
       encrypted_data: encrypted,
@@ -455,13 +455,13 @@ export class ChatEncryption {
 
       const derivedKey = await this.deriveKeyFromPassword(password, backupData.salt);
       const decrypted = await this.decryptMessage(backupData.encrypted_data, derivedKey);
-      
+
       if (!decrypted.verified) {
         throw new Error('Backup integrity verification failed');
       }
 
       const restoredData = JSON.parse(decrypted.content);
-      
+
       // Verify checksum
       const expectedChecksum = await this.calculateSHA256(JSON.stringify(restoredData.key_data));
       if (restoredData.checksum && restoredData.checksum !== expectedChecksum) {
@@ -496,7 +496,7 @@ export class ChatEncryption {
       const startTime = performance.now();
       const keyPair = await this.generateKeyPair();
       const keyGenTime = performance.now() - startTime;
-      
+
       health.checks.key_generation = {
         status: 'pass',
         duration_ms: Math.round(keyGenTime * 100) / 100
@@ -529,7 +529,7 @@ export class ChatEncryption {
         keyPair.public_key,
         keyPair.private_key
       );
-      
+
       health.checks.key_integrity = {
         status: integrityValid ? 'pass' : 'fail'
       };
@@ -702,7 +702,7 @@ export class SecureStorage {
    * Store private key securely (consider using IndexedDB for production)
    */
   static storePrivateKey(userId: string, privateKey: string): void {
-    // In production, consider using IndexedDB with encryption
+    // TODO: In production, consider using IndexedDB with encryption
     sessionStorage.setItem(`${this.STORAGE_PREFIX}private_key_${userId}`, privateKey);
   }
 

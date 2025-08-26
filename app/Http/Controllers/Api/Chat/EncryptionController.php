@@ -152,16 +152,50 @@ class EncryptionController extends Controller
         ]);
 
         try {
-            // For now, just return success - implement job scheduling in production
+            $scheduledAt = \Carbon\Carbon::parse($validated['schedule_at']);
+            $recurring = $validated['recurring'] ?? false;
+            $intervalDays = $validated['interval_days'] ?? null;
+            $reason = $validated['reason'] ?? 'Scheduled key rotation';
+
+            // Dispatch the job with delay
+            \App\Jobs\RotateConversationKeysJob::dispatch(
+                $conversation,
+                $reason,
+                $recurring,
+                $intervalDays
+            )->delay($scheduledAt);
+
+            // Store the scheduled rotation info for tracking
+            $conversation->update([
+                'metadata' => array_merge($conversation->metadata ?? [], [
+                    'scheduled_key_rotation' => [
+                        'scheduled_at' => $scheduledAt->toISOString(),
+                        'reason' => $reason,
+                        'recurring' => $recurring,
+                        'interval_days' => $intervalDays,
+                        'scheduled_by' => auth()->id(),
+                        'created_at' => now()->toISOString(),
+                    ]
+                ])
+            ]);
+
             return response()->json([
                 'message' => 'Key rotation scheduled successfully',
-                'scheduled_at' => $validated['schedule_at'],
-                'recurring' => $validated['recurring'] ?? false,
-                'interval_days' => $validated['interval_days'] ?? null,
+                'scheduled_at' => $scheduledAt->toISOString(),
+                'recurring' => $recurring,
+                'interval_days' => $intervalDays,
+                'reason' => $reason,
+                'job_scheduled' => true,
             ]);
         } catch (\Exception $e) {
+            \Log::error('Failed to schedule key rotation', [
+                'conversation_id' => $conversation->id,
+                'error' => $e->getMessage(),
+                'validated' => $validated,
+            ]);
+
             return response()->json([
-                'error' => 'Failed to schedule key rotation',
+                'error' => 'Failed to schedule key rotation: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -367,7 +401,7 @@ class EncryptionController extends Controller
                             $device = \App\Models\UserDevice::where('user_id', $user->id)
                                 ->where('is_trusted', true)
                                 ->first();
-                            
+
                             if (!$device) {
                                 $device = \App\Models\UserDevice::create([
                                     'user_id' => $user->id,
@@ -562,7 +596,7 @@ class EncryptionController extends Controller
                     $device = \App\Models\UserDevice::where('user_id', $participant->user_id)
                         ->where('is_trusted', true)
                         ->first();
-                    
+
                     if (!$device) {
                         $device = \App\Models\UserDevice::create([
                             'user_id' => $participant->user_id,
