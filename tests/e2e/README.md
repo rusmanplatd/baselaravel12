@@ -106,7 +106,7 @@ Tests run on:
 
 The test configuration is in `playwright.config.ts`:
 
-- **Base URL**: `http://baselaravel12react.test`
+- **Base URL**: `http://localhost:8000`
 - **Test Directory**: `tests/e2e/`
 - **Parallel Execution**: Enabled
 - **Retries**: 2 times in CI

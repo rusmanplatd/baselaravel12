@@ -477,16 +477,15 @@ class EncryptionController extends Controller
             // Get messages and their encrypted content
             $messages = $conversation->messages()
                 ->whereIn('id', $validated['message_ids'])
-                ->get(['id', 'encrypted_content', 'content_iv', 'content_hash', 'content_hmac', 'content_auth_data']);
+                ->get(['id', 'encrypted_content', 'content_hash', 'content_hmac']);
 
             $encryptedMessages = [];
             foreach ($messages as $message) {
                 if ($message->encrypted_content) {
                     $encryptedMessages[$message->id] = [
                         'data' => $message->encrypted_content,
-                        'iv' => $message->content_iv,
                         'hmac' => $message->content_hmac,
-                        'auth_data' => $message->content_auth_data,
+                        'hash' => $message->content_hash,
                     ];
                 }
             }
@@ -514,6 +513,8 @@ class EncryptionController extends Controller
                 'total_count' => $result['total_count'],
             ]);
 
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            throw $e; // Let authorization exceptions bubble up to return proper 403
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Bulk decryption failed',

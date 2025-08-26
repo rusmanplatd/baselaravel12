@@ -18,6 +18,10 @@ beforeEach(function () {
 
     $this->user1->update(['public_key' => $keyPair1['public_key']]);
     $this->user2->update(['public_key' => $keyPair2['public_key']]);
+    
+    // Store private keys for testing
+    $this->user1PrivateKey = $keyPair1['private_key'];
+    $this->user2PrivateKey = $keyPair2['private_key'];
 
     $this->conversation = Conversation::factory()->direct()->create();
     $this->conversation->participants()->create(['user_id' => $this->user1->id, 'role' => 'admin']);
@@ -261,8 +265,9 @@ describe('Enhanced E2EE Functions', function () {
                 $this->user1->public_key
             );
 
-            // Mock cache for private key
-            \Cache::put("user_private_key_{$this->user1->id}", $this->user1->private_key, 3600);
+            // Mock cache for private key (encrypt it as expected by the service)
+            $encryptedPrivateKey = \Crypt::encryptString($this->user1PrivateKey);
+            \Cache::put("user_private_key_{$this->user1->id}", $encryptedPrivateKey, 3600);
 
             $response = $this->postJson('/api/v1/chat/encryption/bulk-decrypt', [
                 'conversation_id' => $this->conversation->id,

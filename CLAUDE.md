@@ -24,8 +24,6 @@ composer dev
 
 # Development with SSR (builds SSR first, then runs with SSR server)
 composer dev:ssr
-
-or you can access via http://baselaravel12react.test/
 ```
 
 ### Frontend Only

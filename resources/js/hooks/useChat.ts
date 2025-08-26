@@ -71,7 +71,7 @@ export function useChat(user: any): UseChatReturn {
   const initializeEncryption = useCallback(async () => {
     try {
       // Check if device is already registered
-      const deviceId = await multiDeviceE2EEService.initializeDevice();
+      const deviceId = await multiDeviceE2EEService.getDeviceId();
       if (deviceId) {
         setDeviceRegistered(true);
         setEncryptionReady(true);
@@ -108,16 +108,14 @@ export function useChat(user: any): UseChatReturn {
 
   const initializeDevice = useCallback(async () => {
     try {
-      const deviceId = await multiDeviceE2EEService.initializeDevice();
-      if (deviceId) {
-        setDeviceRegistered(true);
-        setEncryptionReady(true);
-      }
+      // This method is for initializing the device from the UI
+      // For now, it will trigger the encryption initialization
+      await initializeEncryption();
     } catch (error) {
       console.error('Failed to initialize device:', error);
       throw error;
     }
-  }, []);
+  }, [initializeEncryption]);
 
   const registerDevice = useCallback(async (deviceInfo: any) => {
     try {

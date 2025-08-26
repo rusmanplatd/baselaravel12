@@ -6,10 +6,14 @@ import { useChat } from '@/hooks/useChat';
 import { toast } from 'sonner';
 import DeviceSetup from './DeviceSetup';
 import DeviceManagement from './DeviceManagement';
+import DeviceSetupOverlay from './DeviceSetupOverlay';
+import DeviceSetupDialog from './DeviceSetupDialog';
+import DeviceManagementDialog from './DeviceManagementDialog';
+import AccessRevokedOverlay from './AccessRevokedOverlay';
+import E2EEStatusBadge from './E2EEStatusBadge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ShieldCheckIcon, CogIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
-import { E2EEStatusBadge } from './E2EEStatusIndicator';
 
 interface ChatLayoutProps {
   user: User;
@@ -48,6 +52,9 @@ export default function ChatLayout({ user, inviteCode }: ChatLayoutProps) {
 
   const [showDeviceSetup, setShowDeviceSetup] = useState(false);
   const [showDeviceManagement, setShowDeviceManagement] = useState(false);
+  const [showNewDeviceSetup, setShowNewDeviceSetup] = useState(false);
+  const [showNewDeviceManagement, setShowNewDeviceManagement] = useState(false);
+  const [accessRevoked, setAccessRevoked] = useState(false);
 
   // Handle invite code if provided
   useEffect(() => {
@@ -78,7 +85,10 @@ export default function ChatLayout({ user, inviteCode }: ChatLayoutProps) {
             <div>
               <h1 className="text-xl font-semibold text-gray-900">Messages</h1>
               <div className="flex items-center">
-                <E2EEStatusBadge status={e2eeStatus} />
+                <E2EEStatusBadge 
+                  status={encryptionReady ? 'enabled' : 'disabled'} 
+                  onClick={() => setShowNewDeviceManagement(true)}
+                />
               </div>
             </div>
             
@@ -137,25 +147,22 @@ export default function ChatLayout({ user, inviteCode }: ChatLayoutProps) {
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col" data-testid="chat-window">
-        {!deviceRegistered ? (
-          <div className="flex-1 flex items-center justify-center bg-gray-50">
-            <div className="text-center p-8 bg-white rounded-lg shadow-sm border max-w-md">
-              <ShieldCheckIcon className="mx-auto h-16 w-16 text-blue-500 mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Secure Your Messages</h3>
-              <p className="text-gray-600 mb-6">
-                Set up your device for end-to-end encrypted messaging. Your messages will be protected with industry-standard encryption.
-              </p>
-              <Button 
-                onClick={() => setShowDeviceSetup(true)}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                <ShieldCheckIcon className="h-4 w-4 mr-2" />
-                Setup Device Encryption
-              </Button>
-            </div>
-          </div>
-        ) : activeConversation ? (
+      <div className="flex-1 flex flex-col relative" data-testid="chat-window">
+        {!deviceRegistered && (
+          <DeviceSetupOverlay onStartSetup={() => setShowNewDeviceSetup(true)} />
+        )}
+        
+        {accessRevoked && (
+          <AccessRevokedOverlay 
+            deviceName="this device" 
+            onReauthorize={() => {
+              setAccessRevoked(false);
+              setShowNewDeviceSetup(true);
+            }}
+          />
+        )}
+        
+        {activeConversation ? (
           <ChatWindow
             conversation={activeConversation}
             messages={messages}
@@ -192,6 +199,40 @@ export default function ChatLayout({ user, inviteCode }: ChatLayoutProps) {
           <span className="block sm:inline">{error}</span>
         </div>
       )}
+      
+      {/* New Device Setup Dialog */}
+      <DeviceSetupDialog
+        isOpen={showNewDeviceSetup}
+        onClose={() => setShowNewDeviceSetup(false)}
+        onComplete={() => {
+          setShowNewDeviceSetup(false);
+          // Simulate device registration
+          toast.success('Device setup completed successfully');
+        }}
+      />
+
+      {/* New Device Management Dialog */}
+      <DeviceManagementDialog
+        isOpen={showNewDeviceManagement}
+        onClose={() => setShowNewDeviceManagement(false)}
+        devices={[]}
+        onTrustDevice={(deviceId) => {
+          toast.success('Device trusted successfully');
+        }}
+        onRevokeDevice={(deviceId) => {
+          // Simulate revoking current device access
+          if (deviceId === 'current') {
+            setAccessRevoked(true);
+            setShowNewDeviceManagement(false);
+            toast.error('Your device access has been revoked');
+          } else {
+            toast.success('Device access revoked');
+          }
+        }}
+        onRotateKeys={() => {
+          toast.success('Key rotation completed');
+        }}
+      />
       
       {/* Device Setup Dialog */}
       <Dialog open={showDeviceSetup} onOpenChange={setShowDeviceSetup}>

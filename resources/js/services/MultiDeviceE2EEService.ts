@@ -138,10 +138,10 @@ class MultiDeviceE2EEService {
   private pendingSyncMessages = new Map<string, MessageSyncData>();
   private syncQueue: MessageSyncData[] = [];
   private isSyncing = false;
-  
+
   private readonly STORAGE_PREFIX = 'e2ee_';
   private readonly KEY_CACHE_TTL = 30 * 60 * 1000; // 30 minutes
-  
+
   constructor() {
     this.initializeDevice();
   }
@@ -191,6 +191,36 @@ class MultiDeviceE2EEService {
   }
 
   /**
+   * Check if device is initialized and return device ID
+   */
+  async getDeviceId(): Promise<string | null> {
+    try {
+      // Wait for device initialization to complete if still in progress
+      if (!this.currentDevice) {
+        // Try to initialize again if not done
+        await this.initializeDevice();
+      }
+
+      if (!this.currentDevice) {
+        return null;
+      }
+
+      // Check if device is registered with the server
+      const isRegistered = this.getFromSecureStorage('device_registered');
+
+      // Return device ID only if registered, otherwise null to trigger setup
+      if (isRegistered === true || isRegistered === 'true') {
+        return this.currentDevice.id || this.currentDevice.fingerprint;
+      }
+
+      return null;
+    } catch (error) {
+      console.warn('Could not check device registration status:', error);
+      return null;
+    }
+  }
+
+  /**
    * Register this device with the server
    */
   async registerDevice(): Promise<{ device: any; verification?: DeviceVerificationChallenge }> {
@@ -225,12 +255,14 @@ class MultiDeviceE2EEService {
       });
 
       const result = await E2EEErrorHandler.handleApiResponse(response);
-      
+
       // Update current device with server info
       if (this.currentDevice) {
         this.currentDevice.id = result.device.id;
         this.currentDevice.isTrusted = result.device.is_trusted;
         this.setSecureStorage('current_device', this.currentDevice);
+        // Mark device as registered
+        this.setSecureStorage('device_registered', 'true');
       }
 
       return result;
@@ -290,7 +322,7 @@ class MultiDeviceE2EEService {
 
     try {
       const result = await E2EEErrorHandler.handleApiResponse(verificationResponse);
-      
+
       // Update device trust status
       if (this.currentDevice) {
         this.currentDevice.isTrusted = result.device.is_trusted;
@@ -381,10 +413,10 @@ class MultiDeviceE2EEService {
 
       // Decrypt the symmetric key for this conversation
       const symmetricKey = await this.decryptSymmetricKey(conversationKey.encryptedKey);
-      
+
       // Encrypt the message
       const encrypted = await this.encryptWithSymmetricKey(message, symmetricKey);
-      
+
       const encryptedMessage = {
         ...encrypted,
         keyVersion: conversationKey.keyVersion,
@@ -409,17 +441,17 @@ class MultiDeviceE2EEService {
       // Verify message timestamp (prevent replay attacks)
       const messageAge = Date.now() - encryptedMessage.timestamp;
       const maxAge = 24 * 60 * 60 * 1000; // 24 hours
-      
+
       if (messageAge > maxAge) {
         throw E2EEError.messageTooOld(encryptedMessage.timestamp);
       }
 
       // Get conversation key for the specific version
       const conversationKey = await this.getConversationKey(conversationId, encryptedMessage.keyVersion);
-      
+
       // Decrypt the symmetric key
       const symmetricKey = await this.decryptSymmetricKey(conversationKey.encryptedKey);
-      
+
       // Decrypt the message
       return await this.decryptWithSymmetricKey(encryptedMessage, symmetricKey);
     } catch (error) {
@@ -444,8 +476,8 @@ class MultiDeviceE2EEService {
       }
       console.error('Decryption failed:', error);
       throw E2EEError.decryptionFailed(
-        conversationId, 
-        encryptedMessage.keyVersion, 
+        conversationId,
+        encryptedMessage.keyVersion,
         error instanceof Error ? error : undefined
       );
     }
@@ -476,7 +508,7 @@ class MultiDeviceE2EEService {
     }
 
     const result = await response.json();
-    
+
     // Cache the conversation key
     await this.getConversationKey(conversationId);
   }
@@ -595,7 +627,7 @@ class MultiDeviceE2EEService {
   }
 
   // Private helper methods
-  
+
   private async getConversationKey(conversationId: string, keyVersion?: number): Promise<ConversationKey> {
     if (!this.currentDevice?.id) {
       throw new Error('Device not registered');
@@ -644,7 +676,7 @@ class MultiDeviceE2EEService {
 
     // Import private key
     const privateKeyObj = await this.importPrivateKey(this.currentDevice.privateKey);
-    
+
     // Decrypt the symmetric key
     const encryptedBuffer = this.base64ToArrayBuffer(encryptedKey);
     const decryptedBuffer = await crypto.subtle.decrypt(
@@ -658,22 +690,22 @@ class MultiDeviceE2EEService {
 
   private async encryptWithSymmetricKey(message: string, symmetricKeyBase64: string): Promise<Omit<EncryptedMessage, 'keyVersion' | 'deviceId'>> {
     const symmetricKey = await this.importSymmetricKey(symmetricKeyBase64);
-    
+
     // Generate IV and nonce
     const iv = crypto.getRandomValues(new Uint8Array(16));
     const nonce = crypto.getRandomValues(new Uint8Array(8));
     const timestamp = Date.now();
-    
+
     // Create auth data
     const authData = {
       timestamp,
       nonce: this.arrayBufferToBase64(nonce),
     };
-    
+
     // Encrypt message
     const encoder = new TextEncoder();
     const messageBuffer = encoder.encode(message);
-    
+
     const encryptedBuffer = await crypto.subtle.encrypt(
       { name: 'AES-GCM', iv },
       symmetricKey,
@@ -683,7 +715,7 @@ class MultiDeviceE2EEService {
     const encryptedData = this.arrayBufferToBase64(encryptedBuffer);
     const ivBase64 = this.arrayBufferToBase64(iv);
     const authDataBase64 = btoa(JSON.stringify(authData));
-    
+
     // Calculate HMAC
     const hmacKey = await crypto.subtle.importKey(
       'raw',
@@ -692,11 +724,11 @@ class MultiDeviceE2EEService {
       false,
       ['sign']
     );
-    
+
     const hmacData = encoder.encode(encryptedData + ivBase64 + authDataBase64);
     const hmacBuffer = await crypto.subtle.sign('HMAC', hmacKey, hmacData);
     const hmac = this.arrayBufferToBase64(hmacBuffer);
-    
+
     // Calculate content hash
     const hashBuffer = await crypto.subtle.digest('SHA-256', messageBuffer);
     const hash = this.arrayBufferToBase64(hashBuffer);
@@ -714,7 +746,7 @@ class MultiDeviceE2EEService {
 
   private async decryptWithSymmetricKey(encryptedMessage: EncryptedMessage, symmetricKeyBase64: string): Promise<string> {
     const symmetricKey = await this.importSymmetricKey(symmetricKeyBase64);
-    
+
     // Verify HMAC
     const hmacKey = await crypto.subtle.importKey(
       'raw',
@@ -723,50 +755,50 @@ class MultiDeviceE2EEService {
       false,
       ['verify']
     );
-    
+
     const encoder = new TextEncoder();
     const hmacData = encoder.encode(encryptedMessage.data + encryptedMessage.iv + encryptedMessage.authData);
     const hmacBuffer = this.base64ToArrayBuffer(encryptedMessage.hmac);
-    
+
     const hmacValid = await crypto.subtle.verify(
       'HMAC',
       hmacKey,
       hmacBuffer,
       hmacData
     );
-    
+
     if (!hmacValid) {
       throw new Error('Message authentication failed');
     }
-    
+
     // Check timestamp (replay protection)
     const authData = JSON.parse(atob(encryptedMessage.authData));
     const messageAge = Date.now() - authData.timestamp;
     if (messageAge > 3600000) { // 1 hour
       throw new Error('Message too old');
     }
-    
+
     // Decrypt message
     const encryptedBuffer = this.base64ToArrayBuffer(encryptedMessage.data);
     const iv = this.base64ToArrayBuffer(encryptedMessage.iv);
-    
+
     const decryptedBuffer = await crypto.subtle.decrypt(
       { name: 'AES-GCM', iv },
       symmetricKey,
       encryptedBuffer
     );
-    
+
     const decoder = new TextDecoder();
     const decryptedMessage = decoder.decode(decryptedBuffer);
-    
+
     // Verify content hash
     const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(decryptedMessage));
     const calculatedHash = this.arrayBufferToBase64(hashBuffer);
-    
+
     if (calculatedHash !== encryptedMessage.hash) {
       throw new Error('Message integrity check failed');
     }
-    
+
     return decryptedMessage;
   }
 
@@ -775,7 +807,7 @@ class MultiDeviceE2EEService {
       {
         name: 'RSA-OAEP',
         modulusLength: 4096,
-        publicExponent: new Uint8Array([65537]),
+        publicExponent: new Uint8Array([1, 0, 1]),
         hash: 'SHA-256',
       },
       true,
@@ -891,24 +923,24 @@ class MultiDeviceE2EEService {
 
   private getDeviceCapabilities(): string[] {
     const capabilities = ['messaging', 'encryption'];
-    
+
     // Check for additional capabilities
     if ('credentials' in navigator) capabilities.push('passkey');
     if ('getUserMedia' in navigator.mediaDevices) capabilities.push('video_call');
     if ('serviceWorker' in navigator) capabilities.push('offline');
-    
+
     return capabilities;
   }
 
   private getDeviceSecurityLevel(): 'low' | 'medium' | 'high' | 'maximum' {
     let score = 0;
-    
+
     // Check for security features
     if (location.protocol === 'https:') score += 1;
     if ('credentials' in navigator) score += 1;
     if (crypto.subtle) score += 1;
     if ('serviceWorker' in navigator) score += 1;
-    
+
     if (score >= 4) return 'maximum';
     if (score >= 3) return 'high';
     if (score >= 2) return 'medium';
@@ -916,7 +948,7 @@ class MultiDeviceE2EEService {
   }
 
   // Utility methods for data conversion
-  
+
   private arrayBufferToBase64(buffer: ArrayBuffer): string {
     const bytes = new Uint8Array(buffer);
     const binary = String.fromCharCode(...bytes);
@@ -967,10 +999,10 @@ class MultiDeviceE2EEService {
 
     this.pendingSyncMessages.set(messageId, syncData);
     this.syncQueue.push(syncData);
-    
+
     // Store pending sync data
     this.setSecureStorage('pending_sync', Array.from(this.pendingSyncMessages.values()));
-    
+
     // Start sync process if not already running
     if (!this.isSyncing) {
       this.processSyncQueue();
@@ -999,14 +1031,14 @@ class MultiDeviceE2EEService {
 
       // Get all user devices
       const devices = await this.getDevices();
-      const targetDevices = devices.filter(d => 
-        d.id !== this.currentDevice!.id && 
-        d.is_trusted && 
+      const targetDevices = devices.filter(d =>
+        d.id !== this.currentDevice!.id &&
+        d.is_trusted &&
         d.is_active
       );
 
       // Get messages to sync
-      const messagesToSync = conversationId 
+      const messagesToSync = conversationId
         ? Array.from(this.pendingSyncMessages.values()).filter(m => m.conversationId === conversationId)
         : Array.from(this.pendingSyncMessages.values());
 
@@ -1015,7 +1047,7 @@ class MultiDeviceE2EEService {
       // Sync each message to each target device
       for (const messageData of messagesToSync) {
         let syncedToAnyDevice = false;
-        
+
         for (const device of targetDevices) {
           try {
             await this.syncMessageToDevice(messageData, device);
@@ -1073,9 +1105,9 @@ class MultiDeviceE2EEService {
     try {
       // Get trusted devices
       const devices = await this.getDevices();
-      const trustedDevices = devices.filter(d => 
-        d.id !== this.currentDevice!.id && 
-        d.is_trusted && 
+      const trustedDevices = devices.filter(d =>
+        d.id !== this.currentDevice!.id &&
+        d.is_trusted &&
         d.is_active
       );
 
@@ -1085,7 +1117,7 @@ class MultiDeviceE2EEService {
       for (const device of trustedDevices) {
         try {
           const messages = await this.requestMessagesFromDevice(device, conversationId, timestamp);
-          
+
           for (const message of messages) {
             try {
               // Verify we can decrypt the message
@@ -1120,7 +1152,7 @@ class MultiDeviceE2EEService {
       : Array.from(this.pendingSyncMessages.values());
 
     const lastReport = this.getFromSecureStorage('last_sync_report');
-    
+
     return {
       totalMessages: pendingMessages.length,
       syncedMessages: 0,
@@ -1162,12 +1194,12 @@ class MultiDeviceE2EEService {
     try {
       while (this.syncQueue.length > 0) {
         const messageData = this.syncQueue.shift()!;
-        
+
         try {
           const devices = await this.getDevices();
-          const targetDevices = devices.filter(d => 
-            d.id !== this.currentDevice!.id && 
-            d.is_trusted && 
+          const targetDevices = devices.filter(d =>
+            d.id !== this.currentDevice!.id &&
+            d.is_trusted &&
             d.is_active
           );
 
@@ -1187,7 +1219,7 @@ class MultiDeviceE2EEService {
           } else {
             messageData.syncStatus = 'failed';
             messageData.retryCount++;
-            
+
             // Re-queue for retry if under limit
             if (messageData.retryCount < 3) {
               setTimeout(() => {
@@ -1207,7 +1239,7 @@ class MultiDeviceE2EEService {
       }
     } finally {
       this.isSyncing = false;
-      
+
       // Update stored data
       this.setSecureStorage('pending_sync', Array.from(this.pendingSyncMessages.values()));
     }
@@ -1400,7 +1432,7 @@ class MultiDeviceE2EEService {
       // Decrypt private key
       const encryptedPrivateKeyBuffer = this.base64ToArrayBuffer(backupData.encryptedPrivateKey);
       const iv = this.base64ToArrayBuffer(backupData.iv);
-      
+
       const decryptedPrivateKeyBuffer = await crypto.subtle.decrypt(
         { name: 'AES-GCM', iv },
         backupKey,
@@ -1465,7 +1497,7 @@ class MultiDeviceE2EEService {
       });
 
       const result = await E2EEErrorHandler.handleApiResponse(response);
-      
+
       return {
         challengeId: result.challenge.challenge_id,
         deviceId: this.currentDevice!.id!,
@@ -1481,9 +1513,9 @@ class MultiDeviceE2EEService {
    * Complete device verification with challenge response
    */
   async completeDeviceVerification(
-    challengeId: string, 
-    response: any, 
-    options?: { 
+    challengeId: string,
+    response: any,
+    options?: {
       trustDevice?: boolean;
       rememberDevice?: boolean;
     }
@@ -1508,7 +1540,7 @@ class MultiDeviceE2EEService {
       });
 
       const result = await E2EEErrorHandler.handleApiResponse(verificationResponse);
-      
+
       // Update device trust status
       if (this.currentDevice && result.device) {
         this.currentDevice.isTrusted = result.device.is_trusted;
