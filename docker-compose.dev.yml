@@ -24,10 +24,19 @@ services:
       - SESSION_DRIVER=redis
       - QUEUE_CONNECTION=redis
       - LOG_CHANNEL=stack
+      - FILESYSTEM_DISK=minio
+      - AWS_ACCESS_KEY_ID=minioadmin
+      - AWS_SECRET_ACCESS_KEY=minioadmin
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_BUCKET=laravel
+      - AWS_ENDPOINT=http://minio:9000
+      - AWS_USE_PATH_STYLE_ENDPOINT=true
     depends_on:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      minio:
         condition: service_healthy
     networks:
       - laravel
@@ -135,9 +144,30 @@ services:
         sleep 60
       done"
 
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    volumes:
+      - minio_dev_data:/data
+    networks:
+      - laravel
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
 volumes:
   postgres_dev_data:
   redis_dev_data:
+  minio_dev_data:
 
 networks:
   laravel:
