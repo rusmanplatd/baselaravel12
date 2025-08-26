@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\ActivityLogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -39,6 +40,13 @@ class WebAuthnController extends Controller
                 $request->safe()->merge(['name' => $request->input('name', 'Security Key')])
             );
 
+            // Log passkey registration
+            ActivityLogService::logAuth('passkey_registered', 'New passkey registered', [
+                'passkey_name' => $passkey->name,
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ], $user);
+
             return response()->json([
                 'success' => true,
                 'passkey' => [
@@ -48,6 +56,13 @@ class WebAuthnController extends Controller
                 ],
             ]);
         } catch (\Exception $e) {
+            // Log failed passkey registration
+            ActivityLogService::logAuth('passkey_registration_failed', 'Failed to register passkey', [
+                'error' => $e->getMessage(),
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ], $user);
+
             return response()->json(['error' => 'Failed to register passkey'], 400);
         }
     }
@@ -78,6 +93,13 @@ class WebAuthnController extends Controller
             // WebAuthn is a separate form of authentication, not a replacement for TOTP MFA
             $requiresMfaChallenge = $user->hasMfaEnabled();
 
+            // Log successful passkey authentication
+            ActivityLogService::logAuth('passkey_login', 'User logged in with passkey', [
+                'requires_mfa' => $requiresMfaChallenge,
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ], $user);
+
             return response()->json([
                 'success' => true,
                 'requires_mfa' => $requiresMfaChallenge,
@@ -89,6 +111,13 @@ class WebAuthnController extends Controller
                 ],
             ]);
         } catch (\Exception $e) {
+            // Log failed passkey authentication
+            ActivityLogService::logAuth('passkey_login_failed', 'Failed passkey authentication', [
+                'error' => $e->getMessage(),
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ]);
+
             return response()->json(['error' => 'Authentication failed'], 400);
         }
     }
@@ -100,6 +129,14 @@ class WebAuthnController extends Controller
         if (! $user || $passkey->passable_id !== $user->id) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
+
+        // Log passkey deletion
+        ActivityLogService::logAuth('passkey_deleted', 'Passkey deleted', [
+            'passkey_id' => $passkey->id,
+            'passkey_name' => $passkey->name,
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ], $user);
 
         $passkey->delete();
 

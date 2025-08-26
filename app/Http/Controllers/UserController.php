@@ -69,11 +69,13 @@ class UserController extends Controller
 
         $user->syncRoles($roles);
 
-        ActivityLogService::log('user', 'roles_updated', $user->id, [
+        ActivityLogService::logSystem('roles_updated', 'User roles updated for: '.$user->name, [
             'user_name' => $user->name,
             'user_email' => $user->email,
             'roles_assigned' => $roles,
-        ]);
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ], $user);
 
         return redirect()->route('users.show', $user)
             ->with('success', 'User roles updated successfully.');

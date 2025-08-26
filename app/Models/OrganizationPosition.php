@@ -7,10 +7,12 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class OrganizationPosition extends Model
 {
-    use HasUlids, TenantScoped;
+    use HasUlids, TenantScoped, LogsActivity;
 
     protected $fillable = [
         'organization_id',
@@ -167,5 +169,14 @@ class OrganizationPosition extends Model
                     $subQ->havingRaw('COUNT(*) < organization_positions.max_incumbents');
                 });
         });
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()
+            ->logOnlyDirty()
+            ->useLogName('organization')
+            ->dontLogIfAttributesChangedOnly(['updated_at']);
     }
 }

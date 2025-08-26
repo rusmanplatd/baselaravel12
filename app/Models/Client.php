@@ -5,9 +5,12 @@ namespace App\Models;
 use Laravel\Passport\Client as PassportClient;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Models\User;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Client extends PassportClient
 {
+    use LogsActivity;
     protected $fillable = [
         'owner_id',
         'owner_type',
@@ -173,6 +176,15 @@ class Client extends PassportClient
             default:
                 return 'Access scope not configured - client is disabled';
         }
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['name', 'revoked', 'organization_id', 'allowed_scopes', 'client_type', 'user_access_scope', 'user_access_rules'])
+            ->logOnlyDirty()
+            ->useLogName('oauth')
+            ->dontLogIfAttributesChangedOnly(['updated_at', 'last_used_at']);
     }
 
     /**
