@@ -8,10 +8,12 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class OrganizationMembership extends Model
 {
-    use HasFactory, HasUlids, TenantScoped;
+    use HasFactory, HasUlids, TenantScoped, LogsActivity;
 
     protected $fillable = [
         'user_id',
@@ -198,5 +200,24 @@ class OrganizationMembership extends Model
                 'manager',
             ]);
         });
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly([
+                'user_id',
+                'organization_id',
+                'organization_unit_id',
+                'organization_position_id',
+                'membership_type',
+                'start_date',
+                'end_date',
+                'status'
+            ])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->setDescriptionForEvent(fn(string $eventName) => "Organization membership {$eventName}")
+            ->useLogName('organization');
     }
 }

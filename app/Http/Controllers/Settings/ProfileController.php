@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileDestroyRequest;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
+use App\Services\ActivityLogService;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -33,13 +34,22 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
+        
+        $user->fill($request->validated());
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
         }
 
-        $request->user()->save();
+        $user->save();
+
+        // Log profile update activity
+        ActivityLogService::logAuth('profile_updated', 'User updated profile', [
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'changed_fields' => array_keys($user->getChanges()),
+        ], $user);
 
         return to_route('profile.edit');
     }
@@ -49,8 +59,15 @@ class ProfileController extends Controller
      */
     public function destroy(ProfileDestroyRequest $request): RedirectResponse
     {
-
         $user = $request->user();
+
+        // Log account deletion before deleting
+        ActivityLogService::logAuth('account_deleted', 'User deleted account', [
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'user_id' => $user->id,
+            'user_email' => $user->email,
+        ], $user);
 
         Auth::logout();
 
@@ -84,6 +101,13 @@ class ProfileController extends Controller
         // Update user avatar path
         $user->update(['avatar' => $path]);
 
+        // Log avatar upload activity
+        ActivityLogService::logAuth('avatar_uploaded', 'User uploaded avatar', [
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'file_path' => $path,
+        ], $user);
+
         return response()->json([
             'message' => 'Avatar uploaded successfully',
             'avatar_url' => asset('storage/'.$path),
@@ -105,6 +129,12 @@ class ProfileController extends Controller
 
             // Clear avatar from database
             $user->update(['avatar' => null]);
+            
+            // Log avatar deletion activity
+            ActivityLogService::logAuth('avatar_deleted', 'User deleted avatar', [
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ], $user);
         }
 
         return response()->json([

@@ -17,6 +17,8 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\DB;
 use Laravel\Passport\HasApiTokens;
 use PragmaRX\Google2FA\Google2FA;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\LaravelPasskeys\Models\Concerns\HasPasskeys;
 use Spatie\LaravelPasskeys\Models\Concerns\InteractsWithPasskeys;
 use Spatie\Permission\Traits\HasRoles;
@@ -27,7 +29,7 @@ class User extends Authenticatable implements HasPasskeys
     use HasApiTokens, HasFactory, Notifiable;
 
     use HasRoles, InteractsWithPasskeys;
-    use HasUlids;
+    use HasUlids, LogsActivity;
 
     protected $table = 'sys_users';
 
@@ -65,6 +67,16 @@ class User extends Authenticatable implements HasPasskeys
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['name', 'email', 'avatar'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->setDescriptionForEvent(fn(string $eventName) => "User {$eventName}")
+            ->useLogName('user');
     }
 
     public function mfaSettings(): HasOne

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Security;
 
 use App\Http\Controllers\Controller;
+use App\Services\ActivityLogService;
 use App\Services\TrustedDeviceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

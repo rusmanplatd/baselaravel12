@@ -7,6 +7,7 @@ use App\Models\Chat\Conversation;
 use App\Models\Chat\EncryptionKey;
 use App\Models\Chat\Participant;
 use App\Models\User;
+use App\Services\ActivityLogService;
 use App\Services\ChatEncryptionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;

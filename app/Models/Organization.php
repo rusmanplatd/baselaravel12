@@ -8,10 +8,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Organization extends Model
 {
-    use HasFactory, HasUlids;
+    use HasFactory, HasUlids, LogsActivity;
 
     protected $fillable = [
         'organization_code',
@@ -177,5 +179,24 @@ class Organization extends Model
         }
 
         return $baseScopes;
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly([
+                'organization_code',
+                'name', 
+                'organization_type',
+                'parent_organization_id',
+                'description',
+                'is_active',
+                'level',
+                'path'
+            ])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->setDescriptionForEvent(fn(string $eventName) => "Organization {$eventName}")
+            ->useLogName('organization');
     }
 }

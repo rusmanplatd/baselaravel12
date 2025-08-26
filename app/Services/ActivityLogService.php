@@ -71,10 +71,16 @@ class ActivityLogService
 
     private static function getCurrentOrganizationId(): ?string
     {
-        // First try to get from our tenant service
-        $tenantId = TenantService::getTenantId();
-        if ($tenantId) {
-            return $tenantId;
+        // First try to get from our tenant service if it exists
+        if (class_exists(TenantService::class)) {
+            try {
+                $tenantId = TenantService::getTenantId();
+                if ($tenantId) {
+                    return $tenantId;
+                }
+            } catch (\Exception $e) {
+                // TenantService may not be available in all contexts
+            }
         }
 
         $user = Auth::user();
@@ -95,8 +101,16 @@ class ActivityLogService
 
     private static function getCurrentTenantId(): ?string
     {
-        // Use our custom tenant service
-        return TenantService::getTenantId();
+        // Use our custom tenant service if available
+        if (class_exists(TenantService::class)) {
+            try {
+                return TenantService::getTenantId();
+            } catch (\Exception $e) {
+                return null;
+            }
+        }
+        
+        return null;
     }
 
     public static function getActivitiesForUser(User $user, array $filters = [])
@@ -147,17 +161,31 @@ class ActivityLogService
 
     public static function getActivitiesForCurrentTenant(array $filters = [])
     {
-        $tenant = TenantService::getCurrentTenant();
-        if (! $tenant) {
-            return collect();
+        if (class_exists(TenantService::class)) {
+            try {
+                $tenant = TenantService::getCurrentTenant();
+                if ($tenant) {
+                    return self::getActivitiesForOrganization($tenant, $filters);
+                }
+            } catch (\Exception $e) {
+                // TenantService may not be available
+            }
         }
 
-        return self::getActivitiesForOrganization($tenant, $filters);
+        return collect();
     }
 
     public static function logTenantAction(string $event, string $description, array $properties = [], ?Model $subject = null): Activity
     {
-        $tenant = TenantService::getCurrentTenant();
+        $tenant = null;
+        
+        if (class_exists(TenantService::class)) {
+            try {
+                $tenant = TenantService::getCurrentTenant();
+            } catch (\Exception $e) {
+                // TenantService may not be available
+            }
+        }
 
         $enhancedProperties = array_merge($properties, [
             'tenant_context' => [

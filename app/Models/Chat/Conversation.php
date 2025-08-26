@@ -9,10 +9,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Conversation extends Model
 {
-    use HasFactory, HasUlids, SoftDeletes;
+    use HasFactory, HasUlids, SoftDeletes, LogsActivity;
 
     protected $table = 'chat_conversations';
 
@@ -77,6 +79,16 @@ class Conversation extends Model
         return $query->whereHas('participants', function ($q) use ($userId) {
             $q->where('user_id', $userId)->whereNull('left_at');
         });
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['name', 'type', 'description', 'status'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->setDescriptionForEvent(fn(string $eventName) => "Chat conversation {$eventName}")
+            ->useLogName('chat');
     }
 
     /**
