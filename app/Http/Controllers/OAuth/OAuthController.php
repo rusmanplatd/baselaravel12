@@ -20,7 +20,7 @@ use Knuckles\Scribe\Attributes\Endpoint;
 use Knuckles\Scribe\Attributes\Group;
 use Knuckles\Scribe\Attributes\QueryParam;
 use Knuckles\Scribe\Attributes\Response as ScribeResponse;
-use Laravel\Passport\Client;
+use App\Models\Client;
 use Laravel\Passport\Passport;
 
 #[Group('OAuth 2.0 & OpenID Connect')]
@@ -46,7 +46,7 @@ class OAuthController extends Controller
 
         $client = Client::with('organization')->where('id', $request->client_id)->first();
 
-        if (! $client || ! in_array($request->redirect_uri, json_decode($client->redirect))) {
+        if (! $client || ! in_array($request->redirect_uri, json_decode($client->redirect_uris))) {
             OAuthAuditLog::logError('authorize', 'invalid_client', 'Client authentication failed', [
                 'client_id' => $request->client_id,
                 'redirect_uri' => $request->redirect_uri,
@@ -58,16 +58,19 @@ class OAuthController extends Controller
             ], 400);
         }
 
-        // Require organization association - no legacy clients allowed
-        if (! $client->organization_id) {
-            OAuthAuditLog::logError('authorize', 'invalid_client', 'Client must be associated with an organization', [
+        // Check if user has access to this client based on access scope configuration
+        if (! $client->userHasAccess(Auth::user())) {
+            OAuthAuditLog::logError('authorize', 'access_denied', 'User does not have access to this OAuth client', [
                 'client_id' => $client->id,
+                'user_id' => Auth::id(),
+                'organization_id' => $client->organization_id,
+                'access_scope' => $client->user_access_scope,
             ]);
 
             return response()->json([
-                'error' => 'invalid_client',
-                'error_description' => 'Client must be associated with an organization',
-            ], 400);
+                'error' => 'access_denied',
+                'error_description' => 'You do not have access to this OAuth client',
+            ], 403);
         }
 
         $organization = $client->organization;
@@ -76,21 +79,6 @@ class OAuthController extends Controller
         $requestedScopes = explode(' ', $request->scope ?? '');
         $availableScopes = $this->getAvailableScopes($organization);
         $validScopes = $this->validateScopesForUser($requestedScopes, $availableScopes, $organization, $userOrganizations);
-
-        // Ensure user has access to the organization
-        $hasOrganizationAccess = $userOrganizations->contains('id', $organization->id);
-        if (! $hasOrganizationAccess) {
-            OAuthAuditLog::logError('authorize', 'access_denied', 'User does not have access to the organization', [
-                'client_id' => $client->id,
-                'user_id' => Auth::id(),
-                'organization_id' => $organization->id,
-            ]);
-
-            return response()->json([
-                'error' => 'access_denied',
-                'error_description' => 'You do not have access to this organization',
-            ], 403);
-        }
 
         $existingConsent = UserConsent::where([
             'user_id' => Auth::id(),
@@ -139,31 +127,18 @@ class OAuthController extends Controller
 
         $client = Client::with('organization')->findOrFail($request->client_id);
 
-        // Validate organization context
-        if (! $client->organization_id) {
-            OAuthAuditLog::logError('approve', 'invalid_client', 'Client must be associated with an organization', [
-                'client_id' => $client->id,
-                'user_id' => Auth::id(),
-            ]);
-
-            return response()->json([
-                'error' => 'invalid_client',
-                'error_description' => 'Client must be associated with an organization',
-            ], 400);
-        }
-
-        // Ensure user has access to the organization
-        $userOrganizations = Auth::user()->memberships()->active()->pluck('organization_id');
-        if (! $userOrganizations->contains($client->organization_id)) {
-            OAuthAuditLog::logError('approve', 'access_denied', 'User does not have access to the organization', [
+        // Check if user has access to this client based on access scope configuration
+        if (! $client->userHasAccess(Auth::user())) {
+            OAuthAuditLog::logError('approve', 'access_denied', 'User does not have access to this OAuth client', [
                 'client_id' => $client->id,
                 'user_id' => Auth::id(),
                 'organization_id' => $client->organization_id,
+                'access_scope' => $client->user_access_scope,
             ]);
 
             return response()->json([
                 'error' => 'access_denied',
-                'error_description' => 'You do not have access to this organization',
+                'error_description' => 'You do not have access to this OAuth client',
             ], 403);
         }
 

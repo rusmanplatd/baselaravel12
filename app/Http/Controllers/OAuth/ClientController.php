@@ -10,7 +10,7 @@ use App\Services\ActivityLogService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
-use Laravel\Passport\Client;
+use App\Models\Client;
 use Laravel\Passport\ClientRepository;
 
 class ClientController extends Controller
@@ -32,9 +32,16 @@ class ClientController extends Controller
     {
         $userOrganizations = Auth::user()->memberships()->active()->pluck('organization_id');
 
-        // Only show organization-associated clients (no legacy clients)
-        $clients = Client::whereNotNull('organization_id')
-            ->whereIn('organization_id', $userOrganizations)
+        // Show clients based on user's management permissions or accessible clients
+        $clients = Client::where(function ($query) use ($userOrganizations) {
+                // Organization-associated clients where user has membership
+                $query->whereNotNull('organization_id')
+                      ->whereIn('organization_id', $userOrganizations);
+            })
+            ->orWhere(function ($query) {
+                // All-users clients
+                $query->where('user_access_scope', 'all_users');
+            })
             ->with('organization')
             ->orderBy('created_at', 'desc')
             ->get()
@@ -43,7 +50,7 @@ class ClientController extends Controller
                     'id' => $client->id,
                     'name' => $client->name,
                     'secret' => $client->secret,
-                    'redirect' => json_decode($client->redirect),
+                    'redirect_uris' => json_decode($client->redirect_uris),
                     'revoked' => $client->revoked,
                     'organization' => $client->organization ? [
                         'id' => $client->organization->id,
@@ -51,6 +58,8 @@ class ClientController extends Controller
                         'code' => $client->organization->organization_code,
                     ] : null,
                     'client_type' => $client->client_type ?? 'public',
+                    'user_access_scope' => $client->user_access_scope ?? 'organization_members',
+                    'access_scope_description' => $client->getAccessScopeDescription(),
                     'last_used_at' => $client->last_used_at?->toDateTimeString(),
                     'created_at' => $client->created_at->toDateTimeString(),
                 ];
@@ -75,6 +84,7 @@ class ClientController extends Controller
         return Inertia::render('OAuth/Clients', [
             'clients' => $clients,
             'organizations' => $availableOrganizations,
+            'userAccessScopes' => Client::getUserAccessScopes(),
         ]);
     }
 
@@ -119,10 +129,18 @@ class ClientController extends Controller
         }
 
         // Organization ID is now required and already validated
-        $client->update([
+        $updateData = [
             'organization_id' => $request->organization_id,
             'client_type' => $request->client_type,
-        ]);
+            'user_access_scope' => $request->user_access_scope ?? 'organization_members',
+        ];
+
+        // Handle custom access rules if provided
+        if ($request->user_access_scope === 'custom' && $request->user_access_rules) {
+            $updateData['user_access_rules'] = $request->user_access_rules;
+        }
+
+        $client->update($updateData);
 
         // Handle allowed scopes
         $organization = Organization::find($request->organization_id);
@@ -142,13 +160,14 @@ class ClientController extends Controller
             'client_name' => $client->name,
             'organization_id' => $request->organization_id,
             'client_type' => $request->client_type,
+            'user_access_scope' => $client->user_access_scope,
         ]);
 
         return response()->json([
             'id' => $client->id,
             'name' => $client->name,
             'secret' => $client->secret,
-            'redirect' => json_decode($client->redirect),
+            'redirect_uris' => json_decode($client->redirect_uris),
         ], 201);
     }
 
@@ -162,11 +181,14 @@ class ClientController extends Controller
             'id' => $client->id,
             'name' => $client->name,
             'secret' => $client->secret,
-            'redirect' => json_decode($client->redirect),
+            'redirect_uris' => json_decode($client->redirect_uris),
             'description' => $client->description,
             'website' => $client->website,
             'logo_url' => $client->logo_url,
             'revoked' => $client->revoked,
+            'user_access_scope' => $client->user_access_scope ?? 'organization_members',
+            'user_access_rules' => $client->user_access_rules,
+            'access_scope_description' => $client->getAccessScopeDescription(),
             'created_at' => $client->created_at->toDateTimeString(),
             'updated_at' => $client->updated_at->toDateTimeString(),
         ]);
@@ -181,7 +203,7 @@ class ClientController extends Controller
         $updateData = $request->only(['name', 'description', 'website', 'logo_url']);
 
         if ($request->has('redirect_uris')) {
-            $updateData['redirect'] = json_encode($request->redirect_uris);
+            $updateData['redirect_uris'] = json_encode($request->redirect_uris);
         }
 
         $client->update($updateData);
@@ -196,7 +218,7 @@ class ClientController extends Controller
         return response()->json([
             'id' => $client->id,
             'name' => $client->name,
-            'redirect' => json_decode($client->redirect),
+            'redirect_uris' => json_decode($client->redirect_uris),
             'description' => $client->description,
             'website' => $client->website,
             'logo_url' => $client->logo_url,
