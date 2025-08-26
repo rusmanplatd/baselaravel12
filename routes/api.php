@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
-})->middleware(['web', 'auth']);
+})->middleware('auth:api');
 
 // Public API routes (no authentication required for demo)
 Route::prefix('v1')->group(function () {
@@ -74,7 +74,7 @@ Route::prefix('v1')->group(function () {
 });
 
 // Authenticated API routes
-Route::middleware(['web', 'auth'])->prefix('v1')->group(function () {
+Route::middleware('auth:api')->prefix('v1')->group(function () {
     // User Security Profile
     Route::prefix('security')->name('api.security.')->group(function () {
         Route::get('/', [UserSecurityController::class, 'index'])->name('profile');

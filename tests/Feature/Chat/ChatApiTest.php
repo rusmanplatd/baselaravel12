@@ -27,26 +27,33 @@ beforeEach(function () {
 describe('Authentication and Authorization', function () {
     it('requires authentication for all chat endpoints', function () {
         $endpoints = [
-            ['GET', '/api/conversations'],
-            ['POST', '/api/conversations'],
-            ['GET', '/api/conversations/test-id'],
-            ['PUT', '/api/conversations/test-id'],
-            ['DELETE', '/api/conversations/test-id'],
-            ['GET', '/api/conversations/test-id/messages'],
-            ['POST', '/api/conversations/test-id/messages'],
-            ['POST', '/api/conversations/test-id/participants'],
-            ['GET', '/api/chat/encryption/keys'],
-            ['POST', '/api/chat/encryption/keys'],
+            ['GET', '/api/v1/chat/conversations'],
+            ['POST', '/api/v1/chat/conversations'],
+            ['GET', '/api/v1/chat/conversations/test-id'],
+            ['PUT', '/api/v1/chat/conversations/test-id'],
+            ['DELETE', '/api/v1/chat/conversations/test-id'],
+            ['GET', '/api/v1/chat/conversations/test-id/messages'],
+            ['POST', '/api/v1/chat/conversations/test-id/messages'],
+            ['POST', '/api/v1/chat/conversations/test-id/participants'],
+            ['POST', '/api/v1/chat/encryption/generate-keypair'],
+            ['POST', '/api/v1/chat/encryption/register-key'],
+            ['GET', '/api/v1/chat/encryption/health'],
         ];
 
         foreach ($endpoints as [$method, $url]) {
-            $response = $this->call($method, $url);
+            // Add API headers to ensure request is recognized as API request
+            $response = $this->withHeaders([
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+            ])->call($method, $url);
+            
+            // API routes use Passport auth, so they return 401 Unauthorized when unauthenticated
             $response->assertStatus(401);
         }
     });
 
     it('prevents access to conversations user is not part of', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         $conversation = Conversation::factory()->create([
             'created_by' => $this->otherUser->id,
@@ -59,21 +66,21 @@ describe('Authentication and Authorization', function () {
             'role' => 'member',
         ]);
 
-        $response = $this->getJson("/api/conversations/{$conversation->id}");
+        $response = $this->getJson("/api/v1/chat/conversations/{$conversation->id}");
         $response->assertStatus(403);
 
-        $response = $this->getJson("/api/conversations/{$conversation->id}/messages");
+        $response = $this->getJson("/api/v1/chat/conversations/{$conversation->id}/messages");
         $response->assertStatus(403);
     });
 });
 
 describe('Conversation Management API', function () {
     it('can create direct conversation', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
-        $response = $this->postJson('/api/conversations', [
+        $response = $this->postJson('/api/v1/chat/conversations', [
             'type' => 'direct',
-            'participant_ids' => [$this->otherUser->id],
+            'participants' => [$this->otherUser->id],
         ]);
 
         $response->assertStatus(201);
@@ -98,7 +105,7 @@ describe('Conversation Management API', function () {
         $this->assertDatabaseHas('chat_participants', [
             'conversation_id' => $conversationId,
             'user_id' => $this->user->id,
-            'role' => 'member',
+            'role' => 'owner',
         ]);
 
         $this->assertDatabaseHas('chat_participants', [
@@ -109,12 +116,12 @@ describe('Conversation Management API', function () {
     });
 
     it('can create group conversation', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
-        $response = $this->postJson('/api/conversations', [
+        $response = $this->postJson('/api/v1/chat/conversations', [
             'type' => 'group',
             'name' => 'Project Team Chat',
-            'participant_ids' => [$this->otherUser->id, $this->thirdUser->id],
+            'participants' => [$this->otherUser->id, $this->thirdUser->id],
         ]);
 
         $response->assertStatus(201);
@@ -125,11 +132,11 @@ describe('Conversation Management API', function () {
 
         $conversationId = $response->json('id');
 
-        // Creator should be admin, others members
+        // Creator should be owner, others members
         $this->assertDatabaseHas('chat_participants', [
             'conversation_id' => $conversationId,
             'user_id' => $this->user->id,
-            'role' => 'admin',
+            'role' => 'owner',
         ]);
 
         $this->assertDatabaseHas('chat_participants', [
@@ -140,51 +147,51 @@ describe('Conversation Management API', function () {
     });
 
     it('prevents duplicate direct conversations', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         // Create first conversation
-        $response1 = $this->postJson('/api/conversations', [
+        $response1 = $this->postJson('/api/v1/chat/conversations', [
             'type' => 'direct',
-            'participant_ids' => [$this->otherUser->id],
+            'participants' => [$this->otherUser->id],
         ]);
 
         $response1->assertStatus(201);
 
         // Try to create another direct conversation with same user
-        $response2 = $this->postJson('/api/conversations', [
+        $response2 = $this->postJson('/api/v1/chat/conversations', [
             'type' => 'direct',
-            'participant_ids' => [$this->otherUser->id],
+            'participants' => [$this->otherUser->id],
         ]);
 
-        $response2->assertStatus(422);
-        $response2->assertJsonValidationErrors(['participant_ids']);
+        $response2->assertStatus(200);
+        $response2->assertJson(['id' => $response1->json('id')]);
     });
 
     it('validates conversation creation', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         // Test invalid type
-        $response = $this->postJson('/api/conversations', [
+        $response = $this->postJson('/api/v1/chat/conversations', [
             'type' => 'invalid',
-            'participant_ids' => [$this->otherUser->id],
+            'participants' => [$this->otherUser->id],
         ]);
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['type']);
 
         // Test missing participants for direct conversation
-        $response = $this->postJson('/api/conversations', [
+        $response = $this->postJson('/api/v1/chat/conversations', [
             'type' => 'direct',
-            'participant_ids' => [],
+            'participants' => [],
         ]);
 
         $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['participant_ids']);
+        $response->assertJsonValidationErrors(['participants']);
 
         // Test missing name for group conversation
-        $response = $this->postJson('/api/conversations', [
+        $response = $this->postJson('/api/v1/chat/conversations', [
             'type' => 'group',
-            'participant_ids' => [$this->otherUser->id],
+            'participants' => [$this->otherUser->id],
         ]);
 
         $response->assertStatus(422);
@@ -192,7 +199,7 @@ describe('Conversation Management API', function () {
     });
 
     it('can list user conversations', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         // Create multiple conversations
         $conversation1 = Conversation::factory()->create([
@@ -215,7 +222,7 @@ describe('Conversation Management API', function () {
             ]);
         }
 
-        $response = $this->getJson('/api/conversations');
+        $response = $this->getJson('/api/v1/chat/conversations');
 
         $response->assertStatus(200);
         $response->assertJsonCount(2, 'data');
@@ -226,7 +233,7 @@ describe('Conversation Management API', function () {
     });
 
     it('can update conversation', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         $conversation = Conversation::factory()->create([
             'type' => 'group',
@@ -240,7 +247,7 @@ describe('Conversation Management API', function () {
             'role' => 'admin',
         ]);
 
-        $response = $this->putJson("/api/conversations/{$conversation->id}", [
+        $response = $this->putJson("/api/v1/chat/conversations/{$conversation->id}", [
             'name' => 'New Team Name',
             'description' => 'Updated description',
         ]);
@@ -258,7 +265,7 @@ describe('Conversation Management API', function () {
     });
 
     it('can delete conversation', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         $conversation = Conversation::factory()->create([
             'created_by' => $this->user->id,
@@ -270,7 +277,7 @@ describe('Conversation Management API', function () {
             'role' => 'admin',
         ]);
 
-        $response = $this->deleteJson("/api/conversations/{$conversation->id}");
+        $response = $this->deleteJson("/api/v1/chat/conversations/{$conversation->id}");
 
         $response->assertStatus(204);
 
@@ -301,9 +308,9 @@ describe('Message API', function () {
     });
 
     it('can send text message', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
-        $response = $this->postJson("/api/conversations/{$this->conversation->id}/messages", [
+        $response = $this->postJson("/api/v1/chat/conversations/{$this->conversation->id}/messages", [
             'content' => 'Hello, this is a test message!',
             'type' => 'text',
         ]);
@@ -323,11 +330,11 @@ describe('Message API', function () {
     });
 
     it('can send file message', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         $file = UploadedFile::fake()->image('photo.jpg');
 
-        $response = $this->postJson("/api/conversations/{$this->conversation->id}/messages", [
+        $response = $this->postJson("/api/v1/chat/conversations/{$this->conversation->id}/messages", [
             'type' => 'file',
             'file' => $file,
         ]);
@@ -351,7 +358,7 @@ describe('Message API', function () {
     });
 
     it('can reply to message', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         // Create original message
         $originalMessage = Message::create([
@@ -361,7 +368,7 @@ describe('Message API', function () {
             'type' => 'text',
         ]);
 
-        $response = $this->postJson("/api/conversations/{$this->conversation->id}/messages", [
+        $response = $this->postJson("/api/v1/chat/conversations/{$this->conversation->id}/messages", [
             'content' => 'This is a reply',
             'type' => 'text',
             'reply_to_id' => $originalMessage->id,
@@ -378,7 +385,7 @@ describe('Message API', function () {
     });
 
     it('can edit message', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         $message = Message::create([
             'conversation_id' => $this->conversation->id,
@@ -387,7 +394,7 @@ describe('Message API', function () {
             'type' => 'text',
         ]);
 
-        $response = $this->putJson("/api/messages/{$message->id}", [
+        $response = $this->putJson("/api/v1/chat/messages/{$message->id}", [
             'content' => 'Updated content',
         ]);
 
@@ -400,7 +407,7 @@ describe('Message API', function () {
     });
 
     it('can delete message', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         $message = Message::create([
             'conversation_id' => $this->conversation->id,
@@ -409,7 +416,7 @@ describe('Message API', function () {
             'type' => 'text',
         ]);
 
-        $response = $this->deleteJson("/api/messages/{$message->id}");
+        $response = $this->deleteJson("/api/v1/chat/messages/{$message->id}");
 
         $response->assertStatus(204);
 
@@ -419,7 +426,7 @@ describe('Message API', function () {
     });
 
     it('can search messages', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         Message::create([
             'conversation_id' => $this->conversation->id,
@@ -435,7 +442,7 @@ describe('Message API', function () {
             'type' => 'text',
         ]);
 
-        $response = $this->getJson("/api/conversations/{$this->conversation->id}/messages/search?q=Laravel");
+        $response = $this->getJson("/api/v1/chat/conversations/{$this->conversation->id}/messages/search?q=Laravel");
 
         $response->assertStatus(200);
         expect($response->json('data'))->toHaveCount(1);
@@ -459,9 +466,9 @@ describe('Participant Management API', function () {
     });
 
     it('can add participants to group conversation', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
-        $response = $this->postJson("/api/conversations/{$this->conversation->id}/participants", [
+        $response = $this->postJson("/api/v1/chat/conversations/{$this->conversation->id}/participants", [
             'user_ids' => [$this->otherUser->id, $this->thirdUser->id],
         ]);
 
@@ -476,7 +483,7 @@ describe('Participant Management API', function () {
     });
 
     it('can update participant role', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         // Add participant first
         Participant::create([
@@ -485,7 +492,8 @@ describe('Participant Management API', function () {
             'role' => 'member',
         ]);
 
-        $response = $this->putJson("/api/conversations/{$this->conversation->id}/participants/{$this->otherUser->id}", [
+        $response = $this->putJson("/api/v1/chat/conversations/{$this->conversation->id}/participants/role", [
+            'user_id' => $this->otherUser->id,
             'role' => 'admin',
         ]);
 
@@ -499,7 +507,7 @@ describe('Participant Management API', function () {
     });
 
     it('can remove participant from group', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         // Add participant first
         Participant::create([
@@ -508,7 +516,7 @@ describe('Participant Management API', function () {
             'role' => 'member',
         ]);
 
-        $response = $this->deleteJson("/api/conversations/{$this->conversation->id}/participants/{$this->otherUser->id}");
+        $response = $this->deleteJson("/api/v1/chat/conversations/{$this->conversation->id}/participants/{$this->otherUser->id}");
 
         $response->assertStatus(204);
 
@@ -526,9 +534,9 @@ describe('Participant Management API', function () {
             'role' => 'member',
         ]);
 
-        $this->actingAs($this->otherUser);
+        $this->actingAs($this->otherUser, 'api');
 
-        $response = $this->postJson("/api/conversations/{$this->conversation->id}/participants", [
+        $response = $this->postJson("/api/v1/chat/conversations/{$this->conversation->id}/participants", [
             'user_ids' => [$this->thirdUser->id],
         ]);
 
@@ -538,9 +546,9 @@ describe('Participant Management API', function () {
 
 describe('Encryption Key Management API', function () {
     it('can generate encryption keys for user', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
-        $response = $this->postJson('/api/chat/encryption/keys', [
+        $response = $this->postJson('/api/v1/chat/encryption/keys', [
             'password' => 'user-password-123',
         ]);
 
@@ -555,7 +563,7 @@ describe('Encryption Key Management API', function () {
     });
 
     it('can retrieve user encryption keys', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         // Create test conversation and keys
         $conversation = Conversation::factory()->create();
@@ -574,7 +582,7 @@ describe('Encryption Key Management API', function () {
             'version' => 1,
         ]);
 
-        $response = $this->getJson('/api/chat/encryption/keys');
+        $response = $this->getJson('/api/v1/chat/encryption/keys');
 
         $response->assertStatus(200);
         $response->assertJsonStructure([
@@ -590,7 +598,7 @@ describe('Encryption Key Management API', function () {
     });
 
     it('can update encryption keys', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         $conversation = Conversation::factory()->create();
         Participant::create([
@@ -608,7 +616,7 @@ describe('Encryption Key Management API', function () {
             'version' => 1,
         ]);
 
-        $response = $this->putJson("/api/chat/encryption/keys/{$existingKey->id}", [
+        $response = $this->putJson("/api/v1/chat/encryption/keys/{$existingKey->id}", [
             'public_key' => 'new-public-key',
             'encrypted_private_key' => 'new-encrypted-private-key',
             'symmetric_key' => 'new-symmetric-key',
@@ -643,11 +651,11 @@ describe('Real-time Features', function () {
     });
 
     it('broadcasts message when sent', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         Broadcasting::fake();
 
-        $response = $this->postJson("/api/conversations/{$this->conversation->id}/messages", [
+        $response = $this->postJson("/api/v1/chat/conversations/{$this->conversation->id}/messages", [
             'content' => 'Hello everyone!',
             'type' => 'text',
         ]);
@@ -658,11 +666,11 @@ describe('Real-time Features', function () {
     });
 
     it('can update typing indicator', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         Broadcasting::fake();
 
-        $response = $this->postJson("/api/conversations/{$this->conversation->id}/typing", [
+        $response = $this->postJson("/api/v1/chat/conversations/{$this->conversation->id}/typing", [
             'is_typing' => true,
         ]);
 
@@ -672,11 +680,11 @@ describe('Real-time Features', function () {
     });
 
     it('can update presence status', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         Broadcasting::fake();
 
-        $response = $this->postJson('/api/chat/presence', [
+        $response = $this->postJson('/api/v1/chat/presence/status', [
             'status' => 'online',
         ]);
 
@@ -700,11 +708,11 @@ describe('Rate Limiting', function () {
     });
 
     it('applies rate limiting to message sending', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         // Send messages rapidly
         for ($i = 0; $i < 65; $i++) {
-            $response = $this->postJson("/api/conversations/{$this->conversation->id}/messages", [
+            $response = $this->postJson("/api/v1/chat/conversations/{$this->conversation->id}/messages", [
                 'content' => "Message {$i}",
                 'type' => 'text',
             ]);
@@ -720,15 +728,15 @@ describe('Rate Limiting', function () {
     });
 
     it('applies rate limiting to conversation creation', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         // Create conversations rapidly
         for ($i = 0; $i < 12; $i++) {
             $targetUser = User::factory()->create();
 
-            $response = $this->postJson('/api/conversations', [
+            $response = $this->postJson('/api/v1/chat/conversations', [
                 'type' => 'direct',
-                'participant_ids' => [$targetUser->id],
+                'participants' => [$targetUser->id],
             ]);
 
             if ($i < 10) {
@@ -756,12 +764,12 @@ describe('File Download API', function () {
     });
 
     it('can download file with valid token', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         // Upload file first
         $file = UploadedFile::fake()->create('document.pdf', 100, 'application/pdf');
 
-        $uploadResponse = $this->postJson("/api/conversations/{$this->conversation->id}/messages", [
+        $uploadResponse = $this->postJson("/api/v1/chat/conversations/{$this->conversation->id}/messages", [
             'type' => 'file',
             'file' => $file,
         ]);
@@ -785,7 +793,7 @@ describe('File Download API', function () {
     });
 
     it('rejects invalid download tokens', function () {
-        $response = $this->get('/api/chat/files/download/invalid-path?token=invalid&expires='.(time() + 3600));
+        $response = $this->get('/api/v1/chat/files/invalid-path/download?token=invalid&expires='.(time() + 3600));
 
         $response->assertStatus(403);
     });
