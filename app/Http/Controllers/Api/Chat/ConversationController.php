@@ -334,8 +334,8 @@ class ConversationController extends Controller
             ->where('user_id', auth()->id())
             ->first();
 
-        if (! $currentParticipant->isOwner()) {
-            return response()->json(['error' => 'Only group owners can manage roles'], 403);
+        if (! in_array($currentParticipant->role, ['owner', 'admin'])) {
+            return response()->json(['error' => 'Only group owners and admins can manage roles'], 403);
         }
 
         $participant = $conversation->participants()

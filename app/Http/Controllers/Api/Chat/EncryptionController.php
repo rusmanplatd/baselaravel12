@@ -924,13 +924,13 @@ class EncryptionController extends Controller
 
             return response()->json([
                 'public_key' => $keyPair['public_key'],
-                'encrypted_private_key' => [
+                'encrypted_private_key' => base64_encode(json_encode([
                     'data' => $encryptedPrivateKey['data'],
                     'iv' => $encryptedPrivateKey['iv'],
                     'salt' => base64_encode($salt),
                     'hmac' => $encryptedPrivateKey['hmac'],
                     'auth_data' => $encryptedPrivateKey['auth_data'],
-                ],
+                ])),
             ], 201);
         } catch (\Exception $e) {
             return response()->json([

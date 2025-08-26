@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Chat;
 
 use App\Events\Chat\UserTyping;
+use App\Events\PresenceUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\Chat\Conversation;
 use App\Models\Chat\TypingIndicator;
@@ -83,6 +84,9 @@ class PresenceController extends Controller
 
         // Store presence for 5 minutes
         Cache::put($cacheKey, $presenceData, now()->addMinutes(5));
+
+        // Broadcast presence update
+        broadcast(new PresenceUpdated(auth()->user(), $validated['status']));
 
         return response()->json($presenceData);
     }

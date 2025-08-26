@@ -31,7 +31,7 @@ beforeEach(function () {
 describe('Enhanced E2EE Functions', function () {
     describe('Backup and Restoration', function () {
         it('can create and restore encrypted backup via API', function () {
-            $this->actingAs($this->user1);
+            $this->actingAs($this->user1, 'api');
 
             // Create some encryption keys for the user using the new multi-device approach
             EncryptionKey::createForUser(
@@ -84,7 +84,7 @@ describe('Enhanced E2EE Functions', function () {
         });
 
         it('rejects backup from different user', function () {
-            $this->actingAs($this->user1);
+            $this->actingAs($this->user1, 'api');
 
             // Create backup for user1
             $backupResponse = $this->postJson('/api/v1/chat/encryption/backup/create', [
@@ -94,7 +94,7 @@ describe('Enhanced E2EE Functions', function () {
             $backupData = $backupResponse->json('backup_data');
 
             // Try to restore as user2
-            $this->actingAs($this->user2);
+            $this->actingAs($this->user2, 'api');
 
             $restoreResponse = $this->postJson('/api/v1/chat/encryption/backup/restore', [
                 'backup_data' => $backupData,
@@ -107,7 +107,7 @@ describe('Enhanced E2EE Functions', function () {
         });
 
         it('handles invalid backup data gracefully', function () {
-            $this->actingAs($this->user1);
+            $this->actingAs($this->user1, 'api');
 
             $restoreResponse = $this->postJson('/api/v1/chat/encryption/backup/restore', [
                 'backup_data' => 'invalid-backup-data',
@@ -121,7 +121,7 @@ describe('Enhanced E2EE Functions', function () {
 
     describe('Conversation Encryption Setup', function () {
         it('can setup encryption for new conversation', function () {
-            $this->actingAs($this->user1);
+            $this->actingAs($this->user1, 'api');
 
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
             $encryptedKey1 = $this->encryptionService->encryptSymmetricKey($symmetricKey, $this->user1->public_key);
@@ -168,7 +168,7 @@ describe('Enhanced E2EE Functions', function () {
         });
 
         it('handles invalid public keys gracefully', function () {
-            $this->actingAs($this->user1);
+            $this->actingAs($this->user1, 'api');
 
             $response = $this->postJson("/api/v1/chat/conversations/{$this->conversation->id}/setup-encryption", [
                 'encrypted_keys' => [
@@ -193,7 +193,7 @@ describe('Enhanced E2EE Functions', function () {
 
         it('requires conversation update authorization', function () {
             $unauthorizedUser = User::factory()->create();
-            $this->actingAs($unauthorizedUser);
+            $this->actingAs($unauthorizedUser, 'api');
 
             $response = $this->postJson("/api/v1/chat/conversations/{$this->conversation->id}/setup-encryption", [
                 'encrypted_keys' => [],
@@ -205,7 +205,7 @@ describe('Enhanced E2EE Functions', function () {
 
     describe('Health Check Endpoint', function () {
         it('returns encryption system health status', function () {
-            $this->actingAs($this->user1);
+            $this->actingAs($this->user1, 'api');
 
             $response = $this->getJson('/api/v1/chat/encryption/health');
 
@@ -236,7 +236,7 @@ describe('Enhanced E2EE Functions', function () {
 
     describe('Bulk Operations', function () {
         it('can bulk decrypt messages', function () {
-            $this->actingAs($this->user1);
+            $this->actingAs($this->user1, 'api');
 
             // Create some test messages with encrypted content
             $message1 = $this->conversation->messages()->create([
@@ -288,7 +288,7 @@ describe('Enhanced E2EE Functions', function () {
 
         it('requires conversation access for bulk decrypt', function () {
             $unauthorizedUser = User::factory()->create();
-            $this->actingAs($unauthorizedUser);
+            $this->actingAs($unauthorizedUser, 'api');
 
             // Create a test message to provide valid message IDs for validation
             $message = $this->conversation->messages()->create([
@@ -311,7 +311,7 @@ describe('Enhanced E2EE Functions', function () {
 
     describe('API Validation', function () {
         it('validates backup creation password strength', function () {
-            $this->actingAs($this->user1);
+            $this->actingAs($this->user1, 'api');
 
             $response = $this->postJson('/api/v1/chat/encryption/backup/create', [
                 'password' => '123', // Too weak
@@ -322,7 +322,7 @@ describe('Enhanced E2EE Functions', function () {
         });
 
         it('validates required fields for conversation setup', function () {
-            $this->actingAs($this->user1);
+            $this->actingAs($this->user1, 'api');
 
             $response = $this->postJson("/api/v1/chat/conversations/{$this->conversation->id}/setup-encryption", [
                 'encrypted_keys' => [
@@ -338,7 +338,7 @@ describe('Enhanced E2EE Functions', function () {
         });
 
         it('validates bulk decrypt parameters', function () {
-            $this->actingAs($this->user1);
+            $this->actingAs($this->user1, 'api');
 
             $response = $this->postJson('/api/v1/chat/encryption/bulk-decrypt', [
                 // Missing required fields
