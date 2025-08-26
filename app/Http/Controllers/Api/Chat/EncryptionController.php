@@ -11,6 +11,8 @@ use App\Services\ChatEncryptionService;
 use App\Services\MultiDeviceEncryptionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class EncryptionController extends Controller
 {
@@ -100,7 +102,7 @@ class EncryptionController extends Controller
             }
 
             // Log the rotation event
-            \Log::info('Conversation key rotated', [
+            Log::info('Conversation key rotated', [
                 'conversation_id' => $conversation->id,
                 'initiated_by' => auth()->id(),
                 'reason' => $validated['reason'] ?? 'Manual rotation',
@@ -114,7 +116,7 @@ class EncryptionController extends Controller
                 'message' => 'Conversation key rotated successfully',
                 'participants_updated' => $bulkResult['success_count'],
                 'total_participants' => $bulkResult['total_count'],
-                'rotation_id' => \Str::uuid(),
+                'rotation_id' => Str::uuid(),
                 'timestamp' => now()->toISOString(),
             ];
 
@@ -127,7 +129,7 @@ class EncryptionController extends Controller
             return response()->json($response);
 
         } catch (\Exception $e) {
-            \Log::error('Failed to rotate conversation key', [
+            Log::error('Failed to rotate conversation key', [
                 'conversation_id' => $conversation->id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
@@ -188,7 +190,7 @@ class EncryptionController extends Controller
                 'job_scheduled' => true,
             ]);
         } catch (\Exception $e) {
-            \Log::error('Failed to schedule key rotation', [
+            Log::error('Failed to schedule key rotation', [
                 'conversation_id' => $conversation->id,
                 'error' => $e->getMessage(),
                 'validated' => $validated,
@@ -440,7 +442,7 @@ class EncryptionController extends Controller
             }
 
             // Log the restoration
-            \Log::info('User restored encryption backup', [
+            Log::info('User restored encryption backup', [
                 'user_id' => $user->id,
                 'conversations_restored' => $restoredConversations,
                 'total_conversations_in_backup' => count($keyData['conversations'] ?? []),
@@ -462,7 +464,7 @@ class EncryptionController extends Controller
             return response()->json($response);
 
         } catch (\Exception $e) {
-            \Log::error('Backup restoration failed', [
+            Log::error('Backup restoration failed', [
                 'user_id' => auth()->id(),
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
@@ -636,7 +638,7 @@ class EncryptionController extends Controller
             }
 
             // Log the setup
-            \Log::info('Conversation encryption setup completed', [
+            Log::info('Conversation encryption setup completed', [
                 'conversation_id' => $conversation->id,
                 'initiated_by' => auth()->id(),
                 'participants_count' => $participants->count(),
@@ -648,7 +650,7 @@ class EncryptionController extends Controller
                 'message' => 'Conversation encryption setup completed',
                 'keys_created' => $successCount,
                 'total_participants' => $participants->count(),
-                'setup_id' => \Str::uuid(),
+                'setup_id' => Str::uuid(),
                 'timestamp' => now()->toISOString(),
             ];
 
@@ -659,7 +661,7 @@ class EncryptionController extends Controller
             return response()->json($response);
 
         } catch (\Exception $e) {
-            \Log::error('Failed to setup conversation encryption', [
+            Log::error('Failed to setup conversation encryption', [
                 'conversation_id' => $conversation->id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
@@ -700,7 +702,7 @@ class EncryptionController extends Controller
                 'key_version' => $results['key_version'],
                 'created_keys' => $results['created_keys'],
                 'failed_keys' => $results['failed_keys'],
-                'setup_id' => \Str::uuid(),
+                'setup_id' => Str::uuid(),
                 'timestamp' => now()->toISOString(),
             ]);
 
@@ -735,7 +737,7 @@ class EncryptionController extends Controller
                 'key_version' => $results['key_version'],
                 'rotated_devices' => $results['rotated_devices'],
                 'failed_devices' => $results['failed_devices'],
-                'rotation_id' => \Str::uuid(),
+                'rotation_id' => Str::uuid(),
                 'timestamp' => now()->toISOString(),
             ]);
 
@@ -889,6 +891,128 @@ class EncryptionController extends Controller
             return response()->json([
                 'status' => 'unhealthy',
                 'error' => 'Multi-device health check failed: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function generateUserKeys(Request $request)
+    {
+        $validated = $request->validate([
+            'password' => 'required|string|min:8',
+        ]);
+
+        try {
+            // Generate RSA key pair
+            $keyPair = $this->encryptionService->generateKeyPair();
+
+            // Encrypt private key with user password
+            $salt = $this->encryptionService->generateSalt();
+            $derivedKey = $this->encryptionService->deriveKeyFromPassword(
+                $validated['password'],
+                $salt
+            );
+
+            $encryptedPrivateKey = $this->encryptionService->encryptMessage(
+                $keyPair['private_key'],
+                $derivedKey
+            );
+
+            // Update user's public key
+            auth()->user()->update([
+                'public_key' => $keyPair['public_key'],
+            ]);
+
+            return response()->json([
+                'public_key' => $keyPair['public_key'],
+                'encrypted_private_key' => [
+                    'data' => $encryptedPrivateKey['data'],
+                    'iv' => $encryptedPrivateKey['iv'],
+                    'salt' => base64_encode($salt),
+                    'hmac' => $encryptedPrivateKey['hmac'],
+                    'auth_data' => $encryptedPrivateKey['auth_data'],
+                ],
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to generate encryption keys',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function getUserKeys()
+    {
+        try {
+            $user = auth()->user();
+            $encryptionKeys = $user->encryptionKeys()
+                ->with('conversation:id,name,type')
+                ->where('is_active', true)
+                ->get();
+
+            $keys = $encryptionKeys->map(function ($key) {
+                return [
+                    'id' => $key->id,
+                    'conversation_id' => $key->conversation_id,
+                    'conversation_name' => $key->conversation->name ?? 'Direct Chat',
+                    'conversation_type' => $key->conversation->type,
+                    'public_key' => $key->public_key,
+                    'encrypted_private_key' => null, // Never expose private keys through API
+                    'version' => $key->key_version ?? 1,
+                    'created_at' => $key->created_at,
+                    'is_active' => $key->is_active,
+                ];
+            });
+
+            return response()->json($keys);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to retrieve encryption keys',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function updateUserKey(Request $request, EncryptionKey $encryptionKey)
+    {
+        // Ensure the key belongs to the authenticated user
+        if ($encryptionKey->user_id !== auth()->id()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'public_key' => 'required|string',
+            'encrypted_private_key' => 'required|array',
+            'encrypted_private_key.data' => 'required|string',
+            'encrypted_private_key.iv' => 'required|string',
+            'encrypted_private_key.salt' => 'required|string',
+            'encrypted_private_key.hmac' => 'required|string',
+            'encrypted_private_key.auth_data' => 'required|string',
+            'symmetric_key' => 'nullable|string', // For backward compatibility
+        ]);
+
+        try {
+            // Increment version and update key
+            $encryptionKey->update([
+                'public_key' => $validated['public_key'],
+                'key_version' => ($encryptionKey->key_version ?? 1) + 1,
+                'updated_at' => now(),
+            ]);
+
+            // Also update user's public key if this is their primary key
+            auth()->user()->update([
+                'public_key' => $validated['public_key'],
+            ]);
+
+            return response()->json([
+                'message' => 'Encryption key updated successfully',
+                'key_id' => $encryptionKey->id,
+                'version' => $encryptionKey->key_version,
+                'updated_at' => $encryptionKey->updated_at,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to update encryption key',
+                'message' => $e->getMessage(),
             ], 500);
         }
     }

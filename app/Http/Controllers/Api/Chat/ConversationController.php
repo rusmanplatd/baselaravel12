@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Services\ChatEncryptionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 class ConversationController extends Controller
@@ -178,56 +179,94 @@ class ConversationController extends Controller
         $this->authorize('update', $conversation);
 
         $validated = $request->validate([
-            'user_id' => 'required|exists:sys_users,id',
+            'user_ids' => 'required_without:user_id|array',
+            'user_ids.*' => 'exists:sys_users,id',
+            'user_id' => 'required_without:user_ids|exists:sys_users,id', // For backward compatibility
         ]);
 
         if ($conversation->type === 'direct') {
             return response()->json(['error' => 'Cannot add participants to direct conversations'], 422);
         }
 
-        $existingParticipant = $conversation->participants()
-            ->where('user_id', $validated['user_id'])
-            ->first();
+        // Handle both single user_id and multiple user_ids for backward compatibility
+        $userIds = $validated['user_ids'] ?? [$validated['user_id']];
 
-        if ($existingParticipant && $existingParticipant->isActive()) {
-            return response()->json(['error' => 'User is already a participant'], 422);
-        }
+        return DB::transaction(function () use ($conversation, $userIds) {
+            $addedParticipants = [];
+            $errors = [];
 
-        return DB::transaction(function () use ($conversation, $validated) {
-            if ($existingParticipant) {
-                $existingParticipant->update([
-                    'left_at' => null,
-                    'joined_at' => now(),
-                ]);
-            } else {
-                Participant::create([
-                    'conversation_id' => $conversation->id,
-                    'user_id' => $validated['user_id'],
-                    'role' => 'member',
-                    'joined_at' => now(),
-                ]);
+            foreach ($userIds as $userId) {
+                try {
+                    $existingParticipant = $conversation->participants()
+                        ->where('user_id', $userId)
+                        ->first();
+
+                    if ($existingParticipant && $existingParticipant->isActive()) {
+                        $errors[] = "User {$userId} is already a participant";
+                        continue;
+                    }
+
+                    if ($existingParticipant) {
+                        $existingParticipant->update([
+                            'left_at' => null,
+                            'joined_at' => now(),
+                        ]);
+                        $participant = $existingParticipant;
+                    } else {
+                        $participant = Participant::create([
+                            'conversation_id' => $conversation->id,
+                            'user_id' => $userId,
+                            'role' => 'member',
+                            'joined_at' => now(),
+                        ]);
+                    }
+
+                    // Set up encryption key if conversation has encryption enabled
+                    $encryptionKey = $conversation->encryptionKeys()
+                        ->where('is_active', true)
+                        ->first();
+
+                    if ($encryptionKey) {
+                        try {
+                            $symmetricKey = $encryptionKey->decryptSymmetricKey(
+                                $this->getUserPrivateKey(auth()->id())
+                            );
+
+                            $userKeyPair = $this->getUserKeyPair($userId);
+
+                            EncryptionKey::createForUser(
+                                $conversation->id,
+                                $userId,
+                                $symmetricKey,
+                                $userKeyPair['public_key']
+                            );
+                        } catch (\Exception $e) {
+                            // Log encryption setup error but don't fail the participant addition
+                            Log::warning('Failed to setup encryption for new participant', [
+                                'conversation_id' => $conversation->id,
+                                'user_id' => $userId,
+                                'error' => $e->getMessage()
+                            ]);
+                        }
+                    }
+
+                    $addedParticipants[] = $participant->load('user');
+                } catch (\Exception $e) {
+                    $errors[] = "Failed to add user {$userId}: " . $e->getMessage();
+                }
             }
 
-            $encryptionKey = $conversation->encryptionKeys()
-                ->where('is_active', true)
-                ->first();
+            $response = [
+                'message' => count($addedParticipants) > 0 ? 'Participants added successfully' : 'No participants were added',
+                'participants' => $conversation->activeParticipants()->with('user:id,name,email,avatar')->get(),
+                'added_count' => count($addedParticipants),
+            ];
 
-            if ($encryptionKey) {
-                $symmetricKey = $encryptionKey->decryptSymmetricKey(
-                    $this->getUserPrivateKey(auth()->id())
-                );
-
-                $userKeyPair = $this->getUserKeyPair($validated['user_id']);
-
-                EncryptionKey::createForUser(
-                    $conversation->id,
-                    $validated['user_id'],
-                    $symmetricKey,
-                    $userKeyPair['public_key']
-                );
+            if (!empty($errors)) {
+                $response['errors'] = $errors;
             }
 
-            return response()->json(['message' => 'Participant added successfully']);
+            return response()->json($response);
         });
     }
 
@@ -254,6 +293,28 @@ class ConversationController extends Controller
             ->update(['is_active' => false]);
 
         return response()->json(['message' => 'Participant removed successfully']);
+    }
+
+    public function removeParticipantById(Conversation $conversation, User $user)
+    {
+        $this->authorize('update', $conversation);
+
+        $participant = $conversation->participants()
+            ->where('user_id', $user->id)
+            ->first();
+
+        if (! $participant || ! $participant->isActive()) {
+            return response()->json(['error' => 'User is not an active participant'], 404);
+        }
+
+        $participant->leave();
+
+        // Deactivate encryption keys for this user in this conversation
+        $user->chatEncryptionKeys()
+            ->where('conversation_id', $conversation->id)
+            ->update(['is_active' => false]);
+
+        return response('', 204); // No content response as expected by test
     }
 
     public function updateParticipantRole(Request $request, Conversation $conversation)
@@ -491,7 +552,7 @@ class ConversationController extends Controller
                         'private_key' => $privateKey,
                     ];
                 } catch (\Exception $e) {
-                    \Log::warning('Failed to decrypt private key from cache', [
+                    Log::warning('Failed to decrypt private key from cache', [
                         'user_id' => $userId,
                         'error' => $e->getMessage(),
                     ]);
@@ -525,7 +586,7 @@ class ConversationController extends Controller
             try {
                 return $this->encryptionService->decryptFromStorage($encryptedPrivateKey);
             } catch (\Exception $e) {
-                \Log::warning('Failed to decrypt private key from cache', [
+                Log::warning('Failed to decrypt private key from cache', [
                     'user_id' => $userId,
                     'error' => $e->getMessage(),
                 ]);
@@ -546,7 +607,7 @@ class ConversationController extends Controller
 
             return $keyPair['private_key'];
         } catch (\Exception $e) {
-            \Log::error('Failed to generate fallback private key', [
+            Log::error('Failed to generate fallback private key', [
                 'user_id' => $userId,
                 'error' => $e->getMessage(),
             ]);

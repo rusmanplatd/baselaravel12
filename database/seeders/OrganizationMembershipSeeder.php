@@ -6,6 +6,7 @@ use App\Models\Auth\Role;
 use App\Models\OrganizationMembership;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Log;
 
 class OrganizationMembershipSeeder extends Seeder
 {
@@ -528,7 +529,7 @@ class OrganizationMembershipSeeder extends Seeder
                     }
                 } catch (\Exception $e) {
                     // Log the error but continue with other assignments
-                    \Log::warning("Failed to assign role '{$roleName}' to user '{$email}': ".$e->getMessage());
+                    Log::warning("Failed to assign role '{$roleName}' to user '{$email}': ".$e->getMessage());
                 }
             }
 
@@ -545,6 +546,7 @@ class OrganizationMembershipSeeder extends Seeder
      */
     private function assignOrganizationSpecificPermissions(User $user, array $organizationIds): void
     {
+        // TODO
         // This is where you could assign organization-specific permissions
         // For now, roles handle most permissions, but you could add direct permissions here
         // Example: $user->givePermissionTo('specific-permission', $organizationId);
@@ -607,7 +609,7 @@ class OrganizationMembershipSeeder extends Seeder
                     }
                 }
             } catch (\Exception $e) {
-                \Log::warning("Failed to assign board-member role to user '{$user->email}': ".$e->getMessage());
+                Log::warning("Failed to assign board-member role to user '{$user->email}': ".$e->getMessage());
             }
         }
     }

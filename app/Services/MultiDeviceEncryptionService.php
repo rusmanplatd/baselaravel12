@@ -1071,7 +1071,7 @@ class MultiDeviceEncryptionService
                     $redis = $cacheDriver->connection();
                     $prefix = $cacheDriver->getPrefix();
                     $searchPattern = $prefix . str_replace('*', '*', $pattern);
-                    
+
                     // Use SCAN instead of KEYS for production performance
                     $cursor = 0;
                     do {
@@ -1079,11 +1079,11 @@ class MultiDeviceEncryptionService
                             'MATCH' => $searchPattern,
                             'COUNT' => 100
                         ]);
-                        
+
                         if ($result !== false) {
                             $cursor = $result[0];
                             $matchedKeys = $result[1];
-                            
+
                             foreach ($matchedKeys as $key) {
                                 // Remove prefix to get the cache key
                                 $keys[] = $prefix ? substr($key, strlen($prefix)) : $key;
@@ -1097,14 +1097,14 @@ class MultiDeviceEncryptionService
                     $connection = $cacheDriver->getConnection();
                     $table = $cacheDriver->getTable();
                     $prefix = $cacheDriver->getPrefix();
-                    
+
                     $likePattern = str_replace('*', '%', $prefix . $pattern);
-                    
+
                     $results = $connection->table($table)
                         ->where('key', 'LIKE', $likePattern)
                         ->where('expiration', '>', time())
                         ->pluck('key');
-                    
+
                     foreach ($results as $key) {
                         // Remove prefix to get the cache key
                         $keys[] = $prefix ? substr($key, strlen($prefix)) : $key;
@@ -1115,11 +1115,11 @@ class MultiDeviceEncryptionService
                     // For file cache, we need to scan the file system
                     $directory = $cacheDriver->getDirectory();
                     $prefix = $cacheDriver->getPrefix();
-                    
+
                     // Convert cache pattern to file pattern
                     $filePattern = str_replace(['*', '/'], ['*', DIRECTORY_SEPARATOR], $pattern);
                     $searchPath = $directory . DIRECTORY_SEPARATOR . $prefix . $filePattern;
-                    
+
                     $files = glob($searchPath);
                     foreach ($files as $file) {
                         $filename = basename($file);
@@ -1135,10 +1135,10 @@ class MultiDeviceEncryptionService
                     $storageProperty = $reflection->getProperty('storage');
                     $storageProperty->setAccessible(true);
                     $storage = $storageProperty->getValue($cacheDriver);
-                    
+
                     $prefix = $cacheDriver->getPrefix();
                     $regexPattern = '/^' . preg_quote($prefix, '/') . str_replace('*', '.*', preg_quote($pattern, '/')) . '$/';
-                    
+
                     foreach (array_keys($storage) as $key) {
                         if (preg_match($regexPattern, $key)) {
                             // Remove prefix to get the cache key
@@ -1150,7 +1150,7 @@ class MultiDeviceEncryptionService
                 default:
                     // For other cache drivers, fall back to empty array
                     // Log a warning for unsupported cache driver
-                    \Log::warning('getCacheKeysByPattern: Unsupported cache driver', [
+                    Log::warning('getCacheKeysByPattern: Unsupported cache driver', [
                         'driver' => get_class($cacheDriver),
                         'pattern' => $pattern,
                     ]);
@@ -1158,7 +1158,7 @@ class MultiDeviceEncryptionService
             }
         } catch (\Exception $e) {
             // Log error and return empty array to prevent breaking the application
-            \Log::error('Error in getCacheKeysByPattern', [
+            Log::error('Error in getCacheKeysByPattern', [
                 'pattern' => $pattern,
                 'error' => $e->getMessage(),
                 'driver' => get_class($cacheDriver),

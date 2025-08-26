@@ -2,6 +2,7 @@
 
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
@@ -15,8 +16,8 @@ Schedule::command('security:cleanup')
         return config('trusted_devices.auto_cleanup', true);
     })
     ->onSuccess(function () {
-        \Log::info('Security cleanup completed successfully');
+        Log::info('Security cleanup completed successfully');
     })
     ->onFailure(function () {
-        \Log::error('Security cleanup failed');
+        Log::error('Security cleanup failed');
     });

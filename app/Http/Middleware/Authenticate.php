@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Auth\Middleware\Authenticate as Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class Authenticate extends Middleware
 {
@@ -20,7 +21,7 @@ class Authenticate extends Middleware
     protected function unauthenticated($request, array $guards)
     {
         // Debug logging
-        \Log::info('Custom Authenticate middleware called', [
+        Log::info('Custom Authenticate middleware called', [
             'path' => $request->path(),
             'expects_json' => $request->expectsJson(),
             'is_api' => $request->is('api/*'),

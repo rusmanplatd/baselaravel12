@@ -119,6 +119,9 @@ Route::middleware('auth:api')->prefix('v1')->group(function () {
         Route::delete('conversations/{conversation}/participants', [\App\Http\Controllers\Api\Chat\ConversationController::class, 'removeParticipant'])
             ->name('conversations.participants.remove')
             ->middleware('throttle:20,1');
+        Route::delete('conversations/{conversation}/participants/{user}', [\App\Http\Controllers\Api\Chat\ConversationController::class, 'removeParticipantById'])
+            ->name('conversations.participants.remove.by-id')
+            ->middleware('throttle:20,1');
 
         // Group management routes
         Route::get('conversations/{conversation}/participants', [\App\Http\Controllers\Api\Chat\ConversationController::class, 'getParticipants'])
@@ -201,6 +204,11 @@ Route::middleware('auth:api')->prefix('v1')->group(function () {
         Route::post('conversations/{conversation}/setup-encryption', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'setupConversationEncryption'])->name('conversations.setup-encryption');
         Route::post('encryption/verify', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'verifyMessage'])->name('encryption.verify');
         Route::post('encryption/test', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'testEncryption'])->name('encryption.test');
+
+        // Encryption key management
+        Route::post('encryption/keys', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'generateUserKeys'])->name('encryption.keys.generate');
+        Route::get('encryption/keys', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'getUserKeys'])->name('encryption.keys.list');
+        Route::put('encryption/keys/{encryptionKey}', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'updateUserKey'])->name('encryption.keys.update');
 
         // Enhanced E2EE endpoints
         Route::post('encryption/backup/create', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'createBackup'])->name('encryption.backup.create');

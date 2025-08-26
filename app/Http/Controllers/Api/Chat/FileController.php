@@ -8,6 +8,7 @@ use App\Models\Chat\Message;
 use App\Services\ChatFileService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class FileController extends Controller
 {
@@ -132,7 +133,7 @@ class FileController extends Controller
             try {
                 return app(\App\Services\ChatEncryptionService::class)->decryptFromStorage($encryptedPrivateKey);
             } catch (\Exception $e) {
-                \Log::warning('Failed to decrypt private key from cache', [
+                Log::warning('Failed to decrypt private key from cache', [
                     'user_id' => $userId,
                     'error' => $e->getMessage(),
                 ]);
@@ -154,7 +155,7 @@ class FileController extends Controller
 
             return $keyPair['private_key'];
         } catch (\Exception $e) {
-            \Log::error('Failed to generate fallback private key', [
+            Log::error('Failed to generate fallback private key', [
                 'user_id' => $userId,
                 'error' => $e->getMessage(),
             ]);

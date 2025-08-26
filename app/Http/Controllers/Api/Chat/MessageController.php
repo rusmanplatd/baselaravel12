@@ -10,6 +10,7 @@ use App\Models\Chat\Message;
 use App\Services\ChatEncryptionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class MessageController extends Controller
 {
@@ -100,7 +101,7 @@ class MessageController extends Controller
 
         } catch (DecryptionException $e) {
             // Handle decryption-specific errors
-            \Log::warning('Decryption error in message retrieval', [
+            Log::warning('Decryption error in message retrieval', [
                 'user_id' => auth()->id(),
                 'conversation_id' => $conversation->id,
                 'error' => $e->getMessage(),
@@ -121,7 +122,7 @@ class MessageController extends Controller
                 ], 500);
             }
         } catch (\Exception $e) {
-            \Log::error('Unexpected encryption error in message retrieval', [
+            Log::error('Unexpected encryption error in message retrieval', [
                 'user_id' => auth()->id(),
                 'conversation_id' => $conversation->id,
                 'error' => $e->getMessage(),
@@ -418,7 +419,7 @@ class MessageController extends Controller
 
     private function regenerateEncryptionKeys(Conversation $conversation): void
     {
-        \Log::info('Regenerating encryption keys for conversation', [
+        Log::info('Regenerating encryption keys for conversation', [
             'conversation_id' => $conversation->id,
             'user_id' => auth()->id(),
         ]);
@@ -465,7 +466,7 @@ class MessageController extends Controller
                 }
 
             } catch (\Exception $e) {
-                \Log::error('Failed to create encryption key for user during regeneration', [
+                Log::error('Failed to create encryption key for user during regeneration', [
                     'user_id' => $user->id,
                     'conversation_id' => $conversation->id,
                     'error' => $e->getMessage(),
@@ -493,7 +494,7 @@ class MessageController extends Controller
                         'private_key' => $privateKey,
                     ];
                 } catch (\Exception $e) {
-                    \Log::warning('Failed to decrypt private key from cache', [
+                    Log::warning('Failed to decrypt private key from cache', [
                         'user_id' => $userId,
                         'error' => $e->getMessage(),
                     ]);
@@ -527,7 +528,7 @@ class MessageController extends Controller
             try {
                 return $this->encryptionService->decryptFromStorage($encryptedPrivateKey);
             } catch (\Exception $e) {
-                \Log::warning('Failed to decrypt private key from cache', [
+                Log::warning('Failed to decrypt private key from cache', [
                     'user_id' => $userId,
                     'error' => $e->getMessage(),
                 ]);
@@ -548,7 +549,7 @@ class MessageController extends Controller
 
             return $keyPair['private_key'];
         } catch (\Exception $e) {
-            \Log::error('Failed to generate fallback private key', [
+            Log::error('Failed to generate fallback private key', [
                 'user_id' => $userId,
                 'error' => $e->getMessage(),
             ]);

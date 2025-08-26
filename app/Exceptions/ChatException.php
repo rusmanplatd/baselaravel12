@@ -5,6 +5,7 @@ namespace App\Exceptions;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class ChatException extends Exception
@@ -54,7 +55,7 @@ class ChatException extends Exception
 
     public function report(): void
     {
-        \Log::error('Chat Exception', [
+        Log::error('Chat Exception', [
             'message' => $this->getMessage(),
             'error_code' => $this->errorCode,
             'context' => $this->context,

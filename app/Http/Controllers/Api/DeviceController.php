@@ -7,6 +7,7 @@ use App\Models\Chat\Conversation;
 use App\Models\UserDevice;
 use App\Services\MultiDeviceEncryptionService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class DeviceController extends Controller
 {
@@ -477,7 +478,7 @@ class DeviceController extends Controller
             // Store the synced message in device's message cache
             $cacheKey = "device_sync_{$device->id}_{$validated['conversation_id']}";
             $messages = cache()->get($cacheKey, []);
-            
+
             $messages[] = [
                 'message_id' => $validated['message_id'],
                 'encrypted_content' => $validated['encrypted_content'],
@@ -553,7 +554,7 @@ class DeviceController extends Controller
         try {
             $verificationData = [
                 'device_id' => $device->id,
-                'verification_code' => \Illuminate\Support\Str::random(32),
+                'verification_code' => Str::random(32),
                 'expires_at' => now()->addMinutes(5),
             ];
 
@@ -561,7 +562,7 @@ class DeviceController extends Controller
             cache()->put("device_verification_qr_{$device->id}", $verificationData, now()->addMinutes(5));
 
             $verificationUrl = url("/verify-device/{$device->id}/" . $verificationData['verification_code']);
-            
+
             // Generate QR code data
             $qrCodeData = base64_encode(json_encode([
                 'type' => 'device_verification',

@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Log;
 
 class Message extends Model
 {
@@ -227,7 +228,7 @@ class Message extends Model
 
             return $decryptedContent;
         } catch (\Exception $e) {
-            \Log::error('Failed to decrypt voice transcript', [
+            Log::error('Failed to decrypt voice transcript', [
                 'message_id' => $this->id,
                 'error' => $e->getMessage(),
             ]);
@@ -266,7 +267,7 @@ class Message extends Model
 
             return $decryptedContent;
         } catch (\Exception $e) {
-            \Log::error('Failed to decrypt voice waveform data', [
+            Log::error('Failed to decrypt voice waveform data', [
                 'message_id' => $this->id,
                 'error' => $e->getMessage(),
             ]);

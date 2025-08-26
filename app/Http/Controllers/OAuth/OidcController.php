@@ -9,6 +9,7 @@ use App\Models\Organization;
 use App\Services\JwtService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Laravel\Passport\Client;
 
 class OidcController extends Controller
@@ -85,8 +86,8 @@ class OidcController extends Controller
         $accessTokenExpiry = now()->addDays(15);
         $refreshTokenExpiry = now()->addDays(30);
 
-        $accessToken = \Illuminate\Support\Str::random(80);
-        $refreshToken = \Illuminate\Support\Str::random(80);
+        $accessToken = Str::random(80);
+        $refreshToken = Str::random(80);
 
         DB::table('oauth_access_tokens')->insert([
             'id' => $accessToken,
