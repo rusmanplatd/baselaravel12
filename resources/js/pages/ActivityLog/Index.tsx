@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Search, Filter, Building, User as UserIcon, Eye, Clock, AlertCircle, Download, FileText, File, Loader2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Search, Filter, Building, User as UserIcon, Eye, Clock, AlertCircle, Download, FileText, File, FileSpreadsheet, Loader2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format } from 'date-fns';
 
@@ -104,7 +104,7 @@ export default function ActivityLogIndex({
 
     // Export states
     const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
-    const [exportFormat, setExportFormat] = useState<'csv' | 'json'>('csv');
+    const [exportFormat, setExportFormat] = useState<'csv' | 'json' | 'excel' | 'pdf'>('csv');
     const [selectedColumns, setSelectedColumns] = useState<string[]>(['id', 'log_name', 'description', 'causer_name', 'created_at']);
     const [isExporting, setIsExporting] = useState(false);
     const [exportValidation, setExportValidation] = useState<{
@@ -668,7 +668,7 @@ export default function ActivityLogIndex({
                                                 type="radio"
                                                 value="csv"
                                                 checked={exportFormat === 'csv'}
-                                                onChange={(e) => setExportFormat(e.target.value as 'csv' | 'json')}
+                                                onChange={(e) => setExportFormat(e.target.value as 'csv' | 'json' | 'excel' | 'pdf')}
                                                 className="h-4 w-4 text-blue-600"
                                             />
                                             <div className="flex items-center gap-2">
@@ -682,9 +682,41 @@ export default function ActivityLogIndex({
                                         <label className="flex items-center space-x-3 cursor-pointer">
                                             <input
                                                 type="radio"
+                                                value="excel"
+                                                checked={exportFormat === 'excel'}
+                                                onChange={(e) => setExportFormat(e.target.value as 'csv' | 'json' | 'excel' | 'pdf')}
+                                                className="h-4 w-4 text-blue-600"
+                                            />
+                                            <div className="flex items-center gap-2">
+                                                <FileSpreadsheet className="h-4 w-4" />
+                                                <div>
+                                                    <div className="font-medium">Excel</div>
+                                                    <div className="text-sm text-gray-500">Excel spreadsheet with formatting</div>
+                                                </div>
+                                            </div>
+                                        </label>
+                                        <label className="flex items-center space-x-3 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                value="pdf"
+                                                checked={exportFormat === 'pdf'}
+                                                onChange={(e) => setExportFormat(e.target.value as 'csv' | 'json' | 'excel' | 'pdf')}
+                                                className="h-4 w-4 text-blue-600"
+                                            />
+                                            <div className="flex items-center gap-2">
+                                                <File className="h-4 w-4" />
+                                                <div>
+                                                    <div className="font-medium">PDF</div>
+                                                    <div className="text-sm text-gray-500">Printable document format</div>
+                                                </div>
+                                            </div>
+                                        </label>
+                                        <label className="flex items-center space-x-3 cursor-pointer">
+                                            <input
+                                                type="radio"
                                                 value="json"
                                                 checked={exportFormat === 'json'}
-                                                onChange={(e) => setExportFormat(e.target.value as 'csv' | 'json')}
+                                                onChange={(e) => setExportFormat(e.target.value as 'csv' | 'json' | 'excel' | 'pdf')}
                                                 className="h-4 w-4 text-blue-600"
                                             />
                                             <div className="flex items-center gap-2">

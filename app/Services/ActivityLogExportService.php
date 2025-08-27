@@ -2,11 +2,13 @@
 
 namespace App\Services;
 
+use App\Exports\ActivityLogExport;
 use App\Models\Activity;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Storage;
 use League\Csv\Writer;
+use Maatwebsite\Excel\Facades\Excel;
 use SplTempFileObject;
 
 class ActivityLogExportService
@@ -65,6 +67,7 @@ class ActivityLogExportService
         } elseif ($canViewOrganization) {
             // Organization admins can see activities within their organizations
             $organizationIds = $user->activeOrganizations()->pluck('organizations.id');
+
             return Activity::whereIn('organization_id', $organizationIds)
                 ->orWhere('causer_id', $user->id);
         } else {
@@ -81,45 +84,45 @@ class ActivityLogExportService
         $canViewAll = $user->can('audit_log:admin');
         $canViewOrganization = $user->can('audit_log:read');
 
-        if (!empty($filters['resource']) && $filters['resource'] !== 'all') {
+        if (! empty($filters['resource']) && $filters['resource'] !== 'all') {
             $query->where('log_name', $filters['resource']);
         }
 
-        if (!empty($filters['organization_id']) && $filters['organization_id'] !== 'all') {
+        if (! empty($filters['organization_id']) && $filters['organization_id'] !== 'all') {
             // Only allow if user has permission to view this organization
             if ($canViewAll || ($canViewOrganization && $user->activeOrganizations()->where('organizations.id', $filters['organization_id'])->exists())) {
                 $query->forOrganization($filters['organization_id']);
             }
         }
 
-        if (!empty($filters['from_date'])) {
+        if (! empty($filters['from_date'])) {
             $query->where('created_at', '>=', $filters['from_date']);
         }
 
-        if (!empty($filters['to_date'])) {
-            $query->where('created_at', '<=', $filters['to_date'] . ' 23:59:59');
+        if (! empty($filters['to_date'])) {
+            $query->where('created_at', '<=', $filters['to_date'].' 23:59:59');
         }
 
-        if (!empty($filters['causer_id']) && $filters['causer_id'] !== 'all') {
+        if (! empty($filters['causer_id']) && $filters['causer_id'] !== 'all') {
             // Only allow if user has permission to view other users' activities
             if ($canViewAll || $canViewOrganization) {
                 $query->where('causer_id', $filters['causer_id']);
             }
         }
 
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('description', 'like', "%{$search}%")
-                  ->orWhere('properties->search_terms', 'like', "%{$search}%");
+                    ->orWhere('properties->search_terms', 'like', "%{$search}%");
             });
         }
 
-        if (!empty($filters['event'])) {
+        if (! empty($filters['event'])) {
             $query->where('event', $filters['event']);
         }
 
-        if (!empty($filters['subject_type'])) {
+        if (! empty($filters['subject_type'])) {
             $query->where('subject_type', $filters['subject_type']);
         }
 
@@ -137,6 +140,10 @@ class ActivityLogExportService
         switch (strtolower($format)) {
             case 'json':
                 return $this->exportAsJson($data, $activities->count());
+            case 'excel':
+                return $this->exportAsExcel($data, $columns, $activities->count());
+            case 'pdf':
+                return $this->exportAsPdf($data, $columns, $activities->count());
             case 'csv':
             default:
                 return $this->exportAsCsv($data, $columns, $activities->count());
@@ -226,7 +233,7 @@ class ActivityLogExportService
      */
     protected function getSubjectName(Activity $activity): string
     {
-        if (!$activity->subject) {
+        if (! $activity->subject) {
             return '';
         }
 
@@ -237,7 +244,7 @@ class ActivityLogExportService
             }
         }
 
-        return $activity->subject_type . ' #' . $activity->subject_id;
+        return $activity->subject_type.' #'.$activity->subject_id;
     }
 
     /**
@@ -245,8 +252,8 @@ class ActivityLogExportService
      */
     protected function exportAsCsv(array $data, array $columns, int $totalCount): array
     {
-        $csv = Writer::createFromFileObject(new SplTempFileObject());
-        
+        $csv = Writer::createFromFileObject(new SplTempFileObject);
+
         // Set UTF-8 BOM for Excel compatibility
         $csv->setOutputBOM(Writer::BOM_UTF8);
 
@@ -259,7 +266,7 @@ class ActivityLogExportService
         }
 
         $filename = $this->generateFilename('csv');
-        
+
         return [
             'content' => $csv->toString(),
             'filename' => $filename,
@@ -333,7 +340,7 @@ class ActivityLogExportService
      */
     protected function generateFilename(string $extension): string
     {
-        return 'activity_log_export_' . now()->format('Y-m-d_H-i-s') . '.' . $extension;
+        return 'activity_log_export_'.now()->format('Y-m-d_H-i-s').'.'.$extension;
     }
 
     /**
@@ -381,15 +388,15 @@ class ActivityLogExportService
         $errors = [];
 
         // Check if user has export permissions
-        if (!$user->can('audit_log:admin')) {
+        if (! $user->can('audit_log:admin')) {
             $errors[] = 'You do not have permission to export activity logs.';
         }
 
         // Validate date range
-        if (!empty($filters['from_date']) && !empty($filters['to_date'])) {
+        if (! empty($filters['from_date']) && ! empty($filters['to_date'])) {
             $fromDate = \Carbon\Carbon::parse($filters['from_date']);
             $toDate = \Carbon\Carbon::parse($filters['to_date']);
-            
+
             if ($fromDate->gt($toDate)) {
                 $errors[] = 'From date cannot be later than to date.';
             }
@@ -413,6 +420,65 @@ class ActivityLogExportService
             'valid' => empty($errors),
             'errors' => $errors,
             'estimated_records' => $count,
+        ];
+    }
+
+    /**
+     * Export data as Excel
+     */
+    protected function exportAsExcel(array $data, array $columns, int $totalCount): array
+    {
+        $headers = $this->getColumnHeaders($columns);
+        $filename = $this->generateFilename('xlsx');
+
+        $export = new ActivityLogExport(collect($data), $columns, $headers);
+        $content = Excel::raw($export, \Maatwebsite\Excel\Excel::XLSX);
+
+        return [
+            'content' => $content,
+            'filename' => $filename,
+            'mime_type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'size' => strlen($content),
+            'total_records' => $totalCount,
+            'export_format' => 'excel',
+        ];
+    }
+
+    /**
+     * Export data as PDF
+     */
+    protected function exportAsPdf(array $data, array $columns, int $totalCount): array
+    {
+        $headers = $this->getColumnHeaders($columns);
+        $filename = $this->generateFilename('pdf');
+
+        // Prepare data for PDF view
+        $exportData = [
+            'title' => 'Activity Log Export',
+            'generated_at' => now()->format('Y-m-d H:i:s'),
+            'total_records' => $totalCount,
+            'headers' => $headers,
+            'data' => $data,
+            'columns' => $columns,
+        ];
+
+        $pdf = Pdf::loadView('exports.activity-log-pdf', $exportData)
+            ->setPaper('a4', 'landscape')
+            ->setOptions([
+                'defaultFont' => 'sans-serif',
+                'isRemoteEnabled' => false,
+                'isHtml5ParserEnabled' => true,
+            ]);
+
+        $content = $pdf->output();
+
+        return [
+            'content' => $content,
+            'filename' => $filename,
+            'mime_type' => 'application/pdf',
+            'size' => strlen($content),
+            'total_records' => $totalCount,
+            'export_format' => 'pdf',
         ];
     }
 }

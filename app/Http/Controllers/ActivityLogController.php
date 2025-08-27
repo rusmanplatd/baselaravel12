@@ -6,15 +6,14 @@ use App\Models\Activity;
 use App\Models\Organization;
 use App\Models\User;
 use App\Services\ActivityLogExportService;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
-use Spatie\QueryBuilder\QueryBuilder;
-use Spatie\QueryBuilder\AllowedSort;
 use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\AllowedSort;
+use Spatie\QueryBuilder\QueryBuilder;
 
 class ActivityLogController extends Controller
 {
@@ -29,11 +28,11 @@ class ActivityLogController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        
+
         // Check permissions based on user role
         $canViewAll = $user->can('audit_log:admin') || $user->can('audit_log:read');
         $canViewOrganization = $user->can('audit_log:read');
-        $canViewOwn = $user->can('audit_log:read') || !$canViewAll && !$canViewOrganization;
+        $canViewOwn = $user->can('audit_log:read') || ! $canViewAll && ! $canViewOrganization;
 
         // Build base query with automatic role-based filtering
         if ($canViewAll) {
@@ -72,12 +71,12 @@ class ActivityLogController extends Controller
                     $query->where('created_at', '>=', $value);
                 }),
                 AllowedFilter::callback('to_date', function ($query, $value) {
-                    $query->where('created_at', '<=', $value . ' 23:59:59');
+                    $query->where('created_at', '<=', $value.' 23:59:59');
                 }),
                 AllowedFilter::callback('search', function ($query, $value) {
                     $query->where(function ($q) use ($value) {
                         $q->where('description', 'like', "%{$value}%")
-                          ->orWhere('properties->search_terms', 'like', "%{$value}%");
+                            ->orWhere('properties->search_terms', 'like', "%{$value}%");
                     });
                 }),
             ])
@@ -118,9 +117,9 @@ class ActivityLogController extends Controller
     public function show(Activity $activity)
     {
         $user = Auth::user();
-        
+
         // Check if user can view this specific activity
-        if (!$this->canViewActivity($activity, $user)) {
+        if (! $this->canViewActivity($activity, $user)) {
             abort(403, 'You do not have permission to view this activity.');
         }
 
@@ -158,7 +157,7 @@ class ActivityLogController extends Controller
             $query = Activity::select('log_name')
                 ->where(function ($q) use ($organizationIds, $user) {
                     $q->whereIn('organization_id', $organizationIds)
-                      ->orWhere('causer_id', $user->id);
+                        ->orWhere('causer_id', $user->id);
                 })
                 ->distinct();
         } else {
@@ -188,7 +187,7 @@ class ActivityLogController extends Controller
                 ->map(function ($org) {
                     return [
                         'value' => $org->id,
-                        'label' => $org->name . ' (' . $org->organization_code . ')',
+                        'label' => $org->name.' ('.$org->organization_code.')',
                     ];
                 })
                 ->toArray();
@@ -200,7 +199,7 @@ class ActivityLogController extends Controller
                 ->map(function ($org) {
                     return [
                         'value' => $org->id,
-                        'label' => $org->name . ' (' . $org->organization_code . ')',
+                        'label' => $org->name.' ('.$org->organization_code.')',
                     ];
                 })
                 ->toArray();
@@ -211,7 +210,7 @@ class ActivityLogController extends Controller
 
     private function getAvailableUsers(User $user, bool $canViewAll, bool $canViewOrganization): array
     {
-        if (!$canViewAll && !$canViewOrganization) {
+        if (! $canViewAll && ! $canViewOrganization) {
             return [];
         }
 
@@ -222,7 +221,7 @@ class ActivityLogController extends Controller
                 ->map(function ($u) {
                     return [
                         'value' => $u->id,
-                        'label' => $u->name . ' (' . $u->email . ')',
+                        'label' => $u->name.' ('.$u->email.')',
                     ];
                 })
                 ->toArray();
@@ -243,7 +242,7 @@ class ActivityLogController extends Controller
             ->map(function ($u) {
                 return [
                     'value' => $u->id,
-                    'label' => $u->name . ' (' . $u->email . ')',
+                    'label' => $u->name.' ('.$u->email.')',
                 ];
             })
             ->toArray();
@@ -258,18 +257,18 @@ class ActivityLogController extends Controller
 
         // Validate request
         $request->validate([
-            'format' => ['required', Rule::in(['csv', 'json'])],
+            'format' => ['required', Rule::in(['csv', 'json', 'excel', 'pdf'])],
             'columns' => 'nullable|array',
             'columns.*' => 'string',
         ]);
 
         // Validate export permissions and limits
         $validation = $this->exportService->validateExportRequest($user);
-        
-        if (!$validation['valid']) {
+
+        if (! $validation['valid']) {
             return response()->json([
                 'message' => 'Export validation failed',
-                'errors' => $validation['errors']
+                'errors' => $validation['errors'],
             ], 400);
         }
 
@@ -282,14 +281,14 @@ class ActivityLogController extends Controller
 
             return response($exportData['content'])
                 ->header('Content-Type', $exportData['mime_type'])
-                ->header('Content-Disposition', 'attachment; filename="' . $exportData['filename'] . '"')
+                ->header('Content-Disposition', 'attachment; filename="'.$exportData['filename'].'"')
                 ->header('Content-Length', $exportData['size'])
                 ->header('X-Total-Records', $exportData['total_records']);
 
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Export failed',
-                'error' => 'An error occurred while generating the export file.'
+                'error' => 'An error occurred while generating the export file.',
             ], 500);
         }
     }
@@ -303,7 +302,7 @@ class ActivityLogController extends Controller
 
         // Validate request
         $request->validate([
-            'format' => ['required', Rule::in(['csv', 'json'])],
+            'format' => ['required', Rule::in(['csv', 'json', 'excel', 'pdf'])],
             'columns' => 'nullable|array',
             'columns.*' => 'string',
             'filters' => 'nullable|array',
@@ -321,12 +320,12 @@ class ActivityLogController extends Controller
 
         // Validate export permissions and limits
         $validation = $this->exportService->validateExportRequest($user, $filters);
-        
-        if (!$validation['valid']) {
+
+        if (! $validation['valid']) {
             return response()->json([
                 'message' => 'Export validation failed',
                 'errors' => $validation['errors'],
-                'estimated_records' => $validation['estimated_records']
+                'estimated_records' => $validation['estimated_records'],
             ], 400);
         }
 
@@ -340,14 +339,14 @@ class ActivityLogController extends Controller
 
             return response($exportData['content'])
                 ->header('Content-Type', $exportData['mime_type'])
-                ->header('Content-Disposition', 'attachment; filename="' . $exportData['filename'] . '"')
+                ->header('Content-Disposition', 'attachment; filename="'.$exportData['filename'].'"')
                 ->header('Content-Length', $exportData['size'])
                 ->header('X-Total-Records', $exportData['total_records']);
 
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Export failed',
-                'error' => 'An error occurred while generating the export file.'
+                'error' => 'An error occurred while generating the export file.',
             ], 500);
         }
     }
