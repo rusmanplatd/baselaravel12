@@ -4,12 +4,13 @@ namespace App\Models;
 
 use App\Traits\TenantScoped;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\Activitylog\Models\Activity as BaseActivity;
 
 class Activity extends BaseActivity
 {
-    use HasUlids, TenantScoped;
+    use HasUlids, HasFactory, TenantScoped;
 
     protected $table = 'activity_log';
 

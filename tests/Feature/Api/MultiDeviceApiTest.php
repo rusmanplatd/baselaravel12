@@ -55,7 +55,7 @@ beforeEach(function () {
 
 describe('Device Management API', function () {
     it('can list user devices', function () {
-        $response = $this->actingAs($this->user)
+        $response = $this->actingAs($this->user, 'api')
             ->getJson('/api/v1/chat/devices');
 
         $response->assertStatus(200)
@@ -94,7 +94,7 @@ describe('Device Management API', function () {
             'security_level' => 'medium',
         ];
 
-        $response = $this->actingAs($this->user)
+        $response = $this->actingAs($this->user, 'api')
             ->postJson('/api/v1/chat/devices', $deviceData);
 
         $response->assertStatus(201)
@@ -119,7 +119,7 @@ describe('Device Management API', function () {
     });
 
     it('can get device details', function () {
-        $response = $this->actingAs($this->user)
+        $response = $this->actingAs($this->user, 'api')
             ->getJson("/api/v1/chat/devices/{$this->trustedDevice->id}");
 
         $response->assertStatus(200)
@@ -134,7 +134,7 @@ describe('Device Management API', function () {
     });
 
     it('can update device', function () {
-        $response = $this->actingAs($this->user)
+        $response = $this->actingAs($this->user, 'api')
             ->putJson("/api/v1/chat/devices/{$this->trustedDevice->id}", [
                 'device_name' => 'Updated iPhone',
                 'platform' => 'iOS 17',
@@ -157,7 +157,7 @@ describe('Device Management API', function () {
     });
 
     it('can trust device', function () {
-        $response = $this->actingAs($this->user)
+        $response = $this->actingAs($this->user, 'api')
             ->postJson("/api/v1/chat/devices/{$this->untrustedDevice->id}/trust");
 
         $response->assertStatus(200)
@@ -175,7 +175,7 @@ describe('Device Management API', function () {
     });
 
     it('can remove device', function () {
-        $response = $this->actingAs($this->user)
+        $response = $this->actingAs($this->user, 'api')
             ->deleteJson("/api/v1/chat/devices/{$this->untrustedDevice->id}");
 
         $response->assertStatus(200)
@@ -194,7 +194,7 @@ describe('Device Management API', function () {
             'user_id' => $this->otherUser->id,
         ]);
 
-        $response = $this->actingAs($this->user)
+        $response = $this->actingAs($this->user, 'api')
             ->getJson("/api/v1/chat/devices/{$otherUserDevice->id}");
 
         $response->assertStatus(403);
@@ -215,7 +215,7 @@ describe('Key Sharing API', function () {
             $this->trustedDevice->device_fingerprint
         );
 
-        $response = $this->actingAs($this->user)
+        $response = $this->actingAs($this->user, 'api')
             ->postJson("/api/v1/chat/devices/{$this->untrustedDevice->id}/share-keys", [
                 'from_device_fingerprint' => $this->trustedDevice->device_fingerprint,
             ]);
@@ -248,7 +248,7 @@ describe('Key Sharing API', function () {
             'key_version' => 1,
         ]);
 
-        $response = $this->actingAs($this->user)
+        $response = $this->actingAs($this->user, 'api')
             ->getJson("/api/v1/chat/devices/{$this->untrustedDevice->id}/key-shares");
 
         $response->assertStatus(200)
@@ -266,7 +266,7 @@ describe('Key Sharing API', function () {
     });
 
     it('cannot share keys from untrusted device', function () {
-        $response = $this->actingAs($this->user)
+        $response = $this->actingAs($this->user, 'api')
             ->postJson("/api/v1/chat/devices/{$this->trustedDevice->id}/share-keys", [
                 'from_device_fingerprint' => $this->untrustedDevice->device_fingerprint,
             ]);
@@ -285,7 +285,7 @@ describe('Multi-Device Conversation Encryption API', function () {
             'is_trusted' => true,
         ]);
 
-        $response = $this->actingAs($this->user)
+        $response = $this->actingAs($this->user, 'api')
             ->postJson("/api/v1/chat/conversations/{$this->conversation->id}/setup-encryption-multidevice", [
                 'device_keys' => [
                     ['device_id' => $this->trustedDevice->id],
@@ -329,7 +329,7 @@ describe('Multi-Device Conversation Encryption API', function () {
             ['device_id' => $this->untrustedDevice->id],
         ];
 
-        $this->actingAs($this->user)
+        $this->actingAs($this->user, 'api')
             ->postJson("/api/v1/chat/conversations/{$this->conversation->id}/setup-encryption-multidevice", [
                 'device_keys' => $deviceKeys,
                 'initiating_device_id' => $this->trustedDevice->id,
@@ -338,7 +338,7 @@ describe('Multi-Device Conversation Encryption API', function () {
         // Trust the second device
         $this->untrustedDevice->markAsTrusted();
 
-        $response = $this->actingAs($this->user)
+        $response = $this->actingAs($this->user, 'api')
             ->postJson("/api/v1/chat/conversations/{$this->conversation->id}/rotate-key-multidevice", [
                 'initiating_device_id' => $this->trustedDevice->id,
                 'reason' => 'Security rotation test',
@@ -377,7 +377,7 @@ describe('Multi-Device Conversation Encryption API', function () {
             1
         );
 
-        $response = $this->actingAs($this->user)
+        $response = $this->actingAs($this->user, 'api')
             ->postJson("/api/v1/chat/conversations/{$this->conversation->id}/device-key", [
                 'device_id' => $this->trustedDevice->id,
             ]);
@@ -409,7 +409,7 @@ describe('Multi-Device Conversation Encryption API', function () {
             'key_version' => 1,
         ]);
 
-        $response = $this->actingAs($this->user)
+        $response = $this->actingAs($this->user, 'api')
             ->postJson("/api/v1/chat/key-shares/{$keyShare->id}/accept", [
                 'device_id' => $this->untrustedDevice->id,
                 'decrypted_symmetric_key' => 'decrypted_symmetric_key_data',
@@ -446,7 +446,7 @@ describe('Multi-Device Conversation Encryption API', function () {
             $this->trustedDevice->public_key
         );
 
-        $response = $this->actingAs($this->user)
+        $response = $this->actingAs($this->user, 'api')
             ->deleteJson("/api/v1/chat/devices/{$this->trustedDevice->id}/revoke-access", [
                 'reason' => 'Security test',
             ]);
@@ -467,7 +467,7 @@ describe('Multi-Device Conversation Encryption API', function () {
 
 describe('Multi-Device Health Check API', function () {
     it('can get multi-device health status', function () {
-        $response = $this->actingAs($this->user)
+        $response = $this->actingAs($this->user, 'api')
             ->getJson('/api/v1/chat/encryption/multidevice-health');
 
         $response->assertStatus(200)
@@ -503,7 +503,7 @@ describe('Multi-Device Health Check API', function () {
             $this->trustedDevice->public_key
         );
 
-        $response = $this->actingAs($this->user)
+        $response = $this->actingAs($this->user, 'api')
             ->getJson("/api/v1/chat/encryption/multidevice-health?device_id={$this->trustedDevice->id}");
 
         $response->assertStatus(200)
@@ -527,7 +527,7 @@ describe('Multi-Device Health Check API', function () {
 
 describe('API Validation and Error Handling', function () {
     it('validates device registration input', function () {
-        $response = $this->actingAs($this->user)
+        $response = $this->actingAs($this->user, 'api')
             ->postJson('/api/v1/chat/devices', [
                 'device_name' => '', // Required
                 'device_type' => 'invalid_type', // Must be in allowed values
@@ -545,7 +545,7 @@ describe('API Validation and Error Handling', function () {
     });
 
     it('validates conversation encryption setup input', function () {
-        $response = $this->actingAs($this->user)
+        $response = $this->actingAs($this->user, 'api')
             ->postJson("/api/v1/chat/conversations/{$this->conversation->id}/setup-encryption-multidevice", [
                 'device_keys' => [], // Required and must not be empty
                 // initiating_device_id missing
@@ -564,7 +564,7 @@ describe('API Validation and Error Handling', function () {
             'user_id' => $this->user->id,
         ]);
 
-        $response = $this->actingAs($this->user)
+        $response = $this->actingAs($this->user, 'api')
             ->postJson("/api/v1/chat/key-shares/{$keyShare->id}/accept", [
                 'device_id' => $this->untrustedDevice->id, // Valid device ID to pass auth check
                 // decrypted_symmetric_key missing
@@ -586,7 +586,7 @@ describe('API Validation and Error Handling', function () {
             'user_id' => $this->otherUser->id,
         ]);
 
-        $response = $this->actingAs($this->user)
+        $response = $this->actingAs($this->user, 'api')
             ->postJson("/api/v1/chat/key-shares/{$keyShare->id}/accept", [
                 'device_id' => $otherUserDevice->id,
                 'decrypted_symmetric_key' => 'test_key',

@@ -22,6 +22,8 @@ class RoleFactory extends Factory
         return [
             'name' => $this->faker->unique()->word().'-role',
             'guard_name' => 'web',
+            'created_by' => \App\Models\User::factory(),
+            'updated_by' => \App\Models\User::factory(),
         ];
     }
 

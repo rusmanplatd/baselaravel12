@@ -2,28 +2,36 @@
 
 use App\Models\Auth\Permission;
 use App\Models\Auth\Role;
+use App\Models\Organization;
 use App\Models\User;
 
 beforeEach(function () {
     $this->user = User::factory()->create();
+    $this->organization = Organization::factory()->create();
 
     // Create permissions
     $this->permissions = [
-        Permission::create(['name' => 'view roles', 'guard_name' => 'web']),
-        Permission::create(['name' => 'create roles', 'guard_name' => 'web']),
-        Permission::create(['name' => 'edit roles', 'guard_name' => 'web']),
-        Permission::create(['name' => 'delete roles', 'guard_name' => 'web']),
-        Permission::create(['name' => 'manage roles', 'guard_name' => 'web']),
+        Permission::factory()->create(['name' => 'view roles', 'guard_name' => 'web', 'created_by' => $this->user->id, 'updated_by' => $this->user->id]),
+        Permission::factory()->create(['name' => 'create roles', 'guard_name' => 'web', 'created_by' => $this->user->id, 'updated_by' => $this->user->id]),
+        Permission::factory()->create(['name' => 'edit roles', 'guard_name' => 'web', 'created_by' => $this->user->id, 'updated_by' => $this->user->id]),
+        Permission::factory()->create(['name' => 'delete roles', 'guard_name' => 'web', 'created_by' => $this->user->id, 'updated_by' => $this->user->id]),
+        Permission::factory()->create(['name' => 'manage roles', 'guard_name' => 'web', 'created_by' => $this->user->id, 'updated_by' => $this->user->id]),
     ];
 
-    // Give user all role permissions
+    // Give user all role permissions with team context
+    setPermissionsTeamId($this->organization->id);
     $this->user->givePermissionTo($this->permissions);
 
     $this->actingAs($this->user);
 });
 
 test('can view roles index page', function () {
-    $roles = Role::factory(3)->create();
+    setPermissionsTeamId($this->organization->id);
+    $roles = Role::factory(3)->create([
+        'team_id' => $this->organization->id,
+        'created_by' => $this->user->id,
+        'updated_by' => $this->user->id,
+    ]);
 
     $response = $this->get(route('roles.index'));
 

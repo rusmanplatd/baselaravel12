@@ -25,6 +25,8 @@ class PermissionFactory extends Factory
         return [
             'name' => "{$action} {$resource}",
             'guard_name' => 'web',
+            'created_by' => \App\Models\User::factory(),
+            'updated_by' => \App\Models\User::factory(),
         ];
     }
 
