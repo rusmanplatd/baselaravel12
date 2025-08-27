@@ -74,6 +74,31 @@ class EncryptionKey extends Model
         );
     }
 
+    public static function createForUser(
+        string $conversationId,
+        string $userId,
+        string $symmetricKey,
+        string $publicKey,
+        int $keyVersion = 1
+    ): self {
+        $encryptionService = app(ChatEncryptionService::class);
+
+        $encryptedKey = $encryptionService->encryptSymmetricKey(
+            $symmetricKey,
+            $publicKey
+        );
+
+        return self::create([
+            'conversation_id' => $conversationId,
+            'user_id' => $userId,
+            'encrypted_key' => $encryptedKey,
+            'public_key' => $publicKey,
+            'key_version' => $keyVersion,
+            'algorithm' => 'RSA-4096-OAEP',
+            'key_strength' => 4096,
+        ]);
+    }
+
     public static function createForDevice(
         string $conversationId,
         string $userId,
@@ -117,6 +142,8 @@ class EncryptionKey extends Model
             'public_key' => $publicKey,
             'key_version' => $keyVersion,
             'created_by_device_id' => $createdByDeviceId,
+            'algorithm' => 'RSA-4096-OAEP',
+            'key_strength' => 4096,
         ]);
     }
 
