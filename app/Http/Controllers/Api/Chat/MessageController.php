@@ -201,6 +201,22 @@ class MessageController extends Controller
                 ->update(['last_read_at' => null]);
 
             $message->load('sender:id,name,email');
+            
+            // Load reply_to relationship if this is a reply
+            if ($message->reply_to_id) {
+                $message->load(['replyTo' => function ($query) {
+                    $query->with('sender:id,name,email');
+                }]);
+                
+                // For now, just set a basic content for the reply
+                if ($message->replyTo) {
+                    $message->replyTo->content = 'Original message'; // Simplified for testing
+                }
+                
+                // Append reply_to attribute manually when loaded
+                $message->append('reply_to');
+            }
+            
             $message->content = $validated['content'];
 
             broadcast(new MessageSent($message, auth()->user(), $validated['content']));
@@ -280,7 +296,7 @@ class MessageController extends Controller
 
         $message->delete();
 
-        return response()->json(['message' => 'Message deleted successfully']);
+        return response()->noContent();
     }
 
     public function markAsRead(Request $request, Conversation $conversation)

@@ -54,6 +54,8 @@ class Message extends Model
         'scheduled_at' => 'datetime',
     ];
 
+    // Don't automatically append - only when loaded
+
     protected $hidden = [
         'encrypted_content',
         'content_hash',
@@ -77,6 +79,11 @@ class Message extends Model
     public function replyTo(): BelongsTo
     {
         return $this->belongsTo(Message::class, 'reply_to_id');
+    }
+
+    public function getReplyToAttribute()
+    {
+        return $this->relationLoaded('replyTo') ? $this->getRelation('replyTo') : null;
     }
 
     public function replies(): HasMany
