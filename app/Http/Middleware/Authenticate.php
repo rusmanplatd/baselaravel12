@@ -13,7 +13,6 @@ class Authenticate extends Middleware
      * Handle an unauthenticated user.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  array  $guards
      * @return void
      *
      * @throws \Illuminate\Auth\AuthenticationException
@@ -25,7 +24,7 @@ class Authenticate extends Middleware
             'path' => $request->path(),
             'expects_json' => $request->expectsJson(),
             'is_api' => $request->is('api/*'),
-            'guards' => $guards
+            'guards' => $guards,
         ]);
 
         // For API routes or JSON requests, always throw authentication exception

@@ -9,7 +9,7 @@ use Spatie\Permission\Models\Permission as SpatiePermission;
 
 class Permission extends SpatiePermission
 {
-    use HasUlids, HasFactory;
+    use HasFactory, HasUlids;
 
     protected $fillable = [
         'name',

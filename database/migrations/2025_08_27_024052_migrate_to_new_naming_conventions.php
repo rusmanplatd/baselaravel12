@@ -1,9 +1,8 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -40,7 +39,7 @@ return new class extends Migration
             'user.edit' => 'user:write',
             'user.delete' => 'user:delete',
             'user.impersonate' => 'user:impersonate',
-            
+
             // Organization permissions
             'organization.view' => 'org:read',
             'organization.create' => 'org:write',
@@ -48,7 +47,7 @@ return new class extends Migration
             'organization.delete' => 'org:delete',
             'organization.hierarchy.view' => 'org:read',
             'organization.hierarchy.manage' => 'org:admin',
-            
+
             // Membership permissions
             'membership.view' => 'org_member:read',
             'membership.create' => 'org_member:write',
@@ -57,13 +56,13 @@ return new class extends Migration
             'membership.activate' => 'org_member:write',
             'membership.deactivate' => 'org_member:write',
             'membership.terminate' => 'org_member:delete',
-            
+
             // Unit permissions
             'unit.view' => 'org_unit:read',
             'unit.create' => 'org_unit:write',
             'unit.edit' => 'org_unit:write',
             'unit.delete' => 'org_unit:delete',
-            
+
             // Position permissions
             'position.view' => 'org_position:read',
             'position.create' => 'org_position:write',
@@ -73,13 +72,13 @@ return new class extends Migration
             'position.level.create' => 'org_position:write',
             'position.level.edit' => 'org_position:write',
             'position.level.delete' => 'org_position:delete',
-            
+
             // Legacy position levels
             'view organization position levels' => 'org_position:read',
             'create organization position levels' => 'org_position:write',
             'edit organization position levels' => 'org_position:write',
             'delete organization position levels' => 'org_position:delete',
-            
+
             // OAuth permissions
             'oauth.client.view' => 'oauth_app:read',
             'oauth.client.create' => 'oauth_app:write',
@@ -89,7 +88,7 @@ return new class extends Migration
             'oauth.analytics.view' => 'oauth_token:read',
             'oauth.tokens.view' => 'oauth_token:read',
             'oauth.tokens.revoke' => 'oauth_token:delete',
-            
+
             // Activity log permissions
             'activity.view.own' => 'audit_log:read',
             'activity.view.organization' => 'audit_log:read',
@@ -97,7 +96,7 @@ return new class extends Migration
             'activity.delete' => 'audit_log:delete',
             'activity.export' => 'audit_log:admin',
             'activity.purge' => 'audit_log:admin',
-            
+
             // Role permissions
             'role.view' => 'role:read',
             'role.create' => 'role:write',
@@ -117,13 +116,13 @@ return new class extends Migration
             'manage permissions' => 'permission:admin',
             'assign permissions' => 'permission:write',
             'revoke permissions' => 'permission:write',
-            
+
             // System permissions
             'system.settings.view' => 'system:read',
             'system.settings.edit' => 'system:write',
             'system.maintenance' => 'system:admin',
             'system.logs.view' => 'system:read',
-            
+
             // Profile permissions
             'profile.view' => 'profile:read',
             'profile.edit' => 'profile:write',
@@ -151,11 +150,11 @@ return new class extends Migration
                 if ($client->allowed_scopes) {
                     $scopes = json_decode($client->allowed_scopes, true);
                     $updatedScopes = [];
-                    
+
                     foreach ($scopes as $scope) {
                         $updatedScopes[] = $oauthScopeMappings[$scope] ?? $scope;
                     }
-                    
+
                     DB::table('oauth_clients')
                         ->where('id', $client->id)
                         ->update(['allowed_scopes' => json_encode($updatedScopes)]);
@@ -170,14 +169,14 @@ return new class extends Migration
                 $exists = DB::table('permissions')
                     ->where('name', $oldPermission)
                     ->exists();
-                    
+
                 if ($exists) {
                     // Check if new permission already exists
                     $newExists = DB::table('permissions')
                         ->where('name', $newPermission)
                         ->exists();
-                        
-                    if (!$newExists) {
+
+                    if (! $newExists) {
                         // Update old permission to new name
                         DB::table('permissions')
                             ->where('name', $oldPermission)
@@ -191,7 +190,7 @@ return new class extends Migration
                         $newPermissionId = DB::table('permissions')
                             ->where('name', $newPermission)
                             ->value('id');
-                            
+
                         // Migrate role_has_permissions
                         if (Schema::hasTable('role_has_permissions')) {
                             DB::table('role_has_permissions')
@@ -204,7 +203,7 @@ return new class extends Migration
                                 })
                                 ->update(['permission_id' => $newPermissionId]);
                         }
-                        
+
                         // Migrate model_has_permissions
                         if (Schema::hasTable('model_has_permissions')) {
                             DB::table('model_has_permissions')
@@ -218,7 +217,7 @@ return new class extends Migration
                                 })
                                 ->update(['permission_id' => $newPermissionId]);
                         }
-                        
+
                         // Delete old permission
                         DB::table('permissions')->where('id', $oldPermissionId)->delete();
                         $this->info("Migrated and removed duplicate permission: $oldPermission -> $newPermission");
@@ -237,7 +236,7 @@ return new class extends Migration
                     foreach ($scopes as $scope) {
                         $updatedScopes[] = $oauthScopeMappings[$scope] ?? $scope;
                     }
-                    
+
                     DB::table('oauth_access_tokens')
                         ->where('id', $token->id)
                         ->update(['scopes' => json_encode($updatedScopes)]);

@@ -1,10 +1,10 @@
 <?php
 
 use App\Models\Activity;
-use App\Models\User;
-use App\Models\Organization;
-use App\Models\Auth\Role;
 use App\Models\Auth\Permission;
+use App\Models\Auth\Role;
+use App\Models\Organization;
+use App\Models\User;
 use App\Services\ActivityLogExportService;
 
 beforeEach(function () {
@@ -52,7 +52,7 @@ beforeEach(function () {
         'updated_by' => $this->adminUser->id,
     ]);
     $adminRole->givePermissionTo(['audit_log:admin', 'audit_log:read']);
-    
+
     $userRole = Role::factory()->create([
         'name' => 'user',
         'guard_name' => 'web',
@@ -116,7 +116,7 @@ it('allows admin to access export all endpoint', function () {
 
 it('allows admin to access export filtered endpoint', function () {
     $this->actingAs($this->adminUser);
-    
+
     // Set the team context for Spatie permissions
     setPermissionsTeamId($this->organization->id);
 
@@ -145,7 +145,7 @@ it('prevents regular user from accessing export endpoints', function () {
     $response->assertStatus(400)
         ->assertJson([
             'message' => 'Export validation failed',
-            'errors' => ['You do not have permission to export activity logs.']
+            'errors' => ['You do not have permission to export activity logs.'],
         ]);
 });
 
@@ -320,9 +320,8 @@ it('shows export button for admin users on activity log index', function () {
     $response = $this->get(route('activity-log.index'));
 
     $response->assertOk()
-        ->assertInertia(fn ($page) =>
-            $page->where('permissions.canExport', true)
-                 ->has('exportColumns')
+        ->assertInertia(fn ($page) => $page->where('permissions.canExport', true)
+            ->has('exportColumns')
         );
 });
 
@@ -332,7 +331,6 @@ it('hides export button for regular users on activity log index', function () {
     $response = $this->get(route('activity-log.index'));
 
     $response->assertOk()
-        ->assertInertia(fn ($page) =>
-            $page->where('permissions.canExport', false)
+        ->assertInertia(fn ($page) => $page->where('permissions.canExport', false)
         );
 });

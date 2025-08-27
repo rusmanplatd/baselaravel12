@@ -9,7 +9,7 @@ use Spatie\Permission\Models\Role as SpatieRole;
 
 class Role extends SpatieRole
 {
-    use HasUlids, HasFactory;
+    use HasFactory, HasUlids;
 
     protected $fillable = [
         'name',

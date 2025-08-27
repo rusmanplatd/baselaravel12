@@ -10,7 +10,7 @@ use Spatie\Activitylog\Models\Activity as BaseActivity;
 
 class Activity extends BaseActivity
 {
-    use HasUlids, HasFactory, TenantScoped;
+    use HasFactory, HasUlids, TenantScoped;
 
     protected $table = 'activity_log';
 

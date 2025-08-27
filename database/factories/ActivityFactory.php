@@ -3,8 +3,8 @@
 namespace Database\Factories;
 
 use App\Models\Activity;
-use App\Models\User;
 use App\Models\Organization;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class ActivityFactory extends Factory

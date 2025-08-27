@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Client;
 use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -83,7 +82,7 @@ class OAuthClientsSeeder extends Seeder
         foreach ($clients as $clientData) {
             // Use raw DB insert to avoid activity logging issues with UUID vs ULID
             $clientId = (string) Str::uuid();
-            
+
             \DB::table('oauth_clients')->insertOrIgnore([
                 'id' => $clientId,
                 'name' => $clientData['name'],
@@ -112,7 +111,7 @@ class OAuthClientsSeeder extends Seeder
             [
                 ['all_users', 'Any authenticated user can access'],
                 ['organization_members', 'Only organization members can access'],
-                ['custom', 'Access controlled by custom rules (roles, positions, email domains, etc.)']
+                ['custom', 'Access controlled by custom rules (roles, positions, email domains, etc.)'],
             ]
         );
     }

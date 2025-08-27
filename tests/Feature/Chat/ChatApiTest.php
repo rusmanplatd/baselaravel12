@@ -63,9 +63,9 @@ describe('Authentication and Authorization', function () {
             // Debug information
             if ($response->getStatusCode() !== 401) {
                 echo "Debug - URL: $url, Method: $method\n";
-                echo "Status: " . $response->getStatusCode() . "\n";
-                echo "Headers: " . json_encode($response->headers->all()) . "\n";
-                echo "Content: " . $response->getContent() . "\n";
+                echo 'Status: '.$response->getStatusCode()."\n";
+                echo 'Headers: '.json_encode($response->headers->all())."\n";
+                echo 'Content: '.$response->getContent()."\n";
             }
 
             // API routes use Passport auth, so they return 401 Unauthorized when unauthenticated
@@ -328,47 +328,47 @@ describe('Message API', function () {
         ]);
 
         // Set up device-based encryption keys for testing
-        $this->encryptionService = new \App\Services\ChatEncryptionService();
-        
+        $this->encryptionService = new \App\Services\ChatEncryptionService;
+
         // Generate key pairs for both users and their devices
         $userKeyPair = $this->encryptionService->generateKeyPair();
         $otherUserKeyPair = $this->encryptionService->generateKeyPair();
-        
+
         // Create devices for both users with their public keys
         $userDevice = \App\Models\UserDevice::create([
             'user_id' => $this->user->id,
             'device_name' => 'Test Device - User',
             'device_type' => 'web',
             'public_key' => $userKeyPair['public_key'],
-            'device_fingerprint' => 'test-device-' . $this->user->id,
+            'device_fingerprint' => 'test-device-'.$this->user->id,
             'platform' => 'web',
             'is_trusted' => true,
             'is_active' => true,
         ]);
-        
+
         $otherUserDevice = \App\Models\UserDevice::create([
             'user_id' => $this->otherUser->id,
             'device_name' => 'Test Device - Other User',
             'device_type' => 'web',
             'public_key' => $otherUserKeyPair['public_key'],
-            'device_fingerprint' => 'test-device-' . $this->otherUser->id,
+            'device_fingerprint' => 'test-device-'.$this->otherUser->id,
             'platform' => 'web',
             'is_trusted' => true,
             'is_active' => true,
         ]);
         $this->symmetricKey = $this->encryptionService->generateSymmetricKey();
-        
+
         // Update users' public keys
         $this->user->update(['public_key' => $userKeyPair['public_key']]);
         $this->otherUser->update(['public_key' => $otherUserKeyPair['public_key']]);
-        
+
         // Cache private keys for testing
         $userCacheKey = 'user_private_key_'.$this->user->id;
         $otherUserCacheKey = 'user_private_key_'.$this->otherUser->id;
-        
+
         cache()->put($userCacheKey, $this->encryptionService->encryptForStorage($userKeyPair['private_key']), now()->addHours(24));
         cache()->put($otherUserCacheKey, $this->encryptionService->encryptForStorage($otherUserKeyPair['private_key']), now()->addHours(24));
-        
+
         // Create encryption keys for both users using device-based method
         EncryptionKey::createForDevice(
             $this->conversation->id,
@@ -378,7 +378,7 @@ describe('Message API', function () {
             $userKeyPair['public_key'],
             $userDevice->device_fingerprint
         );
-        
+
         EncryptionKey::createForDevice(
             $this->conversation->id,
             $this->otherUser->id,
@@ -387,11 +387,11 @@ describe('Message API', function () {
             $otherUserKeyPair['public_key'],
             $otherUserDevice->device_fingerprint
         );
-        
+
         // Helper function to create encrypted messages for testing
         $this->createEncryptedMessage = function ($content, $senderId = null, $type = 'text', $additionalData = []) {
             $senderId = $senderId ?? $this->user->id;
-            
+
             return Message::createEncrypted(
                 $this->conversation->id,
                 $senderId,
@@ -736,48 +736,48 @@ describe('Real-time Features', function () {
         ]);
 
         // Set up device-based encryption keys for testing
-        $this->encryptionService = new \App\Services\ChatEncryptionService();
-        
+        $this->encryptionService = new \App\Services\ChatEncryptionService;
+
         // Generate key pairs for both users and their devices
         $userKeyPair = $this->encryptionService->generateKeyPair();
         $otherUserKeyPair = $this->encryptionService->generateKeyPair();
-        
+
         // Create devices for both users with their public keys
         $userDevice = \App\Models\UserDevice::create([
             'user_id' => $this->user->id,
             'device_name' => 'Test Device - User',
             'device_type' => 'web',
             'public_key' => $userKeyPair['public_key'],
-            'device_fingerprint' => 'test-device-' . $this->user->id,
+            'device_fingerprint' => 'test-device-'.$this->user->id,
             'platform' => 'web',
             'is_trusted' => true,
             'is_active' => true,
         ]);
-        
+
         $otherUserDevice = \App\Models\UserDevice::create([
             'user_id' => $this->otherUser->id,
             'device_name' => 'Test Device - Other User',
             'device_type' => 'web',
             'public_key' => $otherUserKeyPair['public_key'],
-            'device_fingerprint' => 'test-device-' . $this->otherUser->id,
+            'device_fingerprint' => 'test-device-'.$this->otherUser->id,
             'platform' => 'web',
             'is_trusted' => true,
             'is_active' => true,
         ]);
-        
+
         $this->symmetricKey = $this->encryptionService->generateSymmetricKey();
-        
+
         // Update users' public keys
         $this->user->update(['public_key' => $userKeyPair['public_key']]);
         $this->otherUser->update(['public_key' => $otherUserKeyPair['public_key']]);
-        
+
         // Cache private keys for testing
         $userCacheKey = 'user_private_key_'.$this->user->id;
         $otherUserCacheKey = 'user_private_key_'.$this->otherUser->id;
-        
+
         cache()->put($userCacheKey, $this->encryptionService->encryptForStorage($userKeyPair['private_key']), now()->addHours(24));
         cache()->put($otherUserCacheKey, $this->encryptionService->encryptForStorage($otherUserKeyPair['private_key']), now()->addHours(24));
-        
+
         // Create encryption keys for both users using device-based method
         EncryptionKey::createForDevice(
             $this->conversation->id,
@@ -787,7 +787,7 @@ describe('Real-time Features', function () {
             $userKeyPair['public_key'],
             $userDevice->device_fingerprint
         );
-        
+
         EncryptionKey::createForDevice(
             $this->conversation->id,
             $this->otherUser->id,
@@ -852,32 +852,32 @@ describe('Rate Limiting', function () {
         ]);
 
         // Set up device-based encryption keys for testing
-        $this->encryptionService = new \App\Services\ChatEncryptionService();
-        
+        $this->encryptionService = new \App\Services\ChatEncryptionService;
+
         // Generate key pair for the user and device
         $userKeyPair = $this->encryptionService->generateKeyPair();
-        
+
         // Create device for the user with public key
         $userDevice = \App\Models\UserDevice::create([
             'user_id' => $this->user->id,
             'device_name' => 'Test Device - User',
             'device_type' => 'web',
             'public_key' => $userKeyPair['public_key'],
-            'device_fingerprint' => 'test-device-' . $this->user->id,
+            'device_fingerprint' => 'test-device-'.$this->user->id,
             'platform' => 'web',
             'is_trusted' => true,
             'is_active' => true,
         ]);
-        
+
         $this->symmetricKey = $this->encryptionService->generateSymmetricKey();
-        
+
         // Update user's public key
         $this->user->update(['public_key' => $userKeyPair['public_key']]);
-        
+
         // Cache private key for testing
         $userCacheKey = 'user_private_key_'.$this->user->id;
         cache()->put($userCacheKey, $this->encryptionService->encryptForStorage($userKeyPair['private_key']), now()->addHours(24));
-        
+
         // Create encryption key using device-based method
         EncryptionKey::createForDevice(
             $this->conversation->id,
@@ -902,7 +902,7 @@ describe('Rate Limiting', function () {
             // Should succeed for normal usage
             expect($response->status())->toBe(201);
         }
-        
+
         // Rate limiting behavior is complex to test in unit tests
         // This test verifies the basic message creation works
         // Actual rate limiting is handled by middleware and would be tested separately
@@ -924,7 +924,7 @@ describe('Rate Limiting', function () {
             // Should succeed for normal usage
             expect($response->status())->toBe(201);
         }
-        
+
         // Rate limiting behavior is complex to test in unit tests
         // This test verifies the basic conversation creation works
         expect(true)->toBeTrue();

@@ -57,11 +57,11 @@ class UserMfaSetting extends Model
                 'totp_enabled',
                 'totp_confirmed_at',
                 'backup_codes_used',
-                'mfa_required'
+                'mfa_required',
             ])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
-            ->setDescriptionForEvent(fn(string $eventName) => "MFA settings {$eventName}")
+            ->setDescriptionForEvent(fn (string $eventName) => "MFA settings {$eventName}")
             ->useLogName('security')
             ->dontLogIfAttributesChangedOnly(['backup_codes', 'totp_secret']);
     }

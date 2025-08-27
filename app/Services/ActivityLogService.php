@@ -109,7 +109,7 @@ class ActivityLogService
                 return null;
             }
         }
-        
+
         return null;
     }
 
@@ -178,7 +178,7 @@ class ActivityLogService
     public static function logTenantAction(string $event, string $description, array $properties = [], ?Model $subject = null): Activity
     {
         $tenant = null;
-        
+
         if (class_exists(TenantService::class)) {
             try {
                 $tenant = TenantService::getCurrentTenant();

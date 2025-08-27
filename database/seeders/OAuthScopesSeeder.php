@@ -31,7 +31,7 @@ class OAuthScopesSeeder extends Seeder
                 'description' => 'Access your email address',
                 'is_default' => true,
             ],
-            
+
             // Google-style organization management scopes
             [
                 'identifier' => 'https://api.yourcompany.com/auth/organization.readonly',
@@ -57,7 +57,7 @@ class OAuthScopesSeeder extends Seeder
                 'description' => 'Administrative access to organization settings and hierarchy',
                 'is_default' => false,
             ],
-            
+
             // Google-style user management scopes
             [
                 'identifier' => 'https://api.yourcompany.com/auth/userinfo.profile',
@@ -77,7 +77,7 @@ class OAuthScopesSeeder extends Seeder
                 'description' => 'Update user profile and settings',
                 'is_default' => false,
             ],
-            
+
             // Google-style analytics and reporting scopes
             [
                 'identifier' => 'https://api.yourcompany.com/auth/analytics.readonly',
@@ -91,7 +91,7 @@ class OAuthScopesSeeder extends Seeder
                 'description' => 'Generate and access business reports',
                 'is_default' => false,
             ],
-            
+
             // Google-style integration scopes
             [
                 'identifier' => 'https://api.yourcompany.com/auth/webhooks',
@@ -105,7 +105,7 @@ class OAuthScopesSeeder extends Seeder
                 'description' => 'Access for third-party system integrations',
                 'is_default' => false,
             ],
-            
+
             // Google-style financial and security scopes
             [
                 'identifier' => 'https://api.yourcompany.com/auth/finance.readonly',
@@ -119,7 +119,7 @@ class OAuthScopesSeeder extends Seeder
                 'description' => 'Access to security logs and audit trails',
                 'is_default' => false,
             ],
-            
+
             // Google-style platform scopes
             [
                 'identifier' => 'https://api.yourcompany.com/auth/platform.full',
@@ -133,7 +133,7 @@ class OAuthScopesSeeder extends Seeder
                 'description' => 'Specialized access for mobile applications',
                 'is_default' => false,
             ],
-            
+
             // Standard OAuth scopes
             [
                 'identifier' => 'offline_access',

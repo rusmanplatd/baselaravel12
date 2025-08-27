@@ -143,7 +143,7 @@ describe('File Upload and Storage', function () {
 
         foreach ($videoTypes as [$filename, $expectedMimeType]) {
             $file = UploadedFile::fake()->create($filename, 1024);
-            
+
             $result = $this->fileService->storeFile($file, $this->symmetricKey);
             expect($result['file_name'])->toBe($filename);
             expect($result['mime_type'])->toBeString();
@@ -160,7 +160,7 @@ describe('File Upload and Storage', function () {
 
         foreach ($audioTypes as [$filename, $expectedMimeType]) {
             $file = UploadedFile::fake()->create($filename, 1024);
-            
+
             $result = $this->fileService->storeFile($file, $this->symmetricKey);
             expect($result['file_name'])->toBe($filename);
             expect($result['mime_type'])->toBeString();

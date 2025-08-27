@@ -7,6 +7,7 @@ use Exception;
 class ChatFileException extends Exception
 {
     protected string $errorCode;
+
     protected array $context;
 
     public function __construct(

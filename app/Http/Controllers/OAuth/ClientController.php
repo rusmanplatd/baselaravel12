@@ -5,12 +5,12 @@ namespace App\Http\Controllers\OAuth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\OAuth\StoreClientRequest;
 use App\Http\Requests\OAuth\UpdateClientRequest;
+use App\Models\Client;
 use App\Models\Organization;
 use App\Services\ActivityLogService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
-use App\Models\Client;
 use Laravel\Passport\ClientRepository;
 
 class ClientController extends Controller
@@ -279,5 +279,4 @@ class ClientController extends Controller
             'secret' => $client->secret,
         ]);
     }
-
 }

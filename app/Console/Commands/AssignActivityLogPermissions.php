@@ -33,66 +33,70 @@ class AssignActivityLogPermissions extends Command
     {
         if ($this->option('list')) {
             $this->listRolesAndPermissions();
+
             return 0;
         }
 
         if ($this->option('show-users')) {
             $this->showUsersWithPermissions();
+
             return 0;
         }
 
         $userEmail = $this->option('user');
         $roleName = $this->option('role');
 
-        if (!$userEmail) {
+        if (! $userEmail) {
             $userEmail = $this->ask('Enter the user email');
         }
 
-        if (!$roleName) {
+        if (! $roleName) {
             $this->listAvailableRoles();
             $roleName = $this->choice('Choose a role', [
                 'employee',
-                'manager', 
+                'manager',
                 'organization-admin',
                 'auditor',
                 'security-admin',
-                'super-admin'
+                'super-admin',
             ]);
         }
 
         $user = User::where('email', $userEmail)->first();
 
-        if (!$user) {
+        if (! $user) {
             $this->error("User with email {$userEmail} not found.");
+
             return 1;
         }
 
         $role = Role::where('name', $roleName)->first();
 
-        if (!$role) {
+        if (! $role) {
             $this->error("Role {$roleName} not found.");
+
             return 1;
         }
 
         // Set permissions team context to null for global permissions
         setPermissionsTeamId(null);
-        
+
         $user->assignRole($role);
-        
+
         $activityPermissions = $role->permissions()
             ->where('name', 'LIKE', 'activity.%')
             ->pluck('name')
             ->toArray();
 
         $this->info("Successfully assigned role '{$roleName}' to user {$user->name} ({$user->email})");
-        
-        if (!empty($activityPermissions)) {
-            $this->info("Activity log permissions granted:");
+
+        if (! empty($activityPermissions)) {
+            $this->info('Activity log permissions granted:');
             foreach ($activityPermissions as $permission) {
                 $this->line("  • {$permission}");
             }
         } else {
-            $this->warn("No activity log permissions found for this role.");
+            $this->warn('No activity log permissions found for this role.');
         }
 
         // Show what the user can now do
@@ -146,17 +150,18 @@ class AssignActivityLogPermissions extends Command
             ->get();
 
         if ($users->isEmpty()) {
-            $this->warn("No users found with activity log permissions.");
+            $this->warn('No users found with activity log permissions.');
+
             return;
         }
 
         foreach ($users as $user) {
             $this->info("👤 {$user->name} ({$user->email})");
-            
+
             // Get roles
             $roles = $user->roles->pluck('name')->toArray();
-            if (!empty($roles)) {
-                $this->line("  Roles: " . implode(', ', $roles));
+            if (! empty($roles)) {
+                $this->line('  Roles: '.implode(', ', $roles));
             }
 
             // Get activity permissions
@@ -167,8 +172,8 @@ class AssignActivityLogPermissions extends Command
                 ->pluck('name')
                 ->toArray();
 
-            if (!empty($activityPermissions)) {
-                $this->line("  Activity Permissions:");
+            if (! empty($activityPermissions)) {
+                $this->line('  Activity Permissions:');
                 foreach ($activityPermissions as $permission) {
                     $this->line("    • {$permission}");
                 }
@@ -183,13 +188,13 @@ class AssignActivityLogPermissions extends Command
      */
     private function listAvailableRoles(): void
     {
-        $this->info("Available roles:");
-        $this->line("• employee - Can view own activities only");
-        $this->line("• manager - Can view organization activities");
-        $this->line("• organization-admin - Can view, delete organization + all activities");
-        $this->line("• auditor - Can view and export all activities (read-only)");
-        $this->line("• security-admin - Can manage all activity logs");
-        $this->line("• super-admin - Full system access");
+        $this->info('Available roles:');
+        $this->line('• employee - Can view own activities only');
+        $this->line('• manager - Can view organization activities');
+        $this->line('• organization-admin - Can view, delete organization + all activities');
+        $this->line('• auditor - Can view and export all activities (read-only)');
+        $this->line('• security-admin - Can manage all activity logs');
+        $this->line('• super-admin - Full system access');
         $this->line('');
     }
 
@@ -216,23 +221,23 @@ class AssignActivityLogPermissions extends Command
         $this->info("\n=== USER CAPABILITIES ===");
 
         if (in_array('audit_log:admin', $activityPermissions)) {
-            $this->line("✅ Can access the Activity Log page and view ALL system activities");
+            $this->line('✅ Can access the Activity Log page and view ALL system activities');
         } elseif (in_array('audit_log:read', $activityPermissions)) {
-            $this->line("✅ Can access the Activity Log page and view activities within their organization scope");
+            $this->line('✅ Can access the Activity Log page and view activities within their organization scope');
         } else {
-            $this->line("❌ Cannot access the Activity Log page");
+            $this->line('❌ Cannot access the Activity Log page');
         }
 
         if (in_array('audit_log:admin', $activityPermissions)) {
-            $this->line("✅ Can export activity logs");
+            $this->line('✅ Can export activity logs');
         }
 
         if (in_array('audit_log:delete', $activityPermissions) || in_array('audit_log:admin', $activityPermissions)) {
-            $this->line("✅ Can delete activity logs");
+            $this->line('✅ Can delete activity logs');
         }
 
         if (in_array('audit_log:admin', $activityPermissions)) {
-            $this->line("✅ Can purge old audit logs");
+            $this->line('✅ Can purge old audit logs');
         }
 
         $this->info("\nThe user can now access the Activity Log at: /activity-log");

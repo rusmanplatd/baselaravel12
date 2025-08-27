@@ -177,8 +177,8 @@ class EncryptionController extends Controller
                         'interval_days' => $intervalDays,
                         'scheduled_by' => auth()->id(),
                         'created_at' => now()->toISOString(),
-                    ]
-                ])
+                    ],
+                ]),
             ]);
 
             return response()->json([
@@ -197,7 +197,7 @@ class EncryptionController extends Controller
             ]);
 
             return response()->json([
-                'error' => 'Failed to schedule key rotation: ' . $e->getMessage(),
+                'error' => 'Failed to schedule key rotation: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -567,6 +567,7 @@ class EncryptionController extends Controller
                     // Normalize whitespace for comparison
                     $userKey = trim(preg_replace('/\s+/', ' ', $p->user->public_key ?? ''));
                     $providedKey = trim(preg_replace('/\s+/', ' ', $keyData['publicKey']));
+
                     return $userKey === $providedKey;
                 });
 

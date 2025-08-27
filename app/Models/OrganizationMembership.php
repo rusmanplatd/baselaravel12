@@ -13,7 +13,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 class OrganizationMembership extends Model
 {
-    use HasFactory, HasUlids, TenantScoped, LogsActivity;
+    use HasFactory, HasUlids, LogsActivity, TenantScoped;
 
     protected $fillable = [
         'user_id',
@@ -213,11 +213,11 @@ class OrganizationMembership extends Model
                 'membership_type',
                 'start_date',
                 'end_date',
-                'status'
+                'status',
             ])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
-            ->setDescriptionForEvent(fn(string $eventName) => "Organization membership {$eventName}")
+            ->setDescriptionForEvent(fn (string $eventName) => "Organization membership {$eventName}")
             ->useLogName('organization');
     }
 }

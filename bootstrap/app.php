@@ -25,7 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
         ]);
-        
+
         $middleware->api(prepend: [
             // Ensure API routes don't get the default auth middleware
         ]);

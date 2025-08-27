@@ -18,7 +18,7 @@ test('user activity is logged when user is created', function () {
     ]);
 
     expect(Activity::count())->toBe(1);
-    
+
     $activity = Activity::first();
     expect($activity->log_name)->toBe('user');
     expect($activity->description)->toBe('User created');
@@ -28,14 +28,14 @@ test('user activity is logged when user is created', function () {
 
 test('user activity is logged when user is updated', function () {
     $user = User::factory()->create();
-    
+
     // Clear creation activity
     Activity::truncate();
-    
+
     $user->update(['name' => 'Updated Name']);
 
     expect(Activity::count())->toBe(1);
-    
+
     $activity = Activity::first();
     expect($activity->log_name)->toBe('user');
     expect($activity->description)->toBe('User updated');
@@ -50,7 +50,7 @@ test('organization activity is logged when organization is created', function ()
 
     $activities = Activity::where('log_name', 'organization')->get();
     expect($activities)->toHaveCount(1);
-    
+
     $activity = $activities->first();
     expect($activity->description)->toBe('Organization created');
     expect($activity->subject_id)->toBe($organization->id);
@@ -59,10 +59,10 @@ test('organization activity is logged when organization is created', function ()
 test('organization membership activity is logged when membership is created', function () {
     $user = User::factory()->create();
     $organization = Organization::factory()->create();
-    
+
     // Clear creation activities
     Activity::truncate();
-    
+
     $membership = OrganizationMembership::factory()->create([
         'user_id' => $user->id,
         'organization_id' => $organization->id,
@@ -71,7 +71,7 @@ test('organization membership activity is logged when membership is created', fu
 
     $activities = Activity::where('log_name', 'organization')->get();
     expect($activities)->toHaveCount(1);
-    
+
     $activity = $activities->first();
     expect($activity->description)->toBe('Organization membership created');
     expect($activity->subject_id)->toBe($membership->id);
@@ -79,10 +79,10 @@ test('organization membership activity is logged when membership is created', fu
 
 test('mfa settings activity is logged when mfa is enabled', function () {
     $user = User::factory()->create();
-    
+
     // Clear creation activities
     Activity::truncate();
-    
+
     $mfaSettings = UserMfaSetting::create([
         'user_id' => $user->id,
         'totp_enabled' => true,
@@ -93,7 +93,7 @@ test('mfa settings activity is logged when mfa is enabled', function () {
 
     $activities = Activity::where('log_name', 'security')->get();
     expect($activities)->toHaveCount(1);
-    
+
     $activity = $activities->first();
     expect($activity->description)->toBe('MFA settings created');
     expect($activity->subject_id)->toBe($mfaSettings->id);
@@ -102,10 +102,10 @@ test('mfa settings activity is logged when mfa is enabled', function () {
 
 test('trusted device activity is logged when device is created', function () {
     $user = User::factory()->create();
-    
+
     // Clear creation activities
     Activity::truncate();
-    
+
     $device = TrustedDevice::create([
         'user_id' => $user->id,
         'device_name' => 'Test Device',
@@ -120,7 +120,7 @@ test('trusted device activity is logged when device is created', function () {
 
     $activities = Activity::where('log_name', 'security')->get();
     expect($activities)->toHaveCount(1);
-    
+
     $activity = $activities->first();
     expect($activity->description)->toBe('Trusted device created');
     expect($activity->subject_id)->toBe($device->id);
@@ -128,10 +128,10 @@ test('trusted device activity is logged when device is created', function () {
 
 test('activity log service logs auth events correctly', function () {
     $user = User::factory()->create();
-    
+
     // Authenticate the user for the activity log
     $this->actingAs($user);
-    
+
     ActivityLogService::logAuth('login', 'User logged in successfully', [
         'ip_address' => '127.0.0.1',
         'user_agent' => 'Test Browser',
@@ -148,9 +148,9 @@ test('activity log service logs auth events correctly', function () {
 test('activity log service logs organization events correctly', function () {
     $user = User::factory()->create();
     $organization = Organization::factory()->create();
-    
+
     $this->actingAs($user);
-    
+
     ActivityLogService::logOrganization('updated', 'Organization settings updated', [
         'changed_fields' => ['name', 'description'],
     ], $organization);
@@ -164,9 +164,9 @@ test('activity log service logs organization events correctly', function () {
 
 test('activity log service logs oauth events correctly', function () {
     $user = User::factory()->create();
-    
+
     $this->actingAs($user);
-    
+
     ActivityLogService::logOAuth('client_created', 'OAuth client created', [
         'client_name' => 'Test Client',
         'grant_types' => ['authorization_code'],
@@ -194,12 +194,12 @@ test('activity log service logs system events correctly', function () {
 
 test('activity queries work with scopes', function () {
     $user = User::factory()->create();
-    
+
     // Clear all activities from previous tests
     Activity::truncate();
-    
+
     $this->actingAs($user);
-    
+
     ActivityLogService::logAuth('login', 'User logged in', [], $user);
     ActivityLogService::logOrganization('created', 'Organization created', []);
     ActivityLogService::logOAuth('token_issued', 'OAuth token issued', []);
@@ -215,9 +215,9 @@ test('activity queries work with scopes', function () {
 test('activity log respects tenant scoping when available', function () {
     $user = User::factory()->create();
     $organization = Organization::factory()->create();
-    
+
     $this->actingAs($user);
-    
+
     // Simulate tenant context by setting organization_id directly
     $activity = ActivityLogService::logAuth('login', 'User logged in', [], $user);
     $activity->update(['organization_id' => $organization->id]);

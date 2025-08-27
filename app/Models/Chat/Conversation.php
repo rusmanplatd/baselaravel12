@@ -14,7 +14,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 class Conversation extends Model
 {
-    use HasFactory, HasUlids, SoftDeletes, LogsActivity;
+    use HasFactory, HasUlids, LogsActivity, SoftDeletes;
 
     protected $table = 'chat_conversations';
 
@@ -87,7 +87,7 @@ class Conversation extends Model
             ->logOnly(['name', 'type', 'description', 'status'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
-            ->setDescriptionForEvent(fn(string $eventName) => "Chat conversation {$eventName}")
+            ->setDescriptionForEvent(fn (string $eventName) => "Chat conversation {$eventName}")
             ->useLogName('chat');
     }
 

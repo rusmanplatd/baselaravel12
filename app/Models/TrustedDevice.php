@@ -121,11 +121,11 @@ class TrustedDevice extends Model
                 'ip_address',
                 'last_used_at',
                 'expires_at',
-                'is_active'
+                'is_active',
             ])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
-            ->setDescriptionForEvent(fn(string $eventName) => "Trusted device {$eventName}")
+            ->setDescriptionForEvent(fn (string $eventName) => "Trusted device {$eventName}")
             ->useLogName('security');
     }
 }

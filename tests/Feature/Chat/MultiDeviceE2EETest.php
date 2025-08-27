@@ -572,7 +572,7 @@ describe('Advanced Multi-Device Scenarios', function () {
         $devices = [];
         foreach ($platforms as $platformData) {
             $keyPair = $this->encryptionService->generateKeyPair();
-            
+
             $device = $this->multiDeviceService->registerDevice(
                 $this->user1,
                 $platformData['name'],
@@ -584,7 +584,7 @@ describe('Advanced Multi-Device Scenarios', function () {
                 $platformData['capabilities'],
                 'medium'
             );
-            
+
             $devices[] = $device;
         }
 
@@ -622,25 +622,25 @@ describe('Advanced Multi-Device Scenarios', function () {
 
     it('can handle device trust verification workflow', function () {
         $newDevice = $this->user1_device2; // Untrusted MacBook
-        
+
         // Initially untrusted
         expect($newDevice->is_trusted)->toBeFalse();
-        
+
         // Simulate trust challenge
         $challengeData = [
-            'challenge_code' => 'TRUST-' . strtoupper(substr(md5(uniqid()), 0, 6)),
+            'challenge_code' => 'TRUST-'.strtoupper(substr(md5(uniqid()), 0, 6)),
             'expires_at' => now()->addMinutes(10),
             'created_by_device' => $this->user1_device1->id,
         ];
 
         // Store challenge in device metadata (simulate storing in cache or separate table)
-        $challengeKey = 'trust_challenge_' . $newDevice->id;
+        $challengeKey = 'trust_challenge_'.$newDevice->id;
         cache()->put($challengeKey, $challengeData, now()->addMinutes(10));
 
         // Verify challenge exists
         $storedChallenge = cache()->get($challengeKey);
         expect($storedChallenge['challenge_code'])->toBe($challengeData['challenge_code']);
-        
+
         // Mark as trusted after challenge verification
         $newDevice->markAsTrusted();
         $newDevice->refresh();
@@ -686,7 +686,7 @@ describe('Advanced Multi-Device Scenarios', function () {
             ->get();
 
         expect($keyShares->count())->toBe(3);
-        
+
         $shareIds = $keyShares->pluck('id')->toArray();
         expect($shareIds)->toEqual(array_unique($shareIds)); // All unique
 
@@ -733,7 +733,7 @@ describe('Advanced Multi-Device Scenarios', function () {
         expect($results)->toHaveKey('total_keys_shared');
         expect($results)->toHaveKey('shared_conversations');
         expect($results)->toHaveKey('failed_conversations');
-        
+
         // At minimum, verify the operation completed without throwing exceptions
         expect($results['total_keys_shared'])->toBeGreaterThanOrEqual(0);
     });
@@ -769,11 +769,11 @@ describe('Advanced Multi-Device Scenarios', function () {
         // Should handle version mismatch - adjust expectations based on actual service behavior
         expect($results)->toHaveKey('failed_keys');
         expect($results)->toHaveKey('created_keys');
-        
+
         // The service may handle different versions gracefully or enforce strict version matching
         $totalOperations = count($results['failed_keys']) + count($results['created_keys']);
         expect($totalOperations)->toBe(2); // Should process both devices
-        
+
         // If there are failed keys, verify the reason mentions version
         if (count($results['failed_keys']) > 0) {
             $failedKey = $results['failed_keys'][0];
@@ -790,7 +790,7 @@ describe('Multi-Device Performance and Load Testing', function () {
         // Register 10 devices
         for ($i = 1; $i <= 10; $i++) {
             $keyPair = $this->encryptionService->generateKeyPair();
-            
+
             $device = $this->multiDeviceService->registerDevice(
                 $this->user1,
                 "Bulk Device $i",
@@ -802,7 +802,7 @@ describe('Multi-Device Performance and Load Testing', function () {
                 ['messaging', 'encryption'],
                 'medium'
             );
-            
+
             $devices[] = $device;
         }
 
@@ -856,7 +856,7 @@ describe('Multi-Device Performance and Load Testing', function () {
         $keyShareCount = DeviceKeyShare::where('from_device_id', $this->user1_device1->id)
             ->where('to_device_id', $this->user1_device2->id)
             ->count();
-        
+
         expect($keyShareCount)->toBe(5);
     });
 });

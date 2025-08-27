@@ -18,7 +18,7 @@ beforeEach(function () {
 
     $this->user1->update(['public_key' => $keyPair1['public_key']]);
     $this->user2->update(['public_key' => $keyPair2['public_key']]);
-    
+
     // Store private keys for testing
     $this->user1PrivateKey = $keyPair1['private_key'];
     $this->user2PrivateKey = $keyPair2['private_key'];

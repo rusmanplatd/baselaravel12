@@ -56,7 +56,6 @@ class PermissionSeeder extends Seeder
             'org_position:delete' => 'Delete organization positions',
             'org_position:admin' => 'Full administrative access to organization positions',
 
-
             // OAuth client permissions (GitHub-style)
             'oauth_app:read' => 'View OAuth applications',
             'oauth_app:write' => 'Create and update OAuth applications',
@@ -79,12 +78,11 @@ class PermissionSeeder extends Seeder
             'role:write' => 'Create and update roles',
             'role:delete' => 'Delete roles',
             'role:admin' => 'Full administrative access to roles',
-            
+
             'permission:read' => 'View permissions',
             'permission:write' => 'Create and update permissions',
             'permission:delete' => 'Delete permissions',
             'permission:admin' => 'Full administrative access to permissions',
-
 
             // System administration (GitHub-style)
             'admin:org' => 'Organization administration',
@@ -104,7 +102,7 @@ class PermissionSeeder extends Seeder
 
         // Set permissions team context to null for global permissions
         setPermissionsTeamId(null);
-        
+
         // Create permissions
         foreach ($permissions as $name => $description) {
             Permission::firstOrCreate([
@@ -268,7 +266,7 @@ class PermissionSeeder extends Seeder
         foreach ($roles as $roleName => $roleData) {
             // Set permissions team context to null for global roles
             setPermissionsTeamId(null);
-            
+
             $role = Role::firstOrCreate([
                 'name' => $roleName,
                 'guard_name' => 'web',
@@ -278,7 +276,7 @@ class PermissionSeeder extends Seeder
             $permissions = Permission::whereIn('name', $roleData['permissions'])->get();
             $role->syncPermissions($permissions);
 
-            $this->command->info("Created role: {$roleName} with " . count($permissions) . " permissions");
+            $this->command->info("Created role: {$roleName} with ".count($permissions).' permissions');
         }
 
         // Display summary
@@ -294,7 +292,7 @@ class PermissionSeeder extends Seeder
     private function displaySummary(array $roles): void
     {
         $this->command->info("\n=== ACTIVITY LOG PERMISSIONS SUMMARY ===");
-        
+
         $activityPermissions = [
             'audit_log:read' => 'Can view audit logs (scoped to user permissions)',
             'audit_log:write' => 'Can create audit log entries',
@@ -309,23 +307,23 @@ class PermissionSeeder extends Seeder
         $this->command->info("\n=== ROLES WITH ACTIVITY LOG ACCESS ===");
 
         foreach ($roles as $roleName => $roleData) {
-            $activityPerms = array_filter($roleData['permissions'], function($perm) {
+            $activityPerms = array_filter($roleData['permissions'], function ($perm) {
                 return strpos($perm, 'audit_log:') === 0;
             });
 
-            if (!empty($activityPerms)) {
-                $this->command->info("• {$roleName}: " . implode(', ', $activityPerms));
+            if (! empty($activityPerms)) {
+                $this->command->info("• {$roleName}: ".implode(', ', $activityPerms));
             }
         }
 
         $this->command->info("\n=== ROLE HIERARCHY FOR AUDIT LOGS (GitHub-style) ===");
-        $this->command->info("• Employees: Basic audit log read access (own activities)");
-        $this->command->info("• Managers/Board Members: Organization-scoped audit log read access");
-        $this->command->info("• Organization Admins: Full audit log administration within organization");
-        $this->command->info("• Auditors: Read-only access to all audit logs with export capabilities");
-        $this->command->info("• Security Admins: Full audit log administration including deletion and purging");
-        $this->command->info("• Super Admins: Complete access to all audit log features");
-        
+        $this->command->info('• Employees: Basic audit log read access (own activities)');
+        $this->command->info('• Managers/Board Members: Organization-scoped audit log read access');
+        $this->command->info('• Organization Admins: Full audit log administration within organization');
+        $this->command->info('• Auditors: Read-only access to all audit logs with export capabilities');
+        $this->command->info('• Security Admins: Full audit log administration including deletion and purging');
+        $this->command->info('• Super Admins: Complete access to all audit log features');
+
         $totalPermissions = Permission::count();
         $totalRoles = Role::count();
         $this->command->info("\nSeeding completed: {$totalPermissions} permissions, {$totalRoles} roles created/updated.");

@@ -18,7 +18,7 @@ return new class extends Migration
                 ->nullable(false)
                 ->after('client_type')
                 ->comment('Controls which users can access this OAuth client');
-            
+
             // JSON field to store custom user access rules when user_access_scope is 'custom'
             $table->json('user_access_rules')->nullable()->after('user_access_scope')
                 ->comment('Custom rules for user access when user_access_scope is custom');

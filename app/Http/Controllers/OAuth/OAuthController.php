@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\OAuth\ApproveRequest;
 use App\Http\Requests\OAuth\AuthorizeRequest;
 use App\Http\Requests\OAuth\IntrospectRequest;
+use App\Models\Client;
 use App\Models\OAuthAuditLog;
 use App\Models\OAuthScope;
 use App\Models\Organization;
@@ -20,7 +21,6 @@ use Knuckles\Scribe\Attributes\Endpoint;
 use Knuckles\Scribe\Attributes\Group;
 use Knuckles\Scribe\Attributes\QueryParam;
 use Knuckles\Scribe\Attributes\Response as ScribeResponse;
-use App\Models\Client;
 use Laravel\Passport\Passport;
 
 #[Group('OAuth 2.0 & OpenID Connect')]
@@ -46,8 +46,8 @@ class OAuthController extends Controller
 
         $client = Client::with('organization')->where('id', $request->client_id)->first();
 
-        $redirectUris = is_string($client->redirect_uris) 
-            ? json_decode($client->redirect_uris, true) 
+        $redirectUris = is_string($client->redirect_uris)
+            ? json_decode($client->redirect_uris, true)
             : $client->redirect_uris;
 
         if (! $client || ! in_array($request->redirect_uri, $redirectUris)) {

@@ -2,14 +2,16 @@
 
 require_once 'vendor/autoload.php';
 
-use App\Models\User;
 use App\Models\Chat\Conversation;
 use App\Models\Chat\EncryptionKey;
+use App\Models\User;
 use App\Services\ChatEncryptionService;
 use Illuminate\Foundation\Application;
 
 $app = new Application(__DIR__);
-$app->singleton('app', function() use ($app) { return $app; });
+$app->singleton('app', function () use ($app) {
+    return $app;
+});
 
 // Bootstrap Laravel
 $app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
@@ -23,7 +25,7 @@ $_ENV['DB_USERNAME'] = 'postgres';
 $_ENV['DB_PASSWORD'] = 'Your_Strong_P455word';
 
 // Create test user and data
-$encryptionService = new ChatEncryptionService();
+$encryptionService = new ChatEncryptionService;
 $user = User::factory()->create();
 
 // Generate key pairs for user
@@ -41,7 +43,7 @@ $encKey = EncryptionKey::createForUser(
     $user->public_key
 );
 
-echo "Created encryption key: " . $encKey->id . "\n";
+echo 'Created encryption key: '.$encKey->id."\n";
 
 // Create backup
 $keyData = [
@@ -62,7 +64,7 @@ print_r($keyData);
 
 $backup = $encryptionService->createBackupEncryptionKey('SecureBackupPassword123!', $keyData);
 
-echo "\nBackup created, length: " . strlen($backup) . "\n";
+echo "\nBackup created, length: ".strlen($backup)."\n";
 
 // Test restoration
 try {
@@ -70,5 +72,5 @@ try {
     echo "Restored data:\n";
     print_r($restored);
 } catch (Exception $e) {
-    echo "Restoration failed: " . $e->getMessage() . "\n";
+    echo 'Restoration failed: '.$e->getMessage()."\n";
 }

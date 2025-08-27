@@ -154,5 +154,4 @@ class EncryptionKey extends Model
     {
         $this->update(['is_active' => false]);
     }
-
 }

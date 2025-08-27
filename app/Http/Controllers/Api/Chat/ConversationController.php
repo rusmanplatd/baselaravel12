@@ -7,7 +7,6 @@ use App\Models\Chat\Conversation;
 use App\Models\Chat\EncryptionKey;
 use App\Models\Chat\Participant;
 use App\Models\User;
-use App\Services\ActivityLogService;
 use App\Services\ChatEncryptionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -51,7 +50,7 @@ class ConversationController extends Controller
         if ($validated['type'] === 'group' && empty($validated['name'])) {
             return response()->json([
                 'message' => 'The given data was invalid.',
-                'errors' => ['name' => ['The name field is required for group conversations.']]
+                'errors' => ['name' => ['The name field is required for group conversations.']],
             ], 422);
         }
 
@@ -209,6 +208,7 @@ class ConversationController extends Controller
 
                     if ($existingParticipant && $existingParticipant->isActive()) {
                         $errors[] = "User {$userId} is already a participant";
+
                         continue;
                     }
 
@@ -258,14 +258,14 @@ class ConversationController extends Controller
                             Log::warning('Failed to setup encryption for new participant', [
                                 'conversation_id' => $conversation->id,
                                 'user_id' => $userId,
-                                'error' => $e->getMessage()
+                                'error' => $e->getMessage(),
                             ]);
                         }
                     }
 
                     $addedParticipants[] = $participant->load('user');
                 } catch (\Exception $e) {
-                    $errors[] = "Failed to add user {$userId}: " . $e->getMessage();
+                    $errors[] = "Failed to add user {$userId}: ".$e->getMessage();
                 }
             }
 
@@ -275,7 +275,7 @@ class ConversationController extends Controller
                 'added_count' => count($addedParticipants),
             ];
 
-            if (!empty($errors)) {
+            if (! empty($errors)) {
                 $response['errors'] = $errors;
             }
 

@@ -74,7 +74,7 @@ class User extends Authenticatable implements HasPasskeys
             ->logOnly(['name', 'email', 'avatar'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
-            ->setDescriptionForEvent(fn(string $eventName) => "User {$eventName}")
+            ->setDescriptionForEvent(fn (string $eventName) => "User {$eventName}")
             ->useLogName('user');
     }
 

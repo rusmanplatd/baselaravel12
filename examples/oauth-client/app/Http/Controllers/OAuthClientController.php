@@ -10,7 +10,9 @@ use Illuminate\Support\Str;
 class OAuthClientController extends Controller
 {
     private string $authServerBaseUrl = 'http://localhost:8000';
+
     private string $clientId = 'a8704536-ee26-4675-b324-741444ffb54e'; // Developer Tools client
+
     private string $redirectUri = 'http://localhost:8081/oauth/callback';
 
     /**
@@ -22,11 +24,11 @@ class OAuthClientController extends Controller
             'openid' => 'OpenID Connect identity',
             'profile' => 'Basic profile information',
             'email' => 'Email address',
-            'https://api.yourcompany.com/auth/organization.readonly' => 'Read organization information'
+            'https://api.yourcompany.com/auth/organization.readonly' => 'Read organization information',
         ];
 
         $clientSecret = env('OAUTH_CLIENT_SECRET', '');
-        
+
         return view('oauth-dashboard', compact('scopes', 'clientSecret'));
     }
 
@@ -59,7 +61,7 @@ class OAuthClientController extends Controller
             'prompt' => 'consent', // Force consent screen for demo purposes
         ];
 
-        $authUrl = $this->authServerBaseUrl . '/oauth/authorize?' . http_build_query($authParams);
+        $authUrl = $this->authServerBaseUrl.'/oauth/authorize?'.http_build_query($authParams);
 
         // Store selected scopes for later display
         Session::put('oauth_requested_scopes', $selectedScopes);
@@ -83,48 +85,48 @@ class OAuthClientController extends Controller
                 'success' => false,
                 'error' => $error,
                 'error_description' => $errorDescription,
-                'step' => 'authorization'
+                'step' => 'authorization',
             ]);
         }
 
         // Validate state parameter
         $sessionState = Session::get('oauth_state');
-        if (!$state || !$sessionState || $state !== $sessionState) {
+        if (! $state || ! $sessionState || $state !== $sessionState) {
             return view('oauth-result', [
                 'success' => false,
                 'error' => 'invalid_state',
                 'error_description' => 'State parameter mismatch. Possible CSRF attack.',
-                'step' => 'state_validation'
+                'step' => 'state_validation',
             ]);
         }
 
-        if (!$code) {
+        if (! $code) {
             return view('oauth-result', [
                 'success' => false,
                 'error' => 'missing_code',
                 'error_description' => 'Authorization code not provided',
-                'step' => 'authorization'
+                'step' => 'authorization',
             ]);
         }
 
         try {
             // Exchange code for tokens
             $tokenData = $this->exchangeCodeForTokens($code);
-            
-            if (!$tokenData['success']) {
+
+            if (! $tokenData['success']) {
                 return view('oauth-result', [
                     'success' => false,
                     'error' => $tokenData['error'] ?? 'token_exchange_failed',
                     'error_description' => $tokenData['error_description'] ?? 'Failed to exchange authorization code for tokens',
                     'step' => 'token_exchange',
-                    'token_response' => $tokenData['response'] ?? null
+                    'token_response' => $tokenData['response'] ?? null,
                 ]);
             }
 
             // Get user information
             $userInfo = null;
             $userInfoError = null;
-            if (!empty($tokenData['access_token'])) {
+            if (! empty($tokenData['access_token'])) {
                 $userInfoResult = $this->getUserInfo($tokenData['access_token']);
                 if ($userInfoResult['success']) {
                     $userInfo = $userInfoResult['data'];
@@ -135,7 +137,7 @@ class OAuthClientController extends Controller
 
             // Decode ID token if present
             $idTokenClaims = null;
-            if (!empty($tokenData['id_token'])) {
+            if (! empty($tokenData['id_token'])) {
                 $idTokenClaims = $this->parseIdToken($tokenData['id_token']);
             }
 
@@ -154,7 +156,7 @@ class OAuthClientController extends Controller
                 'id_token_claims' => $idTokenClaims,
                 'requested_scopes' => Session::get('oauth_requested_scopes', []),
                 'flow_duration' => $duration,
-                'step' => 'complete'
+                'step' => 'complete',
             ]);
 
         } catch (\Exception $e) {
@@ -162,7 +164,7 @@ class OAuthClientController extends Controller
                 'success' => false,
                 'error' => 'unexpected_error',
                 'error_description' => $e->getMessage(),
-                'step' => 'processing'
+                'step' => 'processing',
             ]);
         }
     }
@@ -173,24 +175,24 @@ class OAuthClientController extends Controller
     public function refresh(Request $request)
     {
         $request->validate([
-            'refresh_token' => 'required|string'
+            'refresh_token' => 'required|string',
         ]);
 
         try {
             $refreshResult = $this->refreshAccessToken($request->input('refresh_token'));
-            
+
             return response()->json([
                 'success' => $refreshResult['success'],
                 'tokens' => $refreshResult['success'] ? $refreshResult : null,
-                'error' => !$refreshResult['success'] ? $refreshResult['error'] : null,
-                'error_description' => !$refreshResult['success'] ? $refreshResult['error_description'] : null
+                'error' => ! $refreshResult['success'] ? $refreshResult['error'] : null,
+                'error_description' => ! $refreshResult['success'] ? $refreshResult['error_description'] : null,
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'error' => 'unexpected_error',
-                'error_description' => $e->getMessage()
+                'error_description' => $e->getMessage(),
             ]);
         }
     }
@@ -202,11 +204,11 @@ class OAuthClientController extends Controller
     {
         $request->validate([
             'token' => 'required|string',
-            'token_type_hint' => 'in:access_token,refresh_token'
+            'token_type_hint' => 'in:access_token,refresh_token',
         ]);
 
         try {
-            $response = Http::asForm()->post($this->authServerBaseUrl . '/oauth/revoke', [
+            $response = Http::asForm()->post($this->authServerBaseUrl.'/oauth/revoke', [
                 'token' => $request->input('token'),
                 'token_type_hint' => $request->input('token_type_hint', 'access_token'),
                 'client_id' => $this->clientId,
@@ -216,14 +218,14 @@ class OAuthClientController extends Controller
             return response()->json([
                 'success' => $response->successful(),
                 'status_code' => $response->status(),
-                'response' => $response->json()
+                'response' => $response->json(),
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'error' => 'unexpected_error',
-                'error_description' => $e->getMessage()
+                'error_description' => $e->getMessage(),
             ]);
         }
     }
@@ -234,18 +236,18 @@ class OAuthClientController extends Controller
     public function discovery()
     {
         try {
-            $oauthDiscovery = Http::get($this->authServerBaseUrl . '/.well-known/oauth-authorization-server')->json();
-            $oidcDiscovery = Http::get($this->authServerBaseUrl . '/.well-known/openid_configuration')->json();
+            $oauthDiscovery = Http::get($this->authServerBaseUrl.'/.well-known/oauth-authorization-server')->json();
+            $oidcDiscovery = Http::get($this->authServerBaseUrl.'/.well-known/openid_configuration')->json();
 
             return response()->json([
                 'oauth2' => $oauthDiscovery,
-                'oidc' => $oidcDiscovery
+                'oidc' => $oidcDiscovery,
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'discovery_failed',
-                'error_description' => $e->getMessage()
+                'error_description' => $e->getMessage(),
             ]);
         }
     }
@@ -256,7 +258,7 @@ class OAuthClientController extends Controller
     private function exchangeCodeForTokens(string $code): array
     {
         try {
-            $response = Http::asForm()->post($this->authServerBaseUrl . '/oidc/token', [
+            $response = Http::asForm()->post($this->authServerBaseUrl.'/oidc/token', [
                 'grant_type' => 'authorization_code',
                 'client_id' => $this->clientId,
                 'client_secret' => env('OAUTH_CLIENT_SECRET', ''),
@@ -266,14 +268,16 @@ class OAuthClientController extends Controller
 
             if ($response->successful()) {
                 $data = $response->json();
+
                 return array_merge(['success' => true], $data);
             } else {
                 $errorData = $response->json();
+
                 return [
                     'success' => false,
                     'error' => $errorData['error'] ?? 'token_request_failed',
                     'error_description' => $errorData['error_description'] ?? 'Token request failed',
-                    'response' => $errorData
+                    'response' => $errorData,
                 ];
             }
 
@@ -281,7 +285,7 @@ class OAuthClientController extends Controller
             return [
                 'success' => false,
                 'error' => 'network_error',
-                'error_description' => $e->getMessage()
+                'error_description' => $e->getMessage(),
             ];
         }
     }
@@ -292,7 +296,7 @@ class OAuthClientController extends Controller
     private function refreshAccessToken(string $refreshToken): array
     {
         try {
-            $response = Http::asForm()->post($this->authServerBaseUrl . '/oidc/token', [
+            $response = Http::asForm()->post($this->authServerBaseUrl.'/oidc/token', [
                 'grant_type' => 'refresh_token',
                 'client_id' => $this->clientId,
                 'client_secret' => env('OAUTH_CLIENT_SECRET', ''),
@@ -301,13 +305,15 @@ class OAuthClientController extends Controller
 
             if ($response->successful()) {
                 $data = $response->json();
+
                 return array_merge(['success' => true], $data);
             } else {
                 $errorData = $response->json();
+
                 return [
                     'success' => false,
                     'error' => $errorData['error'] ?? 'refresh_failed',
-                    'error_description' => $errorData['error_description'] ?? 'Token refresh failed'
+                    'error_description' => $errorData['error_description'] ?? 'Token refresh failed',
                 ];
             }
 
@@ -315,7 +321,7 @@ class OAuthClientController extends Controller
             return [
                 'success' => false,
                 'error' => 'network_error',
-                'error_description' => $e->getMessage()
+                'error_description' => $e->getMessage(),
             ];
         }
     }
@@ -327,18 +333,18 @@ class OAuthClientController extends Controller
     {
         try {
             $response = Http::withToken($accessToken)
-                ->get($this->authServerBaseUrl . '/oidc/userinfo');
+                ->get($this->authServerBaseUrl.'/oidc/userinfo');
 
             if ($response->successful()) {
                 return [
                     'success' => true,
-                    'data' => $response->json()
+                    'data' => $response->json(),
                 ];
             } else {
                 return [
                     'success' => false,
                     'error' => 'userinfo_request_failed',
-                    'error_description' => 'Failed to retrieve user information'
+                    'error_description' => 'Failed to retrieve user information',
                 ];
             }
 
@@ -346,7 +352,7 @@ class OAuthClientController extends Controller
             return [
                 'success' => false,
                 'error' => 'network_error',
-                'error_description' => $e->getMessage()
+                'error_description' => $e->getMessage(),
             ];
         }
     }
@@ -363,6 +369,7 @@ class OAuthClientController extends Controller
             }
 
             $payload = base64_decode(strtr($parts[1], '-_', '+/'));
+
             return json_decode($payload, true);
 
         } catch (\Exception $e) {

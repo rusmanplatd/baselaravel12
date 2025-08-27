@@ -561,7 +561,7 @@ class DeviceController extends Controller
             // Store verification code temporarily
             cache()->put("device_verification_qr_{$device->id}", $verificationData, now()->addMinutes(5));
 
-            $verificationUrl = url("/verify-device/{$device->id}/" . $verificationData['verification_code']);
+            $verificationUrl = url("/verify-device/{$device->id}/".$verificationData['verification_code']);
 
             // Generate QR code data
             $qrCodeData = base64_encode(json_encode([

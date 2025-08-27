@@ -35,7 +35,7 @@ class ProfileController extends Controller
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
         $user = $request->user();
-        
+
         $user->fill($request->validated());
 
         if ($user->isDirty('email')) {
@@ -129,7 +129,7 @@ class ProfileController extends Controller
 
             // Clear avatar from database
             $user->update(['avatar' => null]);
-            
+
             // Log avatar deletion activity
             ActivityLogService::logAuth('avatar_deleted', 'User deleted avatar', [
                 'ip_address' => $request->ip(),

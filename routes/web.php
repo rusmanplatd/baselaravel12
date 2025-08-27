@@ -33,7 +33,7 @@ Route::middleware(['auth', 'verified', 'mfa.verified', 'trusted.device', 'sessio
     Route::post('api/generate-token', function () {
         $user = auth()->user();
         $token = $user->createToken('Chat Application Token')->accessToken;
-        
+
         return response()->json([
             'access_token' => $token,
             'token_type' => 'Bearer',
@@ -92,7 +92,7 @@ Route::middleware(['auth', 'verified', 'mfa.verified', 'trusted.device', 'sessio
     // Activity Log
     Route::get('activity-log', [\App\Http\Controllers\ActivityLogController::class, 'index'])->name('activity-log.index');
     Route::get('activity-log/{activity}', [\App\Http\Controllers\ActivityLogController::class, 'show'])->name('activity-log.show');
-    
+
     // Activity Log Export
     Route::post('activity-log/export/all', [\App\Http\Controllers\ActivityLogController::class, 'exportAll'])->name('activity-log.export.all');
     Route::post('activity-log/export/filtered', [\App\Http\Controllers\ActivityLogController::class, 'exportFiltered'])->name('activity-log.export.filtered');

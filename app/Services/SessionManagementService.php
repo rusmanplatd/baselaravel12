@@ -95,6 +95,7 @@ class SessionManagementService
             ->get()
             ->map(function ($session) {
                 $session->last_activity_formatted = \Carbon\Carbon::createFromTimestamp($session->last_activity);
+
                 return $session;
             });
     }
@@ -108,6 +109,7 @@ class SessionManagementService
             ->get()
             ->map(function ($session) {
                 $session->last_activity_formatted = \Carbon\Carbon::createFromTimestamp($session->last_activity);
+
                 return $session;
             });
     }

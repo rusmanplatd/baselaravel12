@@ -12,7 +12,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 class OrganizationUnit extends Model
 {
-    use HasUlids, TenantScoped, LogsActivity;
+    use HasUlids, LogsActivity, TenantScoped;
 
     protected $fillable = [
         'organization_id',

@@ -7,7 +7,6 @@ use App\Models\Organization;
 use App\Models\OrganizationMembership;
 use App\Models\OrganizationPosition;
 use App\Models\OrganizationPositionLevel;
-use App\Models\OrganizationUnit;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
@@ -18,8 +17,11 @@ class ClientAccessControlTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private User $otherUser;
+
     private Organization $organization;
+
     private Client $client;
 
     protected function setUp(): void
@@ -159,7 +161,7 @@ class ClientAccessControlTest extends TestCase
             'redirect' => ['https://example.com/callback'],
         ]);
 
-        $response = $this->get('/oauth/authorize?' . http_build_query([
+        $response = $this->get('/oauth/authorize?'.http_build_query([
             'client_id' => $client->id,
             'redirect_uri' => 'https://example.com/callback',
             'response_type' => 'code',
@@ -171,7 +173,7 @@ class ClientAccessControlTest extends TestCase
         // Test with user who doesn't have access
         Auth::login($this->otherUser);
 
-        $response = $this->get('/oauth/authorize?' . http_build_query([
+        $response = $this->get('/oauth/authorize?'.http_build_query([
             'client_id' => $client->id,
             'redirect_uri' => 'https://example.com/callback',
             'response_type' => 'code',
@@ -191,7 +193,7 @@ class ClientAccessControlTest extends TestCase
 
         // Test with organization member
         Auth::login($this->user);
-        $response = $this->get('/oauth/authorize?' . http_build_query([
+        $response = $this->get('/oauth/authorize?'.http_build_query([
             'client_id' => $client->id,
             'redirect_uri' => 'https://example.com/callback',
             'response_type' => 'code',
@@ -201,7 +203,7 @@ class ClientAccessControlTest extends TestCase
 
         // Test with non-organization member
         Auth::login($this->otherUser);
-        $response = $this->get('/oauth/authorize?' . http_build_query([
+        $response = $this->get('/oauth/authorize?'.http_build_query([
             'client_id' => $client->id,
             'redirect_uri' => 'https://example.com/callback',
             'response_type' => 'code',
@@ -285,7 +287,7 @@ class ClientAccessControlTest extends TestCase
         ]);
 
         $response->assertStatus(422)
-                 ->assertJsonValidationErrors(['user_access_scope']);
+            ->assertJsonValidationErrors(['user_access_scope']);
     }
 
     public function test_client_validation_for_custom_rules()
@@ -302,7 +304,7 @@ class ClientAccessControlTest extends TestCase
         ]);
 
         $response->assertStatus(422)
-                 ->assertJsonValidationErrors(['user_access_rules']);
+            ->assertJsonValidationErrors(['user_access_rules']);
     }
 
     public function test_client_validation_for_email_domains()
@@ -321,7 +323,7 @@ class ClientAccessControlTest extends TestCase
         ]);
 
         $response->assertStatus(422)
-                 ->assertJsonValidationErrors(['user_access_rules.email_domains.0']);
+            ->assertJsonValidationErrors(['user_access_rules.email_domains.0']);
     }
 
     public function test_client_without_organization_is_rejected()

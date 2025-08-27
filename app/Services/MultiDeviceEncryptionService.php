@@ -1070,14 +1070,14 @@ class MultiDeviceEncryptionService
                     // Use Redis SCAN for better performance than KEYS
                     $redis = $cacheDriver->connection();
                     $prefix = $cacheDriver->getPrefix();
-                    $searchPattern = $prefix . str_replace('*', '*', $pattern);
+                    $searchPattern = $prefix.str_replace('*', '*', $pattern);
 
                     // Use SCAN instead of KEYS for production performance
                     $cursor = 0;
                     do {
                         $result = $redis->scan($cursor, [
                             'MATCH' => $searchPattern,
-                            'COUNT' => 100
+                            'COUNT' => 100,
                         ]);
 
                         if ($result !== false) {
@@ -1098,7 +1098,7 @@ class MultiDeviceEncryptionService
                     $table = $cacheDriver->getTable();
                     $prefix = $cacheDriver->getPrefix();
 
-                    $likePattern = str_replace('*', '%', $prefix . $pattern);
+                    $likePattern = str_replace('*', '%', $prefix.$pattern);
 
                     $results = $connection->table($table)
                         ->where('key', 'LIKE', $likePattern)
@@ -1118,7 +1118,7 @@ class MultiDeviceEncryptionService
 
                     // Convert cache pattern to file pattern
                     $filePattern = str_replace(['*', '/'], ['*', DIRECTORY_SEPARATOR], $pattern);
-                    $searchPath = $directory . DIRECTORY_SEPARATOR . $prefix . $filePattern;
+                    $searchPath = $directory.DIRECTORY_SEPARATOR.$prefix.$filePattern;
 
                     $files = glob($searchPath);
                     foreach ($files as $file) {
@@ -1137,7 +1137,7 @@ class MultiDeviceEncryptionService
                     $storage = $storageProperty->getValue($cacheDriver);
 
                     $prefix = $cacheDriver->getPrefix();
-                    $regexPattern = '/^' . preg_quote($prefix, '/') . str_replace('*', '.*', preg_quote($pattern, '/')) . '$/';
+                    $regexPattern = '/^'.preg_quote($prefix, '/').str_replace('*', '.*', preg_quote($pattern, '/')).'$/';
 
                     foreach (array_keys($storage) as $key) {
                         if (preg_match($regexPattern, $key)) {

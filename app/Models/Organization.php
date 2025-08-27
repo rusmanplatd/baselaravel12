@@ -185,17 +185,17 @@ class Organization extends Model
         return LogOptions::defaults()
             ->logOnly([
                 'organization_code',
-                'name', 
+                'name',
                 'organization_type',
                 'parent_organization_id',
                 'description',
                 'is_active',
                 'level',
-                'path'
+                'path',
             ])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
-            ->setDescriptionForEvent(fn(string $eventName) => "Organization {$eventName}")
+            ->setDescriptionForEvent(fn (string $eventName) => "Organization {$eventName}")
             ->useLogName('organization');
     }
 }

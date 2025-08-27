@@ -116,10 +116,10 @@ class FileController extends Controller
         $filePath = base64_decode($encodedPath);
 
         // Generate expected token
-        $expectedToken = hash_hmac('sha256', $filePath . $expires, config('app.key'));
+        $expectedToken = hash_hmac('sha256', $filePath.$expires, config('app.key'));
 
         // Check if token is valid
-        if (!hash_equals($expectedToken, $token)) {
+        if (! hash_equals($expectedToken, $token)) {
             return response()->json(['error' => 'Invalid download token'], 403);
         }
 

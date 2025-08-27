@@ -26,7 +26,7 @@ class ClientFactory extends Factory
             'id' => $this->faker->uuid(),
             'owner_id' => User::factory(),
             'owner_type' => User::class,
-            'name' => $this->faker->company() . ' App',
+            'name' => $this->faker->company().' App',
             'secret' => Str::random(40),
             'provider' => null,
             'redirect' => ['https://example.com/callback'],

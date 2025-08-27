@@ -16,7 +16,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 class Message extends Model
 {
-    use HasFactory, HasUlids, SoftDeletes, LogsActivity;
+    use HasFactory, HasUlids, LogsActivity, SoftDeletes;
 
     protected $table = 'chat_messages';
 

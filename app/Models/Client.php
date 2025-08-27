@@ -2,15 +2,15 @@
 
 namespace App\Models;
 
-use Laravel\Passport\Client as PassportClient;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Models\User;
+use Laravel\Passport\Client as PassportClient;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
 class Client extends PassportClient
 {
     use LogsActivity;
+
     protected $fillable = [
         'owner_id',
         'owner_type',
@@ -34,7 +34,7 @@ class Client extends PassportClient
     protected $casts = [
         'revoked' => 'bool',
         'redirect_uris' => 'json',  // Database field
-        'grant_types' => 'json',    // Database field  
+        'grant_types' => 'json',    // Database field
         'allowed_scopes' => 'array',
         'user_access_rules' => 'array',
         'last_used_at' => 'datetime',
@@ -58,7 +58,7 @@ class Client extends PassportClient
     public function userHasAccess(User $user): bool
     {
         // All OAuth clients must have organization association
-        if (!$this->organization_id) {
+        if (! $this->organization_id) {
             return false;
         }
 
@@ -86,7 +86,7 @@ class Client extends PassportClient
      */
     protected function checkCustomAccessRules(User $user): bool
     {
-        if (!$this->user_access_rules) {
+        if (! $this->user_access_rules) {
             return false;
         }
 
@@ -139,7 +139,7 @@ class Client extends PassportClient
 
         // Check email domains
         if (isset($rules['email_domains'])) {
-            $userEmailDomain = substr(strrchr($user->email, "@"), 1);
+            $userEmailDomain = substr(strrchr($user->email, '@'), 1);
             if (in_array($userEmailDomain, $rules['email_domains'])) {
                 return true;
             }
@@ -174,6 +174,7 @@ class Client extends PassportClient
 
             case 'custom':
                 $rulesCount = $this->user_access_rules ? count($this->user_access_rules) : 0;
+
                 return "Access is controlled by {$rulesCount} custom rule(s)";
 
             default:
@@ -199,13 +200,13 @@ class Client extends PassportClient
         $userOrgIds = $user->memberships()->active()->pluck('organization_id');
 
         return $query->whereNotNull('organization_id')
-                    ->where(function ($q) use ($userOrgIds) {
-                        $q->where('user_access_scope', 'all_users')
-                          ->orWhere(function ($subQuery) use ($userOrgIds) {
-                              $subQuery->where('user_access_scope', 'organization_members')
-                                       ->whereIn('organization_id', $userOrgIds);
-                          })
-                          ->orWhere('user_access_scope', 'custom');
-                    });
+            ->where(function ($q) use ($userOrgIds) {
+                $q->where('user_access_scope', 'all_users')
+                    ->orWhere(function ($subQuery) use ($userOrgIds) {
+                        $subQuery->where('user_access_scope', 'organization_members')
+                            ->whereIn('organization_id', $userOrgIds);
+                    })
+                    ->orWhere('user_access_scope', 'custom');
+            });
     }
 }

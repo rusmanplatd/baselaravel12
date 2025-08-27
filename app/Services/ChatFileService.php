@@ -68,7 +68,7 @@ class ChatFileService
             // Store encrypted file
             $stored = Storage::disk('chat-files')->put($relativePath, $encryptionResult['encrypted_content']);
 
-            if (!$stored) {
+            if (! $stored) {
                 throw new ChatFileException('Failed to store file');
             }
 
@@ -101,11 +101,12 @@ class ChatFileService
         try {
             $this->validateFilePath($filePath);
 
-            if (!Storage::disk('chat-files')->exists($filePath)) {
+            if (! Storage::disk('chat-files')->exists($filePath)) {
                 throw new ChatFileException('File not found');
             }
 
             $encryptedContent = Storage::disk('chat-files')->get($filePath);
+
             return $this->decryptFileContents($encryptedContent, $symmetricKey, $iv, $tag);
 
         } catch (ChatFileException $e) {
@@ -127,7 +128,7 @@ class ChatFileService
             'expires' => time() + $expiresInSeconds,
         ]));
 
-        return "/api/chat/files/download/?token={$token}&expires=" . (time() + $expiresInSeconds);
+        return "/api/chat/files/download/?token={$token}&expires=".(time() + $expiresInSeconds);
     }
 
     public function deleteMultipleFiles(array $filePaths): int
@@ -138,13 +139,14 @@ class ChatFileService
                 $deletedCount++;
             }
         }
+
         return $deletedCount;
     }
 
     public function retrieveFile(string $filePath, string $symmetricKey): array
     {
         try {
-            if (!Storage::disk('chat-files')->exists($filePath)) {
+            if (! Storage::disk('chat-files')->exists($filePath)) {
                 throw new ChatFileException('File not found', 'FILE_NOT_FOUND');
             }
 
@@ -170,7 +172,7 @@ class ChatFileService
     public function deleteFile(string $filePath): bool
     {
         try {
-            if (!Storage::disk('chat-files')->exists($filePath)) {
+            if (! Storage::disk('chat-files')->exists($filePath)) {
                 return false;
             }
 
@@ -207,7 +209,7 @@ class ChatFileService
         }
 
         $mimeType = $file->getMimeType();
-        if (!in_array($mimeType, self::ALLOWED_MIME_TYPES)) {
+        if (! in_array($mimeType, self::ALLOWED_MIME_TYPES)) {
             throw new ChatFileException(
                 'File type not allowed',
                 'INVALID_FILE_TYPE',
@@ -215,7 +217,7 @@ class ChatFileService
             );
         }
 
-        if (!$file->isValid()) {
+        if (! $file->isValid()) {
             throw new ChatFileException('Invalid file upload', 'INVALID_FILE_UPLOAD');
         }
 
@@ -238,7 +240,7 @@ class ChatFileService
         ];
     }
 
-    private function decryptFileContents(string $encryptedContent, string $symmetricKey, string $iv = null, string $tag = null): string
+    private function decryptFileContents(string $encryptedContent, string $symmetricKey, ?string $iv = null, ?string $tag = null): string
     {
         // Handle legacy format where content might be JSON encoded
         if (str_starts_with($encryptedContent, '{')) {
@@ -263,12 +265,12 @@ class ChatFileService
     private function generateThumbnail(UploadedFile $file, string $conversationId, string $symmetricKey): ?string
     {
         try {
-            $thumbnailPath = "chat/files/thumbnails/".Str::uuid().'_thumb.jpg';
+            $thumbnailPath = 'chat/files/thumbnails/'.Str::uuid().'_thumb.jpg';
             $fullThumbnailPath = Storage::disk('public')->path($thumbnailPath);
-            
+
             // Create thumbnail directory if it doesn't exist
             $thumbnailDir = dirname($fullThumbnailPath);
-            if (!is_dir($thumbnailDir)) {
+            if (! is_dir($thumbnailDir)) {
                 mkdir($thumbnailDir, 0755, true);
             }
 
@@ -283,13 +285,14 @@ class ChatFileService
                 $this->generateThumbnailWithGD($file, $fullThumbnailPath);
             } else {
                 Log::warning('No image processing library available for thumbnail generation');
+
                 return null;
             }
 
             // Encrypt the thumbnail if needed (optional for thumbnails)
             // For now, we'll store thumbnails unencrypted for performance
             // but you could encrypt them similar to the main file
-            
+
             return $thumbnailPath;
         } catch (\Exception $e) {
             Log::warning('Thumbnail generation failed', [
@@ -304,12 +307,12 @@ class ChatFileService
     private function generateThumbnailWithGD(UploadedFile $file, string $outputPath): void
     {
         $imageInfo = getimagesize($file->getPathname());
-        if (!$imageInfo) {
+        if (! $imageInfo) {
             throw new \Exception('Cannot read image information');
         }
 
         [$width, $height, $type] = $imageInfo;
-        
+
         // Create image resource from file
         $source = match ($type) {
             IMAGETYPE_JPEG => imagecreatefromjpeg($file->getPathname()),
@@ -319,21 +322,21 @@ class ChatFileService
             default => throw new \Exception('Unsupported image type'),
         };
 
-        if (!$source) {
+        if (! $source) {
             throw new \Exception('Cannot create image resource');
         }
 
         // Calculate thumbnail dimensions (max 200x200, maintain aspect ratio)
         $thumbWidth = 200;
         $thumbHeight = 200;
-        
+
         $ratio = min($thumbWidth / $width, $thumbHeight / $height);
         $newWidth = (int) ($width * $ratio);
         $newHeight = (int) ($height * $ratio);
 
         // Create thumbnail image
         $thumbnail = imagecreatetruecolor($newWidth, $newHeight);
-        
+
         // Handle PNG transparency
         if ($type === IMAGETYPE_PNG) {
             imagealphablending($thumbnail, false);
@@ -375,7 +378,7 @@ class ChatFileService
             $extension = pathinfo($sanitized, PATHINFO_EXTENSION);
             $name = pathinfo($sanitized, PATHINFO_FILENAME);
             $maxNameLength = 255 - strlen($extension) - 1;
-            $sanitized = substr($name, 0, $maxNameLength) . '.' . $extension;
+            $sanitized = substr($name, 0, $maxNameLength).'.'.$extension;
         }
 
         return $sanitized;

@@ -16,15 +16,18 @@ class RotateConversationKeysJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $conversation;
+
     public $reason;
+
     public $isRecurring;
+
     public $intervalDays;
 
     /**
      * Create a new job instance.
      */
     public function __construct(
-        Conversation $conversation, 
+        Conversation $conversation,
         string $reason = 'Scheduled rotation',
         bool $isRecurring = false,
         ?int $intervalDays = null
@@ -51,16 +54,17 @@ class RotateConversationKeysJob implements ShouldQueue
             $trustedDevice = $this->conversation->participants()
                 ->with('user.devices')
                 ->get()
-                ->flatMap(fn($participant) => $participant->user->devices)
+                ->flatMap(fn ($participant) => $participant->user->devices)
                 ->where('is_trusted', true)
                 ->where('is_active', true)
                 ->first();
 
-            if (!$trustedDevice) {
+            if (! $trustedDevice) {
                 Log::error('No trusted device found for key rotation', [
                     'conversation_id' => $this->conversation->id,
                 ]);
                 $this->fail('No trusted device available for key rotation');
+
                 return;
             }
 
@@ -78,7 +82,7 @@ class RotateConversationKeysJob implements ShouldQueue
             // Schedule next rotation if recurring
             if ($this->isRecurring && $this->intervalDays > 0) {
                 $nextRotation = now()->addDays($this->intervalDays);
-                
+
                 static::dispatch(
                     $this->conversation,
                     'Recurring scheduled rotation',
@@ -113,7 +117,7 @@ class RotateConversationKeysJob implements ShouldQueue
             'reason' => $this->reason,
             'error' => $exception->getMessage(),
         ]);
-        
+
         // Optionally, you could dispatch a notification to administrators
         // or add the conversation to a failed rotation queue for manual intervention
     }
