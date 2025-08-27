@@ -48,7 +48,7 @@ jobs:
       run: php artisan config:clear
 
     - name: Run database migrations
-      run: php artisan migrate --force
+      run: php artisan migrate --force --seed
       env:
         DB_CONNECTION: pgsql
         DB_HOST: localhost
@@ -150,7 +150,7 @@ jobs:
       run: php artisan key:generate
 
     - name: Run database migrations
-      run: php artisan migrate --force
+      run: php artisan migrate --force --seed
       env:
         DB_CONNECTION: pgsql
         DB_HOST: localhost
