@@ -558,3 +558,449 @@ describe('User Model Multi-Device Methods', function () {
         ))->toBeTrue();
     });
 });
+
+describe('Advanced Multi-Device Scenarios', function () {
+    it('can handle cross-platform device registration and key sharing', function () {
+        // Create devices on different platforms
+        $platforms = [
+            ['name' => 'Windows PC', 'type' => 'desktop', 'platform' => 'Windows', 'capabilities' => ['messaging', 'encryption', 'file_sharing']],
+            ['name' => 'iPhone 15', 'type' => 'mobile', 'platform' => 'iOS', 'capabilities' => ['messaging', 'encryption']],
+            ['name' => 'Linux Server', 'type' => 'server', 'platform' => 'Linux', 'capabilities' => ['messaging', 'encryption', 'backup']],
+            ['name' => 'Android Tablet', 'type' => 'tablet', 'platform' => 'Android', 'capabilities' => ['messaging', 'encryption']],
+        ];
+
+        $devices = [];
+        foreach ($platforms as $platformData) {
+            $keyPair = $this->encryptionService->generateKeyPair();
+            
+            $device = $this->multiDeviceService->registerDevice(
+                $this->user1,
+                $platformData['name'],
+                $platformData['type'],
+                $keyPair['public_key'],
+                'cross_platform_'.uniqid(),
+                $platformData['platform'],
+                'Mozilla/5.0...',
+                $platformData['capabilities'],
+                'medium'
+            );
+            
+            $devices[] = $device;
+        }
+
+        expect(count($devices))->toBe(4);
+
+        // Test key sharing between different platforms
+        $trustedDevice = $devices[0]; // Windows PC
+        $trustedDevice->markAsTrusted();
+
+        // Create encryption key for trusted device
+        $symmetricKey = $this->encryptionService->generateSymmetricKey();
+        EncryptionKey::createForDevice(
+            $this->conversation->id,
+            $this->user1->id,
+            $trustedDevice->id,
+            $symmetricKey,
+            $trustedDevice->public_key
+        );
+
+        // Share keys with all other devices
+        foreach (array_slice($devices, 1) as $targetDevice) {
+            $results = $this->multiDeviceService->shareKeysWithNewDevice(
+                $trustedDevice,
+                $targetDevice
+            );
+
+            expect($results['total_keys_shared'])->toBe(1);
+            expect($results['shared_conversations'])->toHaveCount(1);
+        }
+
+        // Verify all platforms have pending key shares
+        $totalKeyShares = DeviceKeyShare::where('from_device_id', $trustedDevice->id)->count();
+        expect($totalKeyShares)->toBe(3);
+    });
+
+    it('can handle device trust verification workflow', function () {
+        $newDevice = $this->user1_device2; // Untrusted MacBook
+        
+        // Initially untrusted
+        expect($newDevice->is_trusted)->toBeFalse();
+        
+        // Simulate trust challenge
+        $challengeData = [
+            'challenge_code' => 'TRUST-' . strtoupper(substr(md5(uniqid()), 0, 6)),
+            'expires_at' => now()->addMinutes(10),
+            'created_by_device' => $this->user1_device1->id,
+        ];
+
+        // Store challenge in device metadata
+        $newDevice->device_metadata = array_merge(
+            $newDevice->device_metadata ?? [],
+            ['trust_challenge' => $challengeData]
+        );
+        $newDevice->save();
+
+        // Verify challenge and trust device
+        expect($newDevice->device_metadata['trust_challenge']['challenge_code'])->toBe($challengeData['challenge_code']);
+        
+        // Mark as trusted after challenge verification
+        $newDevice->markAsTrusted();
+        $newDevice->refresh();
+
+        expect($newDevice->is_trusted)->toBeTrue();
+        expect($newDevice->verified_at)->not()->toBeNull();
+    });
+
+    it('can handle concurrent key sharing operations safely', function () {
+        // Create multiple conversations
+        $conversations = [];
+        for ($i = 1; $i <= 3; $i++) {
+            $conv = Conversation::factory()->direct()->create();
+            $conv->participants()->create(['user_id' => $this->user1->id, 'role' => 'admin']);
+            $conversations[] = $conv;
+        }
+
+        // Create encryption keys for trusted device in all conversations
+        foreach ($conversations as $conv) {
+            $symmetricKey = $this->encryptionService->generateSymmetricKey();
+            EncryptionKey::createForDevice(
+                $conv->id,
+                $this->user1->id,
+                $this->user1_device1->id,
+                $symmetricKey,
+                $this->user1_device1->public_key
+            );
+        }
+
+        // Simulate concurrent key sharing (sequential for testing)
+        $results = $this->multiDeviceService->shareKeysWithNewDevice(
+            $this->user1_device1,
+            $this->user1_device2
+        );
+
+        expect($results['total_keys_shared'])->toBe(3);
+        expect($results['shared_conversations'])->toHaveCount(3);
+        expect($results['failed_conversations'])->toBeEmpty();
+
+        // Verify all key shares have unique identifiers and proper timestamps
+        $keyShares = DeviceKeyShare::where('from_device_id', $this->user1_device1->id)
+            ->where('to_device_id', $this->user1_device2->id)
+            ->get();
+
+        expect($keyShares->count())->toBe(3);
+        
+        $shareIds = $keyShares->pluck('id')->toArray();
+        expect($shareIds)->toEqual(array_unique($shareIds)); // All unique
+
+        // Verify proper ordering by creation time
+        $timestamps = $keyShares->pluck('created_at')->toArray();
+        expect($timestamps)->toEqual(array_values(array_sort($timestamps)));
+    });
+
+    it('can handle device sync failure scenarios gracefully', function () {
+        // Create a device with invalid public key
+        $invalidDevice = UserDevice::create([
+            'user_id' => $this->user1->id,
+            'device_name' => 'Corrupted Device',
+            'device_type' => 'mobile',
+            'public_key' => 'invalid-corrupted-key',
+            'device_fingerprint' => 'corrupted_device_'.uniqid(),
+            'platform' => 'iOS',
+            'device_capabilities' => ['messaging', 'encryption'],
+            'security_level' => 'low',
+            'encryption_version' => 1, // Old version
+            'is_trusted' => false,
+            'is_active' => true,
+        ]);
+
+        // Try to share keys with corrupted device
+        $results = $this->multiDeviceService->shareKeysWithNewDevice(
+            $this->user1_device1,
+            $invalidDevice
+        );
+
+        expect($results['total_keys_shared'])->toBe(0);
+        expect($results['failed_conversations'])->not()->toBeEmpty();
+        
+        // Verify error handling
+        $error = $results['failed_conversations'][0] ?? null;
+        expect($error)->not()->toBeNull();
+        expect($error['reason'])->toContain('encryption');
+    });
+
+    it('can detect and handle encryption version mismatches', function () {
+        // Create device with old encryption version
+        $oldVersionDevice = UserDevice::create([
+            'user_id' => $this->user1->id,
+            'device_name' => 'Old Device',
+            'device_type' => 'desktop',
+            'public_key' => $this->encryptionService->generateKeyPair()['public_key'],
+            'device_fingerprint' => 'old_device_'.uniqid(),
+            'platform' => 'Windows',
+            'device_capabilities' => ['messaging'],
+            'security_level' => 'medium',
+            'encryption_version' => 1,
+            'is_trusted' => true,
+            'is_active' => true,
+        ]);
+
+        // Try to setup conversation encryption with mixed versions
+        $deviceKeys = [
+            ['device_id' => $this->user1_device1->id], // v2
+            ['device_id' => $oldVersionDevice->id],     // v1
+        ];
+
+        $results = $this->multiDeviceService->setupConversationEncryptionForDevices(
+            $this->conversation,
+            $deviceKeys,
+            $this->user1_device1
+        );
+
+        // Should handle version mismatch gracefully
+        expect($results['failed_keys'])->toHaveCount(1);
+        expect($results['created_keys'])->toHaveCount(1);
+
+        $failedKey = $results['failed_keys'][0];
+        expect($failedKey['reason'])->toContain('version');
+    });
+});
+
+describe('Multi-Device Performance and Load Testing', function () {
+    it('can handle bulk device registration efficiently', function () {
+        $startTime = microtime(true);
+        $devices = [];
+
+        // Register 10 devices
+        for ($i = 1; $i <= 10; $i++) {
+            $keyPair = $this->encryptionService->generateKeyPair();
+            
+            $device = $this->multiDeviceService->registerDevice(
+                $this->user1,
+                "Bulk Device $i",
+                'mobile',
+                $keyPair['public_key'],
+                "bulk_device_{$i}_".uniqid(),
+                'iOS',
+                'Mozilla/5.0...',
+                ['messaging', 'encryption'],
+                'medium'
+            );
+            
+            $devices[] = $device;
+        }
+
+        $endTime = microtime(true);
+        $executionTime = $endTime - $startTime;
+
+        expect(count($devices))->toBe(10);
+        expect($executionTime)->toBeLessThan(5.0); // Should complete within 5 seconds
+
+        // Verify all devices are properly registered
+        $registeredCount = UserDevice::where('user_id', $this->user1->id)->count();
+        expect($registeredCount)->toBeGreaterThanOrEqual(12); // 2 original + 10 new
+    });
+
+    it('can handle large scale key sharing operations', function () {
+        // Create 5 conversations
+        $conversations = [];
+        for ($i = 1; $i <= 5; $i++) {
+            $conv = Conversation::factory()->direct()->create();
+            $conv->participants()->create(['user_id' => $this->user1->id, 'role' => 'admin']);
+            $conversations[] = $conv;
+        }
+
+        // Create encryption keys for all conversations
+        foreach ($conversations as $conv) {
+            $symmetricKey = $this->encryptionService->generateSymmetricKey();
+            EncryptionKey::createForDevice(
+                $conv->id,
+                $this->user1->id,
+                $this->user1_device1->id,
+                $symmetricKey,
+                $this->user1_device1->public_key
+            );
+        }
+
+        $startTime = microtime(true);
+
+        // Share keys with untrusted device
+        $results = $this->multiDeviceService->shareKeysWithNewDevice(
+            $this->user1_device1,
+            $this->user1_device2
+        );
+
+        $endTime = microtime(true);
+        $executionTime = $endTime - $startTime;
+
+        expect($results['total_keys_shared'])->toBe(5);
+        expect($executionTime)->toBeLessThan(3.0); // Should complete within 3 seconds
+
+        // Verify all key shares were created correctly
+        $keyShareCount = DeviceKeyShare::where('from_device_id', $this->user1_device1->id)
+            ->where('to_device_id', $this->user1_device2->id)
+            ->count();
+        
+        expect($keyShareCount)->toBe(5);
+    });
+});
+
+describe('Multi-Device Security Validation', function () {
+    it('prevents key sharing between devices with different security levels', function () {
+        // Create high security device
+        $highSecurityDevice = UserDevice::create([
+            'user_id' => $this->user1->id,
+            'device_name' => 'Secure Device',
+            'device_type' => 'desktop',
+            'public_key' => $this->encryptionService->generateKeyPair()['public_key'],
+            'device_fingerprint' => 'secure_device_'.uniqid(),
+            'platform' => 'Linux',
+            'device_capabilities' => ['messaging', 'encryption', 'secure_backup'],
+            'security_level' => 'maximum',
+            'encryption_version' => 2,
+            'is_trusted' => true,
+            'is_active' => true,
+        ]);
+
+        // Create low security device
+        $lowSecurityDevice = UserDevice::create([
+            'user_id' => $this->user1->id,
+            'device_name' => 'Basic Device',
+            'device_type' => 'mobile',
+            'public_key' => $this->encryptionService->generateKeyPair()['public_key'],
+            'device_fingerprint' => 'basic_device_'.uniqid(),
+            'platform' => 'Android',
+            'device_capabilities' => ['messaging'],
+            'security_level' => 'low',
+            'encryption_version' => 2,
+            'is_trusted' => false,
+            'is_active' => true,
+        ]);
+
+        // Try to share keys from high to low security
+        expect(fn () => $this->multiDeviceService->shareKeysWithNewDevice(
+            $highSecurityDevice,
+            $lowSecurityDevice
+        ))->toThrow(\InvalidArgumentException::class, 'Security level mismatch');
+    });
+
+    it('validates device capabilities before key operations', function () {
+        // Create device without encryption capability
+        $basicDevice = UserDevice::create([
+            'user_id' => $this->user1->id,
+            'device_name' => 'Basic Messaging Device',
+            'device_type' => 'mobile',
+            'public_key' => $this->encryptionService->generateKeyPair()['public_key'],
+            'device_fingerprint' => 'basic_msg_device_'.uniqid(),
+            'platform' => 'iOS',
+            'device_capabilities' => ['messaging'], // No encryption capability
+            'security_level' => 'medium',
+            'encryption_version' => 2,
+            'is_trusted' => true,
+            'is_active' => true,
+        ]);
+
+        // Try to use device for encryption operations
+        expect(fn () => $this->multiDeviceService->shareKeysWithNewDevice(
+            $this->user1_device1,
+            $basicDevice
+        ))->toThrow(\InvalidArgumentException::class, 'Device does not support encryption');
+    });
+
+    it('enforces key rotation for compromised device scenarios', function () {
+        // Setup initial encryption
+        $symmetricKey = $this->encryptionService->generateSymmetricKey();
+        EncryptionKey::createForDevice(
+            $this->conversation->id,
+            $this->user1->id,
+            $this->user1_device1->id,
+            $symmetricKey,
+            $this->user1_device1->public_key
+        );
+
+        // Mark device as compromised
+        $this->user1_device1->update([
+            'security_level' => 'compromised',
+            'is_trusted' => false,
+        ]);
+
+        // Force key rotation due to compromise
+        $results = $this->multiDeviceService->rotateConversationKeys(
+            $this->conversation,
+            $this->user1_device2, // Use different device for rotation
+            'Device compromise detected'
+        );
+
+        expect($results['key_version'])->toBe(2);
+
+        // Verify compromised device's keys are revoked
+        $compromisedKeys = EncryptionKey::where('device_id', $this->user1_device1->id)
+            ->where('conversation_id', $this->conversation->id)
+            ->get();
+
+        foreach ($compromisedKeys as $key) {
+            expect($key->is_active)->toBeFalse();
+        }
+    });
+});
+
+describe('Multi-Device Error Recovery', function () {
+    it('can recover from failed key sharing operations', function () {
+        // Create incomplete/failed key share
+        $failedKeyShare = DeviceKeyShare::create([
+            'from_device_id' => $this->user1_device1->id,
+            'to_device_id' => $this->user1_device2->id,
+            'conversation_id' => $this->conversation->id,
+            'user_id' => $this->user1->id,
+            'encrypted_symmetric_key' => 'corrupted_key_data',
+            'from_device_public_key' => $this->user1_device1->public_key,
+            'to_device_public_key' => $this->user1_device2->public_key,
+            'key_version' => 1,
+            'is_active' => false, // Failed state
+            'failed_at' => now(),
+            'failure_reason' => 'Encryption failed',
+        ]);
+
+        // Retry key sharing operation
+        $results = $this->multiDeviceService->shareKeysWithNewDevice(
+            $this->user1_device1,
+            $this->user1_device2
+        );
+
+        // Should create new successful key share
+        $successfulShares = DeviceKeyShare::where('from_device_id', $this->user1_device1->id)
+            ->where('to_device_id', $this->user1_device2->id)
+            ->where('is_active', true)
+            ->count();
+
+        expect($successfulShares)->toBeGreaterThan(0);
+    });
+
+    it('can handle device deactivation during key operations', function () {
+        // Create pending key share
+        $keyShare = DeviceKeyShare::create([
+            'from_device_id' => $this->user1_device1->id,
+            'to_device_id' => $this->user1_device2->id,
+            'conversation_id' => $this->conversation->id,
+            'user_id' => $this->user1->id,
+            'encrypted_symmetric_key' => 'valid_key_data',
+            'from_device_public_key' => $this->user1_device1->public_key,
+            'to_device_public_key' => $this->user1_device2->public_key,
+            'key_version' => 1,
+            'is_accepted' => false,
+        ]);
+
+        // Deactivate target device during key share process
+        $this->user1_device2->deactivate();
+
+        // Try to accept key share on deactivated device
+        expect(fn () => $this->multiDeviceService->acceptKeyShare(
+            $this->user1_device2,
+            $keyShare,
+            'test_symmetric_key'
+        ))->toThrow(\InvalidArgumentException::class, 'Device is not active');
+
+        // Verify key share is cancelled
+        $keyShare->refresh();
+        expect($keyShare->is_active)->toBeFalse();
+    });
+});

@@ -112,6 +112,19 @@ run_integration_tests() {
     print_success "Integration tests completed successfully"
 }
 
+# Run multi-device E2EE tests
+run_multidevice_e2ee_tests() {
+    print_header "Running Multi-Device E2EE Tests"
+    
+    print_info "Testing multi-device registration and key sharing..."
+    php artisan test tests/Feature/Chat/MultiDeviceE2EETest.php --stop-on-failure
+    
+    print_info "Testing multi-device API endpoints..."
+    php artisan test tests/Feature/Api/MultiDeviceApiTest.php --stop-on-failure
+    
+    print_success "Multi-device E2EE tests completed successfully"
+}
+
 # Run existing chat tests
 run_existing_chat_tests() {
     print_header "Running Existing Chat Tests"
@@ -203,6 +216,7 @@ generate_report() {
         echo "- Enhanced Encryption Features: ✓"
         echo "- Model Integration: ✓"
         echo "- Full E2EE Flow: ✓"
+        echo "- Multi-Device E2EE: ✓"
         echo "- Performance Benchmarks: ✓"
         echo "- Security Validation: ✓"
         echo ""
@@ -224,6 +238,7 @@ main() {
     setup_test_environment
     run_unit_tests
     run_integration_tests
+    run_multidevice_e2ee_tests
     run_existing_chat_tests
     run_file_service_tests
     run_performance_benchmarks
@@ -258,6 +273,11 @@ case "${1:-all}" in
         check_dependencies
         setup_test_environment
         run_integration_tests
+        ;;
+    "multidevice")
+        check_dependencies
+        setup_test_environment
+        run_multidevice_e2ee_tests
         ;;
     "performance")
         check_dependencies
