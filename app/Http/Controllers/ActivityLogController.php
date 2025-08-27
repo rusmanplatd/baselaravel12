@@ -12,6 +12,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Response;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
+use Spatie\QueryBuilder\QueryBuilder;
+use Spatie\QueryBuilder\AllowedSort;
+use Spatie\QueryBuilder\AllowedFilter;
 
 class ActivityLogController extends Controller
 {
@@ -35,55 +38,59 @@ class ActivityLogController extends Controller
         // Build base query with automatic role-based filtering
         if ($canViewAll) {
             // Super admins can see all activities
-            $query = Activity::query();
+            $baseQuery = Activity::query();
         } elseif ($canViewOrganization) {
             // Organization admins can see activities within their organizations
             $organizationIds = $user->activeOrganizations()->pluck('organizations.id');
-            $query = Activity::whereIn('organization_id', $organizationIds)
+            $baseQuery = Activity::whereIn('organization_id', $organizationIds)
                 ->orWhere('causer_id', $user->id);
         } else {
             // Regular users can only see their own activities
-            $query = Activity::forUser($user->id);
+            $baseQuery = Activity::forUser($user->id);
         }
 
-        // Apply manual filters
-        if ($request->filled('resource') && $request->resource !== 'all') {
-            $query->where('log_name', $request->resource);
-        }
-
+        // Apply manual filters that need special permission checks
         if ($request->filled('organization_id') && $request->organization_id !== 'all') {
             // Only allow if user has permission to view this organization
             if ($canViewAll || ($canViewOrganization && $user->activeOrganizations()->where('organizations.id', $request->organization_id)->exists())) {
-                $query->forOrganization($request->organization_id);
+                $baseQuery->forOrganization($request->organization_id);
             }
-        }
-
-        if ($request->filled('from_date')) {
-            $query->where('created_at', '>=', $request->from_date);
-        }
-
-        if ($request->filled('to_date')) {
-            $query->where('created_at', '<=', $request->to_date . ' 23:59:59');
         }
 
         if ($request->filled('causer_id') && $request->causer_id !== 'all') {
             // Only allow if user has permission to view other users' activities
             if ($canViewAll || $canViewOrganization) {
-                $query->where('causer_id', $request->causer_id);
+                $baseQuery->where('causer_id', $request->causer_id);
             }
         }
 
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('description', 'like', "%{$search}%")
-                  ->orWhere('properties->search_terms', 'like', "%{$search}%");
-            });
-        }
-
-        // Get activities with relationships
-        $activities = $query->with(['causer', 'subject', 'organization'])
-            ->orderBy('created_at', 'desc')
+        // Use QueryBuilder for sorting and filtering
+        $activities = QueryBuilder::for($baseQuery)
+            ->allowedFilters([
+                AllowedFilter::exact('resource', 'log_name'),
+                AllowedFilter::callback('from_date', function ($query, $value) {
+                    $query->where('created_at', '>=', $value);
+                }),
+                AllowedFilter::callback('to_date', function ($query, $value) {
+                    $query->where('created_at', '<=', $value . ' 23:59:59');
+                }),
+                AllowedFilter::callback('search', function ($query, $value) {
+                    $query->where(function ($q) use ($value) {
+                        $q->where('description', 'like', "%{$value}%")
+                          ->orWhere('properties->search_terms', 'like', "%{$value}%");
+                    });
+                }),
+            ])
+            ->allowedSorts([
+                'created_at',
+                'log_name',
+                'description',
+                AllowedSort::field('causer_name', 'causer.name'),
+                AllowedSort::field('organization_name', 'organization.name'),
+                'event',
+            ])
+            ->defaultSort('-created_at')
+            ->with(['causer', 'subject', 'organization'])
             ->paginate(25)
             ->appends($request->query());
 
@@ -97,7 +104,7 @@ class ActivityLogController extends Controller
             'resources' => $resources,
             'organizations' => $organizations,
             'users' => $users,
-            'filters' => $request->only(['resource', 'organization_id', 'from_date', 'to_date', 'causer_id', 'search']),
+            'filters' => $request->only(['resource', 'organization_id', 'from_date', 'to_date', 'causer_id', 'search', 'sort']),
             'permissions' => [
                 'canViewAll' => $canViewAll,
                 'canViewOrganization' => $canViewOrganization,

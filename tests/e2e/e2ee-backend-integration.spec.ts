@@ -2,7 +2,7 @@ import { test, expect, Page } from '@playwright/test';
 
 test.describe('E2EE Backend Integration Tests', () => {
   let page: Page;
-  let testUser = {
+  const testUser = {
     name: 'E2EE Test User',
     email: `e2ee.test.${Date.now()}@example.com`,
     password: 'SecurePassword123!'

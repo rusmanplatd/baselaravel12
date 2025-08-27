@@ -2,7 +2,7 @@ import { test, expect, Page } from '@playwright/test';
 
 test.describe('E2EE Performance and Security Tests', () => {
   let page: Page;
-  let user = {
+  const user = {
     email: 'perf.test@example.com',
     password: 'SecurePassword123!'
   };
@@ -267,7 +267,7 @@ test.describe('E2EE Performance and Security Tests', () => {
   });
 
   test('Decryption failure recovery handles gracefully', async () => {
-    let decryptionAttempts = 0;
+    const decryptionAttempts = 0;
 
     // Mock messages with some that fail decryption
     await page.route('**/api/v1/chat/conversations/*/messages', async (route) => {
@@ -404,7 +404,7 @@ test.describe('E2EE Performance and Security Tests', () => {
     await page.click('button:has-text("Devices")');
     
     let keyShareStartTime = 0;
-    let sharedConversations = 0;
+    const sharedConversations = 0;
 
     // Mock key sharing
     await page.route('**/api/v1/chat/devices/*/share-keys', async (route) => {

@@ -10,7 +10,8 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Search, Filter, Calendar, Building, User as UserIcon, Eye, Clock, AlertCircle, Download, FileText, File, Loader2 } from 'lucide-react';
+import { Search, Filter, Building, User as UserIcon, Eye, Clock, AlertCircle, Download, FileText, File, Loader2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format } from 'date-fns';
 
 interface ActivityWithRelations extends Activity {
@@ -42,6 +43,7 @@ interface Props extends PageProps {
         to_date?: string;
         causer_id?: string;
         search?: string;
+        sort?: string;
     };
     permissions: {
         canViewAll: boolean;
@@ -98,6 +100,7 @@ export default function ActivityLogIndex({
     const [selectedUser, setSelectedUser] = useState(filters.causer_id || 'all');
     const [fromDate, setFromDate] = useState(filters.from_date || '');
     const [toDate, setToDate] = useState(filters.to_date || '');
+    const [currentSort, setCurrentSort] = useState(filters.sort || '-created_at');
 
     // Export states
     const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
@@ -119,6 +122,34 @@ export default function ActivityLogIndex({
         if (selectedUser && selectedUser !== 'all') params.causer_id = selectedUser;
         if (fromDate) params.from_date = fromDate;
         if (toDate) params.to_date = toDate;
+        if (currentSort) params.sort = currentSort;
+
+        router.get(route('activity-log.index'), params, {
+            preserveScroll: true,
+            preserveState: true,
+        });
+    };
+
+    const handleSort = (field: string) => {
+        let newSort = field;
+        
+        // Toggle direction if clicking the same field
+        if (currentSort === field) {
+            newSort = `-${field}`;
+        } else if (currentSort === `-${field}`) {
+            newSort = field;
+        }
+        
+        setCurrentSort(newSort);
+        
+        const params: Record<string, string> = {};
+        if (searchTerm) params.search = searchTerm;
+        if (selectedResource && selectedResource !== 'all') params.resource = selectedResource;
+        if (selectedOrganization && selectedOrganization !== 'all') params.organization_id = selectedOrganization;
+        if (selectedUser && selectedUser !== 'all') params.causer_id = selectedUser;
+        if (fromDate) params.from_date = fromDate;
+        if (toDate) params.to_date = toDate;
+        params.sort = newSort;
 
         router.get(route('activity-log.index'), params, {
             preserveScroll: true,
@@ -133,14 +164,36 @@ export default function ActivityLogIndex({
         setSelectedUser('all');
         setFromDate('');
         setToDate('');
+        setCurrentSort('-created_at');
 
-        router.get(route('activity-log.index'), {}, {
+        router.get(route('activity-log.index'), { sort: '-created_at' }, {
             preserveScroll: true,
             preserveState: true,
         });
     };
 
     const hasActiveFilters = searchTerm || (selectedResource && selectedResource !== 'all') || (selectedOrganization && selectedOrganization !== 'all') || (selectedUser && selectedUser !== 'all') || fromDate || toDate;
+
+    const getSortIcon = (field: string) => {
+        if (currentSort === field) {
+            return <ArrowUp className="h-3 w-3" />;
+        } else if (currentSort === `-${field}`) {
+            return <ArrowDown className="h-3 w-3" />;
+        }
+        return <ArrowUpDown className="h-3 w-3" />;
+    };
+
+    const SortableHeader = ({ field, children }: { field: string; children: React.ReactNode }) => (
+        <TableHead 
+            className="cursor-pointer select-none hover:bg-gray-50" 
+            onClick={() => handleSort(field)}
+        >
+            <div className="flex items-center gap-2">
+                {children}
+                {getSortIcon(field)}
+            </div>
+        </TableHead>
+    );
 
     const validateExport = async () => {
         const currentFilters = {
@@ -451,70 +504,80 @@ export default function ActivityLogIndex({
                     </CardHeader>
                     <CardContent>
                         {activities.data.length > 0 ? (
-                            <div className="space-y-4">
-                                {activities.data.map((activity) => (
-                                    <div
-                                        key={activity.id}
-                                        className="flex items-start gap-4 p-4 border rounded-lg hover:bg-gray-50 transition-colors"
-                                    >
-                                        <div className="flex-shrink-0">
-                                            <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${getLogNameColor(activity.log_name)}`}>
-                                                {getLogNameIcon(activity.log_name)}
-                                                {activity.log_name}
-                                            </div>
-                                        </div>
-
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-start justify-between">
-                                                <div className="flex-1">
-                                                    <p className="text-sm font-medium text-gray-900">
-                                                        {activity.description}
-                                                    </p>
-                                                    
-                                                    <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                                                        {activity.causer && (
-                                                            <span className="flex items-center gap-1">
-                                                                <UserIcon className="h-3 w-3" />
-                                                                {activity.causer.name}
-                                                            </span>
-                                                        )}
-
-                                                        {activity.organization && (
-                                                            <span className="flex items-center gap-1">
-                                                                <Building className="h-3 w-3" />
-                                                                {activity.organization.name}
-                                                            </span>
-                                                        )}
-
-                                                        <span className="flex items-center gap-1">
-                                                            <Clock className="h-3 w-3" />
-                                                            {format(new Date(activity.created_at), 'MMM dd, yyyy HH:mm')}
-                                                        </span>
-                                                    </div>
-
-                                                    {activity.event && (
-                                                        <div className="mt-2">
-                                                            <Badge variant="outline" className="text-xs">
-                                                                {activity.event}
-                                                            </Badge>
-                                                        </div>
-                                                    )}
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <SortableHeader field="log_name">Type</SortableHeader>
+                                        <SortableHeader field="description">Description</SortableHeader>
+                                        <SortableHeader field="causer_name">User</SortableHeader>
+                                        <SortableHeader field="organization_name">Organization</SortableHeader>
+                                        <SortableHeader field="event">Event</SortableHeader>
+                                        <SortableHeader field="created_at">Date</SortableHeader>
+                                        <TableHead>Actions</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {activities.data.map((activity) => (
+                                        <TableRow key={activity.id}>
+                                            <TableCell>
+                                                <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${getLogNameColor(activity.log_name)}`}>
+                                                    {getLogNameIcon(activity.log_name)}
+                                                    {activity.log_name}
                                                 </div>
-
-                                                <div className="flex-shrink-0">
-                                                    <Link
-                                                        href={route('activity-log.show', activity.id)}
-                                                        className="inline-flex items-center gap-1 px-2 py-1 text-xs text-blue-600 hover:text-blue-800"
-                                                    >
-                                                        <Eye className="h-3 w-3" />
-                                                        View
-                                                    </Link>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+                                            </TableCell>
+                                            <TableCell className="max-w-md">
+                                                <p className="text-sm font-medium text-gray-900 truncate">
+                                                    {activity.description}
+                                                </p>
+                                            </TableCell>
+                                            <TableCell>
+                                                {activity.causer ? (
+                                                    <span className="flex items-center gap-1 text-sm">
+                                                        <UserIcon className="h-3 w-3" />
+                                                        {activity.causer.name}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-gray-400 text-sm">System</span>
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                {activity.organization ? (
+                                                    <span className="flex items-center gap-1 text-sm">
+                                                        <Building className="h-3 w-3" />
+                                                        {activity.organization.name}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-gray-400 text-sm">-</span>
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                {activity.event ? (
+                                                    <Badge variant="outline" className="text-xs">
+                                                        {activity.event}
+                                                    </Badge>
+                                                ) : (
+                                                    <span className="text-gray-400 text-sm">-</span>
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                <span className="flex items-center gap-1 text-sm text-gray-600">
+                                                    <Clock className="h-3 w-3" />
+                                                    {format(new Date(activity.created_at), 'MMM dd, yyyy HH:mm')}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Link
+                                                    href={route('activity-log.show', activity.id)}
+                                                    className="inline-flex items-center gap-1 px-2 py-1 text-xs text-blue-600 hover:text-blue-800 rounded hover:bg-blue-50"
+                                                >
+                                                    <Eye className="h-3 w-3" />
+                                                    View
+                                                </Link>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
                         ) : (
                             <div className="text-center py-8 text-gray-500">
                                 <AlertCircle className="h-12 w-12 mx-auto mb-4 text-gray-300" />
