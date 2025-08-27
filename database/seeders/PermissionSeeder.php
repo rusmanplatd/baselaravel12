@@ -87,9 +87,12 @@ class PermissionSeeder extends Seeder
             'oauth.tokens.revoke' => 'Revoke OAuth tokens',
 
             // Activity log permissions
-            'activity.view' => 'View activity logs',
+            'activity.view.own' => 'View own activity logs',
+            'activity.view.organization' => 'View organization activity logs',
             'activity.view.all' => 'View all activity logs across organizations',
             'activity.delete' => 'Delete activity logs',
+            'activity.export' => 'Export activity logs',
+            'activity.purge' => 'Purge old activity logs',
 
             // Role and permission management
             'view roles' => 'View roles',
@@ -127,6 +130,9 @@ class PermissionSeeder extends Seeder
             'security.sessions.manage' => 'Manage active sessions',
         ];
 
+        // Set permissions team context to null for global permissions
+        setPermissionsTeamId(null);
+        
         // Create permissions
         foreach ($permissions as $name => $description) {
             Permission::firstOrCreate([
@@ -179,7 +185,11 @@ class PermissionSeeder extends Seeder
                     'oauth.client.delete',
                     'oauth.client.regenerate',
                     'oauth.analytics.view',
-                    'activity.view',
+                    'activity.view.organization',
+                    'activity.view.all',
+                    'activity.delete',
+                    'activity.export',
+                    'activity.purge',
                     'user.view',
                     'view roles',
                     'create roles',
@@ -209,7 +219,7 @@ class PermissionSeeder extends Seeder
                     'position.level.view',
                     'view organization position levels',
                     'user.view',
-                    'activity.view',
+                    'activity.view.organization',
                     'profile.view',
                     'profile.edit',
                     'security.mfa.manage',
@@ -227,6 +237,7 @@ class PermissionSeeder extends Seeder
                     'position.level.view',
                     'view organization position levels',
                     'user.view',
+                    'activity.view.own',
                     'profile.view',
                     'profile.edit',
                     'security.mfa.manage',
@@ -246,7 +257,7 @@ class PermissionSeeder extends Seeder
                     'view organization position levels',
                     'user.view',
                     'oauth.analytics.view',
-                    'activity.view',
+                    'activity.view.organization',
                     'profile.view',
                     'profile.edit',
                     'security.mfa.manage',
@@ -263,6 +274,57 @@ class PermissionSeeder extends Seeder
                     'position.view',
                     'position.level.view',
                     'view organization position levels',
+                    'activity.view.own',
+                    'profile.view',
+                    'profile.edit',
+                    'security.mfa.manage',
+                    'security.password.change',
+                    'security.sessions.manage',
+                ],
+            ],
+            'auditor' => [
+                'description' => 'System auditor with read-only access to activity logs',
+                'permissions' => [
+                    'organization.view',
+                    'organization.hierarchy.view',
+                    'membership.view',
+                    'unit.view',
+                    'position.view',
+                    'position.level.view',
+                    'view organization position levels',
+                    'user.view',
+                    'activity.view.all',
+                    'activity.export',
+                    'oauth.analytics.view',
+                    'system.logs.view',
+                    'profile.view',
+                    'profile.edit',
+                    'security.mfa.manage',
+                    'security.password.change',
+                    'security.sessions.manage',
+                ],
+            ],
+            'security-admin' => [
+                'description' => 'Security administrator with full access to security features',
+                'permissions' => [
+                    'organization.view',
+                    'organization.hierarchy.view',
+                    'membership.view',
+                    'unit.view',
+                    'position.view',
+                    'position.level.view',
+                    'view organization position levels',
+                    'user.view',
+                    'user.impersonate',
+                    'activity.view.all',
+                    'activity.delete',
+                    'activity.export',
+                    'activity.purge',
+                    'oauth.analytics.view',
+                    'oauth.tokens.view',
+                    'oauth.tokens.revoke',
+                    'system.logs.view',
+                    'system.maintenance',
                     'profile.view',
                     'profile.edit',
                     'security.mfa.manage',
@@ -274,6 +336,9 @@ class PermissionSeeder extends Seeder
 
         // Create roles and assign permissions
         foreach ($roles as $roleName => $roleData) {
+            // Set permissions team context to null for global roles
+            setPermissionsTeamId(null);
+            
             $role = Role::firstOrCreate([
                 'name' => $roleName,
                 'guard_name' => 'web',
@@ -282,9 +347,59 @@ class PermissionSeeder extends Seeder
             // Sync permissions
             $permissions = Permission::whereIn('name', $roleData['permissions'])->get();
             $role->syncPermissions($permissions);
+
+            $this->command->info("Created role: {$roleName} with " . count($permissions) . " permissions");
         }
+
+        // Display summary
+        $this->displaySummary($roles);
 
         // Logout system user after seeding
         Auth::logout();
+    }
+
+    /**
+     * Display a summary of roles and activity log permissions
+     */
+    private function displaySummary(array $roles): void
+    {
+        $this->command->info("\n=== ACTIVITY LOG PERMISSIONS SUMMARY ===");
+        
+        $activityPermissions = [
+            'activity.view.own' => 'Can view their own activity logs',
+            'activity.view.organization' => 'Can view activity logs within their organizations',
+            'activity.view.all' => 'Can view all activity logs across all organizations',
+            'activity.delete' => 'Can delete activity logs',
+            'activity.export' => 'Can export activity logs',
+            'activity.purge' => 'Can purge old activity logs',
+        ];
+
+        foreach ($activityPermissions as $permission => $description) {
+            $this->command->info("• {$permission}: {$description}");
+        }
+
+        $this->command->info("\n=== ROLES WITH ACTIVITY LOG ACCESS ===");
+
+        foreach ($roles as $roleName => $roleData) {
+            $activityPerms = array_filter($roleData['permissions'], function($perm) {
+                return strpos($perm, 'activity.') === 0;
+            });
+
+            if (!empty($activityPerms)) {
+                $this->command->info("• {$roleName}: " . implode(', ', $activityPerms));
+            }
+        }
+
+        $this->command->info("\n=== ROLE HIERARCHY FOR ACTIVITY LOGS ===");
+        $this->command->info("• Employees: Can only view their own activities");
+        $this->command->info("• Managers/Board Members: Can view organization activities");
+        $this->command->info("• Organization Admins: Can view and delete organization activities + all activities");
+        $this->command->info("• Auditors: Can view and export all activities (read-only)");
+        $this->command->info("• Security Admins: Can view, delete, export, and purge all activities");
+        $this->command->info("• Super Admins: Full access to all activity log features");
+        
+        $totalPermissions = Permission::count();
+        $totalRoles = Role::count();
+        $this->command->info("\nSeeding completed: {$totalPermissions} permissions, {$totalRoles} roles created/updated.");
     }
 }

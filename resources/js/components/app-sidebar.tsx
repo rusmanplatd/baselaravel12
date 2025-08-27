@@ -4,7 +4,7 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, Building, Users, Network, UserCheck, Target, Shield, KeyRound, Award, MessageCircle } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, Building, Users, Network, UserCheck, Target, Shield, KeyRound, Award, MessageCircle, Activity } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -141,6 +141,12 @@ const mainNavItems: NavItem[] = [
                 permission: 'oauth.client.view',
             },
         ],
+    },
+    {
+        title: 'Activity Log',
+        href: '/activity-log',
+        icon: Activity,
+        permissions: ['activity.view.own', 'activity.view.organization', 'activity.view.all'],
     },
 ];
 

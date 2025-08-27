@@ -78,6 +78,10 @@ Route::middleware(['auth', 'verified', 'mfa.verified', 'trusted.device', 'sessio
     Route::delete('permissions/bulk-delete', [\App\Http\Controllers\PermissionController::class, 'bulkDelete'])->name('permissions.bulkDelete');
     Route::post('permissions/bulk-create-by-pattern', [\App\Http\Controllers\PermissionController::class, 'bulkCreateByPattern'])->name('permissions.bulkCreateByPattern');
 
+    // Activity Log
+    Route::get('activity-log', [\App\Http\Controllers\ActivityLogController::class, 'index'])->name('activity-log.index');
+    Route::get('activity-log/{activity}', [\App\Http\Controllers\ActivityLogController::class, 'show'])->name('activity-log.show');
+
 });
 
 require __DIR__.'/webs/settings.php';

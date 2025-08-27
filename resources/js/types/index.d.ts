@@ -49,6 +49,34 @@ export interface User {
     [key: string]: unknown; // This allows for additional properties...
 }
 
+export interface Organization {
+    id: string;
+    name: string;
+    organization_code: string;
+    organization_type: string;
+    description?: string | null;
+    created_at: string;
+    updated_at: string;
+    [key: string]: unknown;
+}
+
+export interface Activity {
+    id: string;
+    log_name: string;
+    description: string;
+    subject_type: string | null;
+    subject_id: string | null;
+    causer_type: string | null;
+    causer_id: string | null;
+    event: string | null;
+    properties: Record<string, any>;
+    batch_uuid: string | null;
+    organization_id: string | null;
+    tenant_id: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
 export interface PaginationLink {
     url: string | null;
     label: string;
