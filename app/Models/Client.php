@@ -26,6 +26,9 @@ class Client extends PassportClient
         'last_used_at',
         'user_access_scope',
         'user_access_rules',
+        'description',
+        'website',
+        'logo_url',
     ];
 
     protected $casts = [
@@ -181,7 +184,7 @@ class Client extends PassportClient
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['name', 'revoked', 'organization_id', 'allowed_scopes', 'client_type', 'user_access_scope', 'user_access_rules'])
+            ->logOnly(['name', 'revoked', 'organization_id', 'allowed_scopes', 'client_type', 'user_access_scope', 'user_access_rules', 'description', 'website', 'logo_url'])
             ->logOnlyDirty()
             ->useLogName('oauth')
             ->dontLogIfAttributesChangedOnly(['updated_at', 'last_used_at']);

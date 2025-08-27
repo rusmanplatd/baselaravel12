@@ -35,6 +35,8 @@ Route::prefix('oauth')->group(function () {
             ->name('oauth.analytics');
         Route::get('analytics/chart-data', [\App\Http\Controllers\OAuth\AnalyticsController::class, 'chartData'])
             ->name('oauth.analytics.chart-data');
+        Route::get('analytics/{client}', [\App\Http\Controllers\OAuth\AnalyticsController::class, 'client'])
+            ->name('oauth.analytics.client');
     });
 
     // Public client registration removed - all clients must be organization-associated

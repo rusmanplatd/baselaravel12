@@ -26,7 +26,7 @@ class StoreClientRequest extends FormRequest
             'redirect_uris' => 'required|array|min:1',
             'redirect_uris.*' => 'required|url',
             'organization_id' => 'required|exists:organizations,id',
-            'client_type' => 'required|in:public,confidential',
+            'client_type' => 'required|in:web,mobile,desktop,service',
             'user_access_scope' => 'required|in:all_users,organization_members,custom',
             'user_access_rules' => 'required_if:user_access_scope,custom|array|nullable',
             'user_access_rules.user_ids' => 'sometimes|array',

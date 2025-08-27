@@ -43,18 +43,22 @@ class ClientController extends Controller
                     'id' => $client->id,
                     'name' => $client->name,
                     'secret' => $client->secret,
-                    'redirect_uris' => json_decode($client->redirect_uris),
+                    'redirect_uris' => json_decode($client->redirect_uris, true) ?: [],
                     'revoked' => $client->revoked,
                     'organization' => $client->organization ? [
                         'id' => $client->organization->id,
                         'name' => $client->organization->name,
                         'code' => $client->organization->organization_code,
                     ] : null,
-                    'client_type' => $client->client_type ?? 'public',
+                    'client_type' => $client->client_type ?? 'web',
                     'user_access_scope' => $client->user_access_scope,
                     'access_scope_description' => $client->getAccessScopeDescription(),
                     'last_used_at' => $client->last_used_at?->toDateTimeString(),
                     'created_at' => $client->created_at->toDateTimeString(),
+                    'description' => $client->description,
+                    'website' => $client->website,
+                    'logo_url' => $client->logo_url,
+                    'allowed_scopes' => $client->allowed_scopes ? json_decode($client->allowed_scopes, true) : [],
                 ];
             });
 
@@ -78,6 +82,12 @@ class ClientController extends Controller
             'clients' => $clients,
             'organizations' => $availableOrganizations,
             'userAccessScopes' => Client::getUserAccessScopes(),
+            'clientTypes' => [
+                'web' => 'Web Application',
+                'mobile' => 'Mobile Application',
+                'desktop' => 'Desktop Application',
+                'service' => 'Service Account',
+            ],
         ]);
     }
 

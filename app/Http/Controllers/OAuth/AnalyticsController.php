@@ -5,6 +5,7 @@ namespace App\Http\Controllers\OAuth;
 use App\Http\Controllers\Controller;
 use App\Models\OAuthAuditLog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
@@ -169,5 +170,81 @@ class AnalyticsController extends Controller
             ->orderByDesc('count')
             ->limit(10)
             ->get();
+    }
+
+    public function client($clientId)
+    {
+        // Verify user has access to this client
+        $userManagementOrgs = Auth::user()->memberships()
+            ->active()
+            ->whereHas('organizationPosition.organizationPositionLevel', function ($q) {
+                $q->whereIn('code', ['c_level', 'vice_president', 'director', 'senior_manager', 'manager']);
+            })
+            ->pluck('organization_id');
+
+        $client = \App\Models\Client::whereNotNull('organization_id')
+            ->whereIn('organization_id', $userManagementOrgs)
+            ->where('id', $clientId)
+            ->with('organization')
+            ->firstOrFail();
+
+        $clientStats = $this->getClientAnalytics($clientId);
+        $recentActivity = $this->getClientActivity($clientId);
+
+        return Inertia::render('OAuth/ClientAnalytics', [
+            'client' => [
+                'id' => $client->id,
+                'name' => $client->name,
+                'organization' => $client->organization,
+                'client_type' => $client->client_type,
+                'created_at' => $client->created_at->toDateTimeString(),
+            ],
+            'stats' => $clientStats,
+            'recentActivity' => $recentActivity,
+        ]);
+    }
+
+    protected function getClientAnalytics($clientId)
+    {
+        $today = now()->startOfDay();
+        $lastWeek = now()->subWeek();
+        $lastMonth = now()->subMonth();
+
+        return [
+            'total_requests' => OAuthAuditLog::where('client_id', $clientId)->count(),
+            'successful_requests' => OAuthAuditLog::where('client_id', $clientId)->successful()->count(),
+            'failed_requests' => OAuthAuditLog::where('client_id', $clientId)->failed()->count(),
+            'requests_today' => OAuthAuditLog::where('client_id', $clientId)
+                ->where('created_at', '>=', $today)->count(),
+            'requests_this_week' => OAuthAuditLog::where('client_id', $clientId)
+                ->where('created_at', '>=', $lastWeek)->count(),
+            'requests_this_month' => OAuthAuditLog::where('client_id', $clientId)
+                ->where('created_at', '>=', $lastMonth)->count(),
+            'unique_users' => OAuthAuditLog::where('client_id', $clientId)
+                ->distinct('user_id')->count('user_id'),
+            'success_rate' => $this->getClientSuccessRate($clientId),
+            'last_request_at' => OAuthAuditLog::where('client_id', $clientId)
+                ->latest()->value('created_at'),
+        ];
+    }
+
+    protected function getClientActivity($clientId)
+    {
+        return OAuthAuditLog::where('client_id', $clientId)
+            ->with(['user:id,name'])
+            ->orderByDesc('created_at')
+            ->limit(100)
+            ->get()
+            ->map(function ($log) {
+                return [
+                    'id' => $log->id,
+                    'event_type' => $log->event_type,
+                    'user_name' => $log->user->name ?? 'Anonymous',
+                    'success' => $log->success,
+                    'error_code' => $log->error_code,
+                    'ip_address' => $log->ip_address,
+                    'created_at' => $log->created_at->toISOString(),
+                ];
+            });
     }
 }
