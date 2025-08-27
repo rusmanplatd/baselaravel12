@@ -128,11 +128,11 @@ test('permission name must follow valid format', function () {
 });
 
 test('can search permissions', function () {
-    Permission::create(['name' => 'organization:read', 'guard_name' => 'web']);
+    Permission::create(['name' => 'org:read', 'guard_name' => 'web']);
     Permission::create(['name' => 'user:read', 'guard_name' => 'web']);
-    Permission::create(['name' => 'organization:write', 'guard_name' => 'web']);
+    Permission::create(['name' => 'org:write', 'guard_name' => 'web']);
 
-    $response = $this->get(route('permissions.index', ['search' => 'organization']));
+    $response = $this->get(route('permissions.index', ['search' => 'org']));
 
     $response->assertStatus(200);
     $response->assertInertia(fn ($page) => $page->has('permissions.data', 2)

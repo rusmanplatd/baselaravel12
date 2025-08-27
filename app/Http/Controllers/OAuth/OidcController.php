@@ -182,7 +182,7 @@ class OidcController extends Controller
         }
 
         // Add organization and tenant context based on scopes
-        if (in_array('organization:read', $scopes)) {
+        if (in_array('https://api.yourcompany.com/auth/organization.readonly', $scopes) || in_array('https://api.yourcompany.com/auth/organization', $scopes) || in_array('https://api.yourcompany.com/auth/organization.admin', $scopes)) {
             $activeMemberships = $user->memberships()->active()->with(['organization', 'organizationUnit', 'organizationPosition'])->get();
             $userinfo['organizations'] = $activeMemberships->map(function ($membership) {
                 return [
@@ -199,7 +199,7 @@ class OidcController extends Controller
             })->toArray();
         }
 
-        if (in_array('tenant:read', $scopes) && $client->organization) {
+        if ((in_array('https://api.yourcompany.com/auth/organization.readonly', $scopes) || in_array('https://api.yourcompany.com/auth/organization.admin', $scopes)) && $client->organization) {
             $tenantData = [];
             if ($client->organization->tenant) {
                 $tenantData[] = [
@@ -233,8 +233,13 @@ class OidcController extends Controller
             'registration_endpoint' => $baseUrl.'/oauth/clients',
             'scopes_supported' => [
                 'openid', 'profile', 'email',
-                'organization:read', 'organization:write', 'organization:members', 'organization:admin', 'organization:hierarchy',
-                'tenant:read', 'tenant:admin',
+                'https://api.yourcompany.com/auth/organization.readonly',
+                'https://api.yourcompany.com/auth/organization',
+                'https://api.yourcompany.com/auth/organization.members',
+                'https://api.yourcompany.com/auth/organization.admin',
+                'https://api.yourcompany.com/auth/userinfo.profile',
+                'https://api.yourcompany.com/auth/user.modify',
+                'offline_access',
             ],
             'response_types_supported' => ['code', 'token', 'id_token', 'code token', 'code id_token', 'token id_token', 'code token id_token'],
             'response_modes_supported' => ['query', 'fragment'],

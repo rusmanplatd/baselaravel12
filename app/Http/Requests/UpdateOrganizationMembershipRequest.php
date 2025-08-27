@@ -11,7 +11,7 @@ class UpdateOrganizationMembershipRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->can('edit organization memberships');
+        return $this->user()->can('org_member:write');
     }
 
     /**

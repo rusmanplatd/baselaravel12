@@ -11,7 +11,7 @@ class StoreOrganizationPositionRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->can('create organization positions');
+        return $this->user()->can('org_position:write');
     }
 
     /**

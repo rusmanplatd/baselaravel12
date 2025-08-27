@@ -11,7 +11,7 @@ class StoreClientRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->can('create oauth clients');
+        return $this->user()->can('oauth_app:write');
     }
 
     /**

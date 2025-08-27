@@ -109,14 +109,14 @@ class AssignActivityLogPermissions extends Command
         $this->info("=== ACTIVITY LOG ROLES AND PERMISSIONS ===\n");
 
         $roles = [
-            'super-admin' => ['activity.view.own', 'activity.view.organization', 'activity.view.all', 'activity.delete', 'activity.export', 'activity.purge'],
-            'organization-admin' => ['activity.view.organization', 'activity.view.all', 'activity.delete', 'activity.export', 'activity.purge'],
-            'security-admin' => ['activity.view.all', 'activity.delete', 'activity.export', 'activity.purge'],
-            'auditor' => ['activity.view.all', 'activity.export'],
-            'manager' => ['activity.view.organization'],
-            'board-member' => ['activity.view.organization'],
-            'employee' => ['activity.view.own'],
-            'consultant' => ['activity.view.own'],
+            'super-admin' => ['audit_log:read', 'audit_log:write', 'audit_log:delete', 'audit_log:admin'],
+            'organization-admin' => ['audit_log:read', 'audit_log:delete', 'audit_log:admin'],
+            'security-admin' => ['audit_log:read', 'audit_log:delete', 'audit_log:admin'],
+            'auditor' => ['audit_log:read', 'audit_log:admin'],
+            'manager' => ['audit_log:read'],
+            'board-member' => ['audit_log:read'],
+            'employee' => ['audit_log:read'],
+            'consultant' => ['audit_log:read'],
         ];
 
         foreach ($roles as $roleName => $permissions) {
@@ -199,12 +199,10 @@ class AssignActivityLogPermissions extends Command
     private function getPermissionDescription(string $permission): string
     {
         $descriptions = [
-            'activity.view.own' => 'View their own activity logs',
-            'activity.view.organization' => 'View activity logs within their organizations',
-            'activity.view.all' => 'View all activity logs across all organizations',
-            'activity.delete' => 'Delete activity logs',
-            'activity.export' => 'Export activity logs',
-            'activity.purge' => 'Purge old activity logs',
+            'audit_log:read' => 'View audit logs (scoped to user permissions)',
+            'audit_log:write' => 'Create audit log entries',
+            'audit_log:delete' => 'Delete audit log entries',
+            'audit_log:admin' => 'Full administrative access to audit logs including export and purge',
         ];
 
         return $descriptions[$permission] ?? 'Unknown permission';
@@ -217,26 +215,24 @@ class AssignActivityLogPermissions extends Command
     {
         $this->info("\n=== USER CAPABILITIES ===");
 
-        if (in_array('activity.view.all', $activityPermissions)) {
+        if (in_array('audit_log:admin', $activityPermissions)) {
             $this->line("✅ Can access the Activity Log page and view ALL system activities");
-        } elseif (in_array('activity.view.organization', $activityPermissions)) {
-            $this->line("✅ Can access the Activity Log page and view activities within their organizations");
-        } elseif (in_array('activity.view.own', $activityPermissions)) {
-            $this->line("✅ Can access the Activity Log page and view their own activities only");
+        } elseif (in_array('audit_log:read', $activityPermissions)) {
+            $this->line("✅ Can access the Activity Log page and view activities within their organization scope");
         } else {
             $this->line("❌ Cannot access the Activity Log page");
         }
 
-        if (in_array('activity.export', $activityPermissions)) {
+        if (in_array('audit_log:admin', $activityPermissions)) {
             $this->line("✅ Can export activity logs");
         }
 
-        if (in_array('activity.delete', $activityPermissions)) {
+        if (in_array('audit_log:delete', $activityPermissions) || in_array('audit_log:admin', $activityPermissions)) {
             $this->line("✅ Can delete activity logs");
         }
 
-        if (in_array('activity.purge', $activityPermissions)) {
-            $this->line("✅ Can purge old activity logs");
+        if (in_array('audit_log:admin', $activityPermissions)) {
+            $this->line("✅ Can purge old audit logs");
         }
 
         $this->info("\nThe user can now access the Activity Log at: /activity-log");

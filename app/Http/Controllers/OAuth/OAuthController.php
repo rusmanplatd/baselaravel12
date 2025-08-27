@@ -34,7 +34,7 @@ class OAuthController extends Controller
     #[QueryParam('client_id', 'string', 'OAuth client ID', true, '9a5d7f8e-1234-5678-9abc-def012345678')]
     #[QueryParam('redirect_uri', 'string', 'Redirect URI registered with the client', true, 'https://example.com/callback')]
     #[QueryParam('response_type', 'string', 'OAuth response type', true, 'code')]
-    #[QueryParam('scope', 'string', 'Requested scopes (space-separated)', false, 'openid profile organization:read')]
+    #[QueryParam('scope', 'string', 'Requested scopes (space-separated)', false, 'openid profile https://api.yourcompany.com/auth/organization.readonly')]
     #[QueryParam('state', 'string', 'CSRF protection state parameter', false, 'random-state-string')]
     #[ScribeResponse(null, 302, headers: ['Location' => 'https://example.com/callback?code=auth_code&state=random-state-string'])]
     public function handleAuthorize(AuthorizeRequest $request)
@@ -220,7 +220,7 @@ class OAuthController extends Controller
             ]);
         }
 
-        if (in_array('organization:read', $scopes)) {
+        if (in_array('https://api.yourcompany.com/auth/organization.readonly', $scopes) || in_array('https://api.yourcompany.com/auth/organization', $scopes) || in_array('https://api.yourcompany.com/auth/organization.admin', $scopes)) {
             $activeMemberships = $user->memberships()->active()->with(['organization', 'organizationUnit', 'organizationPosition'])->get();
             $userinfo['organizations'] = $activeMemberships->map(function ($membership) {
                 return [
@@ -237,7 +237,7 @@ class OAuthController extends Controller
             })->toArray();
         }
 
-        if (in_array('tenant:read', $scopes)) {
+        if (in_array('https://api.yourcompany.com/auth/organization.readonly', $scopes) || in_array('https://api.yourcompany.com/auth/organization.admin', $scopes)) {
             $tenantData = [];
             $activeMemberships = $user->memberships()->active()->with('organization.tenant')->get();
             foreach ($activeMemberships as $membership) {
@@ -399,7 +399,7 @@ class OAuthController extends Controller
             $hasOrganizationAccess = $userOrganizations->contains('id', $organization->id);
 
             if (! $hasOrganizationAccess) {
-                $organizationScopes = ['organization:read', 'organization:write', 'organization:members', 'organization:admin', 'organization:hierarchy'];
+                $organizationScopes = ['https://api.yourcompany.com/auth/organization.readonly', 'https://api.yourcompany.com/auth/organization', 'https://api.yourcompany.com/auth/organization.members', 'https://api.yourcompany.com/auth/organization.admin'];
                 $validScopes = array_diff($validScopes, $organizationScopes);
             } else {
                 $userMembership = Auth::user()->memberships()
@@ -408,13 +408,13 @@ class OAuthController extends Controller
                     ->first();
 
                 if (! $userMembership || ! $userMembership->isManagementMembership()) {
-                    $adminScopes = ['organization:admin', 'organization:hierarchy'];
+                    $adminScopes = ['https://api.yourcompany.com/auth/organization.admin'];
                     $validScopes = array_diff($validScopes, $adminScopes);
                 }
             }
 
             if ($organization->tenant) {
-                $tenantScopes = ['tenant:read', 'tenant:admin'];
+                $tenantScopes = ['https://api.yourcompany.com/auth/organization.readonly', 'https://api.yourcompany.com/auth/organization.admin'];
                 if (! $hasOrganizationAccess) {
                     $validScopes = array_diff($validScopes, $tenantScopes);
                 }

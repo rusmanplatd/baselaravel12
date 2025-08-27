@@ -169,13 +169,12 @@ class Organization extends Model
         $baseScopes = ['openid', 'profile', 'email'];
 
         if ($this->organization_type === 'corporate') {
-            $baseScopes[] = 'organization:read';
-            $baseScopes[] = 'organization:members';
+            $baseScopes[] = 'https://api.yourcompany.com/auth/organization.readonly';
+            $baseScopes[] = 'https://api.yourcompany.com/auth/organization.members';
         }
 
         if ($this->level === 0) {
-            $baseScopes[] = 'organization:admin';
-            $baseScopes[] = 'organization:hierarchy';
+            $baseScopes[] = 'https://api.yourcompany.com/auth/organization.admin';
         }
 
         return $baseScopes;

@@ -27,8 +27,8 @@ class PermissionController extends Controller
     #[QueryParam('per_page', 'integer', 'Number of results per page', false, 15)]
     #[ScribeResponse([
         'data' => [
-            ['id' => 1, 'name' => 'organization:read', 'guard_name' => 'web', 'roles' => [['name' => 'admin']]],
-            ['id' => 2, 'name' => 'organization:write', 'guard_name' => 'web', 'roles' => [['name' => 'manager']]],
+            ['id' => 1, 'name' => 'org:read', 'guard_name' => 'web', 'roles' => [['name' => 'admin']]],
+            ['id' => 2, 'name' => 'org:write', 'guard_name' => 'web', 'roles' => [['name' => 'manager']]],
         ],
         'meta' => ['current_page' => 1, 'total' => 2],
     ])]
@@ -92,7 +92,7 @@ class PermissionController extends Controller
         description: 'Retrieve a specific permission with its roles'
     )]
     #[Authenticated]
-    #[ScribeResponse(['id' => 1, 'name' => 'organization:read', 'guard_name' => 'web', 'roles' => [['name' => 'admin']]])]
+    #[ScribeResponse(['id' => 1, 'name' => 'org:read', 'guard_name' => 'web', 'roles' => [['name' => 'admin']]])]
     public function show(Permission $permission)
     {
         return response()->json($permission->load(['roles']));

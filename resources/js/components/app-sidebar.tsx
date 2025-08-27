@@ -21,39 +21,39 @@ const mainNavItems: NavItem[] = [
     {
         title: 'Organizations',
         icon: Building,
-        permission: 'organization.view',
+        permission: 'org:read',
         items: [
             {
                 title: 'All Organizations',
                 href: '/organizations',
-                permission: 'organization.view',
+                permission: 'org:read',
             },
             {
                 title: 'Hierarchy View',
                 href: '/organizations-hierarchy',
-                permission: 'organization.hierarchy.view',
+                permission: 'org:read',
             },
         ],
     },
     {
         title: 'Organizational Units',
         icon: Network,
-        permission: 'unit.view',
+        permission: 'org_unit:read',
         items: [
             {
                 title: 'All Units',
                 href: '/organization-units',
-                permission: 'unit.view',
+                permission: 'org_unit:read',
             },
             {
                 title: 'Governance Units',
                 href: '/organization-units-governance',
-                permission: 'unit.view',
+                permission: 'org_unit:read',
             },
             {
                 title: 'Operational Units',
                 href: '/organization-units-operational',
-                permission: 'unit.view',
+                permission: 'org_unit:read',
             },
         ],
     },
@@ -61,7 +61,7 @@ const mainNavItems: NavItem[] = [
         title: 'Position Levels',
         href: '/organization-position-levels',
         icon: Award,
-        permission: 'position.level.view',
+        permission: 'org_position:read',
     },
     {
         title: 'Positions',
@@ -77,46 +77,46 @@ const mainNavItems: NavItem[] = [
             {
                 title: 'All Memberships',
                 href: '/organization-memberships',
-                permission: 'membership.view',
+                permission: 'org_member:read',
             },
             {
                 title: 'Board Members',
                 href: '/board-members',
-                permission: 'membership.view',
+                permission: 'org_member:read',
             },
             {
                 title: 'Executives',
                 href: '/executives',
-                permission: 'membership.view',
+                permission: 'org_member:read',
             },
         ],
     },
     {
         title: 'User Management',
         icon: Users,
-        permission: 'user.view',
+        permission: 'user:read',
         items: [
             {
                 title: 'All Users',
                 href: '/users',
-                permission: 'user.view',
+                permission: 'user:read',
             },
         ],
     },
     {
         title: 'Access Control',
         icon: KeyRound,
-        permissions: ['view roles', 'view permissions'],
+        permissions: ['role:read', 'permission:read'],
         items: [
             {
                 title: 'Roles',
                 href: '/roles',
-                permission: 'view roles',
+                permission: 'role:read',
             },
             {
                 title: 'Permissions',
                 href: '/permissions',
-                permission: 'view permissions',
+                permission: 'permission:read',
             },
         ],
     },
@@ -146,7 +146,7 @@ const mainNavItems: NavItem[] = [
         title: 'Activity Log',
         href: '/activity-log',
         icon: Activity,
-        permissions: ['activity.view.own', 'activity.view.organization', 'activity.view.all'],
+        permissions: ['audit_log:read', 'audit_log:admin'],
     },
 ];
 

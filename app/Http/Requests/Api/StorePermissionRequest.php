@@ -37,7 +37,7 @@ class StorePermissionRequest extends FormRequest
         return [
             'name' => [
                 'description' => 'The name of the permission',
-                'example' => 'organization:read',
+                'example' => 'org:read',
             ],
             'guard_name' => [
                 'description' => 'The guard name for this permission (optional)',

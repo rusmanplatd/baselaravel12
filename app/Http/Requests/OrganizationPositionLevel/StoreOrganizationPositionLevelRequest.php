@@ -11,7 +11,7 @@ class StoreOrganizationPositionLevelRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->can('create organization position levels');
+        return $this->user()->can('org_position:write');
     }
 
     /**

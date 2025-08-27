@@ -28,8 +28,8 @@ class RoleController extends Controller
     #[QueryParam('per_page', 'integer', 'Number of results per page', false, 15)]
     #[ScribeResponse([
         'data' => [
-            ['id' => 1, 'name' => 'admin', 'permissions' => [['name' => 'organization:admin']]],
-            ['id' => 2, 'name' => 'member', 'permissions' => [['name' => 'organization:read']]],
+            ['id' => 1, 'name' => 'admin', 'permissions' => [['name' => 'org:admin']]],
+            ['id' => 2, 'name' => 'member', 'permissions' => [['name' => 'org:read']]],
         ],
         'meta' => ['current_page' => 1, 'total' => 2],
     ])]

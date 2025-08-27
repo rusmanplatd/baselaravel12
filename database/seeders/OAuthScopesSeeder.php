@@ -12,6 +12,7 @@ class OAuthScopesSeeder extends Seeder
     public function run(): void
     {
         $scopes = [
+            // OpenID Connect core scopes
             [
                 'identifier' => 'openid',
                 'name' => 'OpenID Connect',
@@ -30,102 +31,110 @@ class OAuthScopesSeeder extends Seeder
                 'description' => 'Access your email address',
                 'is_default' => true,
             ],
+            
+            // Google-style organization management scopes
             [
-                'identifier' => 'organization:read',
-                'name' => 'Organization Read',
+                'identifier' => 'https://api.yourcompany.com/auth/organization.readonly',
+                'name' => 'Organization Read Access',
                 'description' => 'Read access to your organization data',
                 'is_default' => false,
             ],
             [
-                'identifier' => 'organization:write',
-                'name' => 'Organization Write',
-                'description' => 'Modify organization data',
+                'identifier' => 'https://api.yourcompany.com/auth/organization',
+                'name' => 'Organization Management',
+                'description' => 'Full access to modify organization data',
                 'is_default' => false,
             ],
             [
-                'identifier' => 'organization:members',
+                'identifier' => 'https://api.yourcompany.com/auth/organization.members',
                 'name' => 'Organization Members',
                 'description' => 'Access to organization membership information',
                 'is_default' => false,
             ],
             [
-                'identifier' => 'organization:admin',
-                'name' => 'Organization Admin',
-                'description' => 'Administrative access to organization settings',
+                'identifier' => 'https://api.yourcompany.com/auth/organization.admin',
+                'name' => 'Organization Administration',
+                'description' => 'Administrative access to organization settings and hierarchy',
                 'is_default' => false,
             ],
+            
+            // Google-style user management scopes
             [
-                'identifier' => 'organization:hierarchy',
-                'name' => 'Organization Hierarchy',
-                'description' => 'Access to full organization hierarchy',
-                'is_default' => false,
-            ],
-            [
-                'identifier' => 'tenant:read',
-                'name' => 'Tenant Read',
-                'description' => 'Read access to tenant-specific data',
-                'is_default' => false,
-            ],
-            [
-                'identifier' => 'tenant:admin',
-                'name' => 'Tenant Admin',
-                'description' => 'Administrative access within tenant scope',
-                'is_default' => false,
-            ],
-            [
-                'identifier' => 'user:read',
-                'name' => 'User Read',
+                'identifier' => 'https://api.yourcompany.com/auth/userinfo.profile',
+                'name' => 'User Profile Access',
                 'description' => 'Read user profile and basic information',
                 'is_default' => false,
             ],
             [
-                'identifier' => 'user:write',
-                'name' => 'User Write',
-                'description' => 'Update user profile and settings',
+                'identifier' => 'https://api.yourcompany.com/auth/userinfo.email',
+                'name' => 'User Email Access',
+                'description' => 'Access user email information',
                 'is_default' => false,
             ],
             [
-                'identifier' => 'analytics:read',
-                'name' => 'Analytics Read',
+                'identifier' => 'https://api.yourcompany.com/auth/user.modify',
+                'name' => 'User Profile Management',
+                'description' => 'Update user profile and settings',
+                'is_default' => false,
+            ],
+            
+            // Google-style analytics and reporting scopes
+            [
+                'identifier' => 'https://api.yourcompany.com/auth/analytics.readonly',
+                'name' => 'Analytics Read Access',
                 'description' => 'Access to analytics and reporting data',
                 'is_default' => false,
             ],
             [
-                'identifier' => 'webhooks:manage',
+                'identifier' => 'https://api.yourcompany.com/auth/reports',
+                'name' => 'Reports Access',
+                'description' => 'Generate and access business reports',
+                'is_default' => false,
+            ],
+            
+            // Google-style integration scopes
+            [
+                'identifier' => 'https://api.yourcompany.com/auth/webhooks',
                 'name' => 'Webhooks Management',
                 'description' => 'Create and manage webhook subscriptions',
                 'is_default' => false,
             ],
             [
-                'identifier' => 'api:full_access',
-                'name' => 'Full API Access',
-                'description' => 'Complete API access for trusted applications',
+                'identifier' => 'https://api.yourcompany.com/auth/integrations',
+                'name' => 'Third-party Integrations',
+                'description' => 'Access for third-party system integrations',
                 'is_default' => false,
             ],
+            
+            // Google-style financial and security scopes
             [
-                'identifier' => 'financial:read',
+                'identifier' => 'https://api.yourcompany.com/auth/finance.readonly',
                 'name' => 'Financial Data Read',
                 'description' => 'Access to financial and billing information',
                 'is_default' => false,
             ],
             [
-                'identifier' => 'security:audit',
-                'name' => 'Security Audit',
+                'identifier' => 'https://api.yourcompany.com/auth/audit.readonly',
+                'name' => 'Security Audit Access',
                 'description' => 'Access to security logs and audit trails',
                 'is_default' => false,
             ],
+            
+            // Google-style platform scopes
             [
-                'identifier' => 'integration:third_party',
-                'name' => 'Third-party Integrations',
-                'description' => 'Access for third-party system integrations',
+                'identifier' => 'https://api.yourcompany.com/auth/platform.full',
+                'name' => 'Full Platform Access',
+                'description' => 'Complete platform access for trusted applications',
                 'is_default' => false,
             ],
             [
-                'identifier' => 'mobile:access',
+                'identifier' => 'https://api.yourcompany.com/auth/mobile',
                 'name' => 'Mobile Application Access',
                 'description' => 'Specialized access for mobile applications',
                 'is_default' => false,
             ],
+            
+            // Standard OAuth scopes
             [
                 'identifier' => 'offline_access',
                 'name' => 'Offline Access',

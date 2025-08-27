@@ -379,8 +379,8 @@ class OrganizationController extends Controller
     )]
     #[Authenticated]
     #[ScribeResponse([
-        ['id' => 1, 'name' => 'admin', 'permissions' => [['name' => 'organization:admin']]],
-        ['id' => 2, 'name' => 'member', 'permissions' => [['name' => 'organization:read']]],
+        ['id' => 1, 'name' => 'admin', 'permissions' => [['name' => 'org:admin']]],
+        ['id' => 2, 'name' => 'member', 'permissions' => [['name' => 'org:read']]],
     ])]
     public function roles(Organization $organization)
     {

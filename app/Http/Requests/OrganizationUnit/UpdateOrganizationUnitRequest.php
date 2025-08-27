@@ -11,7 +11,7 @@ class UpdateOrganizationUnitRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->can('edit organization units');
+        return $this->user()->can('org_unit:write');
     }
 
     /**

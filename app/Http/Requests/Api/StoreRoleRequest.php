@@ -47,7 +47,7 @@ class StoreRoleRequest extends FormRequest
             ],
             'permissions' => [
                 'description' => 'Array of permission names to assign to this role',
-                'example' => ['organization:read', 'organization:write'],
+                'example' => ['org:read', 'org:write'],
             ],
         ];
     }

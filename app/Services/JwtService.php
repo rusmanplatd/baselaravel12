@@ -56,7 +56,7 @@ class JwtService
             $payload['org_name'] = $organization->name;
             $payload['org_code'] = $organization->organization_code;
 
-            if (in_array('organization:read', $scopes)) {
+            if (in_array('https://api.yourcompany.com/auth/organization.readonly', $scopes) || in_array('https://api.yourcompany.com/auth/organization', $scopes) || in_array('https://api.yourcompany.com/auth/organization.admin', $scopes)) {
                 $userMembership = $user->memberships()
                     ->where('organization_id', $organization->id)
                     ->where('status', 'active')
@@ -73,7 +73,7 @@ class JwtService
                 }
             }
 
-            if (in_array('tenant:read', $scopes) && $organization->tenant) {
+            if ((in_array('https://api.yourcompany.com/auth/organization.readonly', $scopes) || in_array('https://api.yourcompany.com/auth/organization.admin', $scopes)) && $organization->tenant) {
                 $payload['tenant_id'] = $organization->tenant->id;
                 $payload['tenant_domain'] = $organization->tenant->domain;
             }

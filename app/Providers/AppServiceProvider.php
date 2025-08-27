@@ -37,10 +37,18 @@ class AppServiceProvider extends ServiceProvider
             'openid' => 'OpenID Connect',
             'profile' => 'Profile Information',
             'email' => 'Email Address',
-            'read' => 'Read Access',
-            'write' => 'Write Access',
-            'organization:read' => 'Organization Read',
-            'organization:write' => 'Organization Write',
+            'https://api.yourcompany.com/auth/organization.readonly' => 'Organization Read Access',
+            'https://api.yourcompany.com/auth/organization' => 'Organization Management',
+            'https://api.yourcompany.com/auth/organization.members' => 'Organization Members',
+            'https://api.yourcompany.com/auth/organization.admin' => 'Organization Administration',
+            'https://api.yourcompany.com/auth/userinfo.profile' => 'User Profile Access',
+            'https://api.yourcompany.com/auth/userinfo.email' => 'User Email Access',
+            'https://api.yourcompany.com/auth/user.modify' => 'User Profile Management',
+            'https://api.yourcompany.com/auth/analytics.readonly' => 'Analytics Read Access',
+            'https://api.yourcompany.com/auth/webhooks' => 'Webhooks Management',
+            'https://api.yourcompany.com/auth/platform.full' => 'Full Platform Access',
+            'https://api.yourcompany.com/auth/mobile' => 'Mobile Application Access',
+            'offline_access' => 'Offline Access',
         ]);
     }
 

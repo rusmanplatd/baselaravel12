@@ -12,7 +12,7 @@ class UpdateOrganizationPositionLevelRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->can('edit organization position levels');
+        return $this->user()->can('org_position:write');
     }
 
     /**

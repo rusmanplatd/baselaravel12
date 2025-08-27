@@ -24,110 +24,82 @@ class PermissionSeeder extends Seeder
 
         // Set auth context for model boot methods
         Auth::login($systemUser);
-        // Create permissions for different modules
+        // GitHub-style permissions for different modules
         $permissions = [
-            // User management permissions
-            'user.view' => 'View users',
-            'user.create' => 'Create users',
-            'user.edit' => 'Edit users',
-            'user.delete' => 'Delete users',
-            'user.impersonate' => 'Impersonate users',
+            // User management permissions (GitHub-style)
+            'user:read' => 'View and list users',
+            'user:write' => 'Create and update users',
+            'user:delete' => 'Delete users',
+            'user:impersonate' => 'Impersonate users for troubleshooting',
 
-            // Organization management permissions
-            'organization.view' => 'View organizations',
-            'organization.create' => 'Create organizations',
-            'organization.edit' => 'Edit organizations',
-            'organization.delete' => 'Delete organizations',
-            'organization.hierarchy.view' => 'View organization hierarchy',
-            'organization.hierarchy.manage' => 'Manage organization hierarchy',
+            // Organization management permissions (GitHub-style)
+            'org:read' => 'View organization information',
+            'org:write' => 'Create and update organizations',
+            'org:delete' => 'Delete organizations',
+            'org:admin' => 'Full administrative access to organization',
 
-            // Organization membership permissions
-            'membership.view' => 'View organization memberships',
-            'membership.create' => 'Create organization memberships',
-            'membership.edit' => 'Edit organization memberships',
-            'membership.delete' => 'Delete organization memberships',
-            'membership.activate' => 'Activate memberships',
-            'membership.deactivate' => 'Deactivate memberships',
-            'membership.terminate' => 'Terminate memberships',
+            // Organization membership permissions (GitHub-style)
+            'org_member:read' => 'View organization memberships',
+            'org_member:write' => 'Create and update organization memberships',
+            'org_member:delete' => 'Remove organization memberships',
+            'org_member:admin' => 'Full administrative access to organization memberships',
 
-            // Organization unit permissions
-            'unit.view' => 'View organization units',
-            'unit.create' => 'Create organization units',
-            'unit.edit' => 'Edit organization units',
-            'unit.delete' => 'Delete organization units',
+            // Repository-style organization unit permissions
+            'org_unit:read' => 'View organization units',
+            'org_unit:write' => 'Create and update organization units',
+            'org_unit:delete' => 'Delete organization units',
+            'org_unit:admin' => 'Full administrative access to organization units',
 
-            // Organization position permissions
-            'position.view' => 'View organization positions',
-            'position.create' => 'Create organization positions',
-            'position.edit' => 'Edit organization positions',
-            'position.delete' => 'Delete organization positions',
+            // Position management permissions (GitHub-style)
+            'org_position:read' => 'View organization positions',
+            'org_position:write' => 'Create and update organization positions',
+            'org_position:delete' => 'Delete organization positions',
+            'org_position:admin' => 'Full administrative access to organization positions',
 
-            // Organization position level permissions
-            'position.level.view' => 'View organization position levels',
-            'position.level.create' => 'Create organization position levels',
-            'position.level.edit' => 'Edit organization position levels',
-            'position.level.delete' => 'Delete organization position levels',
 
-            // Alternative permission names for organization position levels (used by form requests)
-            'create organization position levels' => 'Create organization position levels',
-            'edit organization position levels' => 'Edit organization position levels',
-            'view organization position levels' => 'View organization position levels',
-            'delete organization position levels' => 'Delete organization position levels',
+            // OAuth client permissions (GitHub-style)
+            'oauth_app:read' => 'View OAuth applications',
+            'oauth_app:write' => 'Create and update OAuth applications',
+            'oauth_app:delete' => 'Delete OAuth applications',
+            'oauth_app:admin' => 'Full administrative access to OAuth applications',
 
-            // OAuth client permissions
-            'oauth.client.view' => 'View OAuth clients',
-            'oauth.client.create' => 'Create OAuth clients',
-            'oauth.client.edit' => 'Edit OAuth clients',
-            'oauth.client.delete' => 'Delete OAuth clients',
-            'oauth.client.regenerate' => 'Regenerate OAuth client secrets',
+            // OAuth token and analytics permissions
+            'oauth_token:read' => 'View OAuth tokens and analytics',
+            'oauth_token:write' => 'Manage OAuth tokens',
+            'oauth_token:delete' => 'Revoke OAuth tokens',
 
-            // OAuth analytics and monitoring
-            'oauth.analytics.view' => 'View OAuth analytics',
-            'oauth.tokens.view' => 'View OAuth tokens',
-            'oauth.tokens.revoke' => 'Revoke OAuth tokens',
+            // Activity log permissions (GitHub-style)
+            'audit_log:read' => 'View audit logs',
+            'audit_log:write' => 'Create audit log entries',
+            'audit_log:delete' => 'Delete audit log entries',
+            'audit_log:admin' => 'Full administrative access to audit logs including export and purge',
 
-            // Activity log permissions
-            'activity.view.own' => 'View own activity logs',
-            'activity.view.organization' => 'View organization activity logs',
-            'activity.view.all' => 'View all activity logs across organizations',
-            'activity.delete' => 'Delete activity logs',
-            'activity.export' => 'Export activity logs',
-            'activity.purge' => 'Purge old activity logs',
+            // Role and permission management (GitHub-style)
+            'role:read' => 'View roles and their permissions',
+            'role:write' => 'Create and update roles',
+            'role:delete' => 'Delete roles',
+            'role:admin' => 'Full administrative access to roles',
+            
+            'permission:read' => 'View permissions',
+            'permission:write' => 'Create and update permissions',
+            'permission:delete' => 'Delete permissions',
+            'permission:admin' => 'Full administrative access to permissions',
 
-            // Role and permission management
-            'view roles' => 'View roles',
-            'create roles' => 'Create roles',
-            'edit roles' => 'Edit roles',
-            'delete roles' => 'Delete roles',
-            'manage roles' => 'Manage roles (full access)',
-            'view permissions' => 'View permissions',
-            'create permissions' => 'Create permissions',
-            'edit permissions' => 'Edit permissions',
-            'delete permissions' => 'Delete permissions',
-            'manage permissions' => 'Manage permissions (full access)',
-            'assign permissions' => 'Assign permissions to roles',
-            'revoke permissions' => 'Revoke permissions from roles',
 
-            // Legacy role and permission names (keeping for backward compatibility)
-            'role.view' => 'View roles',
-            'role.create' => 'Create roles',
-            'role.edit' => 'Edit roles',
-            'role.delete' => 'Delete roles',
-            'permission.assign' => 'Assign permissions to roles',
-            'permission.revoke' => 'Revoke permissions from roles',
+            // System administration (GitHub-style)
+            'admin:org' => 'Organization administration',
+            'admin:enterprise' => 'Enterprise administration',
+            'site_admin' => 'Site administration access',
+            'system:read' => 'View system settings and logs',
+            'system:write' => 'Modify system settings',
+            'system:admin' => 'Full system administrative access',
 
-            // System administration
-            'system.settings.view' => 'View system settings',
-            'system.settings.edit' => 'Edit system settings',
-            'system.maintenance' => 'Access system maintenance',
-            'system.logs.view' => 'View system logs',
-
-            // Profile and security permissions
-            'profile.view' => 'View own profile',
-            'profile.edit' => 'Edit own profile',
-            'security.mfa.manage' => 'Manage multi-factor authentication',
-            'security.password.change' => 'Change password',
-            'security.sessions.manage' => 'Manage active sessions',
+            // Profile and security permissions (GitHub-style)
+            'profile:read' => 'View own profile information',
+            'profile:write' => 'Update own profile information',
+            'security:read' => 'View security settings',
+            'security:write' => 'Modify security settings including MFA and sessions',
+            'security:admin' => 'Full administrative access to security features',
         ];
 
         // Set permissions team context to null for global permissions
@@ -144,7 +116,7 @@ class PermissionSeeder extends Seeder
             ]);
         }
 
-        // Create default roles
+        // Create default roles with GitHub-style permissions
         $roles = [
             'super-admin' => [
                 'description' => 'Full system access',
@@ -153,183 +125,141 @@ class PermissionSeeder extends Seeder
             'organization-admin' => [
                 'description' => 'Organization administrator',
                 'permissions' => [
-                    'organization.view',
-                    'organization.edit',
-                    'organization.hierarchy.view',
-                    'membership.view',
-                    'membership.create',
-                    'membership.edit',
-                    'membership.delete',
-                    'membership.activate',
-                    'membership.deactivate',
-                    'membership.terminate',
-                    'unit.view',
-                    'unit.create',
-                    'unit.edit',
-                    'unit.delete',
-                    'position.view',
-                    'position.create',
-                    'position.edit',
-                    'position.delete',
-                    'position.level.view',
-                    'position.level.create',
-                    'position.level.edit',
-                    'position.level.delete',
-                    'view organization position levels',
-                    'create organization position levels',
-                    'edit organization position levels',
-                    'delete organization position levels',
-                    'oauth.client.view',
-                    'oauth.client.create',
-                    'oauth.client.edit',
-                    'oauth.client.delete',
-                    'oauth.client.regenerate',
-                    'oauth.analytics.view',
-                    'activity.view.organization',
-                    'activity.view.all',
-                    'activity.delete',
-                    'activity.export',
-                    'activity.purge',
-                    'user.view',
-                    'view roles',
-                    'create roles',
-                    'edit roles',
-                    'delete roles',
-                    'view permissions',
-                    'assign permissions',
-                    'revoke permissions',
-                    'profile.view',
-                    'profile.edit',
-                    'security.mfa.manage',
-                    'security.password.change',
-                    'security.sessions.manage',
+                    'org:read',
+                    'org:write',
+                    'org:admin',
+                    'org_member:read',
+                    'org_member:write',
+                    'org_member:delete',
+                    'org_member:admin',
+                    'org_unit:read',
+                    'org_unit:write',
+                    'org_unit:delete',
+                    'org_unit:admin',
+                    'org_position:read',
+                    'org_position:write',
+                    'org_position:delete',
+                    'org_position:admin',
+                    'oauth_app:read',
+                    'oauth_app:write',
+                    'oauth_app:delete',
+                    'oauth_app:admin',
+                    'oauth_token:read',
+                    'audit_log:read',
+                    'audit_log:admin',
+                    'user:read',
+                    'role:read',
+                    'role:write',
+                    'role:delete',
+                    'permission:read',
+                    'profile:read',
+                    'profile:write',
+                    'security:read',
+                    'security:write',
+                    'admin:org',
                 ],
             ],
             'manager' => [
                 'description' => 'Department/unit manager',
                 'permissions' => [
-                    'organization.view',
-                    'membership.view',
-                    'membership.create',
-                    'membership.edit',
-                    'unit.view',
-                    'unit.edit',
-                    'position.view',
-                    'position.edit',
-                    'position.level.view',
-                    'view organization position levels',
-                    'user.view',
-                    'activity.view.organization',
-                    'profile.view',
-                    'profile.edit',
-                    'security.mfa.manage',
-                    'security.password.change',
-                    'security.sessions.manage',
+                    'org:read',
+                    'org_member:read',
+                    'org_member:write',
+                    'org_unit:read',
+                    'org_unit:write',
+                    'org_position:read',
+                    'org_position:write',
+                    'user:read',
+                    'audit_log:read',
+                    'profile:read',
+                    'profile:write',
+                    'security:read',
+                    'security:write',
                 ],
             ],
             'employee' => [
                 'description' => 'Regular employee',
                 'permissions' => [
-                    'organization.view',
-                    'membership.view',
-                    'unit.view',
-                    'position.view',
-                    'position.level.view',
-                    'view organization position levels',
-                    'user.view',
-                    'activity.view.own',
-                    'profile.view',
-                    'profile.edit',
-                    'security.mfa.manage',
-                    'security.password.change',
-                    'security.sessions.manage',
+                    'org:read',
+                    'org_member:read',
+                    'org_unit:read',
+                    'org_position:read',
+                    'user:read',
+                    'profile:read',
+                    'profile:write',
+                    'security:read',
+                    'security:write',
                 ],
             ],
             'board-member' => [
                 'description' => 'Board member',
                 'permissions' => [
-                    'organization.view',
-                    'organization.hierarchy.view',
-                    'membership.view',
-                    'unit.view',
-                    'position.view',
-                    'position.level.view',
-                    'view organization position levels',
-                    'user.view',
-                    'oauth.analytics.view',
-                    'activity.view.organization',
-                    'profile.view',
-                    'profile.edit',
-                    'security.mfa.manage',
-                    'security.password.change',
-                    'security.sessions.manage',
+                    'org:read',
+                    'org_member:read',
+                    'org_unit:read',
+                    'org_position:read',
+                    'user:read',
+                    'oauth_token:read',
+                    'audit_log:read',
+                    'profile:read',
+                    'profile:write',
+                    'security:read',
+                    'security:write',
                 ],
             ],
             'consultant' => [
                 'description' => 'External consultant',
                 'permissions' => [
-                    'organization.view',
-                    'membership.view',
-                    'unit.view',
-                    'position.view',
-                    'position.level.view',
-                    'view organization position levels',
-                    'activity.view.own',
-                    'profile.view',
-                    'profile.edit',
-                    'security.mfa.manage',
-                    'security.password.change',
-                    'security.sessions.manage',
+                    'org:read',
+                    'org_member:read',
+                    'org_unit:read',
+                    'org_position:read',
+                    'profile:read',
+                    'profile:write',
+                    'security:read',
+                    'security:write',
                 ],
             ],
             'auditor' => [
                 'description' => 'System auditor with read-only access to activity logs',
                 'permissions' => [
-                    'organization.view',
-                    'organization.hierarchy.view',
-                    'membership.view',
-                    'unit.view',
-                    'position.view',
-                    'position.level.view',
-                    'view organization position levels',
-                    'user.view',
-                    'activity.view.all',
-                    'activity.export',
-                    'oauth.analytics.view',
-                    'system.logs.view',
-                    'profile.view',
-                    'profile.edit',
-                    'security.mfa.manage',
-                    'security.password.change',
-                    'security.sessions.manage',
+                    'org:read',
+                    'org_member:read',
+                    'org_unit:read',
+                    'org_position:read',
+                    'user:read',
+                    'audit_log:read',
+                    'audit_log:admin',
+                    'oauth_token:read',
+                    'system:read',
+                    'profile:read',
+                    'profile:write',
+                    'security:read',
+                    'security:write',
                 ],
             ],
             'security-admin' => [
                 'description' => 'Security administrator with full access to security features',
                 'permissions' => [
-                    'organization.view',
-                    'organization.hierarchy.view',
-                    'membership.view',
-                    'unit.view',
-                    'position.view',
-                    'position.level.view',
-                    'view organization position levels',
-                    'user.view',
-                    'user.impersonate',
-                    'activity.view.all',
-                    'activity.delete',
-                    'activity.export',
-                    'activity.purge',
-                    'oauth.analytics.view',
-                    'oauth.tokens.view',
-                    'oauth.tokens.revoke',
-                    'system.logs.view',
-                    'system.maintenance',
-                    'profile.view',
-                    'profile.edit',
-                    'security.mfa.manage',
-                    'security.password.change',
-                    'security.sessions.manage',
+                    'org:read',
+                    'org_member:read',
+                    'org_unit:read',
+                    'org_position:read',
+                    'user:read',
+                    'user:impersonate',
+                    'audit_log:read',
+                    'audit_log:delete',
+                    'audit_log:admin',
+                    'oauth_token:read',
+                    'oauth_token:write',
+                    'oauth_token:delete',
+                    'system:read',
+                    'system:admin',
+                    'profile:read',
+                    'profile:write',
+                    'security:read',
+                    'security:write',
+                    'security:admin',
                 ],
             ],
         ];
@@ -366,12 +296,10 @@ class PermissionSeeder extends Seeder
         $this->command->info("\n=== ACTIVITY LOG PERMISSIONS SUMMARY ===");
         
         $activityPermissions = [
-            'activity.view.own' => 'Can view their own activity logs',
-            'activity.view.organization' => 'Can view activity logs within their organizations',
-            'activity.view.all' => 'Can view all activity logs across all organizations',
-            'activity.delete' => 'Can delete activity logs',
-            'activity.export' => 'Can export activity logs',
-            'activity.purge' => 'Can purge old activity logs',
+            'audit_log:read' => 'Can view audit logs (scoped to user permissions)',
+            'audit_log:write' => 'Can create audit log entries',
+            'audit_log:delete' => 'Can delete audit log entries',
+            'audit_log:admin' => 'Full administrative access to audit logs including export and purge',
         ];
 
         foreach ($activityPermissions as $permission => $description) {
@@ -382,7 +310,7 @@ class PermissionSeeder extends Seeder
 
         foreach ($roles as $roleName => $roleData) {
             $activityPerms = array_filter($roleData['permissions'], function($perm) {
-                return strpos($perm, 'activity.') === 0;
+                return strpos($perm, 'audit_log:') === 0;
             });
 
             if (!empty($activityPerms)) {
@@ -390,13 +318,13 @@ class PermissionSeeder extends Seeder
             }
         }
 
-        $this->command->info("\n=== ROLE HIERARCHY FOR ACTIVITY LOGS ===");
-        $this->command->info("• Employees: Can only view their own activities");
-        $this->command->info("• Managers/Board Members: Can view organization activities");
-        $this->command->info("• Organization Admins: Can view and delete organization activities + all activities");
-        $this->command->info("• Auditors: Can view and export all activities (read-only)");
-        $this->command->info("• Security Admins: Can view, delete, export, and purge all activities");
-        $this->command->info("• Super Admins: Full access to all activity log features");
+        $this->command->info("\n=== ROLE HIERARCHY FOR AUDIT LOGS (GitHub-style) ===");
+        $this->command->info("• Employees: Basic audit log read access (own activities)");
+        $this->command->info("• Managers/Board Members: Organization-scoped audit log read access");
+        $this->command->info("• Organization Admins: Full audit log administration within organization");
+        $this->command->info("• Auditors: Read-only access to all audit logs with export capabilities");
+        $this->command->info("• Security Admins: Full audit log administration including deletion and purging");
+        $this->command->info("• Super Admins: Complete access to all audit log features");
         
         $totalPermissions = Permission::count();
         $totalRoles = Role::count();

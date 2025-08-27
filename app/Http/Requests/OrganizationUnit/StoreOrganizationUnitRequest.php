@@ -11,7 +11,7 @@ class StoreOrganizationUnitRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->can('create organization units');
+        return $this->user()->can('org_unit:write');
     }
 
     /**

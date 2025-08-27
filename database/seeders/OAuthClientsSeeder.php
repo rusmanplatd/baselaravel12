@@ -92,7 +92,7 @@ class OAuthClientsSeeder extends Seeder
                     'grant_types' => json_encode(['authorization_code', 'refresh_token']),
                     'revoked' => false,
                     'organization_id' => $organization->id,
-                    'allowed_scopes' => json_encode(['openid', 'profile', 'email', 'organization:read']),
+                    'allowed_scopes' => json_encode(['openid', 'profile', 'email', 'https://api.yourcompany.com/auth/organization.readonly']),
                     'client_type' => 'public',
                     'user_access_scope' => $clientData['user_access_scope'],
                     'user_access_rules' => $clientData['user_access_rules'] ?? null,

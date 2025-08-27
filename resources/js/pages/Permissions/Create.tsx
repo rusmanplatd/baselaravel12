@@ -29,9 +29,9 @@ const breadcrumbItems: BreadcrumbItem[] = [
 ];
 
 const commonPermissionExamples = [
-    'organization:read',
-    'organization:write',
-    'organization:delete',
+    'org:read',
+    'org:write',
+    'org:delete',
     'user:read',
     'user:write',
     'user:delete',
@@ -88,7 +88,7 @@ export default function CreatePermission() {
                     <Info className="h-4 w-4" />
                     <AlertDescription>
                         Permission names should follow the format: <code className="bg-muted px-1 rounded">resource:action</code>.
-                        For example: <code className="bg-muted px-1 rounded">organization:read</code> or <code className="bg-muted px-1 rounded">user:delete</code>.
+                        For example: <code className="bg-muted px-1 rounded">org:read</code> or <code className="bg-muted px-1 rounded">user:delete</code>.
                         Use lowercase letters, numbers, colons, underscores, and hyphens only.
                     </AlertDescription>
                 </Alert>
@@ -112,7 +112,7 @@ export default function CreatePermission() {
                                             <FormControl>
                                                 <Input
                                                     {...field}
-                                                    placeholder="e.g., organization:read, user:write, role:delete"
+                                                    placeholder="e.g., org:read, user:write, role:delete"
                                                 />
                                             </FormControl>
                                             <FormMessage />

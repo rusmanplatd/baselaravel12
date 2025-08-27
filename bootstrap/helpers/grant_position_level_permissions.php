@@ -71,10 +71,10 @@ function checkPositionLevelPermissions($email, $organizationId = null)
     }
 
     echo "Position level permissions for {$email}:\n";
-    echo '- Can view position levels: '.($user->can('position.level.view') ? 'YES' : 'NO')."\n";
-    echo '- Can create position levels: '.($user->can('create organization position levels') ? 'YES' : 'NO')."\n";
-    echo '- Can edit position levels: '.($user->can('edit organization position levels') ? 'YES' : 'NO')."\n";
-    echo '- Can delete position levels: '.($user->can('delete organization position levels') ? 'YES' : 'NO')."\n";
+    echo '- Can view position levels: '.($user->can('org_position:read') ? 'YES' : 'NO')."\n";
+    echo '- Can create position levels: '.($user->can('org_position:write') ? 'YES' : 'NO')."\n";
+    echo '- Can edit position levels: '.($user->can('org_position:write') ? 'YES' : 'NO')."\n";
+    echo '- Can delete position levels: '.($user->can('org_position:delete') ? 'YES' : 'NO')."\n";
 }
 
 echo "Position Level Permission Helper loaded.\n";

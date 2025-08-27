@@ -22,9 +22,9 @@ class ActivityLogController extends Controller
         $user = Auth::user();
         
         // Check permissions based on user role
-        $canViewAll = $user->can('activity.view.all');
-        $canViewOrganization = $user->can('activity.view.organization');
-        $canViewOwn = $user->can('activity.view.own') || !$canViewAll && !$canViewOrganization;
+        $canViewAll = $user->can('audit_log:admin') || $user->can('audit_log:read');
+        $canViewOrganization = $user->can('audit_log:read');
+        $canViewOwn = $user->can('audit_log:read') || !$canViewAll && !$canViewOrganization;
 
         // Build base query with automatic role-based filtering
         if ($canViewAll) {
@@ -119,12 +119,12 @@ class ActivityLogController extends Controller
     private function canViewActivity(Activity $activity, User $user): bool
     {
         // Super admin can view all
-        if ($user->can('activity.view.all')) {
+        if ($user->can('audit_log:admin')) {
             return true;
         }
 
         // Organization admin can view activities in their organizations
-        if ($user->can('activity.view.organization')) {
+        if ($user->can('audit_log:read')) {
             if ($activity->organization_id && $user->activeOrganizations()->where('organizations.id', $activity->organization_id)->exists()) {
                 return true;
             }

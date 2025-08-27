@@ -127,7 +127,7 @@ Tests are located in:
 - **Full OAuth 2.0 Server**: Authorization code, client credentials, refresh token flows
 - **OpenID Connect**: Complete OIDC implementation with discovery endpoints
 - **Organization-Scoped Clients**: All OAuth clients must be associated with an organization
-- **Dynamic Scopes**: Organization-specific scopes (organization:read, organization:admin, etc.)
+- **Google-Style Scopes**: Modern URL-based OAuth scopes (https://api.yourcompany.com/auth/organization.readonly, etc.)
 - **Rate Limiting**: Separate rate limits for different OAuth endpoints
 - **Audit Logging**: Complete audit trail for OAuth operations with tenant context
 
