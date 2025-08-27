@@ -42,7 +42,12 @@ test('can view roles index page', function () {
 });
 
 test('can view role details', function () {
-    $role = Role::factory()->create();
+    setPermissionsTeamId($this->organization->id);
+    $role = Role::factory()->create([
+        'team_id' => $this->organization->id,
+        'created_by' => $this->user->id,
+        'updated_by' => $this->user->id,
+    ]);
     $role->givePermissionTo($this->permissions[0]);
 
     $response = $this->get(route('roles.show', $role));
@@ -55,6 +60,7 @@ test('can view role details', function () {
 });
 
 test('can create role with permissions', function () {
+    setPermissionsTeamId($this->organization->id);
     $response = $this->post(route('roles.store'), [
         'name' => 'Test Role',
         'permissions' => ['view roles', 'create roles'],
@@ -63,13 +69,19 @@ test('can create role with permissions', function () {
     $response->assertRedirect(route('roles.index'));
     $response->assertSessionHas('success');
 
-    $role = Role::where('name', 'Test Role')->first();
+    setPermissionsTeamId($this->organization->id);
+    $role = Role::where('name', 'Test Role')->where('team_id', $this->organization->id)->first();
     expect($role)->not->toBeNull();
     expect($role->permissions)->toHaveCount(2);
 });
 
 test('can update role permissions', function () {
-    $role = Role::factory()->create();
+    setPermissionsTeamId($this->organization->id);
+    $role = Role::factory()->create([
+        'team_id' => $this->organization->id,
+        'created_by' => $this->user->id,
+        'updated_by' => $this->user->id,
+    ]);
     $role->givePermissionTo([$this->permissions[0]]);
 
     $response = $this->put(route('roles.update', $role), [
@@ -85,7 +97,12 @@ test('can update role permissions', function () {
 });
 
 test('can delete role without users', function () {
-    $role = Role::factory()->create();
+    setPermissionsTeamId($this->organization->id);
+    $role = Role::factory()->create([
+        'team_id' => $this->organization->id,
+        'created_by' => $this->user->id,
+        'updated_by' => $this->user->id,
+    ]);
 
     $response = $this->delete(route('roles.destroy', $role));
 
@@ -96,7 +113,12 @@ test('can delete role without users', function () {
 });
 
 test('cannot delete role with assigned users', function () {
-    $role = Role::factory()->create();
+    setPermissionsTeamId($this->organization->id);
+    $role = Role::factory()->create([
+        'team_id' => $this->organization->id,
+        'created_by' => $this->user->id,
+        'updated_by' => $this->user->id,
+    ]);
     $testUser = User::factory()->create();
     $testUser->assignRole($role);
 
@@ -109,6 +131,7 @@ test('cannot delete role with assigned users', function () {
 });
 
 test('role name is required', function () {
+    setPermissionsTeamId($this->organization->id);
     $response = $this->post(route('roles.store'), [
         'name' => '',
         'permissions' => [],
@@ -118,9 +141,25 @@ test('role name is required', function () {
 });
 
 test('can search roles', function () {
-    Role::factory()->create(['name' => 'Admin Role']);
-    Role::factory()->create(['name' => 'User Role']);
-    Role::factory()->create(['name' => 'Manager Role']);
+    setPermissionsTeamId($this->organization->id);
+    Role::factory()->create([
+        'name' => 'Admin Role',
+        'team_id' => $this->organization->id,
+        'created_by' => $this->user->id,
+        'updated_by' => $this->user->id,
+    ]);
+    Role::factory()->create([
+        'name' => 'User Role',
+        'team_id' => $this->organization->id,
+        'created_by' => $this->user->id,
+        'updated_by' => $this->user->id,
+    ]);
+    Role::factory()->create([
+        'name' => 'Manager Role',
+        'team_id' => $this->organization->id,
+        'created_by' => $this->user->id,
+        'updated_by' => $this->user->id,
+    ]);
 
     $response = $this->get(route('roles.index', ['search' => 'Admin']));
 

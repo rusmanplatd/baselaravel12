@@ -2,27 +2,31 @@
 
 use App\Models\Auth\Permission;
 use App\Models\Auth\Role;
+use App\Models\Organization;
 use App\Models\User;
 
 beforeEach(function () {
     $this->user = User::factory()->create();
+    $this->organization = Organization::factory()->create();
 
     // Create permission management permissions
     $this->permissions = [
-        Permission::create(['name' => 'view permissions', 'guard_name' => 'web']),
-        Permission::create(['name' => 'create permissions', 'guard_name' => 'web']),
-        Permission::create(['name' => 'edit permissions', 'guard_name' => 'web']),
-        Permission::create(['name' => 'delete permissions', 'guard_name' => 'web']),
-        Permission::create(['name' => 'manage permissions', 'guard_name' => 'web']),
+        Permission::factory()->create(['name' => 'view permissions', 'guard_name' => 'web', 'created_by' => $this->user->id, 'updated_by' => $this->user->id]),
+        Permission::factory()->create(['name' => 'create permissions', 'guard_name' => 'web', 'created_by' => $this->user->id, 'updated_by' => $this->user->id]),
+        Permission::factory()->create(['name' => 'edit permissions', 'guard_name' => 'web', 'created_by' => $this->user->id, 'updated_by' => $this->user->id]),
+        Permission::factory()->create(['name' => 'delete permissions', 'guard_name' => 'web', 'created_by' => $this->user->id, 'updated_by' => $this->user->id]),
+        Permission::factory()->create(['name' => 'manage permissions', 'guard_name' => 'web', 'created_by' => $this->user->id, 'updated_by' => $this->user->id]),
     ];
 
-    // Give user all permission permissions
+    // Give user all permission permissions with team context
+    setPermissionsTeamId($this->organization->id);
     $this->user->givePermissionTo($this->permissions);
 
     $this->actingAs($this->user);
 });
 
 test('can view permissions index page', function () {
+    setPermissionsTeamId($this->organization->id);
     $response = $this->get(route('permissions.index'));
 
     $response->assertStatus(200);

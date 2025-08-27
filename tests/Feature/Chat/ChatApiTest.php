@@ -46,7 +46,7 @@ describe('Authentication and Authorization', function () {
                 'Accept' => 'application/json',
                 'Content-Type' => 'application/json',
             ])->call($method, $url);
-            
+
             // Debug information
             if ($response->getStatusCode() !== 401) {
                 echo "Debug - URL: $url, Method: $method\n";
@@ -54,7 +54,7 @@ describe('Authentication and Authorization', function () {
                 echo "Headers: " . json_encode($response->headers->all()) . "\n";
                 echo "Content: " . $response->getContent() . "\n";
             }
-            
+
             // API routes use Passport auth, so they return 401 Unauthorized when unauthenticated
             $response->assertStatus(401);
         }
@@ -532,7 +532,7 @@ describe('Participant Management API', function () {
             'conversation_id' => $this->conversation->id,
             'user_id' => $this->otherUser->id,
         ]);
-        
+
         // Check that the participant has been soft-deleted (left_at is not null)
         $participant = \App\Models\Chat\Participant::where('conversation_id', $this->conversation->id)
             ->where('user_id', $this->otherUser->id)
@@ -588,7 +588,7 @@ describe('Encryption Key Management API', function () {
         ]);
 
         $device = \App\Models\UserDevice::factory()->create(['user_id' => $this->user->id]);
-        
+
         EncryptionKey::create([
             'conversation_id' => $conversation->id,
             'user_id' => $this->user->id,
@@ -625,7 +625,7 @@ describe('Encryption Key Management API', function () {
         ]);
 
         $device = \App\Models\UserDevice::factory()->create(['user_id' => $this->user->id]);
-        
+
         $existingKey = EncryptionKey::create([
             'conversation_id' => $conversation->id,
             'user_id' => $this->user->id,
@@ -673,7 +673,7 @@ describe('Real-time Features', function () {
             'user_id' => $this->otherUser->id,
             'role' => 'member',
         ]);
-        
+
         // Set up encryption keys for messaging
         $userDevice = \App\Models\UserDevice::factory()->create(['user_id' => $this->user->id]);
         EncryptionKey::create([
@@ -696,7 +696,7 @@ describe('Real-time Features', function () {
         ]);
 
         $response->assertStatus(201);
-        
+
         // Test passes if message creation succeeds - actual broadcasting is tested separately
         expect($response->json('content'))->toBe('Hello everyone!');
     });
@@ -709,7 +709,7 @@ describe('Real-time Features', function () {
         ]);
 
         $response->assertStatus(200);
-        
+
         // Test passes if typing status update succeeds
         expect($response->json('status'))->toBe('ok');
     });
@@ -722,7 +722,7 @@ describe('Real-time Features', function () {
         ]);
 
         $response->assertStatus(200);
-        
+
         // Test passes if presence status update succeeds
         expect($response->json('status'))->toBe('online');
     });
