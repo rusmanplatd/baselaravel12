@@ -41,11 +41,24 @@ describe('Authentication and Authorization', function () {
         ];
 
         foreach ($endpoints as [$method, $url]) {
-            // Add API headers to ensure request is recognized as API request
-            $response = $this->withHeaders([
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json',
-            ])->call($method, $url);
+            // Use JSON methods to ensure proper API handling
+            switch (strtoupper($method)) {
+                case 'GET':
+                    $response = $this->getJson($url);
+                    break;
+                case 'POST':
+                    $response = $this->postJson($url, []);
+                    break;
+                case 'PUT':
+                    $response = $this->putJson($url, []);
+                    break;
+                case 'DELETE':
+                    $response = $this->deleteJson($url);
+                    break;
+                default:
+                    $response = $this->json($method, $url);
+                    break;
+            }
 
             // Debug information
             if ($response->getStatusCode() !== 401) {
@@ -313,6 +326,80 @@ describe('Message API', function () {
             'user_id' => $this->otherUser->id,
             'role' => 'member',
         ]);
+
+        // Set up device-based encryption keys for testing
+        $this->encryptionService = new \App\Services\ChatEncryptionService();
+        
+        // Generate key pairs for both users and their devices
+        $userKeyPair = $this->encryptionService->generateKeyPair();
+        $otherUserKeyPair = $this->encryptionService->generateKeyPair();
+        
+        // Create devices for both users with their public keys
+        $userDevice = \App\Models\UserDevice::create([
+            'user_id' => $this->user->id,
+            'device_name' => 'Test Device - User',
+            'device_type' => 'web',
+            'public_key' => $userKeyPair['public_key'],
+            'device_fingerprint' => 'test-device-' . $this->user->id,
+            'platform' => 'web',
+            'is_trusted' => true,
+            'is_active' => true,
+        ]);
+        
+        $otherUserDevice = \App\Models\UserDevice::create([
+            'user_id' => $this->otherUser->id,
+            'device_name' => 'Test Device - Other User',
+            'device_type' => 'web',
+            'public_key' => $otherUserKeyPair['public_key'],
+            'device_fingerprint' => 'test-device-' . $this->otherUser->id,
+            'platform' => 'web',
+            'is_trusted' => true,
+            'is_active' => true,
+        ]);
+        $this->symmetricKey = $this->encryptionService->generateSymmetricKey();
+        
+        // Update users' public keys
+        $this->user->update(['public_key' => $userKeyPair['public_key']]);
+        $this->otherUser->update(['public_key' => $otherUserKeyPair['public_key']]);
+        
+        // Cache private keys for testing
+        $userCacheKey = 'user_private_key_'.$this->user->id;
+        $otherUserCacheKey = 'user_private_key_'.$this->otherUser->id;
+        
+        cache()->put($userCacheKey, $this->encryptionService->encryptForStorage($userKeyPair['private_key']), now()->addHours(24));
+        cache()->put($otherUserCacheKey, $this->encryptionService->encryptForStorage($otherUserKeyPair['private_key']), now()->addHours(24));
+        
+        // Create encryption keys for both users using device-based method
+        EncryptionKey::createForDevice(
+            $this->conversation->id,
+            $this->user->id,
+            $userDevice->id,
+            $this->symmetricKey,
+            $userKeyPair['public_key'],
+            $userDevice->device_fingerprint
+        );
+        
+        EncryptionKey::createForDevice(
+            $this->conversation->id,
+            $this->otherUser->id,
+            $otherUserDevice->id,
+            $this->symmetricKey,
+            $otherUserKeyPair['public_key'],
+            $otherUserDevice->device_fingerprint
+        );
+        
+        // Helper function to create encrypted messages for testing
+        $this->createEncryptedMessage = function ($content, $senderId = null, $type = 'text', $additionalData = []) {
+            $senderId = $senderId ?? $this->user->id;
+            
+            return Message::createEncrypted(
+                $this->conversation->id,
+                $senderId,
+                $content,
+                $this->symmetricKey,
+                array_merge(['type' => $type], $additionalData)
+            );
+        };
     });
 
     it('can send text message', function () {
@@ -342,9 +429,9 @@ describe('Message API', function () {
 
         $file = UploadedFile::fake()->image('photo.jpg');
 
-        $response = $this->postJson("/api/v1/chat/conversations/{$this->conversation->id}/messages", [
-            'type' => 'file',
+        $response = $this->postJson("/api/v1/chat/conversations/{$this->conversation->id}/upload", [
             'file' => $file,
+            'caption' => 'Test image upload',
         ]);
 
         $response->assertStatus(201);
@@ -353,11 +440,11 @@ describe('Message API', function () {
             'type',
             'file_name',
             'file_size',
-            'mime_type',
+            'file_mime_type',
             'file_url',
         ]);
 
-        expect($response->json('type'))->toBe('file');
+        expect($response->json('type'))->toBe('image');
         expect($response->json('file_name'))->toBe('photo.jpg');
 
         // Verify file is stored
@@ -368,13 +455,8 @@ describe('Message API', function () {
     it('can reply to message', function () {
         $this->actingAs($this->user, 'api');
 
-        // Create original message
-        $originalMessage = Message::create([
-            'conversation_id' => $this->conversation->id,
-            'sender_id' => $this->otherUser->id,
-            'content' => 'Original message',
-            'type' => 'text',
-        ]);
+        // Create original message using the helper
+        $originalMessage = ($this->createEncryptedMessage)('Original message', $this->otherUser->id);
 
         $response = $this->postJson("/api/v1/chat/conversations/{$this->conversation->id}/messages", [
             'content' => 'This is a reply',

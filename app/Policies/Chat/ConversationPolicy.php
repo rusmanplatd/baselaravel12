@@ -43,7 +43,7 @@ class ConversationPolicy
             ->where('user_id', $user->id)
             ->first();
 
-        return $participant && $participant->isOwner() && $participant->isActive();
+        return $participant && $participant->isAdmin() && $participant->isActive();
     }
 
     public function participate(User $user, Conversation $conversation): bool

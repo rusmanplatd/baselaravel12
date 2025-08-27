@@ -20,7 +20,7 @@ class EncryptionController extends Controller
         private ChatEncryptionService $encryptionService,
         private MultiDeviceEncryptionService $multiDeviceService
     ) {
-        $this->middleware('auth');
+        $this->middleware('auth:api');
     }
 
     public function generateKeyPair(Request $request)

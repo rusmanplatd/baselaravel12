@@ -14,7 +14,7 @@ class FileController extends Controller
 {
     public function __construct(private ChatFileService $fileService)
     {
-        $this->middleware('auth');
+        $this->middleware('auth:api');
     }
 
     public function upload(Request $request, Conversation $conversation)

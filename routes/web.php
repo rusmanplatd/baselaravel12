@@ -29,6 +29,17 @@ Route::middleware(['auth', 'verified', 'mfa.verified', 'trusted.device', 'sessio
         ]);
     })->name('chat.join');
 
+    // Generate personal access token for API usage
+    Route::post('api/generate-token', function () {
+        $user = auth()->user();
+        $token = $user->createToken('Chat Application Token')->accessToken;
+        
+        return response()->json([
+            'access_token' => $token,
+            'token_type' => 'Bearer',
+        ]);
+    })->name('api.generate-token');
+
     // Organizations
     Route::resource('organizations', \App\Http\Controllers\OrganizationController::class);
     Route::get('organizations-hierarchy', [\App\Http\Controllers\OrganizationController::class, 'hierarchy'])->name('organizations.hierarchy');

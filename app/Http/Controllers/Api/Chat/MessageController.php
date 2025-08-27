@@ -16,7 +16,7 @@ class MessageController extends Controller
 {
     public function __construct(private ChatEncryptionService $encryptionService)
     {
-        $this->middleware('auth');
+        $this->middleware('auth:api');
     }
 
     public function index(Request $request, $conversationId)

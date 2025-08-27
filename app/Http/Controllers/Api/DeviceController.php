@@ -14,7 +14,7 @@ class DeviceController extends Controller
     public function __construct(
         private MultiDeviceEncryptionService $multiDeviceService
     ) {
-        $this->middleware('auth');
+        $this->middleware('auth:api');
     }
 
     public function index(Request $request)

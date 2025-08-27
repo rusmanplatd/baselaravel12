@@ -18,7 +18,7 @@ class ConversationController extends Controller
 {
     public function __construct(private ChatEncryptionService $encryptionService)
     {
-        $this->middleware('auth');
+        $this->middleware('auth:api');
     }
 
     public function index(Request $request)
@@ -46,6 +46,13 @@ class ConversationController extends Controller
 
         if ($validated['type'] === 'direct' && count($validated['participants']) !== 1) {
             return response()->json(['error' => 'Direct conversations must have exactly one other participant'], 422);
+        }
+
+        if ($validated['type'] === 'group' && empty($validated['name'])) {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['name' => ['The name field is required for group conversations.']]
+            ], 422);
         }
 
         // Convert emails/IDs to user IDs
@@ -172,7 +179,7 @@ class ConversationController extends Controller
 
         $conversation->delete();
 
-        return response()->json(['message' => 'Conversation deleted successfully']);
+        return response()->noContent();
     }
 
     public function addParticipant(Request $request, Conversation $conversation)

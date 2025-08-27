@@ -41,6 +41,10 @@ class Message extends Model
         'is_edited',
         'edited_at',
         'status',
+        'file_path',
+        'file_name',
+        'file_mime_type',
+        'file_size',
     ];
 
     protected $casts = [

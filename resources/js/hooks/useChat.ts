@@ -62,11 +62,49 @@ export function useChat(user: any): UseChatReturn {
   });
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [typingUsers, setTypingUsers] = useState<Array<{ id: string; name: string }>>([]);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
 
   const handleError = useCallback((err: any) => {
     console.error('Chat error:', err);
     setError(err.response?.data?.message || err.message || 'An error occurred');
   }, []);
+
+  const generateAccessToken = useCallback(async () => {
+    try {
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+      const response = await fetch('/api/generate-token', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRF-TOKEN': csrfToken || '',
+        },
+        credentials: 'same-origin',
+      });
+      
+      if (!response.ok) throw new Error('Failed to generate access token');
+      
+      const data = await response.json();
+      setAccessToken(data.access_token);
+      return data.access_token;
+    } catch (error) {
+      console.error('Failed to generate access token:', error);
+      throw error;
+    }
+  }, []);
+
+  const getApiHeaders = useCallback(() => {
+    const headers: HeadersInit = {
+      'Accept': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+    };
+
+    if (accessToken) {
+      headers['Authorization'] = `Bearer ${accessToken}`;
+    }
+
+    return headers;
+  }, [accessToken]);
 
   const initializeEncryption = useCallback(async () => {
     try {
@@ -180,12 +218,15 @@ export function useChat(user: any): UseChatReturn {
   const loadConversations = useCallback(async () => {
     try {
       setLoading(true);
+      
+      // Ensure we have an access token
+      let token = accessToken;
+      if (!token) {
+        token = await generateAccessToken();
+      }
+      
       const response = await fetch('/api/v1/chat/conversations', {
-        headers: {
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-        },
-        credentials: 'same-origin',
+        headers: getApiHeaders(),
       });
       
       if (!response.ok) throw new Error('Failed to load conversations');
@@ -197,7 +238,7 @@ export function useChat(user: any): UseChatReturn {
     } finally {
       setLoading(false);
     }
-  }, [handleError]);
+  }, [handleError, accessToken, generateAccessToken, getApiHeaders]);
 
   const loadMessages = useCallback(async (conversationId: string) => {
     try {
@@ -206,12 +247,14 @@ export function useChat(user: any): UseChatReturn {
       // Setup conversation encryption first
       await setupConversationEncryption(conversationId);
       
+      // Ensure we have an access token
+      let token = accessToken;
+      if (!token) {
+        token = await generateAccessToken();
+      }
+      
       const response = await fetch(`/api/v1/chat/conversations/${conversationId}/messages`, {
-        headers: {
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-        },
-        credentials: 'same-origin',
+        headers: getApiHeaders(),
       });
       
       if (!response.ok) throw new Error('Failed to load messages');
@@ -224,7 +267,7 @@ export function useChat(user: any): UseChatReturn {
     } finally {
       setLoading(false);
     }
-  }, [handleError, setupConversationEncryption, decryptMessages]);
+  }, [handleError, setupConversationEncryption, decryptMessages, accessToken, generateAccessToken, getApiHeaders]);
 
   const sendMessage = useCallback(async (content: string, options?: {
     type?: 'text' | 'voice';
@@ -284,16 +327,20 @@ export function useChat(user: any): UseChatReturn {
         messageData.content = content;
       }
 
-      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+      // Ensure we have an access token
+      let token = accessToken;
+      if (!token) {
+        token = await generateAccessToken();
+      }
+
+      const headers = {
+        ...getApiHeaders(),
+        'Content-Type': 'application/json',
+      };
+
       const response = await fetch(`/api/v1/chat/conversations/${activeConversation.id}/messages`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-TOKEN': csrfToken || '',
-        },
-        credentials: 'same-origin',
+        headers,
         body: JSON.stringify(messageData),
       });
       
@@ -328,20 +375,24 @@ export function useChat(user: any): UseChatReturn {
     } catch (err) {
       handleError(err);
     }
-  }, [activeConversation, handleError, encryptionReady]);
+  }, [activeConversation, handleError, encryptionReady, accessToken, generateAccessToken, getApiHeaders]);
 
   const createConversation = useCallback(async (participants: string[], name?: string) => {
     try {
-      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+      // Ensure we have an access token
+      let token = accessToken;
+      if (!token) {
+        token = await generateAccessToken();
+      }
+
+      const headers = {
+        ...getApiHeaders(),
+        'Content-Type': 'application/json',
+      };
+
       const response = await fetch('/api/v1/chat/conversations', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-TOKEN': csrfToken || '',
-        },
-        credentials: 'same-origin',
+        headers,
         body: JSON.stringify({
           type: participants.length === 1 ? 'direct' : 'group',
           participants,
@@ -357,7 +408,7 @@ export function useChat(user: any): UseChatReturn {
     } catch (err) {
       handleError(err);
     }
-  }, [handleError]);
+  }, [handleError, accessToken, generateAccessToken, getApiHeaders]);
 
   // New feature methods
   const toggleReaction = useCallback(async (messageId: string, emoji: string) => {
@@ -690,12 +741,30 @@ export function useChat(user: any): UseChatReturn {
   }, [activeConversation]);
 
   useEffect(() => {
+    // Initialize access token first
+    const initializeAuth = async () => {
+      if (!accessToken) {
+        try {
+          await generateAccessToken();
+        } catch (error) {
+          console.error('Failed to initialize API authentication:', error);
+        }
+      }
+    };
+    
+    initializeAuth();
+  }, [generateAccessToken, accessToken]);
+
+  useEffect(() => {
     initializeEncryption();
   }, [initializeEncryption]);
 
   useEffect(() => {
-    loadConversations();
-  }, [loadConversations]);
+    // Only load conversations after we have an access token
+    if (accessToken) {
+      loadConversations();
+    }
+  }, [loadConversations, accessToken]);
 
   useEffect(() => {
     if (activeConversation) {
