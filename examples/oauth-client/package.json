@@ -2,16 +2,33 @@
     "$schema": "https://json.schemastore.org/package.json",
     "private": true,
     "type": "module",
+    "name": "oauth-client-tests",
+    "description": "OAuth 2.0 / OpenID Connect Test Client with Playwright automation",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "test": "playwright test",
+        "test:headed": "playwright test --headed",
+        "test:debug": "playwright test --debug",
+        "test:ui": "playwright test --ui",
+        "install-browsers": "playwright install",
+        "start-servers": "./start-oauth-test.sh",
+        "serve": "php artisan serve --port=8081"
     },
     "devDependencies": {
+        "@playwright/test": "^1.40.0",
         "@tailwindcss/vite": "^4.0.0",
         "axios": "^1.11.0",
         "concurrently": "^9.0.1",
         "laravel-vite-plugin": "^2.0.0",
         "tailwindcss": "^4.0.0",
         "vite": "^7.0.4"
-    }
+    },
+    "keywords": [
+        "oauth",
+        "oidc",
+        "testing",
+        "playwright",
+        "laravel"
+    ]
 }

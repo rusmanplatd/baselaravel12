@@ -1,61 +1,330 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# OAuth 2.0 / OpenID Connect Test Client
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A comprehensive Laravel application for testing OAuth 2.0 and OpenID Connect flows with automated Playwright testing. This client implements the complete authorization code flow with PKCE, token refresh, token revocation, and user info retrieval.
 
-## About Laravel
+## 🚀 Features
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### 🔐 Complete OAuth 2.0 Implementation
+- **Authorization Code Flow**: Full implementation with state parameter for CSRF protection
+- **Token Exchange**: Secure exchange of authorization code for access tokens
+- **Token Refresh**: Automatic and manual token refresh functionality  
+- **Token Revocation**: Ability to revoke access and refresh tokens
+- **Scope Selection**: Interactive scope selection with descriptions
+- **Error Handling**: Comprehensive error handling for all OAuth scenarios
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### 🎫 OpenID Connect Support
+- **ID Token Processing**: Decoding and display of ID token claims
+- **UserInfo Endpoint**: Retrieval of user information using access tokens
+- **Discovery Support**: Integration with OIDC discovery endpoints
+- **Multiple Grant Types**: Support for authorization_code and refresh_token grants
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### 🎭 Automated Testing with Playwright
+- **End-to-End Tests**: Complete OAuth flow testing including user registration
+- **Error Scenario Testing**: Comprehensive error handling verification
+- **Cross-Browser Testing**: Support for Chromium, Firefox, and WebKit
+- **Performance Testing**: Load time and concurrent request testing
+- **Mobile Testing**: Responsive design verification
+- **Accessibility Testing**: Basic accessibility compliance checks
 
-## Learning Laravel
+### 🎨 Modern User Interface
+- **Responsive Design**: Works on desktop and mobile devices
+- **Interactive Testing**: Real-time token operations (refresh, revoke)
+- **Token Management**: Copy-to-clipboard functionality for tokens
+- **Detailed Results**: Comprehensive display of tokens, claims, and user data
+- **Error Visualization**: Clear error reporting with contextual information
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## 📋 Quick Start
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### Option 1: Automated Setup (Recommended)
+```bash
+cd examples/oauth-client
+./start-oauth-test.sh
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+This will start both servers and provide testing instructions.
 
-## Laravel Sponsors
+### Option 2: Manual Setup
+```bash
+# Start the main authorization server
+cd ../..
+php artisan serve --port=8000
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+# Start the OAuth client (in new terminal)
+cd examples/oauth-client
+php artisan serve --port=8081
+```
 
-### Premium Partners
+### Option 3: Run with Tests
+```bash
+cd examples/oauth-client
+./run-tests.sh
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+## 🧪 Testing with Playwright
 
-## Contributing
+### Running Tests
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```bash
+# Install dependencies and run all tests
+./run-tests.sh
 
-## Code of Conduct
+# Run with browser windows visible
+./run-tests.sh headed
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+# Run in debug mode (step through tests)
+./run-tests.sh debug
 
-## Security Vulnerabilities
+# Open Playwright UI for interactive testing
+./run-tests.sh ui
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+# Run basic dashboard tests only
+./run-tests.sh basic
+```
 
-## License
+### Manual Test Commands
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+# Install Playwright
+npm install
+npx playwright install
+
+# Run specific test suites
+npm run test                    # All tests
+npm run test:headed            # With browser UI
+npm run test:debug             # Debug mode
+npm run test:ui                # Interactive UI
+
+# Run specific test files
+npx playwright test oauth-flow.spec.js
+npx playwright test oauth-integration.spec.js
+```
+
+### Test Categories
+
+1. **OAuth Flow Tests** (`oauth-flow.spec.js`)
+   - Dashboard functionality
+   - Scope selection
+   - Authorization flow initiation
+   - Error handling
+   - Token operations
+
+2. **Integration Tests** (`oauth-integration.spec.js`)
+   - Complete OAuth flow with user registration
+   - Token refresh and revocation
+   - Cross-browser compatibility
+   - Performance testing
+   - Error scenarios
+
+## ⚙️ Configuration
+
+### Client Credentials
+Pre-configured for the "Developer Tools" OAuth client:
+
+- **Client ID**: `a8704536-ee26-4675-b324-741444ffb54e`
+- **Client Secret**: Set in `.env` as `OAUTH_CLIENT_SECRET`
+- **Redirect URI**: `http://localhost:8081/oauth/callback`
+
+### Environment Variables
+```env
+APP_URL=http://localhost:8081
+OAUTH_CLIENT_SECRET=U2IvscRm4w9GrYfQd8hjbyvjYMtLsSDBcfQyeOwu
+```
+
+### Supported Scopes
+- `openid` - OpenID Connect identity
+- `profile` - Basic profile information  
+- `email` - Email address
+- `https://api.yourcompany.com/auth/organization.readonly` - Organization data
+
+## 🎯 Usage Guide
+
+### 1. Access the OAuth Dashboard
+Navigate to: `http://localhost:8081/oauth/`
+
+### 2. Test OAuth Flow
+1. Select desired scopes
+2. Click "Start OAuth Flow"
+3. Login/register on the authorization server
+4. Grant permissions
+5. View tokens and user information
+
+### 3. Test Token Operations
+- **Refresh Token**: Test automatic token renewal
+- **Revoke Token**: Test token cleanup
+- **User Info**: Verify UserInfo endpoint access
+
+## 🏗️ Architecture
+
+### Controller Structure
+```
+app/Http/Controllers/OAuthClientController.php
+├── index()                # OAuth dashboard
+├── startAuthorization()   # Begin OAuth flow
+├── callback()             # Handle OAuth callback
+├── refresh()              # Token refresh API
+├── revoke()               # Token revocation API
+└── discovery()            # Server discovery API
+```
+
+### View Templates
+```
+resources/views/
+├── oauth-dashboard.blade.php  # Main testing interface
+├── oauth-result.blade.php     # Results display
+└── welcome.blade.php         # Default page
+```
+
+### Test Structure
+```
+tests/e2e/
+├── oauth-flow.spec.js         # Basic OAuth flow tests
+├── oauth-integration.spec.js  # End-to-end integration tests
+├── global-setup.js           # Test environment setup
+└── global-teardown.js        # Test cleanup
+```
+
+## 🔍 API Endpoints
+
+### Client Routes
+- `GET /oauth/` - OAuth dashboard
+- `POST /oauth/authorize` - Start authorization
+- `GET /oauth/callback` - OAuth callback
+- `POST /oauth/refresh` - Refresh tokens
+- `POST /oauth/revoke` - Revoke tokens
+- `GET /oauth/discovery` - Server discovery
+
+### Testing Endpoints
+The Playwright tests interact with these endpoints to verify functionality.
+
+## 🛡️ Security Features
+
+### CSRF Protection
+- State parameter validation prevents CSRF attacks
+- Laravel CSRF tokens for API calls
+
+### Secure Token Handling
+- Tokens displayed securely with copy functionality
+- No persistent token storage
+- Proper session cleanup
+
+### Error Handling
+- Comprehensive OAuth error scenarios
+- Network error handling
+- User-friendly error messages
+
+## 🧪 Testing Scenarios
+
+### Automated Test Coverage
+
+1. **Basic Functionality**
+   - Dashboard rendering
+   - Scope selection
+   - Form submission
+   - Discovery endpoint access
+
+2. **OAuth Flow Testing**
+   - Authorization initiation
+   - Callback handling
+   - Token exchange
+   - User info retrieval
+
+3. **Error Scenarios**
+   - Invalid state parameters
+   - Missing authorization codes
+   - Network timeouts
+   - Server errors
+
+4. **Token Operations**
+   - Token refresh
+   - Token revocation
+   - API error handling
+
+5. **Cross-Platform**
+   - Multiple browsers
+   - Mobile responsive design
+   - Performance benchmarks
+
+### Manual Testing
+1. Complete authorization flow
+2. Scope variations
+3. Token operations
+4. Error conditions
+5. Multiple sessions
+
+## 📊 Test Results
+
+After running tests, check:
+- `test-results/report/index.html` - HTML test report
+- `test-results/` - Screenshots of failed tests
+- Console output for detailed logs
+
+## 🔧 Customization
+
+### Adding New Tests
+1. Create new test files in `tests/e2e/`
+2. Follow existing patterns for page interactions
+3. Use descriptive test names and assertions
+4. Add to test runner if needed
+
+### Modifying OAuth Configuration
+1. Update controller constructor for different servers
+2. Modify client credentials in environment
+3. Update redirect URIs as needed
+4. Adjust scope handling for different providers
+
+## 🚨 Troubleshooting
+
+### Common Issues
+
+**"Client not found" Error**
+- Ensure main server is running (port 8000)
+- Verify client seeded in database
+- Check client ID matches seeded client
+
+**"Connection refused" Error**
+- Verify both servers running (8000, 8081)
+- Check firewall settings
+- Ensure network connectivity
+
+**Test Failures**
+- Check server logs for errors
+- Verify database connectivity
+- Review test screenshots in `test-results/`
+
+### Debug Mode
+- Set `APP_DEBUG=true` in `.env`
+- Use `./run-tests.sh debug` for step-through
+- Check Laravel logs in `storage/logs/`
+
+## 🤝 Contributing
+
+When contributing:
+1. Maintain backward compatibility
+2. Add comprehensive error handling
+3. Update tests for new features
+4. Follow Laravel coding standards
+5. Update documentation
+
+## 📝 License
+
+This OAuth client example is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+---
+
+## 🎉 Getting Started
+
+Ready to test OAuth 2.0? Run:
+
+```bash
+cd examples/oauth-client
+./start-oauth-test.sh
+```
+
+Then visit `http://localhost:8081/oauth/` to begin testing!
+
+For automated testing:
+```bash
+./run-tests.sh
+```
+
+Happy testing! 🎭✨

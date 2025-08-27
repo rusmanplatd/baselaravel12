@@ -81,25 +81,29 @@ class OAuthClientsSeeder extends Seeder
         ];
 
         foreach ($clients as $clientData) {
-            $client = Client::updateOrCreate(
-                ['name' => $clientData['name']],
-                [
-                    'owner_id' => $user->id,
-                    'owner_type' => User::class,
-                    'secret' => Str::random(40),
-                    'provider' => null,
-                    'redirect_uris' => json_encode($clientData['redirect_uris']),
-                    'grant_types' => json_encode(['authorization_code', 'refresh_token']),
-                    'revoked' => false,
-                    'organization_id' => $organization->id,
-                    'allowed_scopes' => json_encode(['openid', 'profile', 'email', 'https://api.yourcompany.com/auth/organization.readonly']),
-                    'client_type' => 'public',
-                    'user_access_scope' => $clientData['user_access_scope'],
-                    'user_access_rules' => $clientData['user_access_rules'] ?? null,
-                ]
-            );
+            // Use raw DB insert to avoid activity logging issues with UUID vs ULID
+            $clientId = (string) Str::uuid();
+            
+            \DB::table('oauth_clients')->insertOrIgnore([
+                'id' => $clientId,
+                'name' => $clientData['name'],
+                'owner_id' => $user->id,
+                'owner_type' => User::class,
+                'secret' => Str::random(40),
+                'provider' => null,
+                'redirect_uris' => json_encode($clientData['redirect_uris']),
+                'grant_types' => json_encode(['authorization_code', 'refresh_token']),
+                'revoked' => false,
+                'organization_id' => $organization->id,
+                'allowed_scopes' => json_encode(['openid', 'profile', 'email', 'https://api.yourcompany.com/auth/organization.readonly']),
+                'client_type' => 'public',
+                'user_access_scope' => $clientData['user_access_scope'],
+                'user_access_rules' => isset($clientData['user_access_rules']) ? json_encode($clientData['user_access_rules']) : null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
 
-            $this->command->info("Created OAuth client: {$client->name} (ID: {$client->id})");
+            $this->command->info("Created OAuth client: {$clientData['name']} (ID: {$clientId})");
         }
 
         $this->command->info('OAuth clients seeded successfully with various access control configurations.');
