@@ -8,6 +8,27 @@ beforeEach(function () {
     $this->adminUser = User::factory()->create();
     $this->testUser = User::factory()->create();
 
+    // Create a test organization to use as team context
+    $this->testOrganization = \App\Models\Organization::factory()->create([
+        'name' => 'Test Organization',
+        'organization_code' => 'TEST-ORG',
+        'organization_type' => 'holding_company',
+    ]);
+
+    // Authenticate as admin user first so that created_by is properly set
+    $this->actingAs($this->adminUser);
+
+    // Associate admin user with the test organization
+    \App\Models\OrganizationMembership::create([
+        'user_id' => $this->adminUser->id,
+        'organization_id' => $this->testOrganization->id,
+        'role' => 'admin',
+        'status' => 'active',
+        'start_date' => now(),
+        'created_by' => $this->adminUser->id,
+        'updated_by' => $this->adminUser->id,
+    ]);
+
     // Create user management permissions
     $this->permissions = [
         Permission::create(['name' => 'view users', 'guard_name' => 'web']),
@@ -15,7 +36,8 @@ beforeEach(function () {
         Permission::create(['name' => 'delete users', 'guard_name' => 'web']),
     ];
 
-    // Give admin user permissions
+    // Set team context using the test organization ID and give admin user permissions
+    setPermissionsTeamId($this->testOrganization->id);
     $this->adminUser->givePermissionTo($this->permissions);
 
     // Create test roles
@@ -24,8 +46,6 @@ beforeEach(function () {
         Role::create(['name' => 'employee', 'guard_name' => 'web']),
         Role::create(['name' => 'admin', 'guard_name' => 'web']),
     ];
-
-    $this->actingAs($this->adminUser);
 });
 
 test('can view users index page', function () {
@@ -38,6 +58,7 @@ test('can view users index page', function () {
 });
 
 test('can view user details with roles', function () {
+    setPermissionsTeamId($this->testOrganization->id);
     $this->testUser->assignRole('manager');
 
     $response = $this->get(route('users.show', $this->testUser));
@@ -51,6 +72,8 @@ test('can view user details with roles', function () {
 });
 
 test('can assign roles to user', function () {
+    setPermissionsTeamId($this->testOrganization->id);
+    
     $response = $this->post(route('users.assignRoles', $this->testUser), [
         'roles' => ['manager', 'employee'],
     ]);
@@ -59,12 +82,14 @@ test('can assign roles to user', function () {
     $response->assertSessionHas('success');
 
     $this->testUser->refresh();
+    setPermissionsTeamId($this->testOrganization->id);
     expect($this->testUser->roles)->toHaveCount(2);
     expect($this->testUser->hasRole('manager'))->toBeTrue();
     expect($this->testUser->hasRole('employee'))->toBeTrue();
 });
 
 test('can remove roles from user', function () {
+    setPermissionsTeamId($this->testOrganization->id);
     $this->testUser->assignRole(['manager', 'employee']);
 
     $response = $this->post(route('users.assignRoles', $this->testUser), [
@@ -75,12 +100,14 @@ test('can remove roles from user', function () {
     $response->assertSessionHas('success');
 
     $this->testUser->refresh();
+    setPermissionsTeamId($this->testOrganization->id);
     expect($this->testUser->roles)->toHaveCount(1);
     expect($this->testUser->hasRole('manager'))->toBeTrue();
     expect($this->testUser->hasRole('employee'))->toBeFalse();
 });
 
 test('can remove all roles from user', function () {
+    setPermissionsTeamId($this->testOrganization->id);
     $this->testUser->assignRole(['manager', 'employee']);
 
     $response = $this->post(route('users.assignRoles', $this->testUser), [
@@ -91,6 +118,7 @@ test('can remove all roles from user', function () {
     $response->assertSessionHas('success');
 
     $this->testUser->refresh();
+    setPermissionsTeamId($this->testOrganization->id);
     expect($this->testUser->roles)->toHaveCount(0);
 });
 
@@ -103,6 +131,7 @@ test('role assignment validates role existence', function () {
 });
 
 test('can delete user and remove all roles', function () {
+    setPermissionsTeamId($this->testOrganization->id);
     $this->testUser->assignRole('manager');
     $userId = $this->testUser->id;
 
@@ -124,6 +153,7 @@ test('can search users', function () {
 });
 
 test('users show effective permissions from roles', function () {
+    setPermissionsTeamId($this->testOrganization->id);
     $permission = Permission::create(['name' => 'test:permission', 'guard_name' => 'web']);
     $this->roles[0]->givePermissionTo($permission); // manager role gets permission
     $this->testUser->assignRole('manager');
@@ -147,6 +177,7 @@ test('unauthorized user cannot manage user roles', function () {
 });
 
 test('users index shows role counts', function () {
+    setPermissionsTeamId($this->testOrganization->id);
     $this->testUser->assignRole(['manager', 'employee']);
 
     $response = $this->get(route('users.index'));

@@ -67,6 +67,15 @@ class UserController extends Controller
 
         $roles = $request->input('roles', []);
 
+        // Set team context for role assignment - use the first organization of the authenticated user
+        $currentUserOrganizations = auth()->user()->organizations;
+        $teamId = $currentUserOrganizations->isNotEmpty() 
+            ? $currentUserOrganizations->first()->id 
+            : \App\Models\Organization::first()?->id;
+            
+        if ($teamId) {
+            setPermissionsTeamId($teamId);
+        }
         $user->syncRoles($roles);
 
         ActivityLogService::logSystem('roles_updated', 'User roles updated for: '.$user->name, [
@@ -87,11 +96,19 @@ class UserController extends Controller
         $userEmail = $user->email;
 
         // Remove all roles before deletion
+        $currentUserOrganizations = auth()->user()->organizations;
+        $teamId = $currentUserOrganizations->isNotEmpty() 
+            ? $currentUserOrganizations->first()->id 
+            : \App\Models\Organization::first()?->id;
+            
+        if ($teamId) {
+            setPermissionsTeamId($teamId);
+        }
         $user->syncRoles([]);
 
         $user->delete();
 
-        ActivityLogService::log('user', 'deleted', $user->id, [
+        ActivityLogService::logSystem('deleted', 'User deleted: '.$userName, [
             'user_name' => $userName,
             'user_email' => $userEmail,
         ]);

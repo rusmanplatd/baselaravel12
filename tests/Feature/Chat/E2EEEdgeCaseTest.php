@@ -39,17 +39,34 @@ describe('E2EE Edge Cases and Error Handling', function () {
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
             $keyPair = $this->encryptionService->generateKeyPair();
 
+            // Create a default device for the user if it doesn't exist
+            $device = \App\Models\UserDevice::firstOrCreate(
+                ['user_id' => $this->user1->id],
+                [
+                    'device_name' => 'Test Device',
+                    'device_type' => 'web',
+                    'platform' => 'web',
+                    'device_fingerprint' => 'test-device-'.$this->user1->id,
+                    'public_key' => $keyPair['public_key'],
+                    'last_used_at' => now(),
+                    'is_trusted' => true,
+                ]
+            );
+
             // Create a corrupted encryption key
             $corruptedEncryptedKey = 'corrupted_key_data_that_cannot_be_decrypted';
 
             $encryptionKey = EncryptionKey::create([
                 'conversation_id' => $this->conversation->id,
                 'user_id' => $this->user1->id,
+                'device_id' => $device->id,
+                'device_fingerprint' => $device->device_fingerprint,
                 'encrypted_key' => $corruptedEncryptedKey,
                 'public_key' => $keyPair['public_key'],
                 'key_version' => 1,
                 'is_active' => true,
-                'created_by' => $this->user1->id,
+                'algorithm' => 'RSA-4096-OAEP',
+                'key_strength' => 4096,
             ]);
 
             // Try to decrypt with corrupted key
@@ -351,16 +368,33 @@ describe('E2EE Edge Cases and Error Handling', function () {
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
             $keyPair = $this->encryptionService->generateKeyPair();
 
+            // Create a default device for the user if it doesn't exist
+            $device = \App\Models\UserDevice::firstOrCreate(
+                ['user_id' => $this->user1->id],
+                [
+                    'device_name' => 'Test Device',
+                    'device_type' => 'web',
+                    'platform' => 'web',
+                    'device_fingerprint' => 'test-device-expired-'.$this->user1->id,
+                    'public_key' => $keyPair['public_key'],
+                    'last_used_at' => now(),
+                    'is_trusted' => true,
+                ]
+            );
+
             // Create an expired key
             $expiredKey = EncryptionKey::create([
                 'conversation_id' => $this->conversation->id,
                 'user_id' => $this->user1->id,
+                'device_id' => $device->id,
+                'device_fingerprint' => $device->device_fingerprint,
                 'encrypted_key' => $this->encryptionService->encryptSymmetricKey($symmetricKey, $keyPair['public_key']),
                 'public_key' => $keyPair['public_key'],
                 'key_version' => 1,
                 'is_active' => true,
                 'expires_at' => now()->subDay(), // Expired
-                'created_by' => $this->user1->id,
+                'algorithm' => 'RSA-4096-OAEP',
+                'key_strength' => 4096,
             ]);
 
             // Mark as expired in database

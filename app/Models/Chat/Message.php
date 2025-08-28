@@ -105,23 +105,37 @@ class Message extends Model
 
     public function decryptContent(string $symmetricKey): string
     {
-        $encryptionService = app(ChatEncryptionService::class);
+        try {
+            $encryptionService = app(ChatEncryptionService::class);
 
-        $encryptedData = json_decode($this->encrypted_content, true);
+            $encryptedData = json_decode($this->encrypted_content, true);
 
-        $decryptedContent = $encryptionService->decryptMessage(
-            $encryptedData['data'],
-            $encryptedData['iv'],
-            $symmetricKey,
-            $encryptedData['hmac'] ?? null,
-            $encryptedData['auth_data'] ?? null
-        );
+            if ($encryptedData === null || ! is_array($encryptedData)) {
+                throw new \App\Exceptions\DecryptionException('Invalid encrypted content format');
+            }
 
-        if (! $encryptionService->verifyMessageHash($decryptedContent, $this->content_hash)) {
-            throw new \RuntimeException('Message integrity check failed');
+            if (! isset($encryptedData['data']) || ! isset($encryptedData['iv'])) {
+                throw new \App\Exceptions\DecryptionException('Missing required encryption fields');
+            }
+
+            $decryptedContent = $encryptionService->decryptMessage(
+                $encryptedData['data'],
+                $encryptedData['iv'],
+                $symmetricKey,
+                $encryptedData['hmac'] ?? null,
+                $encryptedData['auth_data'] ?? null
+            );
+
+            if (! $encryptionService->verifyMessageHash($decryptedContent, $this->content_hash)) {
+                throw new \App\Exceptions\DecryptionException('Message integrity check failed');
+            }
+
+            return $decryptedContent;
+        } catch (\App\Exceptions\DecryptionException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            throw new \App\Exceptions\DecryptionException('Failed to decrypt message content: '.$e->getMessage(), 0, $e);
         }
-
-        return $decryptedContent;
     }
 
     public static function createEncrypted(

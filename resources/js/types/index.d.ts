@@ -147,3 +147,16 @@ export interface SecurityAlert {
     message: string;
     data: Record<string, unknown>;
 }
+
+// Generic PageProps interface for Inertia.js pages
+export interface PageProps<T = Record<string, unknown>> {
+    auth: Auth;
+    ziggy?: Config & { location: string };
+    flash?: {
+        message?: string;
+        error?: string;
+        success?: string;
+    };
+    errors?: Record<string, string>;
+    [key: string]: unknown;
+}
