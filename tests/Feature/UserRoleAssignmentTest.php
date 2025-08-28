@@ -5,15 +5,21 @@ use App\Models\Auth\Role;
 use App\Models\User;
 
 beforeEach(function () {
-    $this->adminUser = User::factory()->create();
-    $this->testUser = User::factory()->create();
+    // Clear any existing tenant context first
+    if (class_exists(\App\Services\TenantService::class)) {
+        \App\Services\TenantService::clearTenant();
+    }
 
-    // Create a test organization to use as team context
+    // Create a test organization to use as team context FIRST
     $this->testOrganization = \App\Models\Organization::factory()->create([
         'name' => 'Test Organization',
         'organization_code' => 'TEST-ORG',
         'organization_type' => 'holding_company',
     ]);
+
+    // Now create users - this ensures any activity logging has a valid org context
+    $this->adminUser = User::factory()->create();
+    $this->testUser = User::factory()->create();
 
     // Authenticate as admin user first so that created_by is properly set
     $this->actingAs($this->adminUser);
@@ -46,6 +52,28 @@ beforeEach(function () {
         Role::create(['name' => 'employee', 'guard_name' => 'web']),
         Role::create(['name' => 'admin', 'guard_name' => 'web']),
     ];
+});
+
+afterEach(function () {
+    // Clear tenant context to avoid interference with other tests
+    if (class_exists(\App\Services\TenantService::class)) {
+        \App\Services\TenantService::clearTenant();
+        
+        // Clear any static state
+        $reflection = new \ReflectionClass(\App\Services\TenantService::class);
+        if ($reflection->hasProperty('currentTenant')) {
+            $currentTenantProperty = $reflection->getProperty('currentTenant');
+            $currentTenantProperty->setValue(null);
+        }
+        
+        if ($reflection->hasProperty('currentUser')) {
+            $currentUserProperty = $reflection->getProperty('currentUser');
+            $currentUserProperty->setValue(null);
+        }
+    }
+    
+    // Clear permissions team context
+    setPermissionsTeamId(null);
 });
 
 test('can view users index page', function () {

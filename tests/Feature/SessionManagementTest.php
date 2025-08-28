@@ -14,6 +14,25 @@ beforeEach(function () {
     $this->sessionService = app(SessionManagementService::class);
 });
 
+afterEach(function () {
+    // Clear tenant context to avoid interference with other tests
+    if (class_exists(\App\Services\TenantService::class)) {
+        \App\Services\TenantService::clearTenant();
+        
+        // Clear any static state
+        $reflection = new \ReflectionClass(\App\Services\TenantService::class);
+        if ($reflection->hasProperty('currentTenant')) {
+            $currentTenantProperty = $reflection->getProperty('currentTenant');
+            $currentTenantProperty->setValue(null);
+        }
+        
+        if ($reflection->hasProperty('currentUser')) {
+            $currentUserProperty = $reflection->getProperty('currentUser');
+            $currentUserProperty->setValue(null);
+        }
+    }
+});
+
 test('user can view sessions page', function () {
     // Skip frontend test as the React component doesn't exist yet
     $this->markTestSkipped('Frontend component not implemented yet');

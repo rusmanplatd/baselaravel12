@@ -66,4 +66,9 @@ class Session extends Model
     {
         $this->update(['is_active' => false]);
     }
+
+    public function getDeviceNameAttribute(): ?string
+    {
+        return $this->trustedDevice?->device_name;
+    }
 }
