@@ -771,7 +771,7 @@ class ConversationController extends Controller
         try {
             $user = auth()->user();
             $conversationIds = $validated['conversation_ids'];
-            
+
             // Verify user has access to all requested conversations
             $conversations = Conversation::whereIn('id', $conversationIds)
                 ->whereHas('participants', function ($query) use ($user) {
@@ -781,7 +781,7 @@ class ConversationController extends Controller
 
             if ($conversations->count() !== count($conversationIds)) {
                 return response()->json([
-                    'error' => 'Access denied to one or more conversations'
+                    'error' => 'Access denied to one or more conversations',
                 ], 403);
             }
 
@@ -801,9 +801,9 @@ class ConversationController extends Controller
                     ->with(['sender:id,name,email'])
                     ->orderBy('created_at')
                     ->get();
-                    
+
                 $totalMessages += $messages->count();
-                
+
                 $conversationData = [
                     'id' => $conversation->id,
                     'name' => $conversation->name,
@@ -867,19 +867,19 @@ class ConversationController extends Controller
             $user = auth()->user();
             $conversationIds = $validated['conversation_ids'];
             $enableEncryption = $validated['encryption_settings']['enable_encryption'];
-            
+
             // Verify user has admin access to all requested conversations
             $conversations = Conversation::whereIn('id', $conversationIds)
                 ->whereHas('participants', function ($query) use ($user) {
                     $query->where('user_id', $user->id)
-                          ->where('role', 'admin')
-                          ->whereNull('left_at');
+                        ->where('role', 'admin')
+                        ->whereNull('left_at');
                 })
                 ->get();
 
             if ($conversations->count() !== count($conversationIds)) {
                 return response()->json([
-                    'error' => 'Admin access required for one or more conversations'
+                    'error' => 'Admin access required for one or more conversations',
                 ], 403);
             }
 
@@ -889,20 +889,20 @@ class ConversationController extends Controller
 
             foreach ($conversations as $conversation) {
                 try {
-                    if ($enableEncryption && !$conversation->is_encrypted) {
+                    if ($enableEncryption && ! $conversation->is_encrypted) {
                         // Enable encryption
                         $algorithm = $validated['encryption_settings']['algorithm'] ?? 'RSA-4096-OAEP';
                         $keyStrength = $validated['encryption_settings']['key_strength'] ?? 4096;
-                        
+
                         $conversation->enableEncryption($algorithm, $keyStrength);
-                        
+
                         // Generate encryption keys for all participants
                         $symmetricKey = $this->encryptionService->generateSymmetricKey();
                         $activeParticipants = $conversation->activeParticipants()->get();
 
                         foreach ($activeParticipants as $participant) {
                             $userKeyPair = $this->getUserKeyPair($participant->user_id);
-                            
+
                             $userDevice = \App\Models\UserDevice::where('user_id', $participant->user_id)
                                 ->where('is_trusted', true)
                                 ->first();
@@ -925,15 +925,15 @@ class ConversationController extends Controller
                                 ]);
                             }
                         }
-                        
+
                         $updatedCount++;
-                        
-                    } elseif (!$enableEncryption && $conversation->is_encrypted) {
+
+                    } elseif (! $enableEncryption && $conversation->is_encrypted) {
                         // Disable encryption
                         $conversation->disableEncryption();
                         $updatedCount++;
                     }
-                    
+
                 } catch (\Exception $e) {
                     $failedCount++;
                     $errors[$conversation->id] = $e->getMessage();
@@ -948,7 +948,7 @@ class ConversationController extends Controller
                     'errors' => $errors,
                     'operation' => $enableEncryption ? 'enable_encryption' : 'disable_encryption',
                     'completed_at' => now()->toISOString(),
-                ]
+                ],
             ]);
 
         } catch (\Exception $e) {

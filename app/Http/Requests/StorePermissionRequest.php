@@ -11,7 +11,7 @@ class StorePermissionRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->can('permission:admin');
+        return $this->user()->can('create permissions');
     }
 
     /**
@@ -22,7 +22,7 @@ class StorePermissionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|max:255|unique:sys_permissions,name',
+            'name' => 'required|string|max:255|unique:sys_permissions,name|regex:/^[a-zA-Z0-9\s:_-]+$/',
             'guard_name' => 'nullable|string|max:255',
         ];
     }
@@ -36,6 +36,7 @@ class StorePermissionRequest extends FormRequest
             'name.required' => 'Please provide a permission name.',
             'name.max' => 'The permission name cannot be longer than 255 characters.',
             'name.unique' => 'A permission with this name already exists.',
+            'name.regex' => 'The permission name may only contain letters, numbers, spaces, colons, underscores, and hyphens.',
             'guard_name.max' => 'The guard name cannot be longer than 255 characters.',
         ];
     }

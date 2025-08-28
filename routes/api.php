@@ -229,7 +229,7 @@ Route::middleware('auth:api')->prefix('v1')->group(function () {
         Route::get('encryption/key-usage-stats', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'getKeyUsageStats'])->name('encryption.key-usage-stats');
         Route::get('encryption/detect-anomalies', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'detectAnomalies'])->name('encryption.detect-anomalies');
         Route::get('conversations/{conversation}/encryption/audit-log', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'getAuditLog'])->name('conversations.encryption.audit-log');
-        
+
         // Bulk operations
         Route::post('conversations/bulk-export', [\App\Http\Controllers\Api\Chat\ConversationController::class, 'bulkExport'])->name('conversations.bulk-export');
         Route::patch('conversations/bulk-update-encryption', [\App\Http\Controllers\Api\Chat\ConversationController::class, 'bulkUpdateEncryption'])->name('conversations.bulk-update-encryption');
@@ -273,6 +273,19 @@ Route::middleware('auth:api')->prefix('v1')->group(function () {
         Route::post('conversations/{conversation}/typing', [\App\Http\Controllers\Api\Chat\PresenceController::class, 'setTyping'])->name('conversations.typing');
         Route::delete('conversations/{conversation}/typing', [\App\Http\Controllers\Api\Chat\PresenceController::class, 'stopTyping'])->name('conversations.typing.stop');
         Route::get('conversations/{conversation}/typing', [\App\Http\Controllers\Api\Chat\PresenceController::class, 'getTypingUsers'])->name('conversations.typing.get');
+    });
+
+    // Key Recovery and Backup Management
+    Route::prefix('key-recovery')->name('api.key-recovery.')->middleware(['auth:api', 'throttle:30,1'])->group(function () {
+        Route::post('backup', [\App\Http\Controllers\Api\KeyRecoveryController::class, 'createBackup'])->name('backup.create');
+        Route::post('backup/incremental', [\App\Http\Controllers\Api\KeyRecoveryController::class, 'createIncrementalBackup'])->name('backup.incremental');
+        Route::post('backup/restore', [\App\Http\Controllers\Api\KeyRecoveryController::class, 'restoreFromBackup'])->name('backup.restore');
+        Route::post('backup/load', [\App\Http\Controllers\Api\KeyRecoveryController::class, 'loadBackup'])->name('backup.load');
+        Route::post('backup/validate', [\App\Http\Controllers\Api\KeyRecoveryController::class, 'validateBackup'])->name('backup.validate');
+        Route::get('status', [\App\Http\Controllers\Api\KeyRecoveryController::class, 'getRecoveryStatus'])->name('status');
+        Route::post('emergency-recovery', [\App\Http\Controllers\Api\KeyRecoveryController::class, 'performEmergencyRecovery'])
+            ->name('emergency-recovery')
+            ->middleware('throttle:5,1'); // Stricter rate limiting for emergency recovery
     });
 
     // User API endpoints

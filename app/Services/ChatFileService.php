@@ -3,8 +3,8 @@
 namespace App\Services;
 
 use App\Exceptions\ChatFileException;
-use App\Exceptions\EncryptionException;
 use App\Exceptions\DecryptionException;
+use App\Exceptions\EncryptionException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -425,7 +425,7 @@ class ChatFileService
                 'file_name' => $fileName,
                 'error' => $e->getMessage(),
             ]);
-            throw new EncryptionException('File encryption failed: ' . $e->getMessage(), $e);
+            throw new EncryptionException('File encryption failed: '.$e->getMessage(), $e);
         }
     }
 
@@ -437,7 +437,7 @@ class ChatFileService
             throw $e;
         } catch (\Exception $e) {
             Log::error('File decryption failed', ['error' => $e->getMessage()]);
-            throw new DecryptionException('File decryption failed: ' . $e->getMessage(), $e);
+            throw new DecryptionException('File decryption failed: '.$e->getMessage(), $e);
         }
     }
 }

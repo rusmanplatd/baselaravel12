@@ -209,7 +209,7 @@ class EncryptionKey extends Model
             ->logFillable()
             ->logOnlyDirty()
             ->useLogName('encryption')
-            ->setDescriptionForEvent(fn(string $eventName) => "Encryption key {$eventName}")
+            ->setDescriptionForEvent(fn (string $eventName) => "Encryption key {$eventName}")
             ->dontLogIfAttributesChangedOnly(['updated_at']);
     }
 }

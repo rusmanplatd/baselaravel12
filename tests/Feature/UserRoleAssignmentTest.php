@@ -58,20 +58,20 @@ afterEach(function () {
     // Clear tenant context to avoid interference with other tests
     if (class_exists(\App\Services\TenantService::class)) {
         \App\Services\TenantService::clearTenant();
-        
+
         // Clear any static state
         $reflection = new \ReflectionClass(\App\Services\TenantService::class);
         if ($reflection->hasProperty('currentTenant')) {
             $currentTenantProperty = $reflection->getProperty('currentTenant');
             $currentTenantProperty->setValue(null);
         }
-        
+
         if ($reflection->hasProperty('currentUser')) {
             $currentUserProperty = $reflection->getProperty('currentUser');
             $currentUserProperty->setValue(null);
         }
     }
-    
+
     // Clear permissions team context
     setPermissionsTeamId(null);
 });
@@ -101,7 +101,7 @@ test('can view user details with roles', function () {
 
 test('can assign roles to user', function () {
     setPermissionsTeamId($this->testOrganization->id);
-    
+
     $response = $this->post(route('users.assignRoles', $this->testUser), [
         'roles' => ['manager', 'employee'],
     ]);

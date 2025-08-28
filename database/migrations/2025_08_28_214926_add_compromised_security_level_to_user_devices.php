@@ -1,8 +1,6 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
@@ -13,7 +11,7 @@ return new class extends Migration
     public function up(): void
     {
         // Drop the existing check constraint and recreate with the new value
-        DB::statement("ALTER TABLE user_devices DROP CONSTRAINT user_devices_security_level_check");
+        DB::statement('ALTER TABLE user_devices DROP CONSTRAINT user_devices_security_level_check');
         DB::statement("ALTER TABLE user_devices ADD CONSTRAINT user_devices_security_level_check CHECK (security_level::text = ANY (ARRAY['low'::character varying, 'medium'::character varying, 'high'::character varying, 'maximum'::character varying, 'compromised'::character varying]))");
     }
 

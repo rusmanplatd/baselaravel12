@@ -103,11 +103,11 @@ class MultiDeviceEncryptionService
         }
 
         // Device capability validation (check first)
-        if (!$newDevice->hasCapability('encryption')) {
+        if (! $newDevice->hasCapability('encryption')) {
             throw new \InvalidArgumentException('Device does not support encryption');
         }
 
-        if (!$newDevice->is_active) {
+        if (! $newDevice->is_active) {
             throw new \InvalidArgumentException('Device is not active');
         }
 
@@ -121,7 +121,7 @@ class MultiDeviceEncryptionService
         }
 
         // Block sharing to untrusted devices with low security
-        if (!$newDevice->is_trusted && $toSecLevel === 1) {
+        if (! $newDevice->is_trusted && $toSecLevel === 1) {
             throw new \InvalidArgumentException('Security level mismatch');
         }
 
@@ -206,7 +206,7 @@ class MultiDeviceEncryptionService
             throw new \InvalidArgumentException('Key share does not belong to this device');
         }
 
-        if (!$device->is_active) {
+        if (! $device->is_active) {
             throw new \InvalidArgumentException('Device is not active');
         }
 

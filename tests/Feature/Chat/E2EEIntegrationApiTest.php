@@ -118,7 +118,7 @@ describe('E2EE Integration and API Comprehensive Tests', function () {
             }
 
             // At least one request should have been processed
-            $processedCount = count(array_filter($responses, fn($r) => in_array($r->status(), [201, 422])));
+            $processedCount = count(array_filter($responses, fn ($r) => in_array($r->status(), [201, 422])));
             expect($processedCount)->toBeGreaterThan(0);
         });
     });
@@ -130,7 +130,7 @@ describe('E2EE Integration and API Comprehensive Tests', function () {
             $plaintext = 'This is a secret message sent via API';
 
             $response = $this->postJson("/api/v1/chat/conversations/{$this->conversation->id}/messages", [
-                'content' => $plaintext, 
+                'content' => $plaintext,
                 'message_type' => 'text',
                 'is_encrypted' => true,
             ]);

@@ -31,8 +31,11 @@ describe('E2EE Key Recovery and Backup System', function () {
         $this->user1KeyPair = $keyPair1;
         $this->user2KeyPair = $keyPair2;
 
-        // Create test conversation with encryption
-        $this->conversation = Conversation::factory()->create(['is_encrypted' => true]);
+        // Create test conversation with encryption (older timestamp)
+        $this->conversation = Conversation::factory()->create([
+            'is_encrypted' => true,
+            'created_at' => now()->subWeeks(2), // Ensure it's older than incremental backup tests
+        ]);
 
         Participant::create([
             'conversation_id' => $this->conversation->id,
@@ -253,6 +256,7 @@ describe('E2EE Key Recovery and Backup System', function () {
                     })->toArray(),
             ];
 
+            // Should only include the 3 new conversations, not the original one
             expect($incrementalBackup['conversations'])->toHaveCount(3);
             foreach ($newConversations as $conv) {
                 $found = collect($incrementalBackup['conversations'])
@@ -287,9 +291,26 @@ describe('E2EE Key Recovery and Backup System', function () {
 
             // Restore from backup
             foreach ($backupData['conversations'] as $convData) {
+                // Get or create a device for this user
+                $device = \App\Models\UserDevice::where('user_id', $backupData['user_id'])->first();
+                if (! $device) {
+                    $device = \App\Models\UserDevice::create([
+                        'user_id' => $backupData['user_id'],
+                        'device_name' => 'Recovery Device',
+                        'device_type' => 'web',
+                        'platform' => 'web',
+                        'public_key' => $backupData['public_key'],
+                        'device_fingerprint' => 'recovery-'.$backupData['user_id'].'-'.time(),
+                        'last_used_at' => now(),
+                        'is_trusted' => true,
+                    ]);
+                }
+
                 EncryptionKey::create([
                     'conversation_id' => $convData['conversation_id'],
                     'user_id' => $backupData['user_id'],
+                    'device_id' => $device->id,
+                    'device_fingerprint' => $device->device_fingerprint,
                     'encrypted_key' => $convData['encrypted_key'],
                     'public_key' => $backupData['public_key'],
                     'key_version' => $convData['key_version'],
@@ -312,7 +333,13 @@ describe('E2EE Key Recovery and Backup System', function () {
                 $this->user1KeyPair['private_key']
             );
 
-            $decryptedMessage = $this->encryptionService->decryptMessage($encryptedMessage, $decryptedKey);
+            $decryptedMessage = $this->encryptionService->decryptMessage(
+                $encryptedMessage['data'],
+                $encryptedMessage['iv'],
+                $decryptedKey,
+                $encryptedMessage['hmac'],
+                $encryptedMessage['auth_data']
+            );
             expect($decryptedMessage)->toBe($testMessage);
         });
 
@@ -363,9 +390,26 @@ describe('E2EE Key Recovery and Backup System', function () {
 
             // Restore lost keys
             foreach ($backupData['lost_keys'] as $keyData) {
+                // Get or create a device for this user
+                $device = \App\Models\UserDevice::where('user_id', $this->user1->id)->first();
+                if (! $device) {
+                    $device = \App\Models\UserDevice::create([
+                        'user_id' => $this->user1->id,
+                        'device_name' => 'Recovery Device',
+                        'device_type' => 'web',
+                        'platform' => 'web',
+                        'public_key' => $this->user1->public_key,
+                        'device_fingerprint' => 'recovery-'.$this->user1->id.'-'.time(),
+                        'last_used_at' => now(),
+                        'is_trusted' => true,
+                    ]);
+                }
+
                 EncryptionKey::create([
                     'conversation_id' => $keyData['conversation_id'],
                     'user_id' => $this->user1->id,
+                    'device_id' => $device->id,
+                    'device_fingerprint' => $device->device_fingerprint,
                     'encrypted_key' => $keyData['encrypted_key'],
                     'public_key' => $this->user1->public_key,
                     'algorithm' => $keyData['algorithm'],
@@ -416,10 +460,30 @@ describe('E2EE Key Recovery and Backup System', function () {
                     $newKeyPair['public_key']
                 );
 
+                // Get or create a device for this user with new key
+                $device = \App\Models\UserDevice::where('user_id', $this->user1->id)->first();
+                if (! $device) {
+                    $device = \App\Models\UserDevice::create([
+                        'user_id' => $this->user1->id,
+                        'device_name' => 'New Recovery Device',
+                        'device_type' => 'web',
+                        'platform' => 'web',
+                        'public_key' => $newKeyPair['public_key'],
+                        'device_fingerprint' => 'new-device-'.$this->user1->id.'-'.time(),
+                        'last_used_at' => now(),
+                        'is_trusted' => true,
+                    ]);
+                } else {
+                    // Update existing device with new public key
+                    $device->update(['public_key' => $newKeyPair['public_key']]);
+                }
+
                 // Create new encryption key record
                 EncryptionKey::create([
                     'conversation_id' => $convData['conversation_id'],
                     'user_id' => $this->user1->id,
+                    'device_id' => $device->id,
+                    'device_fingerprint' => $device->device_fingerprint,
                     'encrypted_key' => $newEncryptedKey,
                     'public_key' => $newKeyPair['public_key'],
                     'algorithm' => 'RSA-4096-OAEP',
@@ -441,7 +505,13 @@ describe('E2EE Key Recovery and Backup System', function () {
                 $newKeyPair['private_key']
             );
 
-            $decryptedMessage = $this->encryptionService->decryptMessage($encryptedMessage, $decryptedKey);
+            $decryptedMessage = $this->encryptionService->decryptMessage(
+                $encryptedMessage['data'],
+                $encryptedMessage['iv'],
+                $decryptedKey,
+                $encryptedMessage['hmac'],
+                $encryptedMessage['auth_data']
+            );
             expect($decryptedMessage)->toBe($testMessage);
         });
     });
@@ -453,7 +523,7 @@ describe('E2EE Key Recovery and Backup System', function () {
             $this->user1->update(['public_key' => null]);
 
             // Admin creates emergency recovery package
-            $adminUser = User::factory()->create(['role' => 'admin']);
+            $adminUser = User::factory()->create();
             $adminKeyPair = $this->encryptionService->generateKeyPair();
             $adminUser->update(['public_key' => $adminKeyPair['public_key']]);
 
@@ -483,9 +553,26 @@ describe('E2EE Key Recovery and Backup System', function () {
                     $newUserKeyPair['public_key']
                 );
 
+                // Get or create a device for emergency recovery
+                $device = \App\Models\UserDevice::where('user_id', $this->user1->id)->first();
+                if (! $device) {
+                    $device = \App\Models\UserDevice::create([
+                        'user_id' => $this->user1->id,
+                        'device_name' => 'Emergency Recovery Device',
+                        'device_type' => 'web',
+                        'platform' => 'web',
+                        'public_key' => $newUserKeyPair['public_key'],
+                        'device_fingerprint' => 'emergency-'.$this->user1->id.'-'.time(),
+                        'last_used_at' => now(),
+                        'is_trusted' => true,
+                    ]);
+                }
+
                 EncryptionKey::create([
                     'conversation_id' => $convData['conversation_id'],
                     'user_id' => $this->user1->id,
+                    'device_id' => $device->id,
+                    'device_fingerprint' => $device->device_fingerprint,
                     'encrypted_key' => $encryptedKey,
                     'public_key' => $newUserKeyPair['public_key'],
                     'algorithm' => 'RSA-4096-OAEP',
@@ -507,7 +594,13 @@ describe('E2EE Key Recovery and Backup System', function () {
                 $newUserKeyPair['private_key']
             );
 
-            $decryptedMessage = $this->encryptionService->decryptMessage($encryptedMessage, $decryptedKey);
+            $decryptedMessage = $this->encryptionService->decryptMessage(
+                $encryptedMessage['data'],
+                $encryptedMessage['iv'],
+                $decryptedKey,
+                $encryptedMessage['hmac'],
+                $encryptedMessage['auth_data']
+            );
             expect($decryptedMessage)->toBe($testMessage);
         });
 
@@ -585,9 +678,26 @@ describe('E2EE Key Recovery and Backup System', function () {
 
             // Restore recoverable conversations
             foreach ($partialBackup['conversations'] as $convData) {
+                // Get or create a device for partial recovery
+                $device = \App\Models\UserDevice::where('user_id', $this->user1->id)->first();
+                if (! $device) {
+                    $device = \App\Models\UserDevice::create([
+                        'user_id' => $this->user1->id,
+                        'device_name' => 'Partial Recovery Device',
+                        'device_type' => 'web',
+                        'platform' => 'web',
+                        'public_key' => $this->user1->public_key,
+                        'device_fingerprint' => 'partial-'.$this->user1->id.'-'.time(),
+                        'last_used_at' => now(),
+                        'is_trusted' => true,
+                    ]);
+                }
+
                 EncryptionKey::create([
                     'conversation_id' => $convData['conversation_id'],
                     'user_id' => $this->user1->id,
+                    'device_id' => $device->id,
+                    'device_fingerprint' => $device->device_fingerprint,
                     'encrypted_key' => $convData['encrypted_key'],
                     'public_key' => $this->user1->public_key,
                     'algorithm' => 'RSA-4096-OAEP',

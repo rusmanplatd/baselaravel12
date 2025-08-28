@@ -627,5 +627,4 @@ class ChatEncryptionService
 
         return $health;
     }
-
 }

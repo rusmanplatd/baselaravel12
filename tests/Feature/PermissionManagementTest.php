@@ -9,14 +9,20 @@ beforeEach(function () {
     $this->user = User::factory()->create();
     $this->organization = Organization::factory()->create();
 
-    // Create permission management permissions
-    $this->permissions = [
-        Permission::factory()->create(['name' => 'view permissions', 'guard_name' => 'web', 'created_by' => $this->user->id, 'updated_by' => $this->user->id]),
-        Permission::factory()->create(['name' => 'create permissions', 'guard_name' => 'web', 'created_by' => $this->user->id, 'updated_by' => $this->user->id]),
-        Permission::factory()->create(['name' => 'edit permissions', 'guard_name' => 'web', 'created_by' => $this->user->id, 'updated_by' => $this->user->id]),
-        Permission::factory()->create(['name' => 'delete permissions', 'guard_name' => 'web', 'created_by' => $this->user->id, 'updated_by' => $this->user->id]),
-        Permission::factory()->create(['name' => 'manage permissions', 'guard_name' => 'web', 'created_by' => $this->user->id, 'updated_by' => $this->user->id]),
-    ];
+    // Create or get permission management permissions (avoid duplicates)
+    $permissionNames = ['view permissions', 'create permissions', 'edit permissions', 'delete permissions', 'manage permissions'];
+    $this->permissions = [];
+
+    foreach ($permissionNames as $permissionName) {
+        $permission = Permission::firstOrCreate([
+            'name' => $permissionName,
+            'guard_name' => 'web',
+        ], [
+            'created_by' => $this->user->id,
+            'updated_by' => $this->user->id,
+        ]);
+        $this->permissions[] = $permission;
+    }
 
     // Give user all permission permissions with team context
     setPermissionsTeamId($this->organization->id);
@@ -36,7 +42,8 @@ test('can view permissions index page', function () {
 });
 
 test('can view permission details', function () {
-    $permission = Permission::factory()->create();
+    setPermissionsTeamId($this->organization->id);
+    $permission = Permission::factory()->create(['name' => 'test:view-details-permission']);
     $role = Role::factory()->create();
     $role->givePermissionTo($permission);
 
@@ -50,6 +57,8 @@ test('can view permission details', function () {
 });
 
 test('can create permission', function () {
+    setPermissionsTeamId($this->organization->id);
+
     $response = $this->post(route('permissions.store'), [
         'name' => 'test:permission',
         'guard_name' => 'web',
@@ -64,6 +73,7 @@ test('can create permission', function () {
 });
 
 test('can update permission', function () {
+    setPermissionsTeamId($this->organization->id);
     $permission = Permission::factory()->create(['name' => 'old:permission']);
 
     $response = $this->put(route('permissions.update', $permission), [
@@ -79,7 +89,8 @@ test('can update permission', function () {
 });
 
 test('can delete permission without roles', function () {
-    $permission = Permission::factory()->create();
+    setPermissionsTeamId($this->organization->id);
+    $permission = Permission::factory()->create(['name' => 'test:can-delete-permission']);
 
     $response = $this->delete(route('permissions.destroy', $permission));
 
@@ -90,7 +101,8 @@ test('can delete permission without roles', function () {
 });
 
 test('cannot delete permission assigned to roles', function () {
-    $permission = Permission::factory()->create();
+    setPermissionsTeamId($this->organization->id);
+    $permission = Permission::factory()->create(['name' => 'test:cannot-delete-permission']);
     $role = Role::factory()->create();
     $role->givePermissionTo($permission);
 
@@ -103,6 +115,8 @@ test('cannot delete permission assigned to roles', function () {
 });
 
 test('permission name is required', function () {
+    setPermissionsTeamId($this->organization->id);
+
     $response = $this->post(route('permissions.store'), [
         'name' => '',
         'guard_name' => 'web',
@@ -112,6 +126,7 @@ test('permission name is required', function () {
 });
 
 test('permission name must be unique', function () {
+    setPermissionsTeamId($this->organization->id);
     Permission::factory()->create(['name' => 'duplicate:permission']);
 
     $response = $this->post(route('permissions.store'), [
@@ -123,6 +138,8 @@ test('permission name must be unique', function () {
 });
 
 test('permission name must follow valid format', function () {
+    setPermissionsTeamId($this->organization->id);
+
     $response = $this->post(route('permissions.store'), [
         'name' => 'Invalid Permission Name!@#',
         'guard_name' => 'web',
@@ -132,6 +149,8 @@ test('permission name must follow valid format', function () {
 });
 
 test('can search permissions', function () {
+    setPermissionsTeamId($this->organization->id);
+
     Permission::create(['name' => 'org:read', 'guard_name' => 'web']);
     Permission::create(['name' => 'user:read', 'guard_name' => 'web']);
     Permission::create(['name' => 'org:write', 'guard_name' => 'web']);
@@ -144,6 +163,8 @@ test('can search permissions', function () {
 });
 
 test('can filter permissions by guard', function () {
+    setPermissionsTeamId($this->organization->id);
+
     Permission::create(['name' => 'web:permission', 'guard_name' => 'web']);
     Permission::create(['name' => 'api:permission', 'guard_name' => 'api']);
 

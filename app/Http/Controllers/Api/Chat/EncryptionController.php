@@ -11,6 +11,7 @@ use App\Services\ChatEncryptionService;
 use App\Services\MultiDeviceEncryptionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -993,7 +994,7 @@ class EncryptionController extends Controller
     {
         try {
             $user = auth()->user();
-            
+
             $stats = [
                 'user_id' => $user->id,
                 'total_keys' => $user->encryptionKeys()->count(),
@@ -1019,7 +1020,7 @@ class EncryptionController extends Controller
                 'data' => $stats,
                 'generated_at' => now()->toISOString(),
             ]);
-            
+
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Failed to get key usage stats',
@@ -1033,9 +1034,9 @@ class EncryptionController extends Controller
         try {
             $anomalies = [];
             $user = auth()->user();
-            
+
             // Detect unencrypted messages in encrypted conversations
-            $unencryptedInEncrypted = DB::select("
+            $unencryptedInEncrypted = DB::select('
                 SELECT c.id as conversation_id, COUNT(m.id) as message_count
                 FROM chat_conversations c
                 INNER JOIN chat_participants p ON c.id = p.conversation_id
@@ -1045,7 +1046,7 @@ class EncryptionController extends Controller
                   AND p.user_id = ?
                   AND p.left_at IS NULL
                 GROUP BY c.id
-            ", [$user->id]);
+            ', [$user->id]);
 
             foreach ($unencryptedInEncrypted as $anomaly) {
                 $anomalies[] = [
@@ -1056,12 +1057,12 @@ class EncryptionController extends Controller
                     'detected_at' => now()->toISOString(),
                 ];
             }
-            
+
             // Detect encryption keys without corresponding participants
             $orphanedKeys = EncryptionKey::where('user_id', $user->id)
                 ->whereDoesntHave('conversation.participants', function ($query) use ($user) {
                     $query->where('user_id', $user->id)
-                          ->whereNull('left_at');
+                        ->whereNull('left_at');
                 })
                 ->get();
 
@@ -1074,13 +1075,13 @@ class EncryptionController extends Controller
                     'detected_at' => now()->toISOString(),
                 ];
             }
-            
+
             // Detect inactive keys that should be active
             $inactiveKeys = $user->encryptionKeys()
                 ->where('is_active', false)
                 ->whereHas('conversation.participants', function ($query) use ($user) {
                     $query->where('user_id', $user->id)
-                          ->whereNull('left_at');
+                        ->whereNull('left_at');
                 })
                 ->whereHas('conversation', function ($query) {
                     $query->where('is_encrypted', true);
@@ -1103,9 +1104,9 @@ class EncryptionController extends Controller
                     'anomaly_types' => array_unique(array_column($anomalies, 'type')),
                     'details' => $anomalies,
                     'scan_completed_at' => now()->toISOString(),
-                ]
+                ],
             ]);
-            
+
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Failed to detect anomalies',
@@ -1117,7 +1118,7 @@ class EncryptionController extends Controller
     public function getAuditLog(Conversation $conversation)
     {
         $this->authorize('view', $conversation);
-        
+
         try {
             // Get activity logs related to encryption for this conversation
             $auditEntries = \Spatie\Activitylog\Models\Activity::where('subject_type', 'App\Models\Chat\Conversation')
@@ -1146,9 +1147,9 @@ class EncryptionController extends Controller
                     'audit_entries' => $auditEntries,
                     'total_entries' => $auditEntries->count(),
                     'retrieved_at' => now()->toISOString(),
-                ]
+                ],
             ]);
-            
+
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Failed to get audit log',

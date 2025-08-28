@@ -17,15 +17,15 @@ class TenantServiceTest extends TestCase
     {
         parent::setUp();
         $this->seed(\Database\Seeders\OrganizationPositionLevelSeeder::class);
-        
+
         // Clear tenant context to avoid interference between tests
         TenantService::clearTenant();
-        
+
         // Clear any static state
         $reflection = new \ReflectionClass(TenantService::class);
         $currentTenantProperty = $reflection->getProperty('currentTenant');
         $currentTenantProperty->setValue(null);
-        
+
         $currentUserProperty = $reflection->getProperty('currentUser');
         $currentUserProperty->setValue(null);
     }

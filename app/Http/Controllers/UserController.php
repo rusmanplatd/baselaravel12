@@ -69,10 +69,10 @@ class UserController extends Controller
 
         // Set team context for role assignment - use the first organization of the authenticated user
         $currentUserOrganizations = auth()->user()->organizations;
-        $teamId = $currentUserOrganizations->isNotEmpty() 
-            ? $currentUserOrganizations->first()->id 
+        $teamId = $currentUserOrganizations->isNotEmpty()
+            ? $currentUserOrganizations->first()->id
             : \App\Models\Organization::first()?->id;
-            
+
         if ($teamId) {
             setPermissionsTeamId($teamId);
         }
@@ -97,10 +97,10 @@ class UserController extends Controller
 
         // Remove all roles before deletion
         $currentUserOrganizations = auth()->user()->organizations;
-        $teamId = $currentUserOrganizations->isNotEmpty() 
-            ? $currentUserOrganizations->first()->id 
+        $teamId = $currentUserOrganizations->isNotEmpty()
+            ? $currentUserOrganizations->first()->id
             : \App\Models\Organization::first()?->id;
-            
+
         if ($teamId) {
             setPermissionsTeamId($teamId);
         }

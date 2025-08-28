@@ -93,7 +93,7 @@ class NewActivityLoggingTest extends TestCase
     {
         $organization = Organization::factory()->create();
         $user = User::factory()->create();
-        
+
         $orgUnit = OrganizationUnit::create([
             'organization_id' => $organization->id,
             'unit_code' => 'TEST_UNIT',
