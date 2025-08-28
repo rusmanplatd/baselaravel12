@@ -14,7 +14,8 @@ return new class extends Migration
         Schema::create('oauth_device_codes', function (Blueprint $table) {
             $table->char('id', 80)->primary();
             $table->foreignId('user_id')->nullable()->index();
-            $table->foreignUuid('client_id')->index();
+            $table->ulid('client_id');
+            $table->index('client_id');
             $table->char('user_code', 8)->unique();
             $table->text('scopes');
             $table->boolean('revoked');
