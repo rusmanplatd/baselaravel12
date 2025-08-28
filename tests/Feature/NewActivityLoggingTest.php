@@ -68,6 +68,7 @@ class NewActivityLoggingTest extends TestCase
     public function test_organization_unit_activity_is_logged_when_unit_is_created()
     {
         $organization = Organization::factory()->create();
+        $user = User::factory()->create();
 
         $orgUnit = OrganizationUnit::create([
             'organization_id' => $organization->id,
@@ -75,6 +76,7 @@ class NewActivityLoggingTest extends TestCase
             'name' => 'Test Unit',
             'unit_type' => 'department',
             'is_active' => true,
+            'created_by' => $user->id,
         ]);
 
         $activity = Activity::where('subject_id', $orgUnit->id)
@@ -90,12 +92,15 @@ class NewActivityLoggingTest extends TestCase
     public function test_organization_position_activity_is_logged_when_position_is_created()
     {
         $organization = Organization::factory()->create();
+        $user = User::factory()->create();
+        
         $orgUnit = OrganizationUnit::create([
             'organization_id' => $organization->id,
             'unit_code' => 'TEST_UNIT',
             'name' => 'Test Unit',
             'unit_type' => 'department',
             'is_active' => true,
+            'created_by' => $user->id,
         ]);
 
         $position = OrganizationPosition::create([
@@ -105,6 +110,7 @@ class NewActivityLoggingTest extends TestCase
             'title' => 'Test Position',
             'is_active' => true,
             'max_incumbents' => 1,
+            'created_by' => $user->id,
         ]);
 
         $activity = Activity::where('subject_id', $position->id)

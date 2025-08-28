@@ -25,6 +25,8 @@ class OrganizationUnit extends Model
         'authorities',
         'is_active',
         'sort_order',
+        'created_by',
+        'updated_by',
     ];
 
     protected $casts = [

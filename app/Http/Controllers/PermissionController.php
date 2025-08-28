@@ -62,10 +62,10 @@ class PermissionController extends Controller
             'guard_name' => $validated['guard_name'] ?? 'web',
         ]);
 
-        ActivityLogService::log('permission', 'created', $permission->id, [
+        ActivityLogService::logSystem('created', "Permission '{$permission->name}' created", [
             'permission_name' => $permission->name,
             'guard_name' => $permission->guard_name,
-        ]);
+        ], $permission);
 
         return redirect()->route('permissions.index')
             ->with('success', 'Permission created successfully.');
@@ -96,10 +96,10 @@ class PermissionController extends Controller
             'guard_name' => $validated['guard_name'] ?? $permission->guard_name,
         ]);
 
-        ActivityLogService::log('permission', 'updated', $permission->id, [
+        ActivityLogService::logSystem('updated', "Permission '{$permission->name}' updated", [
             'permission_name' => $permission->name,
             'guard_name' => $permission->guard_name,
-        ]);
+        ], $permission);
 
         return redirect()->route('permissions.index')
             ->with('success', 'Permission updated successfully.');
@@ -116,7 +116,7 @@ class PermissionController extends Controller
 
         $permission->delete();
 
-        ActivityLogService::log('permission', 'deleted', $permission->id, [
+        ActivityLogService::logSystem('deleted', "Permission '{$permissionName}' deleted", [
             'permission_name' => $permissionName,
         ]);
 
@@ -142,9 +142,9 @@ class PermissionController extends Controller
                     continue; // Skip permissions that are assigned to roles
                 }
 
-                ActivityLogService::log('permission', 'bulk_deleted', $permission->id, [
+                ActivityLogService::logSystem('bulk_deleted', "Permission '{$permission->name}' bulk deleted", [
                     'permission_name' => $permission->name,
-                ]);
+                ], $permission);
 
                 $permission->delete();
             }
@@ -183,10 +183,10 @@ class PermissionController extends Controller
                     if ($permission->wasRecentlyCreated) {
                         $createdCount++;
 
-                        ActivityLogService::log('permission', 'bulk_created', $permission->id, [
+                        ActivityLogService::logSystem('bulk_created', "Permission '{$permission->name}' bulk created", [
                             'permission_name' => $permission->name,
                             'guard_name' => $permission->guard_name,
-                        ]);
+                        ], $permission);
                     }
                 }
             }

@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Exceptions\ChatFileException;
+use App\Exceptions\EncryptionException;
+use App\Exceptions\DecryptionException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -394,5 +396,49 @@ class ChatFileService
     public function getFileUrl(string $filePath): string
     {
         return route('api.chat.files.download', ['encodedPath' => base64_encode($filePath)]);
+    }
+
+    public function encryptFile(string $fileContent, string $symmetricKey, string $fileName = 'file.bin', string $mimeType = 'application/octet-stream'): array
+    {
+        try {
+            // Validate the symmetric key
+            if (strlen($symmetricKey) !== 32) {
+                throw new EncryptionException('Invalid symmetric key length');
+            }
+
+            // Encrypt the file content using the encryption service
+            $encryptionResult = $this->encryptionService->encryptFile($fileContent, $symmetricKey);
+
+            return [
+                'encrypted_data' => $encryptionResult['data'],
+                'iv' => $encryptionResult['iv'],
+                'tag' => $encryptionResult['hmac'] ?? '',
+                'hash' => $encryptionResult['hash'] ?? '',
+                'file_name' => $fileName,
+                'mime_type' => $mimeType,
+                'file_size' => strlen($fileContent),
+            ];
+
+        } catch (EncryptionException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            Log::error('File encryption failed', [
+                'file_name' => $fileName,
+                'error' => $e->getMessage(),
+            ]);
+            throw new EncryptionException('File encryption failed: ' . $e->getMessage(), $e);
+        }
+    }
+
+    public function decryptFile(string $encryptedData, string $iv, string $symmetricKey, string $tag = ''): string
+    {
+        try {
+            return $this->encryptionService->decryptFile($encryptedData, $iv, $symmetricKey);
+        } catch (DecryptionException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            Log::error('File decryption failed', ['error' => $e->getMessage()]);
+            throw new DecryptionException('File decryption failed: ' . $e->getMessage(), $e);
+        }
     }
 }

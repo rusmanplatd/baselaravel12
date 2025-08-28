@@ -85,7 +85,7 @@ beforeEach(function () {
 
 describe('Message Creation', function () {
     it('can create a text message', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         $response = $this->postJson("/api/v1/chat/conversations/{$this->conversation->id}/messages", [
             'content' => 'Hello, this is a test message',
@@ -109,7 +109,7 @@ describe('Message Creation', function () {
     });
 
     it('can create a reply message', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         // Create original message
         $originalMessage = ($this->createTestMessage)('Original message', $this->otherUser->id);
@@ -129,7 +129,7 @@ describe('Message Creation', function () {
     });
 
     it('validates message content', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         $response = $this->postJson("/api/v1/chat/conversations/{$this->conversation->id}/messages", [
             'content' => '',
@@ -141,7 +141,7 @@ describe('Message Creation', function () {
     });
 
     it('validates message type', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         $response = $this->postJson("/api/v1/chat/conversations/{$this->conversation->id}/messages", [
             'content' => 'Test message',
@@ -181,7 +181,7 @@ describe('Message Retrieval', function () {
     });
 
     it('can retrieve messages with pagination', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         $response = $this->getJson("/api/v1/chat/conversations/{$this->conversation->id}/messages");
 
@@ -205,7 +205,7 @@ describe('Message Retrieval', function () {
     });
 
     it('can retrieve messages with custom page size', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         $response = $this->getJson("/api/v1/chat/conversations/{$this->conversation->id}/messages?per_page=10");
 
@@ -215,7 +215,7 @@ describe('Message Retrieval', function () {
     });
 
     it('can retrieve older messages', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         $response = $this->getJson("/api/v1/chat/conversations/{$this->conversation->id}/messages?page=2");
 
@@ -225,7 +225,7 @@ describe('Message Retrieval', function () {
     });
 
     it('includes sender information', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         $response = $this->getJson("/api/v1/chat/conversations/{$this->conversation->id}/messages");
 
@@ -237,7 +237,7 @@ describe('Message Retrieval', function () {
     });
 
     it('orders messages by creation date descending', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         $response = $this->getJson("/api/v1/chat/conversations/{$this->conversation->id}/messages");
 
@@ -255,16 +255,11 @@ describe('Message Retrieval', function () {
 
 describe('Message Updates', function () {
     beforeEach(function () {
-        $this->message = Message::create([
-            'conversation_id' => $this->conversation->id,
-            'sender_id' => $this->user->id,
-            'content' => 'Original message',
-            'type' => 'text',
-        ]);
+        $this->message = ($this->createTestMessage)('Original message');
     });
 
     it('can update own message', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         $response = $this->putJson("/api/v1/chat/messages/{$this->message->id}", [
             'content' => 'Updated message content',
@@ -294,7 +289,7 @@ describe('Message Updates', function () {
     });
 
     it('validates updated content', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         $response = $this->putJson("/api/v1/chat/messages/{$this->message->id}", [
             'content' => '',
@@ -305,7 +300,7 @@ describe('Message Updates', function () {
     });
 
     it('tracks edit timestamp', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         $this->putJson("/api/v1/chat/messages/{$this->message->id}", [
             'content' => 'Updated content',
@@ -318,16 +313,11 @@ describe('Message Updates', function () {
 
 describe('Message Deletion', function () {
     beforeEach(function () {
-        $this->message = Message::create([
-            'conversation_id' => $this->conversation->id,
-            'sender_id' => $this->user->id,
-            'content' => 'Message to delete',
-            'type' => 'text',
-        ]);
+        $this->message = ($this->createTestMessage)('Message to delete');
     });
 
     it('can soft delete own message', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         $response = $this->deleteJson("/api/v1/chat/messages/{$this->message->id}");
 
@@ -358,14 +348,9 @@ describe('Message Deletion', function () {
             ->update(['role' => 'admin']);
 
         // Create message by other user
-        $otherMessage = Message::create([
-            'conversation_id' => $this->conversation->id,
-            'sender_id' => $this->otherUser->id,
-            'content' => 'Message by other user',
-            'type' => 'text',
-        ]);
+        $otherMessage = ($this->createTestMessage)('Message by other user', $this->otherUser->id);
 
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         $response = $this->deleteJson("/api/v1/chat/messages/{$otherMessage->id}");
 
@@ -383,7 +368,7 @@ describe('File Messages', function () {
     });
 
     it('can create file message', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         $file = UploadedFile::fake()->image('test.jpg', 100, 100);
 
@@ -410,7 +395,7 @@ describe('File Messages', function () {
     });
 
     it('validates file size', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         // Create file larger than 100MB
         $largeFile = UploadedFile::fake()->create('large.pdf', 101 * 1024); // 101MB
@@ -425,7 +410,7 @@ describe('File Messages', function () {
     });
 
     it('validates file type', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         $invalidFile = UploadedFile::fake()->create('script.exe', 1024);
 
@@ -439,7 +424,7 @@ describe('File Messages', function () {
     });
 
     it('encrypts uploaded files', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         $file = UploadedFile::fake()->create('document.pdf', 1024);
 
@@ -466,30 +451,13 @@ describe('File Messages', function () {
 
 describe('Message Search', function () {
     beforeEach(function () {
-        Message::create([
-            'conversation_id' => $this->conversation->id,
-            'sender_id' => $this->user->id,
-            'content' => 'This is about Laravel development',
-            'type' => 'text',
-        ]);
-
-        Message::create([
-            'conversation_id' => $this->conversation->id,
-            'sender_id' => $this->otherUser->id,
-            'content' => 'React components are great',
-            'type' => 'text',
-        ]);
-
-        Message::create([
-            'conversation_id' => $this->conversation->id,
-            'sender_id' => $this->user->id,
-            'content' => 'Database optimization tips',
-            'type' => 'text',
-        ]);
+        ($this->createTestMessage)('This is about Laravel development');
+        ($this->createTestMessage)('React components are great', $this->otherUser->id);
+        ($this->createTestMessage)('Database optimization tips');
     });
 
     it('can search messages by content', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         $response = $this->getJson("/api/v1/chat/conversations/{$this->conversation->id}/messages/search?q=Laravel");
 
@@ -499,7 +467,7 @@ describe('Message Search', function () {
     });
 
     it('search is case insensitive', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         $response = $this->getJson("/api/v1/chat/conversations/{$this->conversation->id}/messages/search?q=react");
 
@@ -509,7 +477,7 @@ describe('Message Search', function () {
     });
 
     it('returns empty results for no matches', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         $response = $this->getJson("/api/v1/chat/conversations/{$this->conversation->id}/messages/search?q=nonexistent");
 
@@ -518,7 +486,7 @@ describe('Message Search', function () {
     });
 
     it('validates search query', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         $response = $this->getJson("/api/v1/chat/conversations/{$this->conversation->id}/messages/search?q=ab");
 
@@ -529,7 +497,7 @@ describe('Message Search', function () {
 
 describe('Rate Limiting', function () {
     it('applies rate limiting to message creation', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         // Send messages up to rate limit
         for ($i = 0; $i < 60; $i++) {
@@ -550,7 +518,7 @@ describe('Rate Limiting', function () {
 
 describe('Error Handling', function () {
     it('handles conversation not found', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         $response = $this->postJson('/api/conversations/non-existent-id/messages', [
             'content' => 'Test message',
@@ -561,7 +529,7 @@ describe('Error Handling', function () {
     });
 
     it('handles message not found', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         $response = $this->putJson('/api/messages/non-existent-id', [
             'content' => 'Updated content',
@@ -571,7 +539,7 @@ describe('Error Handling', function () {
     });
 
     it('handles database errors gracefully', function () {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
         // Mock a database error
         $this->mock(Message::class, function ($mock) {

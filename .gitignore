@@ -24,4 +24,3 @@ yarn-error.log
 /.zed
 /test-results
 /playwright-report
-test.log

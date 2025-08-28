@@ -8,10 +8,12 @@ use App\Services\ChatEncryptionService;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class EncryptionKey extends Model
 {
-    use HasUlids;
+    use HasUlids, LogsActivity;
 
     protected $table = 'chat_encryption_keys';
 
@@ -199,5 +201,15 @@ class EncryptionKey extends Model
     public function deactivate(): void
     {
         $this->update(['is_active' => false]);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()
+            ->logOnlyDirty()
+            ->useLogName('encryption')
+            ->setDescriptionForEvent(fn(string $eventName) => "Encryption key {$eventName}")
+            ->dontLogIfAttributesChangedOnly(['updated_at']);
     }
 }
