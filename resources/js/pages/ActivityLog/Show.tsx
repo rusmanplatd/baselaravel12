@@ -122,13 +122,13 @@ export default function ActivityLogShow({ activity }: Props) {
                                     </div>
                                 </div>
 
-                                {activity.batch_ulid && (
+                                {activity.batch_uuid && (
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">
                                             Batch UUID
                                         </label>
                                         <p className="text-sm text-gray-900 font-mono">
-                                            {activity.batch_ulid}
+                                            {activity.batch_uuid}
                                         </p>
                                     </div>
                                 )}

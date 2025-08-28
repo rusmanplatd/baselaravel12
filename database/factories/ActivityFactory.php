@@ -22,7 +22,7 @@ class ActivityFactory extends Factory
             'causer_type' => User::class,
             'causer_id' => User::factory(),
             'properties' => [],
-            'batch_ulid' => $this->faker->ulid(),
+            'batch_uuid' => \Illuminate\Support\Str::ulid()->toString(),
             'organization_id' => null, // Allow null by default
             'tenant_id' => null,
             'created_at' => $this->faker->dateTimeBetween('-30 days', 'now'),
