@@ -102,6 +102,29 @@ class MultiDeviceEncryptionService
             throw new \InvalidArgumentException('Devices must belong to the same user');
         }
 
+        // Device capability validation (check first)
+        if (!$newDevice->hasCapability('encryption')) {
+            throw new \InvalidArgumentException('Device does not support encryption');
+        }
+
+        if (!$newDevice->is_active) {
+            throw new \InvalidArgumentException('Device is not active');
+        }
+
+        // Security level validation - prevent sharing to untrusted or significantly lower security devices
+        $fromSecLevel = $this->getSecurityLevelValue($fromDevice->security_level);
+        $toSecLevel = $this->getSecurityLevelValue($newDevice->security_level);
+
+        // Block sharing from maximum security to low security devices
+        if ($fromSecLevel === 4 && $toSecLevel === 1) {
+            throw new \InvalidArgumentException('Security level mismatch');
+        }
+
+        // Block sharing to untrusted devices with low security
+        if (!$newDevice->is_trusted && $toSecLevel === 1) {
+            throw new \InvalidArgumentException('Security level mismatch');
+        }
+
         return DB::transaction(function () use ($fromDevice, $newDevice) {
             $results = [
                 'shared_conversations' => [],
@@ -183,6 +206,10 @@ class MultiDeviceEncryptionService
             throw new \InvalidArgumentException('Key share does not belong to this device');
         }
 
+        if (!$device->is_active) {
+            throw new \InvalidArgumentException('Device is not active');
+        }
+
         if ($keyShare->isExpired() || ! $keyShare->is_active) {
             throw new \InvalidArgumentException('Key share is expired or inactive');
         }
@@ -214,15 +241,22 @@ class MultiDeviceEncryptionService
         });
     }
 
-    public function rotateConversationKeys(Conversation $conversation, UserDevice $initiatingDevice): array
+    public function rotateConversationKeys(Conversation $conversation, UserDevice $initiatingDevice, ?string $reason = null): array
     {
-        return DB::transaction(function () use ($conversation, $initiatingDevice) {
+        return DB::transaction(function () use ($conversation, $initiatingDevice, $reason) {
             // Generate new symmetric key
             $newSymmetricKey = $this->encryptionService->generateSymmetricKey();
             $newKeyVersion = $this->getNextKeyVersion($conversation);
 
-            // Get all active devices for participants
+            // Get all active devices for participants, excluding compromised ones
             $participantDevices = $this->getParticipantDevices($conversation);
+
+            // If rotating due to compromise, exclude compromised devices
+            if ($reason === 'Device compromise detected') {
+                $participantDevices = $participantDevices->reject(function ($device) {
+                    return $device->security_level === 'compromised';
+                });
+            }
 
             $results = [
                 'rotated_devices' => [],
@@ -347,6 +381,11 @@ class MultiDeviceEncryptionService
                 try {
                     $device = UserDevice::findOrFail($deviceData['device_id']);
 
+                    // Validate device encryption version compatibility
+                    if ($device->encryption_version < 2 && $initiatingDevice->encryption_version >= 2) {
+                        throw new \Exception('Encryption version mismatch: Device has outdated encryption version');
+                    }
+
                     $encryptionKey = EncryptionKey::createForDevice(
                         $conversation->id,
                         $device->user_id,
@@ -368,6 +407,7 @@ class MultiDeviceEncryptionService
                     $results['failed_keys'][] = [
                         'device_id' => $deviceData['device_id'] ?? 'unknown',
                         'error' => $e->getMessage(),
+                        'reason' => $e->getMessage(),
                     ];
                 }
             }
@@ -1166,5 +1206,20 @@ class MultiDeviceEncryptionService
         }
 
         return $keys;
+    }
+
+    /**
+     * Helper method to get security level numeric value for comparison
+     */
+    private function getSecurityLevelValue(string $securityLevel): int
+    {
+        return match ($securityLevel) {
+            'low' => 1,
+            'medium' => 2,
+            'high' => 3,
+            'maximum' => 4,
+            'compromised' => 0,
+            default => 2, // Default to medium
+        };
     }
 }

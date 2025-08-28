@@ -886,7 +886,7 @@ describe('Multi-Device Security Validation', function () {
             'public_key' => $this->encryptionService->generateKeyPair()['public_key'],
             'device_fingerprint' => 'basic_device_'.uniqid(),
             'platform' => 'Android',
-            'device_capabilities' => ['messaging'],
+            'device_capabilities' => ['messaging', 'encryption'],
             'security_level' => 'low',
             'encryption_version' => 2,
             'is_trusted' => false,
