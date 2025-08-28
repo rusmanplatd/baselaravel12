@@ -27,11 +27,16 @@ class Conversation extends Model
         'status',
         'last_message_at',
         'created_by',
+        'is_encrypted',
+        'encryption_algorithm',
+        'key_strength',
     ];
 
     protected $casts = [
         'metadata' => 'array',
         'last_message_at' => 'datetime',
+        'is_encrypted' => 'boolean',
+        'key_strength' => 'integer',
     ];
 
     public function creator(): BelongsTo
@@ -69,6 +74,43 @@ class Conversation extends Model
         return $this->type === 'group';
     }
 
+    public function isEncrypted(): bool
+    {
+        return $this->is_encrypted === true;
+    }
+
+    public function enableEncryption(string $algorithm = 'RSA-4096-OAEP', int $keyStrength = 4096): void
+    {
+        $this->update([
+            'is_encrypted' => true,
+            'encryption_algorithm' => $algorithm,
+            'key_strength' => $keyStrength,
+        ]);
+    }
+
+    public function disableEncryption(): void
+    {
+        $this->update([
+            'is_encrypted' => false,
+            'encryption_algorithm' => null,
+            'key_strength' => null,
+        ]);
+    }
+
+    public function getEncryptionInfo(): array
+    {
+        return [
+            'is_encrypted' => $this->is_encrypted,
+            'algorithm' => $this->encryption_algorithm,
+            'key_strength' => $this->key_strength,
+        ];
+    }
+
+    public function getEncryptionInfoAttribute(): array
+    {
+        return $this->getEncryptionInfo();
+    }
+
     public function scopeActive($query)
     {
         return $query->where('status', 'active');
@@ -81,10 +123,20 @@ class Conversation extends Model
         });
     }
 
+    public function scopeEncrypted($query)
+    {
+        return $query->where('is_encrypted', true);
+    }
+
+    public function scopeUnencrypted($query)
+    {
+        return $query->where('is_encrypted', false);
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['name', 'type', 'description', 'status'])
+            ->logOnly(['name', 'type', 'description', 'status', 'is_encrypted', 'encryption_algorithm', 'key_strength'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
             ->setDescriptionForEvent(fn (string $eventName) => "Chat conversation {$eventName}")

@@ -164,9 +164,9 @@ describe('E2EE Key Recovery and Backup System', function () {
                 $messages[] = Message::create([
                     'conversation_id' => $this->conversation->id,
                     'sender_id' => $i % 2 === 0 ? $this->user1->id : $this->user2->id,
-                    'content' => $encryptedContent,
-                    'message_type' => 'text',
-                    'is_encrypted' => true,
+                    'type' => 'text',
+                    'encrypted_content' => json_encode($encryptedContent),
+                    'content_hash' => hash('sha256', $content),
                 ]);
             }
             

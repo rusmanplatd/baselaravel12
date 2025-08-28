@@ -41,6 +41,9 @@ class ConversationController extends Controller
             'description' => 'nullable|string|max:1000',
             'participants' => 'required|array|min:1',
             'participants.*' => 'required|string',
+            'is_encrypted' => 'nullable|boolean',
+            'encryption_algorithm' => 'nullable|string|in:RSA-4096-OAEP,RSA-2048-OAEP',
+            'key_strength' => 'nullable|integer|in:2048,4096',
         ]);
 
         if ($validated['type'] === 'direct' && count($validated['participants']) !== 1) {
@@ -91,14 +94,25 @@ class ConversationController extends Controller
         }
 
         return DB::transaction(function () use ($validated, $participants) {
+            $isEncrypted = $validated['is_encrypted'] ?? true; // Default to encrypted
+            $algorithm = $validated['encryption_algorithm'] ?? 'RSA-4096-OAEP';
+            $keyStrength = $validated['key_strength'] ?? 4096;
+
             $conversation = Conversation::create([
                 'name' => $validated['name'] ?? null,
                 'type' => $validated['type'],
                 'description' => $validated['description'] ?? null,
                 'created_by' => auth()->id(),
+                'is_encrypted' => $isEncrypted,
+                'encryption_algorithm' => $isEncrypted ? $algorithm : null,
+                'key_strength' => $isEncrypted ? $keyStrength : null,
             ]);
 
-            $symmetricKey = $this->encryptionService->generateSymmetricKey();
+            // Only generate encryption keys if the conversation is encrypted
+            $symmetricKey = null;
+            if ($isEncrypted) {
+                $symmetricKey = $this->encryptionService->generateSymmetricKey();
+            }
 
             foreach ($participants as $index => $userId) {
                 $role = $userId === auth()->id() ? 'owner' : 'member';
@@ -110,28 +124,31 @@ class ConversationController extends Controller
                     'joined_at' => now(),
                 ]);
 
-                $userKeyPair = $this->getUserKeyPair($userId);
+                // Only create encryption keys if conversation is encrypted
+                if ($isEncrypted && $symmetricKey) {
+                    $userKeyPair = $this->getUserKeyPair($userId);
 
-                // Get user's device for key creation (use primary device)
-                $userDevice = \App\Models\UserDevice::where('user_id', $userId)
-                    ->where('is_trusted', true)
-                    ->first();
+                    // Get user's device for key creation (use primary device)
+                    $userDevice = \App\Models\UserDevice::where('user_id', $userId)
+                        ->where('is_trusted', true)
+                        ->first();
 
-                if ($userDevice) {
-                    EncryptionKey::create([
-                        'conversation_id' => $conversation->id,
-                        'user_id' => $userId,
-                        'device_id' => $userDevice->id,
-                        'device_fingerprint' => $userDevice->device_fingerprint,
-                        'encrypted_key' => $this->encryptionService->encryptSymmetricKey(
-                            $symmetricKey,
-                            $userKeyPair['public_key']
-                        ),
-                        'key_version' => 1,
-                        'algorithm' => 'RSA-OAEP',
-                        'key_strength' => 4096,
-                        'is_active' => true,
-                    ]);
+                    if ($userDevice) {
+                        EncryptionKey::create([
+                            'conversation_id' => $conversation->id,
+                            'user_id' => $userId,
+                            'device_id' => $userDevice->id,
+                            'device_fingerprint' => $userDevice->device_fingerprint,
+                            'encrypted_key' => $this->encryptionService->encryptSymmetricKey(
+                                $symmetricKey,
+                                $userKeyPair['public_key']
+                            ),
+                            'key_version' => 1,
+                            'algorithm' => $algorithm,
+                            'key_strength' => $keyStrength,
+                            'is_active' => true,
+                        ]);
+                    }
                 }
             }
 
@@ -415,7 +432,111 @@ class ConversationController extends Controller
 
         return response()->json([
             'message' => 'Group settings updated successfully',
-            'conversation' => $conversation,
+            'conversation' => $conversation->append(['encryption_info']),
+        ]);
+    }
+
+    public function enableEncryption(Request $request, Conversation $conversation)
+    {
+        $this->authorize('update', $conversation);
+
+        $validated = $request->validate([
+            'algorithm' => 'nullable|string|in:RSA-4096-OAEP,RSA-2048-OAEP',
+            'key_strength' => 'nullable|integer|in:2048,4096',
+        ]);
+
+        if ($conversation->is_encrypted) {
+            return response()->json(['error' => 'Conversation is already encrypted'], 422);
+        }
+
+        return DB::transaction(function () use ($conversation, $validated) {
+            $algorithm = $validated['algorithm'] ?? 'RSA-4096-OAEP';
+            $keyStrength = $validated['key_strength'] ?? 4096;
+
+            $conversation->enableEncryption($algorithm, $keyStrength);
+
+            // Generate symmetric key for the conversation
+            $symmetricKey = $this->encryptionService->generateSymmetricKey();
+
+            // Create encryption keys for all active participants
+            $activeParticipants = $conversation->activeParticipants()->get();
+
+            foreach ($activeParticipants as $participant) {
+                $userKeyPair = $this->getUserKeyPair($participant->user_id);
+
+                // Get user's device for key creation
+                $userDevice = \App\Models\UserDevice::where('user_id', $participant->user_id)
+                    ->where('is_trusted', true)
+                    ->first();
+
+                if ($userDevice) {
+                    EncryptionKey::create([
+                        'conversation_id' => $conversation->id,
+                        'user_id' => $participant->user_id,
+                        'device_id' => $userDevice->id,
+                        'device_fingerprint' => $userDevice->device_fingerprint,
+                        'encrypted_key' => $this->encryptionService->encryptSymmetricKey(
+                            $symmetricKey,
+                            $userKeyPair['public_key']
+                        ),
+                        'key_version' => 1,
+                        'algorithm' => $algorithm,
+                        'key_strength' => $keyStrength,
+                        'is_active' => true,
+                    ]);
+                }
+            }
+
+            return response()->json([
+                'message' => 'Encryption enabled successfully',
+                'conversation' => $conversation->fresh()->append(['encryption_info']),
+            ]);
+        });
+    }
+
+    public function disableEncryption(Request $request, Conversation $conversation)
+    {
+        $this->authorize('update', $conversation);
+
+        if (!$conversation->is_encrypted) {
+            return response()->json(['error' => 'Conversation is not encrypted'], 422);
+        }
+
+        return DB::transaction(function () use ($conversation) {
+            $conversation->disableEncryption();
+
+            // Deactivate all encryption keys for this conversation
+            $conversation->encryptionKeys()->update(['is_active' => false]);
+
+            return response()->json([
+                'message' => 'Encryption disabled successfully',
+                'conversation' => $conversation->fresh()->append(['encryption_info']),
+            ]);
+        });
+    }
+
+    public function getEncryptionStatus(Conversation $conversation)
+    {
+        $this->authorize('view', $conversation);
+
+        return response()->json([
+            'conversation_id' => $conversation->id,
+            'encryption_info' => $conversation->getEncryptionInfo(),
+            'active_keys_count' => $conversation->encryptionKeys()->active()->count(),
+            'participants_with_keys' => $conversation->encryptionKeys()
+                ->active()
+                ->with('user:id,name,email')
+                ->get()
+                ->groupBy('user_id')
+                ->map(function ($keys) {
+                    $user = $keys->first()->user;
+                    return [
+                        'user' => $user,
+                        'keys_count' => $keys->count(),
+                        'devices_count' => $keys->pluck('device_id')->unique()->count(),
+                    ];
+                })
+                ->values(),
         ]);
     }
 

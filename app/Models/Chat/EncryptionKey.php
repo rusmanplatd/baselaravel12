@@ -81,6 +81,23 @@ class EncryptionKey extends Model
         string $publicKey,
         int $keyVersion = 1
     ): self {
+        // Get or create a default device for the user
+        $device = UserDevice::where('user_id', $userId)->first();
+        
+        if (!$device) {
+            // Create a default device if none exists
+            $device = UserDevice::create([
+                'user_id' => $userId,
+                'device_name' => 'Default Device',
+                'device_type' => 'web',
+                'platform' => 'web',
+                'public_key' => $publicKey, // Use the provided public key
+                'device_fingerprint' => 'default-' . $userId . '-' . time(),
+                'last_used_at' => now(),
+                'is_trusted' => true,
+            ]);
+        }
+
         $encryptionService = app(ChatEncryptionService::class);
 
         $encryptedKey = $encryptionService->encryptSymmetricKey(
@@ -91,6 +108,8 @@ class EncryptionKey extends Model
         return self::create([
             'conversation_id' => $conversationId,
             'user_id' => $userId,
+            'device_id' => $device->id,
+            'device_fingerprint' => $device->device_fingerprint,
             'encrypted_key' => $encryptedKey,
             'public_key' => $publicKey,
             'key_version' => $keyVersion,

@@ -202,6 +202,17 @@ Route::middleware('auth:api')->prefix('v1')->group(function () {
         Route::get('conversations/{conversation}/encryption-key', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'getConversationKey'])->name('conversations.encryption-key');
         Route::post('conversations/{conversation}/rotate-key', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'rotateConversationKey'])->name('conversations.rotate-key');
         Route::post('conversations/{conversation}/setup-encryption', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'setupConversationEncryption'])->name('conversations.setup-encryption');
+        
+        // Conversation-level encryption management
+        Route::get('conversations/{conversation}/encryption/status', [\App\Http\Controllers\Api\Chat\ConversationController::class, 'getEncryptionStatus'])
+            ->name('conversations.encryption.status')
+            ->middleware('throttle:60,1');
+        Route::post('conversations/{conversation}/encryption/enable', [\App\Http\Controllers\Api\Chat\ConversationController::class, 'enableEncryption'])
+            ->name('conversations.encryption.enable')
+            ->middleware('throttle:10,1');
+        Route::post('conversations/{conversation}/encryption/disable', [\App\Http\Controllers\Api\Chat\ConversationController::class, 'disableEncryption'])
+            ->name('conversations.encryption.disable')
+            ->middleware('throttle:10,1');
         Route::post('encryption/verify', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'verifyMessage'])->name('encryption.verify');
         Route::post('encryption/test', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'testEncryption'])->name('encryption.test');
 

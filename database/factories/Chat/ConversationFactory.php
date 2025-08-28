@@ -57,4 +57,28 @@ class ConversationFactory extends Factory
             'name' => $this->faker->words(3, true),
         ]);
     }
+
+    /**
+     * Indicate that the conversation is encrypted.
+     */
+    public function encrypted(string $algorithm = 'RSA-4096-OAEP', int $keyStrength = 4096): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_encrypted' => true,
+            'encryption_algorithm' => $algorithm,
+            'key_strength' => $keyStrength,
+        ]);
+    }
+
+    /**
+     * Indicate that the conversation is not encrypted.
+     */
+    public function unencrypted(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_encrypted' => false,
+            'encryption_algorithm' => null,
+            'key_strength' => null,
+        ]);
+    }
 }
