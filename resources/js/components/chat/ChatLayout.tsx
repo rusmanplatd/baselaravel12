@@ -244,16 +244,13 @@ export default function ChatLayout({ user, inviteCode }: ChatLayoutProps) {
             </DialogDescription>
           </DialogHeader>
           <DeviceSetup 
-            onComplete={async (deviceInfo) => {
-              try {
-                await registerDevice(deviceInfo);
-                setShowDeviceSetup(false);
-                toast.success('Device setup completed successfully');
-              } catch (error: any) {
-                toast.error(error.message || 'Failed to setup device');
-              }
+            onSetupComplete={() => {
+              setShowDeviceSetup(false);
+              toast.success('Device setup completed successfully');
             }}
-            onCancel={() => setShowDeviceSetup(false)}
+            onSetupError={(error: string) => {
+              toast.error(error || 'Failed to setup device');
+            }}
           />
         </DialogContent>
       </Dialog>

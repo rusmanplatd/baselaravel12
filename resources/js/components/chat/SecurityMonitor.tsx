@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { multiDeviceE2EE } from '@/services/MultiDeviceE2EEService';
+import { multiDeviceE2EEService } from '@/services/MultiDeviceE2EEService';
 
 interface SecurityMetrics {
   overallSecurityScore: number;
@@ -59,7 +59,7 @@ export function SecurityMonitor() {
       setRefreshing(true);
       
       // Load security report
-      const report = await multiDeviceE2EE.getSecurityReport();
+      const report = await multiDeviceE2EEService.getSecurityReport();
       
       setMetrics({
         overallSecurityScore: report.integrityReport.securityScore,
@@ -73,7 +73,7 @@ export function SecurityMonitor() {
       });
 
       // Transform integrity issues into security alerts
-      const securityAlerts: SecurityAlert[] = report.integrityReport.issues.map((issue, index) => ({
+      const securityAlerts: SecurityAlert[] = report.integrityReport.issues.map((issue: any, index: number) => ({
         id: `alert_${index}`,
         type: issue.severity === 'high' ? 'critical' : issue.severity === 'medium' ? 'warning' : 'info',
         title: issue.type.replace('_', ' ').toUpperCase(),

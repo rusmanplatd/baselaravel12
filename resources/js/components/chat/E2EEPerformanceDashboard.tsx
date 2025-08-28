@@ -51,16 +51,25 @@ export function E2EEPerformanceDashboard({
     errorRate: 0
   });
 
-  const [cacheStats, setCacheStats] = useState({
+  const [cacheStats, setCacheStats] = useState<{
+    size: number;
+    hitRate: number;
+    totalHits: number;
+    entries: { keyId: string; hitCount: number; lastUsed: string; expiresAt: string }[];
+  }>({
     size: 0,
     hitRate: 0,
     totalHits: 0,
     entries: []
   });
 
-  const [optimizationNeeded, setOptimizationNeeded] = useState({
+  const [optimizationNeeded, setOptimizationNeeded] = useState<{
+    needed: boolean;
+    priority: 'low' | 'medium' | 'high';
+    reasons: string[];
+  }>({
     needed: false,
-    priority: 'low' as 'low' | 'medium' | 'high',
+    priority: 'low',
     reasons: []
   });
 

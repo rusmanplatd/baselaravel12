@@ -155,7 +155,7 @@ export default function DeviceSetup({ onSetupComplete, onSetupError }: DeviceSet
       setRegistrationResult(result);
       
       if (result.verification) {
-        setVerificationChallenge(result.verification.challenge);
+        setVerificationChallenge(result.verification);
       }
       
       updateStepStatus('registration', true);

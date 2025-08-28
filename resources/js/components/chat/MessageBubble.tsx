@@ -60,27 +60,24 @@ export default function MessageBubble({
   const getEncryptionIndicator = () => {
     if (!isEncrypted) {
       return (
-        <ShieldAlert 
-          className="h-3 w-3 text-yellow-500" 
-          title="This message is not encrypted"
-        />
+        <span title="This message is not encrypted">
+          <ShieldAlert className="h-3 w-3 text-yellow-500" />
+        </span>
       );
     }
 
     if (encryptionVerified) {
       return (
-        <ShieldCheck 
-          className="h-3 w-3 text-green-500" 
-          title="Message verified with end-to-end encryption"
-        />
+        <span title="Message verified with end-to-end encryption">
+          <ShieldCheck className="h-3 w-3 text-green-500" />
+        </span>
       );
     }
 
     return (
-      <Shield 
-        className="h-3 w-3 text-blue-500" 
-        title="End-to-end encrypted"
-      />
+      <span title="End-to-end encrypted">
+        <Shield className="h-3 w-3 text-blue-500" />
+      </span>
     );
   };
 

@@ -64,7 +64,7 @@ export default function DeviceSync({ conversationId, onSyncComplete }: DeviceSyn
       
       // Recover messages from the last 24 hours
       const fromTimestamp = Date.now() - (24 * 60 * 60 * 1000);
-      const result = await multiDeviceE2EEService.recoverMissngMessages(conversationId, fromTimestamp);
+      const result = await multiDeviceE2EEService.recoverMissingMessages(conversationId, fromTimestamp);
       
       setRecoveredMessages(result);
       

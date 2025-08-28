@@ -1009,9 +1009,33 @@ describe('File Download API', function () {
     });
 
     it('rejects expired download tokens', function () {
-        // This would require mocking time or creating an expired token
-        // Implementation depends on how download tokens are generated
-        $this->markTestSkipped('Requires time mocking for expired token testing');
+        $this->actingAs($this->user, 'api');
+        
+        // Upload file first
+        $file = UploadedFile::fake()->create('document.pdf', 100, 'application/pdf');
+        $uploadResponse = $this->postJson("/api/v1/chat/conversations/{$this->conversation->id}/upload", [
+            'file' => $file,
+            'caption' => 'Sharing a document',
+        ]);
+        
+        $uploadResponse->assertStatus(201);
+        $fileUrl = $uploadResponse->json('file_url');
+        
+        // Extract the encoded path from file URL
+        $parsedUrl = parse_url($fileUrl);
+        $pathParts = explode('/', $parsedUrl['path']);
+        $encodedPath = end($pathParts);
+        
+        // Create an expired token
+        $filePath = base64_decode($encodedPath);
+        $expiredTime = time() - 3600; // 1 hour ago
+        $expiredToken = hash_hmac('sha256', $filePath.$expiredTime, config('app.key'));
+        
+        // Try to download with expired token
+        $response = $this->getJson("/api/v1/chat/files/{$encodedPath}/download?token={$expiredToken}&expires={$expiredTime}");
+        
+        $response->assertStatus(403);
+        $response->assertJson(['error' => 'Download token expired']);
     });
 
     it('rejects invalid download tokens', function () {
