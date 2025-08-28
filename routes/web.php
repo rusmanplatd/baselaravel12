@@ -7,7 +7,7 @@ Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');
 
-Route::middleware(['auth', 'verified', 'mfa.verified', 'trusted.device', 'session.tracking'])->group(function () {
+Route::middleware(['auth', 'verified', 'mfa.verified'])->group(function () {
     // Tenant management routes (before tenant middleware)
     Route::get('tenant/select', [\App\Http\Controllers\TenantController::class, 'select'])->name('tenant.select');
     Route::post('tenant/switch', [\App\Http\Controllers\TenantController::class, 'switch'])->name('tenant.switch');
