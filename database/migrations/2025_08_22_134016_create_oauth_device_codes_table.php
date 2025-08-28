@@ -30,7 +30,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('oauth_device_codes');
+        Schema::drop('oauth_device_codes');
     }
 
     /**

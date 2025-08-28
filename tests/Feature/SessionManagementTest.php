@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\TrustedDevice;
 use App\Models\User;
 use App\Services\SessionManagementService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -18,14 +17,14 @@ afterEach(function () {
     // Clear tenant context to avoid interference with other tests
     if (class_exists(\App\Services\TenantService::class)) {
         \App\Services\TenantService::clearTenant();
-        
+
         // Clear any static state
         $reflection = new \ReflectionClass(\App\Services\TenantService::class);
         if ($reflection->hasProperty('currentTenant')) {
             $currentTenantProperty = $reflection->getProperty('currentTenant');
             $currentTenantProperty->setValue(null);
         }
-        
+
         if ($reflection->hasProperty('currentUser')) {
             $currentUserProperty = $reflection->getProperty('currentUser');
             $currentUserProperty->setValue(null);
@@ -284,31 +283,4 @@ test('session service can cleanup expired sessions', function () {
 
     expect($expiredSession->is_active)->toBeFalse();
     expect($activeSession->is_active)->toBeTrue();
-});
-
-test('sessions can be linked to trusted devices', function () {
-    $trustedDevice = TrustedDevice::factory()->create([
-        'user_id' => $this->user->id,
-    ]);
-
-    DB::table('sessions')->insert([
-        'id' => 'session-with-device',
-        'user_id' => $this->user->id,
-        'trusted_device_id' => $trustedDevice->id,
-        'ip_address' => '127.0.0.1',
-        'user_agent' => 'Test Browser',
-        'browser' => 'Chrome',
-        'platform' => 'Windows',
-        'device_type' => 'desktop',
-        'payload' => serialize([]),
-        'last_activity' => now()->timestamp,
-        'login_at' => now(),
-        'is_active' => true,
-    ]);
-
-    $session = $this->sessionService->getSessionById('session-with-device');
-
-    expect($session)->not->toBeNull();
-    expect($session->trusted_device_id)->toBe($trustedDevice->id);
-    expect($session->device_name)->toBe($trustedDevice->device_name);
 });

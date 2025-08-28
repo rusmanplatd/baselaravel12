@@ -3,7 +3,6 @@
 use App\Models\Activity;
 use App\Models\Organization;
 use App\Models\OrganizationMembership;
-use App\Models\TrustedDevice;
 use App\Models\User;
 use App\Models\UserMfaSetting;
 use App\Services\ActivityLogService;
@@ -54,20 +53,6 @@ test('activity logging demonstration', function () {
         'mfa_required' => true,
     ]);
     echo "✅ MFA enabled for user\n";
-
-    // Add trusted device
-    $device = TrustedDevice::create([
-        'user_id' => $user->id,
-        'device_name' => 'MacBook Pro',
-        'device_type' => 'desktop',
-        'browser' => 'Safari',
-        'platform' => 'macOS',
-        'ip_address' => '192.168.1.100',
-        'user_agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
-        'is_active' => true,
-        'expires_at' => now()->addDays(30),
-    ]);
-    echo "✅ Trusted device added\n";
 
     // Log various activities
     ActivityLogService::logAuth('login', 'User logged in from trusted device', [

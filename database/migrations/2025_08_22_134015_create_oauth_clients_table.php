@@ -29,7 +29,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('oauth_clients');
+        Schema::drop('oauth_clients');
     }
 
     /**

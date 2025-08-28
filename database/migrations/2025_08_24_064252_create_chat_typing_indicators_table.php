@@ -35,6 +35,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('chat_typing_indicators');
+        Schema::drop('chat_typing_indicators');
     }
 };

@@ -178,10 +178,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('organization_memberships');
-        Schema::dropIfExists('organization_positions');
-        Schema::dropIfExists('organization_position_levels');
-        Schema::dropIfExists('organization_units');
-        Schema::dropIfExists('organizations');
+        Schema::drop('organization_memberships');
+        Schema::drop('organization_positions');
+        Schema::drop('organization_position_levels');
+        Schema::drop('organization_units');
+        Schema::drop('organizations');
     }
 };

@@ -99,39 +99,6 @@ export interface PaginatedData<T> {
     total: number;
 }
 
-// Security & Session Management Types
-export interface TrustedDevice {
-    id: string;
-    device_name: string;
-    device_type: 'desktop' | 'mobile' | 'tablet';
-    browser: string;
-    platform: string;
-    ip_address: string;
-    location: string | null;
-    last_used_at: string;
-    expires_at: string;
-    is_active: boolean;
-    is_current: boolean;
-}
-
-export interface UserSession {
-    id: string;
-    ip_address: string;
-    browser: string;
-    platform: string;
-    device_type: 'desktop' | 'mobile' | 'tablet';
-    location: string | null;
-    last_activity: string;
-    login_at: string;
-    is_active: boolean;
-    is_current: boolean;
-    trusted_device: {
-        id: string;
-        device_name: string;
-        device_type: string;
-    } | null;
-}
-
 export interface SessionStats {
     active_sessions: number;
     total_sessions: number;

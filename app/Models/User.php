@@ -342,16 +342,6 @@ class User extends Authenticatable implements HasPasskeys
         return $query->first();
     }
 
-    public function trustedDevices(): HasMany
-    {
-        return $this->hasMany(TrustedDevice::class);
-    }
-
-    public function activeTrustedDevices(): HasMany
-    {
-        return $this->hasMany(TrustedDevice::class)->active();
-    }
-
     public function sessions(): HasMany
     {
         return $this->hasMany(Session::class);
@@ -360,14 +350,6 @@ class User extends Authenticatable implements HasPasskeys
     public function activeSessions(): HasMany
     {
         return $this->hasMany(Session::class)->active();
-    }
-
-    public function getTrustedDeviceByToken(string $token): ?TrustedDevice
-    {
-        return $this->trustedDevices()
-            ->where('device_token', $token)
-            ->active()
-            ->first();
     }
 
     public function getCurrentSession(string $sessionId): ?Session

@@ -3,7 +3,6 @@
 use App\Models\Activity;
 use App\Models\Organization;
 use App\Models\OrganizationMembership;
-use App\Models\TrustedDevice;
 use App\Models\User;
 use App\Models\UserMfaSetting;
 use App\Services\ActivityLogService;
@@ -98,32 +97,6 @@ test('mfa settings activity is logged when mfa is enabled', function () {
     expect($activity->description)->toBe('MFA settings created');
     expect($activity->subject_id)->toBe($mfaSettings->id);
     expect($activity->properties->get('attributes'))->toHaveKey('totp_enabled', true);
-});
-
-test('trusted device activity is logged when device is created', function () {
-    $user = User::factory()->create();
-
-    // Clear creation activities
-    Activity::truncate();
-
-    $device = TrustedDevice::create([
-        'user_id' => $user->id,
-        'device_name' => 'Test Device',
-        'device_type' => 'desktop',
-        'browser' => 'Chrome',
-        'platform' => 'Windows',
-        'ip_address' => '127.0.0.1',
-        'user_agent' => 'Mozilla/5.0...',
-        'is_active' => true,
-        'expires_at' => now()->addDays(30),
-    ]);
-
-    $activities = Activity::where('log_name', 'security')->get();
-    expect($activities)->toHaveCount(1);
-
-    $activity = $activities->first();
-    expect($activity->description)->toBe('Trusted device created');
-    expect($activity->subject_id)->toBe($device->id);
 });
 
 test('activity log service logs auth events correctly', function () {

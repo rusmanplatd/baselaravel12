@@ -45,6 +45,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('device_key_shares');
+        Schema::drop('device_key_shares');
     }
 };

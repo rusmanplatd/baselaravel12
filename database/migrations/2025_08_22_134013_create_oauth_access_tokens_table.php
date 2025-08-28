@@ -28,7 +28,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('oauth_access_tokens');
+        Schema::drop('oauth_access_tokens');
     }
 
     /**

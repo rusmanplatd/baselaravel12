@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::table('sessions', function (Blueprint $table) {
             // Add additional columns to extend Laravel's built-in sessions table
-            $table->foreignUlid('trusted_device_id')->nullable()->after('user_id')->constrained('trusted_devices')->onDelete('set null');
             $table->string('browser')->nullable()->after('user_agent');
             $table->string('platform')->nullable()->after('browser');
             $table->string('device_type')->nullable()->after('platform');
@@ -24,7 +23,6 @@ return new class extends Migration
 
             // Add indexes for performance
             $table->index(['user_id', 'is_active']);
-            $table->index(['trusted_device_id', 'is_active']);
         });
     }
 
@@ -34,11 +32,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('sessions', function (Blueprint $table) {
-            $table->dropForeign(['trusted_device_id']);
             $table->dropIndex(['user_id', 'is_active']);
-            $table->dropIndex(['trusted_device_id', 'is_active']);
             $table->dropColumn([
-                'trusted_device_id',
                 'browser',
                 'platform',
                 'device_type',

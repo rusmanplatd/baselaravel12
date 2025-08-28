@@ -1,7 +1,5 @@
 <?php
 
-use App\Http\Controllers\Security\SessionController;
-use App\Http\Controllers\Security\TrustedDeviceController;
 use App\Http\Controllers\Settings\PasswordController;
 use App\Http\Controllers\Settings\ProfileController;
 use Illuminate\Support\Facades\Route;
@@ -38,28 +36,4 @@ Route::middleware('auth')->group(function () {
             'passkeys' => $passkeys,
         ]);
     })->name('security');
-
-    // Trusted Devices
-    Route::prefix('security')->name('security.')->group(function () {
-        // Trust device page (for new device verification)
-        Route::get('trust-device', [TrustedDeviceController::class, 'show'])->name('trust-device');
-
-        // Trusted devices management
-        Route::get('trusted-devices', [TrustedDeviceController::class, 'index'])->name('trusted-devices');
-        Route::post('trusted-devices', [TrustedDeviceController::class, 'store'])->name('trusted-devices.store');
-        Route::put('trusted-devices/{device}', [TrustedDeviceController::class, 'update'])->name('trusted-devices.update');
-        Route::delete('trusted-devices/{device}', [TrustedDeviceController::class, 'destroy'])->name('trusted-devices.destroy');
-        Route::post('trusted-devices/revoke-all', [TrustedDeviceController::class, 'revokeAll'])->name('trusted-devices.revoke-all');
-        Route::post('trusted-devices/cleanup', [TrustedDeviceController::class, 'cleanup'])->name('trusted-devices.cleanup');
-
-        // Session management
-        Route::get('sessions', [SessionController::class, 'index'])->name('sessions');
-        Route::get('sessions/{session}', [SessionController::class, 'show'])->name('sessions.show');
-        Route::delete('sessions/{session}', [SessionController::class, 'destroy'])->name('sessions.destroy');
-        Route::post('sessions/terminate-all', [SessionController::class, 'terminateAll'])->name('sessions.terminate-all');
-        Route::post('sessions/terminate-others', [SessionController::class, 'terminateAllOthers'])->name('sessions.terminate-others');
-        Route::get('sessions-stats', [SessionController::class, 'stats'])->name('sessions.stats');
-        Route::get('sessions-alerts', [SessionController::class, 'alerts'])->name('sessions.alerts');
-        Route::post('sessions/cleanup', [SessionController::class, 'cleanup'])->name('sessions.cleanup');
-    });
 });

@@ -13,7 +13,6 @@ class Session extends Model
         'user_agent',
         'payload',
         'last_activity',
-        'trusted_device_id',
         'browser',
         'platform',
         'device_type',
@@ -35,11 +34,6 @@ class Session extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
-    }
-
-    public function trustedDevice(): BelongsTo
-    {
-        return $this->belongsTo(TrustedDevice::class);
     }
 
     public function scopeActive($query)

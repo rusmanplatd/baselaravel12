@@ -41,6 +41,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('oauth_audit_logs');
+        Schema::drop('oauth_audit_logs');
     }
 };
