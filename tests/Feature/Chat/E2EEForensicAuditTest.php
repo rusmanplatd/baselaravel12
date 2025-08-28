@@ -17,7 +17,7 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     $this->encryptionService = new ChatEncryptionService;
     $this->multiDeviceService = new MultiDeviceEncryptionService($this->encryptionService);
-    
+
     $this->user1 = User::factory()->create();
     $this->user2 = User::factory()->create();
     $this->auditor = User::factory()->create(['role' => 'auditor']);
@@ -48,7 +48,7 @@ describe('E2EE Forensic Analysis and Audit Compliance', function () {
 
             // Check if activity was logged
             $finalActivityCount = Activity::count();
-            
+
             if ($finalActivityCount > $initialActivityCount) {
                 $latestActivity = Activity::latest()->first();
                 expect($latestActivity->description)->toContain('encryption');
@@ -73,11 +73,11 @@ describe('E2EE Forensic Analysis and Audit Compliance', function () {
 
             // Verify message creation was logged (if activity logging is enabled for messages)
             $finalActivityCount = Activity::count();
-            
+
             expect($message)->toBeInstanceOf(Message::class);
             expect($message->content_hash)->not()->toBeEmpty();
             expect($message->encrypted_content)->not()->toBeEmpty();
-            
+
             // Verify audit metadata is present
             $encryptedData = json_decode($message->encrypted_content, true);
             expect($encryptedData)->toHaveKey('timestamp');
@@ -101,7 +101,7 @@ describe('E2EE Forensic Analysis and Audit Compliance', function () {
             // Rotate key
             $initialKey->update(['is_active' => false]);
             $newSymmetricKey = $this->encryptionService->rotateSymmetricKey($this->conversation->id);
-            
+
             $rotatedKey = EncryptionKey::createForUser(
                 $this->conversation->id,
                 $this->user1->id,
@@ -159,7 +159,7 @@ describe('E2EE Forensic Analysis and Audit Compliance', function () {
             // Verify encrypted content includes forensic metadata
             $encryptedData = json_decode($message->encrypted_content, true);
             expect($encryptedData)->toHaveKeys(['data', 'iv', 'hmac', 'timestamp', 'nonce']);
-            
+
             // Timestamp should be preserved for forensic timeline
             expect($encryptedData['timestamp'])->toBeNumeric();
             expect($encryptedData['timestamp'])->toBeGreaterThan(time() - 300); // Within last 5 minutes
@@ -178,14 +178,14 @@ describe('E2EE Forensic Analysis and Audit Compliance', function () {
 
             // Get initial creation timestamp
             $originalCreatedAt = $encryptionKey->created_at;
-            
+
             // Update the key (simulate normal operations)
             $encryptionKey->touch();
             $encryptionKey->refresh();
 
             // Creation timestamp should remain immutable
             expect($encryptionKey->created_at->toISOString())->toBe($originalCreatedAt->toISOString());
-            
+
             // But updated_at should change
             expect($encryptionKey->updated_at->toISOString())->not()->toBe($originalCreatedAt->toISOString());
         });
@@ -306,7 +306,7 @@ describe('E2EE Forensic Analysis and Audit Compliance', function () {
             expect($lifecycle['first_message'])->not()->toBeNull();
             expect($lifecycle['deactivated'])->not()->toBeNull();
             expect($lifecycle['rotated'])->not()->toBeNull();
-            
+
             // Verify chronological order
             expect($lifecycle['created']->timestamp)->toBeLessThanOrEqual($lifecycle['first_message']->timestamp);
             expect($lifecycle['first_message']->timestamp)->toBeLessThanOrEqual($lifecycle['deactivated']->timestamp);
@@ -316,7 +316,7 @@ describe('E2EE Forensic Analysis and Audit Compliance', function () {
         it('provides user access audit trails', function () {
             $keyPair1 = $this->encryptionService->generateKeyPair();
             $keyPair2 = $this->encryptionService->generateKeyPair();
-            
+
             $device1 = $this->multiDeviceService->registerDevice(
                 $this->user1, 'Primary Device', 'mobile', $keyPair1['public_key'],
                 'primary_'.uniqid(), 'iOS', 'Mozilla/5.0...', ['messaging', 'encryption'], 'high'
@@ -487,14 +487,14 @@ describe('E2EE Forensic Analysis and Audit Compliance', function () {
 
             // Simulate legal hold flag
             $legalHoldMessage->update([
-                'metadata' => json_encode(['legal_hold' => true, 'hold_reason' => 'Litigation case #12345'])
+                'metadata' => json_encode(['legal_hold' => true, 'hold_reason' => 'Litigation case #12345']),
             ]);
 
             // Attempt to delete message under legal hold
-            $canDelete = !json_decode($legalHoldMessage->metadata ?? '{}', true)['legal_hold'] ?? false;
-            
+            $canDelete = ! json_decode($legalHoldMessage->metadata ?? '{}', true)['legal_hold'] ?? false;
+
             expect($canDelete)->toBeFalse();
-            
+
             // Message should remain in database
             expect(Message::find($legalHoldMessage->id))->not()->toBeNull();
         });
@@ -579,16 +579,16 @@ describe('E2EE Forensic Analysis and Audit Compliance', function () {
 
             // GDPR deletion request simulation
             $gdprDeletionItems = [];
-            
+
             // Find all user data
             $userMessages = Message::where('sender_id', $this->user1->id)->get();
             $userEncryptionKeys = EncryptionKey::where('user_id', $this->user1->id)->get();
-            
+
             foreach ($userMessages as $msg) {
                 $gdprDeletionItems[] = ['type' => 'message', 'id' => $msg->id, 'hash' => $msg->content_hash];
                 $msg->forceDelete();
             }
-            
+
             foreach ($userEncryptionKeys as $key) {
                 $gdprDeletionItems[] = ['type' => 'encryption_key', 'id' => $key->id];
                 $key->forceDelete();
@@ -634,10 +634,10 @@ describe('E2EE Forensic Analysis and Audit Compliance', function () {
             );
 
             $soxCompliance = [
-                'data_encrypted' => !empty($financialMessage->encrypted_content),
-                'integrity_hash' => !empty($financialMessage->content_hash),
+                'data_encrypted' => ! empty($financialMessage->encrypted_content),
+                'integrity_hash' => ! empty($financialMessage->content_hash),
                 'access_controlled' => true, // Assuming access controls are in place
-                'audit_trail' => !empty($financialMessage->created_at),
+                'audit_trail' => ! empty($financialMessage->created_at),
                 'immutable_records' => $financialMessage->created_at !== null,
                 'retention_policy' => true, // Assuming 7-year retention
             ];

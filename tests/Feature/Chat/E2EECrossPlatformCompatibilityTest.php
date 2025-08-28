@@ -16,7 +16,7 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     $this->encryptionService = new ChatEncryptionService;
     $this->multiDeviceService = new MultiDeviceEncryptionService($this->encryptionService);
-    
+
     $this->user1 = User::factory()->create();
     $this->user2 = User::factory()->create();
 
@@ -29,7 +29,7 @@ describe('E2EE Cross-Platform Compatibility', function () {
     describe('Platform-Specific Device Registration', function () {
         it('handles iOS device encryption', function () {
             $keyPair = $this->encryptionService->generateKeyPair();
-            
+
             $iOSDevice = $this->multiDeviceService->registerDevice(
                 $this->user1,
                 'iPhone 15 Pro',
@@ -58,7 +58,7 @@ describe('E2EE Cross-Platform Compatibility', function () {
 
         it('handles Android device encryption', function () {
             $keyPair = $this->encryptionService->generateKeyPair();
-            
+
             $androidDevice = $this->multiDeviceService->registerDevice(
                 $this->user1,
                 'Samsung Galaxy S24',
@@ -87,7 +87,7 @@ describe('E2EE Cross-Platform Compatibility', function () {
 
         it('handles Windows desktop encryption', function () {
             $keyPair = $this->encryptionService->generateKeyPair();
-            
+
             $windowsDevice = $this->multiDeviceService->registerDevice(
                 $this->user1,
                 'Windows Workstation',
@@ -116,7 +116,7 @@ describe('E2EE Cross-Platform Compatibility', function () {
 
         it('handles macOS desktop encryption', function () {
             $keyPair = $this->encryptionService->generateKeyPair();
-            
+
             $macDevice = $this->multiDeviceService->registerDevice(
                 $this->user1,
                 'MacBook Pro M3',
@@ -145,7 +145,7 @@ describe('E2EE Cross-Platform Compatibility', function () {
 
         it('handles Linux server encryption', function () {
             $keyPair = $this->encryptionService->generateKeyPair();
-            
+
             $linuxDevice = $this->multiDeviceService->registerDevice(
                 $this->user1,
                 'Ubuntu Server',
@@ -178,35 +178,37 @@ describe('E2EE Cross-Platform Compatibility', function () {
             // Generate keys on different simulated platforms
             $platforms = ['iOS', 'Android', 'Windows', 'macOS', 'Linux'];
             $keyPairs = [];
-            
+
             foreach ($platforms as $platform) {
                 $keyPair = $this->encryptionService->generateKeyPair();
                 $keyPairs[$platform] = $keyPair;
-                
+
                 // All platforms should generate compatible PEM format
                 expect($keyPair['public_key'])->toStartWith('-----BEGIN PUBLIC KEY-----');
-                expect($keyPair['public_key'])->toEndWith('-----END PUBLIC KEY-----');
+                expect(trim($keyPair['public_key']))->toEndWith('-----END PUBLIC KEY-----');
                 expect($keyPair['private_key'])->toStartWith('-----BEGIN PRIVATE KEY-----');
-                expect($keyPair['private_key'])->toEndWith('-----END PRIVATE KEY-----');
+                expect(trim($keyPair['private_key']))->toEndWith('-----END PRIVATE KEY-----');
             }
-            
+
             // Test cross-platform encryption/decryption
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
-            
+
             foreach ($platforms as $encryptPlatform) {
                 foreach ($platforms as $decryptPlatform) {
-                    if ($encryptPlatform === $decryptPlatform) continue;
-                    
+                    if ($encryptPlatform === $decryptPlatform) {
+                        continue;
+                    }
+
                     $encryptedKey = $this->encryptionService->encryptSymmetricKey(
                         $symmetricKey,
                         $keyPairs[$encryptPlatform]['public_key']
                     );
-                    
+
                     $decryptedKey = $this->encryptionService->decryptSymmetricKey(
                         $encryptedKey,
                         $keyPairs[$encryptPlatform]['private_key']
                     );
-                    
+
                     expect($decryptedKey)->toBe($symmetricKey);
                 }
             }
@@ -215,16 +217,16 @@ describe('E2EE Cross-Platform Compatibility', function () {
         it('handles different base64 encoding standards', function () {
             $keyPair = $this->encryptionService->generateKeyPair();
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
-            
+
             $encryptedKey = $this->encryptionService->encryptSymmetricKey($symmetricKey, $keyPair['public_key']);
-            
+
             // Test different base64 variants that might come from different platforms
             $variants = [
                 $encryptedKey, // Standard
                 str_replace('+', '-', str_replace('/', '_', $encryptedKey)), // URL-safe
                 rtrim($encryptedKey, '='), // No padding
             ];
-            
+
             foreach ($variants as $variant) {
                 try {
                     // The service should handle different base64 formats gracefully
@@ -244,7 +246,7 @@ describe('E2EE Cross-Platform Compatibility', function () {
     describe('Platform-Specific Security Features', function () {
         it('leverages iOS Secure Enclave capabilities', function () {
             $keyPair = $this->encryptionService->generateKeyPair();
-            
+
             $iOSDevice = UserDevice::create([
                 'user_id' => $this->user1->id,
                 'device_name' => 'iPhone with Secure Enclave',
@@ -272,7 +274,7 @@ describe('E2EE Cross-Platform Compatibility', function () {
 
         it('leverages Android Hardware Security Module', function () {
             $keyPair = $this->encryptionService->generateKeyPair();
-            
+
             $androidDevice = UserDevice::create([
                 'user_id' => $this->user1->id,
                 'device_name' => 'Android with HSM',
@@ -299,7 +301,7 @@ describe('E2EE Cross-Platform Compatibility', function () {
 
         it('leverages Windows TPM for key protection', function () {
             $keyPair = $this->encryptionService->generateKeyPair();
-            
+
             $windowsDevice = UserDevice::create([
                 'user_id' => $this->user1->id,
                 'device_name' => 'Windows with TPM',
@@ -328,7 +330,7 @@ describe('E2EE Cross-Platform Compatibility', function () {
     describe('Browser and WebView Compatibility', function () {
         it('handles web browser encryption', function () {
             $keyPair = $this->encryptionService->generateKeyPair();
-            
+
             $webDevice = UserDevice::create([
                 'user_id' => $this->user1->id,
                 'device_name' => 'Chrome Browser',
@@ -358,7 +360,7 @@ describe('E2EE Cross-Platform Compatibility', function () {
 
         it('handles mobile WebView encryption', function () {
             $keyPair = $this->encryptionService->generateKeyPair();
-            
+
             $webViewDevice = UserDevice::create([
                 'user_id' => $this->user1->id,
                 'device_name' => 'iOS WebView',
@@ -402,7 +404,7 @@ describe('E2EE Cross-Platform Compatibility', function () {
             // Create devices for each platform
             foreach ($platforms as [$platform, $type]) {
                 $keyPair = $this->encryptionService->generateKeyPair();
-                
+
                 $device = UserDevice::create([
                     'user_id' => $this->user1->id,
                     'device_name' => "{$platform} Device",
@@ -434,7 +436,7 @@ describe('E2EE Cross-Platform Compatibility', function () {
                 'Simple text message',
                 'Message with émojis 🚀 🔒 📱',
                 'Message with special chars: !@#$%^&*()',
-                'Long message: ' . str_repeat('Lorem ipsum dolor sit amet. ', 50),
+                'Long message: '.str_repeat('Lorem ipsum dolor sit amet. ', 50),
             ];
 
             foreach ($testMessages as $content) {
@@ -457,7 +459,7 @@ describe('E2EE Cross-Platform Compatibility', function () {
 
         it('handles different character encodings', function () {
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
-            
+
             $testStrings = [
                 'ASCII text',
                 'UTF-8 with accents: café résumé naïve',
@@ -491,7 +493,7 @@ describe('E2EE Cross-Platform Compatibility', function () {
             // Simulate iOS and Android devices
             foreach (['iOS', 'Android'] as $platform) {
                 $keyPair = $this->encryptionService->generateKeyPair();
-                
+
                 $device = UserDevice::create([
                     'user_id' => $this->user1->id,
                     'device_name' => "{$platform} Mobile",
@@ -511,7 +513,7 @@ describe('E2EE Cross-Platform Compatibility', function () {
 
             // Test encryption performance (should be fast enough for mobile)
             $startTime = microtime(true);
-            
+
             for ($i = 0; $i < 10; $i++) {
                 $message = Message::createEncrypted(
                     $this->conversation->id,
@@ -525,14 +527,14 @@ describe('E2EE Cross-Platform Compatibility', function () {
             }
 
             $totalTime = microtime(true) - $startTime;
-            
+
             // Should complete 10 encrypt/decrypt cycles in under 2 seconds on mobile
             expect($totalTime)->toBeLessThan(2.0);
         });
 
         it('optimizes for low-power devices', function () {
             $keyPair = $this->encryptionService->generateKeyPair();
-            
+
             $lowPowerDevice = UserDevice::create([
                 'user_id' => $this->user1->id,
                 'device_name' => 'IoT Device',
@@ -573,16 +575,31 @@ describe('E2EE Cross-Platform Compatibility', function () {
         it('maintains compatibility with older encryption versions', function () {
             $keyPair = $this->encryptionService->generateKeyPair();
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
-            
+
+            // Create a device for the user
+            $device = \App\Models\UserDevice::create([
+                'user_id' => $this->user1->id,
+                'device_name' => 'Legacy Device',
+                'device_type' => 'web',
+                'platform' => 'web',
+                'public_key' => $keyPair['public_key'],
+                'device_fingerprint' => 'legacy-fingerprint-'.time(),
+                'last_used_at' => now(),
+                'is_trusted' => true,
+            ]);
+
             // Create encryption key with older version
             $oldVersionKey = EncryptionKey::create([
                 'conversation_id' => $this->conversation->id,
                 'user_id' => $this->user1->id,
+                'device_id' => $device->id,
+                'device_fingerprint' => $device->device_fingerprint,
                 'encrypted_key' => $this->encryptionService->encryptSymmetricKey($symmetricKey, $keyPair['public_key']),
                 'public_key' => $keyPair['public_key'],
+                'algorithm' => 'RSA-4096-OAEP',
+                'key_strength' => 4096,
                 'key_version' => 1, // Older version
                 'is_active' => true,
-                'created_by' => $this->user1->id,
             ]);
 
             // Should still be able to decrypt with older version key
@@ -594,9 +611,9 @@ describe('E2EE Cross-Platform Compatibility', function () {
             // Simulate older message format (without some newer fields)
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
             $content = 'Legacy message format';
-            
+
             $encrypted = $this->encryptionService->encryptMessage($content, $symmetricKey);
-            
+
             // Create message with minimal fields (simulating older format)
             $legacyMessage = Message::create([
                 'conversation_id' => $this->conversation->id,

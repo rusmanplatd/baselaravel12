@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use App\Models\Chat\Conversation;
-use App\Models\Chat\EncryptionKey;
 use App\Models\Chat\Message;
 use App\Models\User;
 use App\Services\ChatEncryptionService;
@@ -17,7 +16,7 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     $this->encryptionService = new ChatEncryptionService;
     $this->fileService = new ChatFileService($this->encryptionService);
-    
+
     $this->user1 = User::factory()->create();
     $this->user2 = User::factory()->create();
 
@@ -37,11 +36,11 @@ describe('E2EE File and Media Encryption', function () {
     describe('Text File Encryption', function () {
         it('encrypts and decrypts text files end-to-end', function () {
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
-            
+
             // Create test text file
             $textContent = "This is a confidential document.\nIt contains sensitive information.\n\nLine 3 with special chars: @#$%^&*()";
             $textFile = UploadedFile::fake()->createWithContent('document.txt', $textContent);
-            
+
             // Encrypt file
             $encryptedResult = $this->fileService->encryptFile(
                 file_get_contents($textFile->getPathname()),
@@ -67,7 +66,7 @@ describe('E2EE File and Media Encryption', function () {
 
         it('handles various text file formats', function () {
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
-            
+
             $testFiles = [
                 'config.json' => '{"name": "test", "value": 123, "nested": {"key": "value"}}',
                 'data.csv' => "Name,Age,City\nJohn,30,New York\nJane,25,Los Angeles",
@@ -79,7 +78,7 @@ describe('E2EE File and Media Encryption', function () {
 
             foreach ($testFiles as $filename => $content) {
                 $file = UploadedFile::fake()->createWithContent($filename, $content);
-                
+
                 // Encrypt
                 $encrypted = $this->fileService->encryptFile(
                     file_get_contents($file->getPathname()),
@@ -102,10 +101,10 @@ describe('E2EE File and Media Encryption', function () {
 
         it('maintains file integrity with checksums', function () {
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
-            $content = "File integrity test content with checksum verification.";
-            
+            $content = 'File integrity test content with checksum verification.';
+
             $file = UploadedFile::fake()->createWithContent('integrity.txt', $content);
-            
+
             $encrypted = $this->fileService->encryptFile(
                 file_get_contents($file->getPathname()),
                 $symmetricKey,
@@ -116,7 +115,7 @@ describe('E2EE File and Media Encryption', function () {
             // Verify hash is present and correct
             expect($encrypted['hash'])->not()->toBeEmpty();
             $expectedHash = hash('sha256', $content);
-            
+
             // Decrypt
             $decrypted = $this->fileService->decryptFile(
                 $encrypted['encrypted_data'],
@@ -133,16 +132,16 @@ describe('E2EE File and Media Encryption', function () {
     describe('Binary File Encryption', function () {
         it('encrypts and decrypts binary files correctly', function () {
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
-            
+
             // Create binary content (simulating a small executable or binary file)
             $binaryContent = '';
             for ($i = 0; $i < 256; $i++) {
                 $binaryContent .= chr($i);
             }
-            
+
             $binaryFile = UploadedFile::fake()->create('binary.bin', strlen($binaryContent));
             file_put_contents($binaryFile->getPathname(), $binaryContent);
-            
+
             // Encrypt
             $encrypted = $this->fileService->encryptFile(
                 file_get_contents($binaryFile->getPathname()),
@@ -160,7 +159,7 @@ describe('E2EE File and Media Encryption', function () {
 
             expect($decrypted)->toBe($binaryContent);
             expect(strlen($decrypted))->toBe(256);
-            
+
             // Verify each byte
             for ($i = 0; $i < 256; $i++) {
                 expect(ord($decrypted[$i]))->toBe($i);
@@ -169,14 +168,14 @@ describe('E2EE File and Media Encryption', function () {
 
         it('handles ZIP and archive files', function () {
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
-            
+
             // Create a ZIP-like binary signature and content
             $zipSignature = "\x50\x4B\x03\x04"; // ZIP file signature
-            $zipContent = $zipSignature . str_repeat("compressed_data", 100);
-            
+            $zipContent = $zipSignature.str_repeat('compressed_data', 100);
+
             $zipFile = UploadedFile::fake()->create('archive.zip', strlen($zipContent));
             file_put_contents($zipFile->getPathname(), $zipContent);
-            
+
             // Encrypt
             $encrypted = $this->fileService->encryptFile(
                 file_get_contents($zipFile->getPathname()),
@@ -201,7 +200,7 @@ describe('E2EE File and Media Encryption', function () {
     describe('Image File Encryption', function () {
         it('encrypts and decrypts image files maintaining binary integrity', function () {
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
-            
+
             // Create fake image files
             $imageFiles = [
                 'image.jpg' => UploadedFile::fake()->image('test.jpg', 100, 100),
@@ -212,7 +211,7 @@ describe('E2EE File and Media Encryption', function () {
             foreach ($imageFiles as $name => $file) {
                 $originalContent = file_get_contents($file->getPathname());
                 $originalSize = filesize($file->getPathname());
-                
+
                 // Encrypt
                 $encrypted = $this->fileService->encryptFile(
                     $originalContent,
@@ -223,7 +222,7 @@ describe('E2EE File and Media Encryption', function () {
 
                 expect($encrypted['size'])->toBe($originalSize);
                 expect($encrypted['original_name'])->toBe($name);
-                
+
                 // Decrypt
                 $decrypted = $this->fileService->decryptFile(
                     $encrypted['encrypted_data'],
@@ -239,15 +238,15 @@ describe('E2EE File and Media Encryption', function () {
 
         it('handles large image files efficiently', function () {
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
-            
+
             // Create larger fake image (1MB)
             $largeImageSize = 1024 * 1024; // 1MB
             $largeImage = UploadedFile::fake()->create('large_image.jpg', $largeImageSize, 'image/jpeg');
-            
+
             $originalContent = file_get_contents($largeImage->getPathname());
-            
+
             $startTime = microtime(true);
-            
+
             // Encrypt
             $encrypted = $this->fileService->encryptFile(
                 $originalContent,
@@ -255,24 +254,24 @@ describe('E2EE File and Media Encryption', function () {
                 'large_image.jpg',
                 'image/jpeg'
             );
-            
+
             $encryptTime = microtime(true) - $startTime;
-            
+
             // Should encrypt within reasonable time
             expect($encryptTime)->toBeLessThan(10.0);
             expect($encrypted['size'])->toBe($largeImageSize);
-            
+
             $decryptStartTime = microtime(true);
-            
+
             // Decrypt
             $decrypted = $this->fileService->decryptFile(
                 $encrypted['encrypted_data'],
                 $encrypted['iv'],
                 $symmetricKey
             );
-            
+
             $decryptTime = microtime(true) - $decryptStartTime;
-            
+
             expect($decryptTime)->toBeLessThan(10.0);
             expect($decrypted)->toBe($originalContent);
             expect(strlen($decrypted))->toBe($largeImageSize);
@@ -282,13 +281,13 @@ describe('E2EE File and Media Encryption', function () {
     describe('Voice Message Encryption', function () {
         it('encrypts voice messages with metadata', function () {
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
-            
+
             // Simulate voice message data
-            $voiceContent = str_repeat("audio_data", 1000); // Fake audio binary
-            $transcript = "This is the voice message transcript";
+            $voiceContent = str_repeat('audio_data', 1000); // Fake audio binary
+            $transcript = 'This is the voice message transcript';
             $waveformData = implode(',', range(0, 100)); // Waveform visualization data
             $duration = 15; // seconds
-            
+
             // Create voice message
             $voiceMessage = Message::createEncrypted(
                 $this->conversation->id,
@@ -323,10 +322,10 @@ describe('E2EE File and Media Encryption', function () {
 
         it('handles voice messages without transcript', function () {
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
-            
-            $voiceContent = str_repeat("audio_only", 500);
+
+            $voiceContent = str_repeat('audio_only', 500);
             $waveformData = implode(',', range(0, 50));
-            
+
             $voiceMessage = Message::createEncrypted(
                 $this->conversation->id,
                 $this->user1->id,
@@ -356,14 +355,14 @@ describe('E2EE File and Media Encryption', function () {
     describe('File Message Integration', function () {
         it('creates encrypted file messages with full metadata', function () {
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
-            
+
             // Create test file
-            $fileContent = "Confidential document content for message attachment.";
-            $fileName = "confidential.txt";
-            $mimeType = "text/plain";
-            
+            $fileContent = 'Confidential document content for message attachment.';
+            $fileName = 'confidential.txt';
+            $mimeType = 'text/plain';
+
             $testFile = UploadedFile::fake()->createWithContent($fileName, $fileContent);
-            
+
             // Encrypt file
             $encryptedFile = $this->fileService->encryptFile(
                 file_get_contents($testFile->getPathname()),
@@ -409,7 +408,7 @@ describe('E2EE File and Media Encryption', function () {
 
         it('handles multiple file attachments in conversation', function () {
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
-            
+
             $testFiles = [
                 ['name' => 'document1.pdf', 'content' => 'PDF content 1', 'type' => 'application/pdf'],
                 ['name' => 'image1.jpg', 'content' => 'JPEG binary data 1', 'type' => 'image/jpeg'],
@@ -470,7 +469,7 @@ describe('E2EE File and Media Encryption', function () {
     describe('File Size and Format Limitations', function () {
         it('handles maximum file size constraints', function () {
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
-            
+
             // Test with different file sizes
             $fileSizes = [
                 '10KB' => 10 * 1024,
@@ -482,10 +481,10 @@ describe('E2EE File and Media Encryption', function () {
             foreach ($fileSizes as $sizeName => $sizeBytes) {
                 $content = str_repeat('A', $sizeBytes);
                 $fileName = "large_file_{$sizeName}.txt";
-                
+
                 $startTime = microtime(true);
                 $startMemory = memory_get_usage();
-                
+
                 // Encrypt
                 $encrypted = $this->fileService->encryptFile(
                     $content,
@@ -493,14 +492,14 @@ describe('E2EE File and Media Encryption', function () {
                     $fileName,
                     'text/plain'
                 );
-                
+
                 $encryptTime = microtime(true) - $startTime;
                 $memoryUsed = memory_get_usage() - $startMemory;
-                
+
                 // Performance checks (adjust based on system capacity)
                 expect($encryptTime)->toBeLessThan(30.0); // Within 30 seconds
                 expect($memoryUsed)->toBeLessThan(100 * 1024 * 1024); // Less than 100MB overhead
-                
+
                 // Decrypt sample to verify
                 $decryptStartTime = microtime(true);
                 $decrypted = $this->fileService->decryptFile(
@@ -509,11 +508,11 @@ describe('E2EE File and Media Encryption', function () {
                     $symmetricKey
                 );
                 $decryptTime = microtime(true) - $decryptStartTime;
-                
+
                 expect($decryptTime)->toBeLessThan(30.0);
                 expect(strlen($decrypted))->toBe($sizeBytes);
                 expect(substr($decrypted, 0, 10))->toBe(str_repeat('A', 10));
-                
+
                 // Cleanup memory
                 unset($content, $encrypted, $decrypted);
                 gc_collect_cycles();
@@ -522,7 +521,7 @@ describe('E2EE File and Media Encryption', function () {
 
         it('validates file format security', function () {
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
-            
+
             // Test various file types for security considerations
             $testFiles = [
                 'safe_text.txt' => ['content' => 'Safe text content', 'safe' => true],
@@ -552,7 +551,7 @@ describe('E2EE File and Media Encryption', function () {
                 );
 
                 expect($decrypted)->toBe($fileData['content']);
-                
+
                 // File type safety checks would be implemented at application level,
                 // not at encryption level. Encryption preserves all data equally.
             }
@@ -564,7 +563,7 @@ describe('E2EE File and Media Encryption', function () {
             // Test with invalid symmetric key
             $invalidKey = 'invalid_key_too_short';
             $content = 'Test file content';
-            
+
             expect(fn () => $this->fileService->encryptFile($content, $invalidKey, 'test.txt', 'text/plain'))
                 ->toThrow(\App\Exceptions\EncryptionException::class);
         });
@@ -572,12 +571,12 @@ describe('E2EE File and Media Encryption', function () {
         it('handles decryption failures with wrong keys', function () {
             $correctKey = $this->encryptionService->generateSymmetricKey();
             $wrongKey = $this->encryptionService->generateSymmetricKey();
-            
+
             $content = 'Secret file content';
-            
+
             // Encrypt with correct key
             $encrypted = $this->fileService->encryptFile($content, $correctKey, 'secret.txt', 'text/plain');
-            
+
             // Try to decrypt with wrong key
             expect(fn () => $this->fileService->decryptFile($encrypted['encrypted_data'], $encrypted['iv'], $wrongKey))
                 ->toThrow(\App\Exceptions\DecryptionException::class);
@@ -586,13 +585,13 @@ describe('E2EE File and Media Encryption', function () {
         it('detects corrupted encrypted file data', function () {
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
             $content = 'File content to be corrupted';
-            
+
             // Encrypt normally
             $encrypted = $this->fileService->encryptFile($content, $symmetricKey, 'test.txt', 'text/plain');
-            
+
             // Corrupt the encrypted data
-            $corruptedData = substr($encrypted['encrypted_data'], 0, -10) . 'CORRUPTED!';
-            
+            $corruptedData = substr($encrypted['encrypted_data'], 0, -10).'CORRUPTED!';
+
             // Attempt to decrypt corrupted data
             expect(fn () => $this->fileService->decryptFile($corruptedData, $encrypted['iv'], $symmetricKey))
                 ->toThrow(\App\Exceptions\DecryptionException::class);
@@ -601,13 +600,13 @@ describe('E2EE File and Media Encryption', function () {
         it('handles empty file encryption', function () {
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
             $emptyContent = '';
-            
+
             // Empty files should be handled gracefully
             $encrypted = $this->fileService->encryptFile($emptyContent, $symmetricKey, 'empty.txt', 'text/plain');
-            
+
             expect($encrypted['size'])->toBe(0);
             expect($encrypted['original_name'])->toBe('empty.txt');
-            
+
             $decrypted = $this->fileService->decryptFile($encrypted['encrypted_data'], $encrypted['iv'], $symmetricKey);
             expect($decrypted)->toBe($emptyContent);
         });
@@ -616,7 +615,7 @@ describe('E2EE File and Media Encryption', function () {
     describe('File Metadata Preservation', function () {
         it('preserves all file metadata through encryption/decryption cycle', function () {
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
-            
+
             $testCases = [
                 ['name' => 'document.pdf', 'type' => 'application/pdf', 'content' => 'PDF document content'],
                 ['name' => 'photo.jpeg', 'type' => 'image/jpeg', 'content' => 'Binary photo data'],
@@ -652,7 +651,7 @@ describe('E2EE File and Media Encryption', function () {
 
         it('handles special characters in filenames', function () {
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
-            
+
             $specialFilenames = [
                 'file with spaces.txt',
                 'file-with-dashes.txt',
@@ -667,17 +666,17 @@ describe('E2EE File and Media Encryption', function () {
 
             foreach ($specialFilenames as $filename) {
                 $content = "Content for {$filename}";
-                
+
                 $encrypted = $this->fileService->encryptFile($content, $symmetricKey, $filename, 'text/plain');
-                
+
                 expect($encrypted['original_name'])->toBe($filename);
-                
+
                 $decrypted = $this->fileService->decryptFile(
                     $encrypted['encrypted_data'],
                     $encrypted['iv'],
                     $symmetricKey
                 );
-                
+
                 expect($decrypted)->toBe($content);
             }
         });

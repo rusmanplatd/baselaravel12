@@ -7,18 +7,16 @@ use App\Models\Chat\EncryptionKey;
 use App\Models\Chat\Message;
 use App\Models\Chat\Participant;
 use App\Models\User;
-use App\Models\UserDevice;
 use App\Services\ChatEncryptionService;
 use App\Services\MultiDeviceEncryptionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
     $this->encryptionService = new ChatEncryptionService;
     $this->multiDeviceService = new MultiDeviceEncryptionService($this->encryptionService);
-    
+
     // Create test users
     $this->users = [];
     for ($i = 1; $i <= 10; $i++) {
@@ -35,13 +33,13 @@ beforeEach(function () {
     // Add participants with different roles
     $this->groupConversation->participants()->create([
         'user_id' => $this->users[0]->id,
-        'role' => 'admin'
+        'role' => 'admin',
     ]);
-    
+
     for ($i = 1; $i <= 5; $i++) {
         $this->groupConversation->participants()->create([
             'user_id' => $this->users[$i]->id,
-            'role' => 'member'
+            'role' => 'member',
         ]);
     }
 });
@@ -80,7 +78,7 @@ describe('E2EE Group Chat and Multi-Participant Encryption', function () {
             foreach ($encryptionKeys as $key) {
                 $userId = $key->user_id;
                 $privateKey = $participantKeys[$userId]['private_key'];
-                
+
                 $decryptedKey = $key->decryptSymmetricKey($privateKey);
                 expect($decryptedKey)->toBe($symmetricKey);
             }
@@ -98,7 +96,7 @@ describe('E2EE Group Chat and Multi-Participant Encryption', function () {
                 $userKey = EncryptionKey::where('conversation_id', $this->groupConversation->id)
                     ->where('user_id', $userId)
                     ->first();
-                    
+
                 $userSymmetricKey = $userKey->decryptSymmetricKey($keyPair['private_key']);
                 $decryptedMessage = $groupMessage->decryptContent($userSymmetricKey);
                 expect($decryptedMessage)->toBe('Hello everyone in the group!');
@@ -163,11 +161,11 @@ describe('E2EE Group Chat and Multi-Participant Encryption', function () {
 
             // Verify key rotation worked
             expect(count($newKeys))->toBe(6);
-            
+
             foreach ($newKeys as $key) {
                 expect($key->is_active)->toBeTrue();
                 expect($key->key_version)->toBe(2);
-                
+
                 $userId = $key->user_id;
                 $privateKey = $participantKeys[$userId]['private_key'];
                 $decryptedKey = $key->decryptSymmetricKey($privateKey);
@@ -179,7 +177,7 @@ describe('E2EE Group Chat and Multi-Participant Encryption', function () {
                 ->where('user_id', $this->users[0]->id)
                 ->where('key_version', 1)
                 ->first();
-            
+
             if ($oldUserKey) {
                 $oldDecryptedKey = $oldUserKey->decryptSymmetricKey($participantKeys[$this->users[0]->id]['private_key']);
                 $oldDecryptedMessage = $oldMessage->decryptContent($oldDecryptedKey);
@@ -191,7 +189,7 @@ describe('E2EE Group Chat and Multi-Participant Encryption', function () {
                 ->where('user_id', $this->users[1]->id)
                 ->where('key_version', 2)
                 ->first();
-                
+
             $newDecryptedKey = $newUserKey->decryptSymmetricKey($participantKeys[$this->users[1]->id]['private_key']);
             $newDecryptedMessage = $newMessage->decryptContent($newDecryptedKey);
             expect($newDecryptedMessage)->toBe('Message with new key');
@@ -395,7 +393,7 @@ describe('E2EE Group Chat and Multi-Participant Encryption', function () {
             // Add admin
             $largeGroup->participants()->create([
                 'user_id' => $this->users[0]->id,
-                'role' => 'admin'
+                'role' => 'admin',
             ]);
             $participants[] = $this->users[0];
 
@@ -406,10 +404,10 @@ describe('E2EE Group Chat and Multi-Participant Encryption', function () {
                 } else {
                     $user = User::factory()->create(['name' => "Large Group User {$i}"]);
                 }
-                
+
                 $largeGroup->participants()->create([
                     'user_id' => $user->id,
-                    'role' => 'member'
+                    'role' => 'member',
                 ]);
                 $participants[] = $user;
             }
@@ -443,7 +441,7 @@ describe('E2EE Group Chat and Multi-Participant Encryption', function () {
 
             // Test message broadcasting to large group
             $messageStartTime = microtime(true);
-            
+
             $broadcastMessage = Message::createEncrypted(
                 $largeGroup->id,
                 $participants[0]->id,
@@ -479,7 +477,7 @@ describe('E2EE Group Chat and Multi-Participant Encryption', function () {
             $this->groupConversation->participants()
                 ->where('user_id', $moderatorUser->id)
                 ->update(['role' => 'moderator']);
-                
+
             $this->groupConversation->participants()
                 ->where('user_id', $readOnlyUser->id)
                 ->update(['role' => 'read_only']);
@@ -644,7 +642,7 @@ describe('E2EE Group Chat and Multi-Participant Encryption', function () {
             // Add reactions from different users
             $reactions = [];
             $emojis = ['👍', '❤️', '😂', '🎉'];
-            
+
             for ($i = 1; $i < 4; $i++) {
                 $reaction = \App\Models\Chat\MessageReaction::create([
                     'message_id' => $originalMessage->id,
@@ -656,7 +654,7 @@ describe('E2EE Group Chat and Multi-Participant Encryption', function () {
 
             // Verify reactions are stored
             expect(count($reactions))->toBe(3);
-            
+
             $storedReactions = \App\Models\Chat\MessageReaction::where('message_id', $originalMessage->id)->get();
             expect($storedReactions->count())->toBe(3);
 
@@ -749,7 +747,7 @@ describe('E2EE Group Chat and Multi-Participant Encryption', function () {
 
                 if ($v1Key) {
                     $v1UserSymmetricKey = $v1Key->decryptSymmetricKey($keyPair['private_key']);
-                    
+
                     foreach ($messages['v1'] as $message) {
                         $decrypted = $message->decryptContent($v1UserSymmetricKey);
                         expect($decrypted)->toStartWith('Version 1 message');
@@ -763,7 +761,7 @@ describe('E2EE Group Chat and Multi-Participant Encryption', function () {
                     ->first();
 
                 $v2UserSymmetricKey = $v2Key->decryptSymmetricKey($keyPair['private_key']);
-                
+
                 foreach ($messages['v2'] as $message) {
                     $decrypted = $message->decryptContent($v2UserSymmetricKey);
                     expect($decrypted)->toStartWith('Version 2 message');

@@ -6,7 +6,6 @@ use App\Models\Chat\Conversation;
 use App\Models\Chat\EncryptionKey;
 use App\Models\Chat\Message;
 use App\Models\User;
-use App\Models\UserDevice;
 use App\Services\ChatEncryptionService;
 use App\Services\MultiDeviceEncryptionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -17,7 +16,7 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     $this->encryptionService = new ChatEncryptionService;
     $this->multiDeviceService = new MultiDeviceEncryptionService($this->encryptionService);
-    
+
     $this->user1 = User::factory()->create();
     $this->user2 = User::factory()->create();
 
@@ -36,7 +35,7 @@ describe('E2EE Performance and Stress Testing', function () {
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
             $messageCount = 1000;
             $batchSize = 50;
-            
+
             $totalStartTime = microtime(true);
             $encryptionTimes = [];
             $messageIds = [];
@@ -45,30 +44,30 @@ describe('E2EE Performance and Stress Testing', function () {
             for ($batch = 0; $batch < $messageCount / $batchSize; $batch++) {
                 $batchMessages = [];
                 $batchStartTime = microtime(true);
-                
+
                 DB::transaction(function () use ($batch, $batchSize, $symmetricKey, &$batchMessages, &$messageIds) {
                     for ($i = 0; $i < $batchSize; $i++) {
                         $messageIndex = ($batch * $batchSize) + $i;
-                        $content = "Bulk test message #{$messageIndex} with unique content: " . uniqid();
-                        
+                        $content = "Bulk test message #{$messageIndex} with unique content: ".uniqid();
+
                         $message = Message::createEncrypted(
                             $this->conversation->id,
                             $this->user1->id,
                             $content,
                             $symmetricKey
                         );
-                        
+
                         $batchMessages[] = $message;
                         $messageIds[] = $message->id;
                     }
                 });
-                
+
                 $batchTime = microtime(true) - $batchStartTime;
                 $encryptionTimes[] = $batchTime;
-                
+
                 // Verify batch was processed correctly
                 expect(count($batchMessages))->toBe($batchSize);
-                
+
                 // Clean up memory
                 unset($batchMessages);
                 if ($batch % 5 === 0) {
@@ -110,15 +109,15 @@ describe('E2EE Performance and Stress Testing', function () {
             for ($i = 0; $i < $userCount; $i++) {
                 $user = User::factory()->create();
                 $users[] = $user;
-                
+
                 $conversation = Conversation::factory()->create([
                     'type' => 'direct',
                     'created_by' => $user->id,
                 ]);
-                
+
                 $conversation->participants()->create(['user_id' => $user->id, 'role' => 'admin']);
                 $conversation->participants()->create(['user_id' => $this->user1->id, 'role' => 'member']);
-                
+
                 $conversations[] = $conversation;
                 $symmetricKeys[] = $this->encryptionService->generateSymmetricKey();
             }
@@ -130,28 +129,28 @@ describe('E2EE Performance and Stress Testing', function () {
             foreach ($users as $index => $user) {
                 $userStartTime = microtime(true);
                 $userMessages = [];
-                
+
                 for ($j = 0; $j < $messagesPerUser; $j++) {
-                    $content = "User {$index} message {$j}: " . uniqid();
-                    
+                    $content = "User {$index} message {$j}: ".uniqid();
+
                     $message = Message::createEncrypted(
                         $conversations[$index]->id,
                         $user->id,
                         $content,
                         $symmetricKeys[$index]
                     );
-                    
+
                     $userMessages[] = $message->id;
                     $allMessageIds[] = $message->id;
                 }
-                
+
                 $userTime = microtime(true) - $userStartTime;
                 expect($userTime)->toBeLessThan(10.0); // Each user should complete within 10 seconds
                 expect(count($userMessages))->toBe($messagesPerUser);
             }
 
             $totalTime = microtime(true) - $totalStartTime;
-            
+
             // Overall performance checks
             expect($totalTime)->toBeLessThan(30.0);
             expect(count($allMessageIds))->toBe($userCount * $messagesPerUser);
@@ -161,9 +160,9 @@ describe('E2EE Performance and Stress Testing', function () {
                 $userMessages = Message::where('conversation_id', $conversations[$index]->id)
                     ->where('sender_id', $user->id)
                     ->get();
-                    
+
                 expect($userMessages->count())->toBe($messagesPerUser);
-                
+
                 // Sample decrypt a few messages
                 $samples = $userMessages->take(3);
                 foreach ($samples as $message) {
@@ -188,11 +187,11 @@ describe('E2EE Performance and Stress Testing', function () {
             foreach ($messageSizes as $sizeName => $sizeBytes) {
                 $startTime = microtime(true);
                 $startMemory = memory_get_usage();
-                
+
                 // Create large content
                 $largeContent = str_repeat('A', $sizeBytes);
-                $content = "Large message test ({$sizeName}): " . $largeContent;
-                
+                $content = "Large message test ({$sizeName}): ".$largeContent;
+
                 // Encrypt
                 $message = Message::createEncrypted(
                     $this->conversation->id,
@@ -200,27 +199,27 @@ describe('E2EE Performance and Stress Testing', function () {
                     $content,
                     $symmetricKey
                 );
-                
+
                 $encryptTime = microtime(true) - $startTime;
-                
+
                 // Decrypt
                 $decryptStartTime = microtime(true);
                 $decrypted = $message->decryptContent($symmetricKey);
                 $decryptTime = microtime(true) - $decryptStartTime;
-                
+
                 $totalTime = microtime(true) - $startTime;
                 $memoryUsed = memory_get_usage() - $startMemory;
-                
+
                 // Verify correctness
                 expect($decrypted)->toBe($content);
                 expect(strlen($decrypted))->toBe(strlen($content));
-                
+
                 // Performance assertions (adjust based on system capacity)
                 expect($encryptTime)->toBeLessThan(10.0); // Encryption within 10 seconds
                 expect($decryptTime)->toBeLessThan(10.0); // Decryption within 10 seconds
                 expect($totalTime)->toBeLessThan(15.0); // Total within 15 seconds
                 expect($memoryUsed)->toBeLessThan(50 * 1024 * 1024); // Less than 50MB memory overhead
-                
+
                 // Clean up
                 $message->delete();
                 unset($largeContent, $content, $decrypted);
@@ -232,32 +231,32 @@ describe('E2EE Performance and Stress Testing', function () {
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
             $messageCount = 50;
             $messageSize = 100 * 1024; // 100KB each
-            
+
             $initialMemory = memory_get_usage();
             $peakMemory = $initialMemory;
             $messageIds = [];
 
             for ($i = 0; $i < $messageCount; $i++) {
-                $content = "Large message {$i}: " . str_repeat('X', $messageSize);
-                
+                $content = "Large message {$i}: ".str_repeat('X', $messageSize);
+
                 $message = Message::createEncrypted(
                     $this->conversation->id,
                     $this->user1->id,
                     $content,
                     $symmetricKey
                 );
-                
+
                 $messageIds[] = $message->id;
-                
+
                 // Monitor memory usage
                 $currentMemory = memory_get_usage();
                 $peakMemory = max($peakMemory, $currentMemory);
-                
+
                 // Periodic cleanup
                 if ($i % 10 === 9) {
                     gc_collect_cycles();
                 }
-                
+
                 // Memory shouldn't grow excessively
                 $memoryIncrease = $currentMemory - $initialMemory;
                 expect($memoryIncrease)->toBeLessThan(200 * 1024 * 1024); // Less than 200MB growth
@@ -293,10 +292,10 @@ describe('E2EE Performance and Stress Testing', function () {
             for ($i = 0; $i < $keyCount; $i++) {
                 $keyPair = $this->encryptionService->generateKeyPair();
                 $symmetricKey = $this->encryptionService->generateSymmetricKey();
-                
+
                 $keyPairs[] = $keyPair;
                 $symmetricKeys[] = $symmetricKey;
-                
+
                 // Verify key quality periodically
                 if ($i % 20 === 19) {
                     expect(strlen($keyPair['public_key']))->toBeGreaterThan(400);
@@ -315,7 +314,7 @@ describe('E2EE Performance and Stress Testing', function () {
             // Verify all keys are unique
             $publicKeys = array_column($keyPairs, 'public_key');
             $privateKeys = array_column($keyPairs, 'private_key');
-            
+
             expect(count(array_unique($publicKeys)))->toBe($keyCount);
             expect(count(array_unique($privateKeys)))->toBe($keyCount);
             expect(count(array_unique($symmetricKeys)))->toBe($keyCount);
@@ -331,19 +330,19 @@ describe('E2EE Performance and Stress Testing', function () {
             // Setup multiple devices
             for ($i = 0; $i < $deviceCount; $i++) {
                 $keyPair = $this->encryptionService->generateKeyPair();
-                
+
                 $device = $this->multiDeviceService->registerDevice(
                     $this->user1,
                     "Test Device {$i}",
                     'mobile',
                     $keyPair['public_key'],
-                    "device_{$i}_" . uniqid(),
+                    "device_{$i}_".uniqid(),
                     'iOS',
                     'Mozilla/5.0...',
                     ['messaging', 'encryption'],
                     'medium'
                 );
-                
+
                 $devices[] = $device;
             }
 
@@ -353,7 +352,7 @@ describe('E2EE Performance and Stress Testing', function () {
                     'type' => 'group',
                     'created_by' => $this->user1->id,
                 ]);
-                
+
                 $conversation->participants()->create(['user_id' => $this->user1->id, 'role' => 'admin']);
                 $conversations[] = $conversation;
             }
@@ -363,7 +362,7 @@ describe('E2EE Performance and Stress Testing', function () {
             // Create encryption keys for each device-conversation combination
             foreach ($conversations as $convIndex => $conversation) {
                 $symmetricKey = $this->encryptionService->generateSymmetricKey();
-                
+
                 foreach ($devices as $devIndex => $device) {
                     $encryptionKey = EncryptionKey::createForDevice(
                         $conversation->id,
@@ -372,7 +371,7 @@ describe('E2EE Performance and Stress Testing', function () {
                         $symmetricKey,
                         $device->public_key
                     );
-                    
+
                     $encryptionKeys[] = $encryptionKey;
                 }
             }
@@ -390,12 +389,12 @@ describe('E2EE Performance and Stress Testing', function () {
 
             // Verify key retrieval performance
             $retrievalStartTime = microtime(true);
-            
+
             foreach ($conversations as $conversation) {
                 $conversationKeys = EncryptionKey::where('conversation_id', $conversation->id)->get();
                 expect($conversationKeys->count())->toBe($deviceCount);
             }
-            
+
             $retrievalTime = microtime(true) - $retrievalStartTime;
             expect($retrievalTime)->toBeLessThan(10.0); // Key retrieval should be fast
         });
@@ -405,7 +404,7 @@ describe('E2EE Performance and Stress Testing', function () {
         it('handles concurrent database operations efficiently', function () {
             $operationCount = 100;
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
-            
+
             $operationTimes = [];
             $successCount = 0;
             $errorCount = 0;
@@ -413,7 +412,7 @@ describe('E2EE Performance and Stress Testing', function () {
             // Simulate concurrent database operations
             for ($i = 0; $i < $operationCount; $i++) {
                 $opStartTime = microtime(true);
-                
+
                 try {
                     DB::transaction(function () use ($i, $symmetricKey) {
                         // Create message
@@ -427,16 +426,16 @@ describe('E2EE Performance and Stress Testing', function () {
                         // Simulate some processing
                         $decrypted = $message->decryptContent($symmetricKey);
                         expect($decrypted)->toBe("Concurrent message {$i}");
-                        
+
                         // Update conversation timestamp
                         $this->conversation->touch();
                     });
-                    
+
                     $successCount++;
                 } catch (\Exception $e) {
                     $errorCount++;
                 }
-                
+
                 $opTime = microtime(true) - $opStartTime;
                 $operationTimes[] = $opTime;
             }
@@ -458,10 +457,10 @@ describe('E2EE Performance and Stress Testing', function () {
         it('maintains query performance with large datasets', function () {
             $messageCount = 2000;
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
-            
+
             // Create large dataset
             $createStartTime = microtime(true);
-            
+
             for ($i = 0; $i < $messageCount; $i++) {
                 Message::createEncrypted(
                     $this->conversation->id,
@@ -469,7 +468,7 @@ describe('E2EE Performance and Stress Testing', function () {
                     "Dataset message {$i}",
                     $symmetricKey
                 );
-                
+
                 // Periodic progress check
                 if ($i % 200 === 199) {
                     $elapsed = microtime(true) - $createStartTime;
@@ -500,7 +499,7 @@ describe('E2EE Performance and Stress Testing', function () {
                 },
                 'search_pattern' => function () {
                     return Message::where('conversation_id', $this->conversation->id)
-                        ->where('content_hash', 'like', '%' . hash('sha256', 'Dataset message 100') . '%')
+                        ->where('content_hash', 'like', '%'.hash('sha256', 'Dataset message 100').'%')
                         ->get();
                 },
             ];
@@ -509,9 +508,9 @@ describe('E2EE Performance and Stress Testing', function () {
                 $queryStartTime = microtime(true);
                 $result = $queryFunc();
                 $queryTime = microtime(true) - $queryStartTime;
-                
+
                 expect($queryTime)->toBeLessThan(5.0); // Each query under 5 seconds
-                
+
                 if ($testName === 'count') {
                     expect($result)->toBe($messageCount);
                 } elseif (in_array($testName, ['latest_10', 'pagination'])) {
@@ -526,13 +525,13 @@ describe('E2EE Performance and Stress Testing', function () {
             $iterations = 100;
             $messageSize = 50 * 1024; // 50KB per message
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
-            
+
             $initialMemory = memory_get_usage();
             $memoryReadings = [];
 
             for ($i = 0; $i < $iterations; $i++) {
-                $content = "Memory test {$i}: " . str_repeat('M', $messageSize);
-                
+                $content = "Memory test {$i}: ".str_repeat('M', $messageSize);
+
                 // Encrypt
                 $message = Message::createEncrypted(
                     $this->conversation->id,
@@ -544,17 +543,17 @@ describe('E2EE Performance and Stress Testing', function () {
                 // Decrypt to verify
                 $decrypted = $message->decryptContent($symmetricKey);
                 expect(strlen($decrypted))->toBe(strlen($content));
-                
+
                 // Monitor memory
                 $currentMemory = memory_get_usage();
                 $memoryReadings[] = $currentMemory;
-                
+
                 // Cleanup every 10 iterations
                 if ($i % 10 === 9) {
                     unset($content, $decrypted);
                     gc_collect_cycles();
                 }
-                
+
                 // Check for memory leaks
                 $memoryIncrease = $currentMemory - $initialMemory;
                 expect($memoryIncrease)->toBeLessThan(200 * 1024 * 1024); // Less than 200MB growth
@@ -573,13 +572,13 @@ describe('E2EE Performance and Stress Testing', function () {
             $batchCount = 20;
             $messagesPerBatch = 50;
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
-            
+
             $gcStats = [];
-            
+
             for ($batch = 0; $batch < $batchCount; $batch++) {
                 $batchStartMemory = memory_get_usage();
                 $messages = [];
-                
+
                 // Create batch of messages
                 for ($i = 0; $i < $messagesPerBatch; $i++) {
                     $content = "GC test batch {$batch} message {$i}";
@@ -591,15 +590,15 @@ describe('E2EE Performance and Stress Testing', function () {
                     );
                     $messages[] = $message;
                 }
-                
+
                 $beforeGcMemory = memory_get_usage();
-                
+
                 // Force garbage collection
                 unset($messages);
                 $collected = gc_collect_cycles();
-                
+
                 $afterGcMemory = memory_get_usage();
-                
+
                 $gcStats[] = [
                     'batch' => $batch,
                     'before_gc' => $beforeGcMemory,
@@ -607,7 +606,7 @@ describe('E2EE Performance and Stress Testing', function () {
                     'collected' => $collected,
                     'freed' => $beforeGcMemory - $afterGcMemory,
                 ];
-                
+
                 // Memory should be freed effectively
                 $memoryFreed = $beforeGcMemory - $afterGcMemory;
                 expect($memoryFreed)->toBeGreaterThanOrEqual(0); // Should free some memory
@@ -616,7 +615,7 @@ describe('E2EE Performance and Stress Testing', function () {
             // Analyze GC effectiveness
             $totalFreed = array_sum(array_column($gcStats, 'freed'));
             $avgFreed = $totalFreed / count($gcStats);
-            
+
             expect($avgFreed)->toBeGreaterThan(0); // Should free memory on average
         });
     });
@@ -626,28 +625,28 @@ describe('E2EE Performance and Stress Testing', function () {
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
             $messageCount = 50;
             $latencySimulation = 100; // milliseconds
-            
+
             $messages = [];
             $totalTime = 0;
 
             for ($i = 0; $i < $messageCount; $i++) {
                 $startTime = microtime(true);
-                
+
                 // Simulate network latency
                 usleep($latencySimulation * 1000);
-                
+
                 $message = Message::createEncrypted(
                     $this->conversation->id,
                     $this->user1->id,
                     "Latency test message {$i}",
                     $symmetricKey
                 );
-                
+
                 $messages[] = $message;
-                
+
                 $messageTime = microtime(true) - $startTime;
                 $totalTime += $messageTime;
-                
+
                 // Even with latency, operation should complete reasonably
                 expect($messageTime)->toBeLessThan(2.0);
             }
@@ -692,7 +691,7 @@ describe('E2EE Performance and Stress Testing', function () {
                     $successCount++;
                 } catch (\Exception $e) {
                     // Handle interruption gracefully
-                    if (!str_contains($e->getMessage(), 'Simulated connection interruption')) {
+                    if (! str_contains($e->getMessage(), 'Simulated connection interruption')) {
                         throw $e; // Re-throw unexpected exceptions
                     }
                 }

@@ -83,8 +83,8 @@ class EncryptionKey extends Model
     ): self {
         // Get or create a default device for the user
         $device = UserDevice::where('user_id', $userId)->first();
-        
-        if (!$device) {
+
+        if (! $device) {
             // Create a default device if none exists
             $device = UserDevice::create([
                 'user_id' => $userId,
@@ -92,7 +92,7 @@ class EncryptionKey extends Model
                 'device_type' => 'web',
                 'platform' => 'web',
                 'public_key' => $publicKey, // Use the provided public key
-                'device_fingerprint' => 'default-' . $userId . '-' . time(),
+                'device_fingerprint' => 'default-'.$userId.'-'.time(),
                 'last_used_at' => now(),
                 'is_trusted' => true,
             ]);

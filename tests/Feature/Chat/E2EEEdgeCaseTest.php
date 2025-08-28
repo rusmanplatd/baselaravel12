@@ -38,10 +38,10 @@ describe('E2EE Edge Cases and Error Handling', function () {
         it('handles corrupted encryption key gracefully', function () {
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
             $keyPair = $this->encryptionService->generateKeyPair();
-            
+
             // Create a corrupted encryption key
             $corruptedEncryptedKey = 'corrupted_key_data_that_cannot_be_decrypted';
-            
+
             $encryptionKey = EncryptionKey::create([
                 'conversation_id' => $this->conversation->id,
                 'user_id' => $this->user1->id,
@@ -59,7 +59,7 @@ describe('E2EE Edge Cases and Error Handling', function () {
 
         it('handles corrupted message content gracefully', function () {
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
-            
+
             // Create message with corrupted encrypted content
             $message = Message::create([
                 'conversation_id' => $this->conversation->id,
@@ -85,17 +85,17 @@ describe('E2EE Edge Cases and Error Handling', function () {
         it('handles corrupted initialization vector gracefully', function () {
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
             $content = 'Test message for IV corruption';
-            
+
             // Encrypt normally first
             $encrypted = $this->encryptionService->encryptMessage($content, $symmetricKey);
-            
+
             // Corrupt the IV
             $corruptedIv = str_repeat('X', strlen($encrypted['iv']));
-            
+
             // Try to decrypt with corrupted IV
             expect(fn () => $this->encryptionService->decryptMessage(
-                $encrypted['data'], 
-                $corruptedIv, 
+                $encrypted['data'],
+                $corruptedIv,
                 $symmetricKey
             ))->toThrow(\App\Exceptions\DecryptionException::class);
         });
@@ -103,15 +103,15 @@ describe('E2EE Edge Cases and Error Handling', function () {
         it('handles truncated encrypted data', function () {
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
             $content = 'Test message for truncation';
-            
+
             $encrypted = $this->encryptionService->encryptMessage($content, $symmetricKey);
-            
+
             // Truncate the encrypted data
             $truncatedData = substr($encrypted['data'], 0, -10);
-            
+
             expect(fn () => $this->encryptionService->decryptMessage(
-                $truncatedData, 
-                $encrypted['iv'], 
+                $truncatedData,
+                $encrypted['iv'],
                 $symmetricKey
             ))->toThrow(\App\Exceptions\DecryptionException::class);
         });
@@ -120,7 +120,7 @@ describe('E2EE Edge Cases and Error Handling', function () {
     describe('Boundary Conditions', function () {
         it('handles empty message content', function () {
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
-            
+
             expect(fn () => Message::createEncrypted(
                 $this->conversation->id,
                 $this->user1->id,
@@ -131,10 +131,10 @@ describe('E2EE Edge Cases and Error Handling', function () {
 
         it('handles extremely long message content', function () {
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
-            
+
             // Create a very long message (1MB)
             $longContent = str_repeat('A', 1024 * 1024);
-            
+
             $message = Message::createEncrypted(
                 $this->conversation->id,
                 $this->user1->id,
@@ -143,16 +143,16 @@ describe('E2EE Edge Cases and Error Handling', function () {
             );
 
             expect($message)->toBeInstanceOf(Message::class);
-            
+
             $decryptedContent = $message->decryptContent($symmetricKey);
             expect($decryptedContent)->toBe($longContent);
         });
 
         it('handles unicode and special characters in messages', function () {
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
-            
+
             $unicodeContent = '🔒 Hello 世界! Encrypted message with émojis & spëcial chärs 🚀 التشفير';
-            
+
             $message = Message::createEncrypted(
                 $this->conversation->id,
                 $this->user1->id,
@@ -166,9 +166,9 @@ describe('E2EE Edge Cases and Error Handling', function () {
 
         it('handles null byte in message content', function () {
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
-            
+
             $contentWithNull = "Message with\0null byte in the middle";
-            
+
             $message = Message::createEncrypted(
                 $this->conversation->id,
                 $this->user1->id,
@@ -193,7 +193,7 @@ describe('E2EE Edge Cases and Error Handling', function () {
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
             $keyPair1 = $this->encryptionService->generateKeyPair();
             $keyPair2 = $this->encryptionService->generateKeyPair();
-            
+
             // Simulate concurrent key creation (sequential for testing)
             $key1 = EncryptionKey::createForUser(
                 $this->conversation->id,
@@ -217,7 +217,7 @@ describe('E2EE Edge Cases and Error Handling', function () {
         it('handles message encryption during key rotation', function () {
             $oldSymmetricKey = $this->encryptionService->generateSymmetricKey();
             $newSymmetricKey = $this->encryptionService->generateSymmetricKey();
-            
+
             // Create old encryption key
             $keyPair = $this->encryptionService->generateKeyPair();
             $oldKey = EncryptionKey::createForUser(
@@ -237,7 +237,7 @@ describe('E2EE Edge Cases and Error Handling', function () {
 
             // Deactivate old key and create new one
             $oldKey->update(['is_active' => false]);
-            
+
             $newKey = EncryptionKey::createForUser(
                 $this->conversation->id,
                 $this->user1->id,
@@ -264,7 +264,7 @@ describe('E2EE Edge Cases and Error Handling', function () {
             // This would require mocking database failures
             // For now, we test that operations complete normally
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
-            
+
             $message = Message::createEncrypted(
                 $this->conversation->id,
                 $this->user1->id,
@@ -279,7 +279,7 @@ describe('E2EE Edge Cases and Error Handling', function () {
             // Test that encryption operations don't rely on temp files
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
             $content = 'Test content for filesystem error simulation';
-            
+
             $encrypted = $this->encryptionService->encryptMessage($content, $symmetricKey);
             $decrypted = $this->encryptionService->decryptMessage(
                 $encrypted['data'],
@@ -296,7 +296,7 @@ describe('E2EE Edge Cases and Error Handling', function () {
             // Test multiple encryption operations
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
             $messages = [];
-            
+
             // Create multiple messages to test memory usage
             for ($i = 0; $i < 50; $i++) {
                 $content = "Test message number {$i} with some content";
@@ -318,21 +318,21 @@ describe('E2EE Edge Cases and Error Handling', function () {
         it('handles rapid successive encryptions', function () {
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
             $results = [];
-            
+
             $startTime = microtime(true);
-            
+
             // Perform rapid encryptions
             for ($i = 0; $i < 100; $i++) {
                 $encrypted = $this->encryptionService->encryptMessage("Message {$i}", $symmetricKey);
                 $results[] = $encrypted;
             }
-            
+
             $endTime = microtime(true);
             $executionTime = $endTime - $startTime;
-            
+
             expect($executionTime)->toBeLessThan(10.0); // Should complete within 10 seconds
             expect(count($results))->toBe(100);
-            
+
             // Verify random samples can be decrypted
             $samples = [0, 25, 50, 75, 99];
             foreach ($samples as $index) {
@@ -350,7 +350,7 @@ describe('E2EE Edge Cases and Error Handling', function () {
         it('handles expired encryption keys', function () {
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
             $keyPair = $this->encryptionService->generateKeyPair();
-            
+
             // Create an expired key
             $expiredKey = EncryptionKey::create([
                 'conversation_id' => $this->conversation->id,
@@ -365,7 +365,7 @@ describe('E2EE Edge Cases and Error Handling', function () {
 
             // Mark as expired in database
             $expiredKey->update(['is_active' => false]);
-            
+
             expect($expiredKey->is_active)->toBeFalse();
         });
 
@@ -373,7 +373,7 @@ describe('E2EE Edge Cases and Error Handling', function () {
             $symmetricKey1 = $this->encryptionService->generateSymmetricKey();
             $symmetricKey2 = $this->encryptionService->generateSymmetricKey();
             $keyPair = $this->encryptionService->generateKeyPair();
-            
+
             // Create keys with different versions
             $keyV1 = EncryptionKey::createForUser(
                 $this->conversation->id,
@@ -381,7 +381,7 @@ describe('E2EE Edge Cases and Error Handling', function () {
                 $symmetricKey1,
                 $keyPair['public_key']
             );
-            
+
             // Update to simulate version 2
             $keyV1->update(['key_version' => 2]);
 
@@ -391,10 +391,10 @@ describe('E2EE Edge Cases and Error Handling', function () {
         it('handles orphaned encryption keys', function () {
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
             $keyPair = $this->encryptionService->generateKeyPair();
-            
+
             // Create key for non-existent conversation
-            $nonExistentConversationId = 'non-existent-conv-' . uniqid();
-            
+            $nonExistentConversationId = 'non-existent-conv-'.uniqid();
+
             expect(fn () => EncryptionKey::createForUser(
                 $nonExistentConversationId,
                 $this->user1->id,
@@ -417,14 +417,14 @@ describe('E2EE Edge Cases and Error Handling', function () {
             ]);
 
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
-            
+
             expect(fn () => $message->decryptContent($symmetricKey))
                 ->toThrow(\App\Exceptions\DecryptionException::class);
         });
 
         it('handles invalid base64 encoding in encryption data', function () {
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
-            
+
             expect(fn () => $this->encryptionService->decryptMessage(
                 'invalid-base64-!@#$%^&*',
                 'valid-iv-data-here==',
@@ -435,10 +435,10 @@ describe('E2EE Edge Cases and Error Handling', function () {
         it('handles wrong key length for symmetric encryption', function () {
             $shortKey = 'short'; // Too short
             $longKey = str_repeat('x', 64); // Too long for AES-256
-            
+
             expect(fn () => $this->encryptionService->encryptMessage('test', $shortKey))
                 ->toThrow(\App\Exceptions\EncryptionException::class);
-                
+
             expect(fn () => $this->encryptionService->encryptMessage('test', $longKey))
                 ->toThrow(\App\Exceptions\EncryptionException::class);
         });
@@ -447,7 +447,7 @@ describe('E2EE Edge Cases and Error Handling', function () {
     describe('State Consistency Edge Cases', function () {
         it('maintains consistency during partial failures', function () {
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
-            
+
             // Start a database transaction to test rollback behavior
             \DB::transaction(function () use ($symmetricKey) {
                 $message = Message::createEncrypted(
@@ -456,9 +456,9 @@ describe('E2EE Edge Cases and Error Handling', function () {
                     'Transaction test message',
                     $symmetricKey
                 );
-                
+
                 expect($message)->toBeInstanceOf(Message::class);
-                
+
                 // Verify the message exists
                 expect(Message::find($message->id))->not()->toBeNull();
             });
@@ -467,7 +467,7 @@ describe('E2EE Edge Cases and Error Handling', function () {
         it('handles duplicate key creation attempts', function () {
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
             $keyPair = $this->encryptionService->generateKeyPair();
-            
+
             // Create first key
             $key1 = EncryptionKey::createForUser(
                 $this->conversation->id,
@@ -484,7 +484,7 @@ describe('E2EE Edge Cases and Error Handling', function () {
                     $symmetricKey,
                     $keyPair['public_key']
                 );
-                
+
                 // If allowed, keys should be different instances
                 expect($key1->id)->not()->toBe($key2->id);
             } catch (\Exception $e) {

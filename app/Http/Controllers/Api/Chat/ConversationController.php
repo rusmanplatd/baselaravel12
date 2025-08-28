@@ -500,7 +500,7 @@ class ConversationController extends Controller
     {
         $this->authorize('update', $conversation);
 
-        if (!$conversation->is_encrypted) {
+        if (! $conversation->is_encrypted) {
             return response()->json(['error' => 'Conversation is not encrypted'], 422);
         }
 
@@ -532,6 +532,7 @@ class ConversationController extends Controller
                 ->groupBy('user_id')
                 ->map(function ($keys) {
                     $user = $keys->first()->user;
+
                     return [
                         'user' => $user,
                         'keys_count' => $keys->count(),

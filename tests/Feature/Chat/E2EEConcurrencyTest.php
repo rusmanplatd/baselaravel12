@@ -6,7 +6,6 @@ use App\Models\Chat\Conversation;
 use App\Models\Chat\EncryptionKey;
 use App\Models\Chat\Message;
 use App\Models\User;
-use App\Models\UserDevice;
 use App\Services\ChatEncryptionService;
 use App\Services\MultiDeviceEncryptionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -17,7 +16,7 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     $this->encryptionService = new ChatEncryptionService;
     $this->multiDeviceService = new MultiDeviceEncryptionService($this->encryptionService);
-    
+
     $this->user1 = User::factory()->create();
     $this->user2 = User::factory()->create();
     $this->user3 = User::factory()->create();
@@ -253,7 +252,7 @@ describe('E2EE Concurrency and Race Conditions', function () {
                         ];
                     });
                 } catch (\Exception $e) {
-                    $errors[] = "Attempt {$i}: " . $e->getMessage();
+                    $errors[] = "Attempt {$i}: ".$e->getMessage();
                 }
             }
 
@@ -263,9 +262,9 @@ describe('E2EE Concurrency and Race Conditions', function () {
             // Verify the successful rotation
             $latestResult = end($rotationResults);
             $latestKey = $latestResult['key'];
-            
+
             expect($latestKey->is_active)->toBeTrue();
-            
+
             $decryptedKey = $latestKey->decryptSymmetricKey($latestResult['key_pair']['private_key']);
             expect($decryptedKey)->toBe($latestResult['symmetric_key']);
         });
@@ -281,7 +280,7 @@ describe('E2EE Concurrency and Race Conditions', function () {
             for ($i = 0; $i < $deviceCount; $i++) {
                 try {
                     $keyPair = $this->encryptionService->generateKeyPair();
-                    
+
                     $device = $this->multiDeviceService->registerDevice(
                         $this->user1,
                         "Concurrent Device {$i}",
@@ -309,7 +308,7 @@ describe('E2EE Concurrency and Race Conditions', function () {
             foreach ($registeredDevices as $device) {
                 expect($deviceIds)->not()->toContain($device->id);
                 expect($fingerprints)->not()->toContain($device->device_fingerprint);
-                
+
                 $deviceIds[] = $device->id;
                 $fingerprints[] = $device->device_fingerprint;
             }
@@ -429,7 +428,7 @@ describe('E2EE Concurrency and Race Conditions', function () {
         it('handles deadlock scenarios gracefully', function () {
             $symmetricKey1 = $this->encryptionService->generateSymmetricKey();
             $symmetricKey2 = $this->encryptionService->generateSymmetricKey();
-            
+
             $conversation2 = Conversation::factory()->create([
                 'type' => 'direct',
                 'created_by' => $this->user1->id,
@@ -489,6 +488,7 @@ describe('E2EE Concurrency and Race Conditions', function () {
                 },
                 function () use ($encryptionKey) {
                     $encryptionKey->touch();
+
                     return $encryptionKey->fresh();
                 },
                 function () use ($encryptionKey) {
@@ -503,15 +503,15 @@ describe('E2EE Concurrency and Race Conditions', function () {
 
             // All operations should return consistent data
             expect(count($results))->toBe(3);
-            
+
             if ($results[0] instanceof EncryptionKey) {
                 expect($results[0]->id)->toBe($encryptionKey->id);
             }
-            
+
             if ($results[1] instanceof EncryptionKey) {
                 expect($results[1]->id)->toBe($encryptionKey->id);
             }
-            
+
             if ($results[2] instanceof \Illuminate\Database\Eloquent\Collection) {
                 expect($results[2]->contains('id', $encryptionKey->id))->toBeTrue();
             }
@@ -523,7 +523,7 @@ describe('E2EE Concurrency and Race Conditions', function () {
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
             $operationCount = 50;
             $startTime = microtime(true);
-            
+
             $results = [];
             $errors = [];
 
@@ -533,7 +533,7 @@ describe('E2EE Concurrency and Race Conditions', function () {
                     $content = "High frequency message {$i}";
                     $encrypted = $this->encryptionService->encryptMessage($content, $symmetricKey);
                     $decrypted = $this->encryptionService->decryptMessage($encrypted['data'], $encrypted['iv'], $symmetricKey);
-                    
+
                     $results[] = ['original' => $content, 'decrypted' => $decrypted];
                 } catch (\Exception $e) {
                     $errors[] = $e->getMessage();
@@ -546,7 +546,7 @@ describe('E2EE Concurrency and Race Conditions', function () {
             // Should complete all operations successfully
             expect(count($results))->toBe($operationCount);
             expect($errors)->toBeEmpty();
-            
+
             // Should complete within reasonable time (adjust based on system performance)
             expect($totalTime)->toBeLessThan(30.0);
 
@@ -559,28 +559,28 @@ describe('E2EE Concurrency and Race Conditions', function () {
         it('handles memory pressure during bulk operations', function () {
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
             $bulkSize = 100;
-            
+
             $initialMemory = memory_get_usage();
             $messages = [];
 
             // Create bulk messages
             for ($i = 0; $i < $bulkSize; $i++) {
-                $content = "Bulk message {$i} with content: " . str_repeat("data ", 100);
-                
+                $content = "Bulk message {$i} with content: ".str_repeat('data ', 100);
+
                 $message = Message::createEncrypted(
                     $this->conversation->id,
                     $this->user1->id,
                     $content,
                     $symmetricKey
                 );
-                
+
                 $messages[] = $message;
-                
+
                 // Periodically check memory usage
                 if ($i % 20 === 0) {
                     $currentMemory = memory_get_usage();
                     $memoryIncrease = $currentMemory - $initialMemory;
-                    
+
                     // Memory usage should not grow excessively
                     expect($memoryIncrease)->toBeLessThan(50 * 1024 * 1024); // 50MB limit
                 }
@@ -588,7 +588,7 @@ describe('E2EE Concurrency and Race Conditions', function () {
 
             // Verify all messages were created and are decryptable
             expect(count($messages))->toBe($bulkSize);
-            
+
             // Spot check some messages
             $testIndices = [0, 25, 50, 75, 99];
             foreach ($testIndices as $index) {

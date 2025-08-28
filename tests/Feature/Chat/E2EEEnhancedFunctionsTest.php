@@ -23,6 +23,29 @@ beforeEach(function () {
     $this->user1PrivateKey = $keyPair1['private_key'];
     $this->user2PrivateKey = $keyPair2['private_key'];
 
+    // Create trusted devices for users (required for encryption setup)
+    \App\Models\UserDevice::create([
+        'user_id' => $this->user1->id,
+        'device_name' => 'User 1 Device',
+        'device_type' => 'web',
+        'platform' => 'web',
+        'public_key' => $keyPair1['public_key'],
+        'device_fingerprint' => 'test-fingerprint-1',
+        'last_used_at' => now(),
+        'is_trusted' => true,
+    ]);
+
+    \App\Models\UserDevice::create([
+        'user_id' => $this->user2->id,
+        'device_name' => 'User 2 Device',
+        'device_type' => 'web',
+        'platform' => 'web',
+        'public_key' => $keyPair2['public_key'],
+        'device_fingerprint' => 'test-fingerprint-2',
+        'last_used_at' => now(),
+        'is_trusted' => true,
+    ]);
+
     $this->conversation = Conversation::factory()->direct()->create();
     $this->conversation->participants()->create(['user_id' => $this->user1->id, 'role' => 'admin']);
     $this->conversation->participants()->create(['user_id' => $this->user2->id, 'role' => 'member']);
