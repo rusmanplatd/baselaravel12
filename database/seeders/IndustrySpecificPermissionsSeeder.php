@@ -7,6 +7,7 @@ use App\Models\Auth\Role;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class IndustrySpecificPermissionsSeeder extends Seeder
 {
@@ -18,7 +19,7 @@ class IndustrySpecificPermissionsSeeder extends Seeder
         ], [
             'name' => 'System User',
             'email' => 'system@system.local',
-            'password' => bcrypt('system-user-password-'.bin2hex(random_bytes(16))),
+            'password' => Hash::make('system-user-password-'.bin2hex(random_bytes(16))),
             'email_verified_at' => now(),
         ]);
 

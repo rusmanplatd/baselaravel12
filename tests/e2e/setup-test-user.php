@@ -5,6 +5,7 @@
 require_once __DIR__.'/../../vendor/autoload.php';
 
 use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 
 $app = require_once __DIR__.'/../../bootstrap/app.php';
 $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
@@ -17,7 +18,7 @@ try {
         $user = User::create([
             'name' => 'Test User',
             'email' => 'test@example.com',
-            'password' => bcrypt('password'),
+            'password' => Hash::make('password'),
             'email_verified_at' => now(),
         ]);
         echo "Created test user: test@example.com\n";

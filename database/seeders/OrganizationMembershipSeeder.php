@@ -6,6 +6,7 @@ use App\Models\Auth\Role;
 use App\Models\OrganizationMembership;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 
 class OrganizationMembershipSeeder extends Seeder
@@ -24,73 +25,73 @@ class OrganizationMembershipSeeder extends Seeder
                 'name' => 'John Smith',
                 'email' => 'john.smith@techcorp.com',
                 'email_verified_at' => now(),
-                'password' => bcrypt('password'),
+                'password' => Hash::make('password'),
             ],
             [
                 'name' => 'Jane Doe',
                 'email' => 'jane.doe@techcorp.com',
                 'email_verified_at' => now(),
-                'password' => bcrypt('password'),
+                'password' => Hash::make('password'),
             ],
             [
                 'name' => 'Mike Johnson',
                 'email' => 'mike.johnson@techcorpsoftware.com',
                 'email_verified_at' => now(),
-                'password' => bcrypt('password'),
+                'password' => Hash::make('password'),
             ],
             [
                 'name' => 'Sarah Wilson',
                 'email' => 'sarah.wilson@techcorpsoftware.com',
                 'email_verified_at' => now(),
-                'password' => bcrypt('password'),
+                'password' => Hash::make('password'),
             ],
             [
                 'name' => 'David Brown',
                 'email' => 'david.brown@techcorpdata.com',
                 'email_verified_at' => now(),
-                'password' => bcrypt('password'),
+                'password' => Hash::make('password'),
             ],
             [
                 'name' => 'Emily Davis',
                 'email' => 'emily.davis@techcorpdata.com',
                 'email_verified_at' => now(),
-                'password' => bcrypt('password'),
+                'password' => Hash::make('password'),
             ],
             [
                 'name' => 'Robert Taylor',
                 'email' => 'robert.taylor@techcorpsoftware.com',
                 'email_verified_at' => now(),
-                'password' => bcrypt('password'),
+                'password' => Hash::make('password'),
             ],
             [
                 'name' => 'Lisa Anderson',
                 'email' => 'lisa.anderson@techcorpsoftware.com',
                 'email_verified_at' => now(),
-                'password' => bcrypt('password'),
+                'password' => Hash::make('password'),
             ],
             [
                 'name' => 'Michael Chen',
                 'email' => 'michael.chen@techcorpsoftware.com',
                 'email_verified_at' => now(),
-                'password' => bcrypt('password'),
+                'password' => Hash::make('password'),
             ],
             [
                 'name' => 'Jennifer Martinez',
                 'email' => 'jennifer.martinez@techcorpsoftware.com',
                 'email_verified_at' => now(),
-                'password' => bcrypt('password'),
+                'password' => Hash::make('password'),
             ],
             [
                 'name' => 'Alex Thompson',
                 'email' => 'alex.thompson@techcorpsoftware.com',
                 'email_verified_at' => now(),
-                'password' => bcrypt('password'),
+                'password' => Hash::make('password'),
             ],
             [
                 'name' => 'Maria Rodriguez',
                 'email' => 'maria.rodriguez@techcorpsoftware.com',
                 'email_verified_at' => now(),
-                'password' => bcrypt('password'),
+                'password' => Hash::make('password'),
             ],
         ];
 

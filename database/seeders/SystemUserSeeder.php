@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class SystemUserSeeder extends Seeder
 {
@@ -15,7 +16,7 @@ class SystemUserSeeder extends Seeder
         ], [
             'name' => 'System User',
             'email' => 'system@system.local',
-            'password' => bcrypt('password'),
+            'password' => Hash::make('password'),
             'email_verified_at' => now(),
         ]);
 
@@ -24,31 +25,31 @@ class SystemUserSeeder extends Seeder
             [
                 'name' => 'OAuth Service',
                 'email' => 'oauth@system.local',
-                'password' => bcrypt('password'),
+                'password' => Hash::make('password'),
                 'email_verified_at' => now(),
             ],
             [
                 'name' => 'Audit Service',
                 'email' => 'audit@system.local',
-                'password' => bcrypt('password'),
+                'password' => Hash::make('password'),
                 'email_verified_at' => now(),
             ],
             [
                 'name' => 'Backup Service',
                 'email' => 'backup@system.local',
-                'password' => bcrypt('password'),
+                'password' => Hash::make('password'),
                 'email_verified_at' => now(),
             ],
             [
                 'name' => 'Monitoring Service',
                 'email' => 'monitor@system.local',
-                'password' => bcrypt('password'),
+                'password' => Hash::make('password'),
                 'email_verified_at' => now(),
             ],
             [
                 'name' => 'Notification Service',
                 'email' => 'notifications@system.local',
-                'password' => bcrypt('password'),
+                'password' => Hash::make('password'),
                 'email_verified_at' => now(),
             ],
         ];

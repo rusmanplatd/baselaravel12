@@ -8,6 +8,7 @@ use App\Models\OrganizationPosition;
 use App\Models\OrganizationUnit;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class OrganizationalStructureSeeder extends Seeder
 {
@@ -311,22 +312,22 @@ class OrganizationalStructureSeeder extends Seeder
         // Create sample users
         $user1 = User::firstOrCreate(['email' => 'chairman@globaltech.com'], $addAuditFields([
             'name' => 'Robert Johnson',
-            'password' => bcrypt('password'),
+            'password' => Hash::make('password'),
         ]));
 
         $user2 = User::firstOrCreate(['email' => 'ceo@globaltech.com'], $addAuditFields([
             'name' => 'Sarah Williams',
-            'password' => bcrypt('password'),
+            'password' => Hash::make('password'),
         ]));
 
         $user3 = User::firstOrCreate(['email' => 'cto@techsolutions.com'], $addAuditFields([
             'name' => 'Michael Chen',
-            'password' => bcrypt('password'),
+            'password' => Hash::make('password'),
         ]));
 
         $user4 = User::firstOrCreate(['email' => 'vpsales@techsolutions.com'], $addAuditFields([
             'name' => 'Jennifer Davis',
-            'password' => bcrypt('password'),
+            'password' => Hash::make('password'),
         ]));
 
         // Create memberships

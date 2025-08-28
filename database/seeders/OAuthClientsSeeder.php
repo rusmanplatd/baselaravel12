@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 class OAuthClientsSeeder extends Seeder
@@ -19,7 +20,7 @@ class OAuthClientsSeeder extends Seeder
             'email' => 'admin@example.com',
         ], [
             'name' => 'OAuth Admin',
-            'password' => bcrypt('password'),
+            'password' => Hash::make('password'),
             'email_verified_at' => now(),
         ]);
 
