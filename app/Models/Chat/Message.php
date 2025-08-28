@@ -408,6 +408,8 @@ class Message extends Model
             ->dontLogIfAttributesChangedOnly(['updated_at']);
     }
 
+
+
     /**
      * Create a new factory instance for the model.
      */
