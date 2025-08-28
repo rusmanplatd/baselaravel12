@@ -412,11 +412,10 @@ class ChatFileService
             return [
                 'encrypted_data' => $encryptionResult['data'],
                 'iv' => $encryptionResult['iv'],
-                'tag' => $encryptionResult['hmac'] ?? '',
-                'hash' => $encryptionResult['hash'] ?? '',
-                'file_name' => $fileName,
+                'hash' => $encryptionResult['hash'] ?? hash('sha256', $fileContent),
+                'original_name' => $fileName,
                 'mime_type' => $mimeType,
-                'file_size' => strlen($fileContent),
+                'size' => strlen($fileContent),
             ];
 
         } catch (EncryptionException $e) {
