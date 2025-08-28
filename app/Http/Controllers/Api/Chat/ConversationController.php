@@ -758,4 +758,210 @@ class ConversationController extends Controller
             throw new \RuntimeException('Unable to obtain private key for user');
         }
     }
+
+    public function bulkExport(Request $request)
+    {
+        $validated = $request->validate([
+            'conversation_ids' => 'required|array|min:1|max:50',
+            'conversation_ids.*' => 'required|string',
+            'export_format' => 'required|string|in:json,csv',
+            'include_encryption_keys' => 'boolean',
+        ]);
+
+        try {
+            $user = auth()->user();
+            $conversationIds = $validated['conversation_ids'];
+            
+            // Verify user has access to all requested conversations
+            $conversations = Conversation::whereIn('id', $conversationIds)
+                ->whereHas('participants', function ($query) use ($user) {
+                    $query->where('user_id', $user->id)->whereNull('left_at');
+                })
+                ->get();
+
+            if ($conversations->count() !== count($conversationIds)) {
+                return response()->json([
+                    'error' => 'Access denied to one or more conversations'
+                ], 403);
+            }
+
+            $exportId = \Illuminate\Support\Str::uuid();
+            $exportData = [
+                'export_id' => $exportId,
+                'conversations_count' => $conversations->count(),
+                'export_format' => $validated['export_format'],
+                'includes_encryption_keys' => $validated['include_encryption_keys'] ?? false,
+                'exported_at' => now()->toISOString(),
+                'conversations' => [],
+            ];
+
+            $totalMessages = 0;
+            foreach ($conversations as $conversation) {
+                $messages = $conversation->messages()
+                    ->with(['sender:id,name,email'])
+                    ->orderBy('created_at')
+                    ->get();
+                    
+                $totalMessages += $messages->count();
+                
+                $conversationData = [
+                    'id' => $conversation->id,
+                    'name' => $conversation->name,
+                    'type' => $conversation->type,
+                    'is_encrypted' => $conversation->is_encrypted,
+                    'created_at' => $conversation->created_at,
+                    'messages_count' => $messages->count(),
+                    'messages' => $messages->map(function ($message) {
+                        return [
+                            'id' => $message->id,
+                            'sender' => $message->sender,
+                            'content' => $message->content,
+                            'message_type' => $message->message_type,
+                            'is_encrypted' => $message->is_encrypted,
+                            'created_at' => $message->created_at,
+                        ];
+                    })->toArray(),
+                ];
+
+                if ($validated['include_encryption_keys'] ?? false) {
+                    $conversationData['encryption_keys'] = $user->encryptionKeys()
+                        ->where('conversation_id', $conversation->id)
+                        ->where('is_active', true)
+                        ->get(['id', 'public_key', 'key_version', 'created_at'])
+                        ->toArray();
+                }
+
+                $exportData['conversations'][] = $conversationData;
+            }
+
+            $exportData['total_messages'] = $totalMessages;
+
+            return response()->json(['data' => $exportData]);
+
+        } catch (\Exception $e) {
+            Log::error('Bulk export failed', [
+                'user_id' => auth()->id(),
+                'conversation_ids' => $validated['conversation_ids'] ?? [],
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'error' => 'Failed to export conversations',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function bulkUpdateEncryption(Request $request)
+    {
+        $validated = $request->validate([
+            'conversation_ids' => 'required|array|min:1|max:20',
+            'conversation_ids.*' => 'required|string',
+            'encryption_settings' => 'required|array',
+            'encryption_settings.enable_encryption' => 'required|boolean',
+            'encryption_settings.algorithm' => 'nullable|string|in:RSA-4096-OAEP,RSA-2048-OAEP',
+            'encryption_settings.key_strength' => 'nullable|integer|in:2048,4096',
+        ]);
+
+        try {
+            $user = auth()->user();
+            $conversationIds = $validated['conversation_ids'];
+            $enableEncryption = $validated['encryption_settings']['enable_encryption'];
+            
+            // Verify user has admin access to all requested conversations
+            $conversations = Conversation::whereIn('id', $conversationIds)
+                ->whereHas('participants', function ($query) use ($user) {
+                    $query->where('user_id', $user->id)
+                          ->where('role', 'admin')
+                          ->whereNull('left_at');
+                })
+                ->get();
+
+            if ($conversations->count() !== count($conversationIds)) {
+                return response()->json([
+                    'error' => 'Admin access required for one or more conversations'
+                ], 403);
+            }
+
+            $updatedCount = 0;
+            $failedCount = 0;
+            $errors = [];
+
+            foreach ($conversations as $conversation) {
+                try {
+                    if ($enableEncryption && !$conversation->is_encrypted) {
+                        // Enable encryption
+                        $algorithm = $validated['encryption_settings']['algorithm'] ?? 'RSA-4096-OAEP';
+                        $keyStrength = $validated['encryption_settings']['key_strength'] ?? 4096;
+                        
+                        $conversation->enableEncryption($algorithm, $keyStrength);
+                        
+                        // Generate encryption keys for all participants
+                        $symmetricKey = $this->encryptionService->generateSymmetricKey();
+                        $activeParticipants = $conversation->activeParticipants()->get();
+
+                        foreach ($activeParticipants as $participant) {
+                            $userKeyPair = $this->getUserKeyPair($participant->user_id);
+                            
+                            $userDevice = \App\Models\UserDevice::where('user_id', $participant->user_id)
+                                ->where('is_trusted', true)
+                                ->first();
+
+                            if ($userDevice) {
+                                EncryptionKey::create([
+                                    'conversation_id' => $conversation->id,
+                                    'user_id' => $participant->user_id,
+                                    'device_id' => $userDevice->id,
+                                    'device_fingerprint' => $userDevice->device_fingerprint,
+                                    'encrypted_key' => $this->encryptionService->encryptSymmetricKey(
+                                        $symmetricKey,
+                                        $userKeyPair['public_key']
+                                    ),
+                                    'public_key' => $userKeyPair['public_key'],
+                                    'key_version' => 1,
+                                    'algorithm' => $algorithm,
+                                    'key_strength' => $keyStrength,
+                                    'is_active' => true,
+                                ]);
+                            }
+                        }
+                        
+                        $updatedCount++;
+                        
+                    } elseif (!$enableEncryption && $conversation->is_encrypted) {
+                        // Disable encryption
+                        $conversation->disableEncryption();
+                        $updatedCount++;
+                    }
+                    
+                } catch (\Exception $e) {
+                    $failedCount++;
+                    $errors[$conversation->id] = $e->getMessage();
+                }
+            }
+
+            return response()->json([
+                'data' => [
+                    'updated_count' => $updatedCount,
+                    'failed_count' => $failedCount,
+                    'total_count' => $conversations->count(),
+                    'errors' => $errors,
+                    'operation' => $enableEncryption ? 'enable_encryption' : 'disable_encryption',
+                    'completed_at' => now()->toISOString(),
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Bulk encryption update failed', [
+                'user_id' => auth()->id(),
+                'conversation_ids' => $validated['conversation_ids'] ?? [],
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'error' => 'Failed to update encryption settings',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }

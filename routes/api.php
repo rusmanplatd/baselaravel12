@@ -226,6 +226,13 @@ Route::middleware('auth:api')->prefix('v1')->group(function () {
         Route::post('encryption/backup/restore', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'restoreBackup'])->name('encryption.backup.restore');
         Route::get('encryption/health', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'getEncryptionHealth'])->name('encryption.health');
         Route::post('encryption/bulk-decrypt', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'bulkDecryptMessages'])->name('encryption.bulk-decrypt');
+        Route::get('encryption/key-usage-stats', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'getKeyUsageStats'])->name('encryption.key-usage-stats');
+        Route::get('encryption/detect-anomalies', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'detectAnomalies'])->name('encryption.detect-anomalies');
+        Route::get('conversations/{conversation}/encryption/audit-log', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'getAuditLog'])->name('conversations.encryption.audit-log');
+        
+        // Bulk operations
+        Route::post('conversations/bulk-export', [\App\Http\Controllers\Api\Chat\ConversationController::class, 'bulkExport'])->name('conversations.bulk-export');
+        Route::patch('conversations/bulk-update-encryption', [\App\Http\Controllers\Api\Chat\ConversationController::class, 'bulkUpdateEncryption'])->name('conversations.bulk-update-encryption');
 
         // Multi-Device E2EE endpoints
         Route::post('conversations/{conversation}/setup-encryption-multidevice', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'setupConversationEncryptionMultiDevice'])->name('conversations.setup-encryption-multidevice');

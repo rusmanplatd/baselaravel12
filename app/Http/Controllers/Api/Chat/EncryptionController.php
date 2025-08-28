@@ -988,4 +988,172 @@ class EncryptionController extends Controller
             ], 500);
         }
     }
+
+    public function getKeyUsageStats(Request $request)
+    {
+        try {
+            $user = auth()->user();
+            
+            $stats = [
+                'user_id' => $user->id,
+                'total_keys' => $user->encryptionKeys()->count(),
+                'active_keys' => $user->encryptionKeys()->where('is_active', true)->count(),
+                'conversations_with_encryption' => $user->encryptionKeys()
+                    ->distinct('conversation_id')
+                    ->count(),
+                'devices_with_keys' => $user->encryptionKeys()
+                    ->whereNotNull('device_id')
+                    ->distinct('device_id')
+                    ->count(),
+                'key_versions' => $user->encryptionKeys()
+                    ->selectRaw('key_version, count(*) as count')
+                    ->groupBy('key_version')
+                    ->pluck('count', 'key_version')
+                    ->toArray(),
+                'last_key_generated' => $user->encryptionKeys()
+                    ->latest('created_at')
+                    ->value('created_at'),
+            ];
+
+            return response()->json([
+                'data' => $stats,
+                'generated_at' => now()->toISOString(),
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to get key usage stats',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function detectAnomalies(Request $request)
+    {
+        try {
+            $anomalies = [];
+            $user = auth()->user();
+            
+            // Detect unencrypted messages in encrypted conversations
+            $unencryptedInEncrypted = DB::select("
+                SELECT c.id as conversation_id, COUNT(m.id) as message_count
+                FROM chat_conversations c
+                INNER JOIN chat_participants p ON c.id = p.conversation_id
+                INNER JOIN chat_messages m ON c.id = m.conversation_id
+                WHERE c.is_encrypted = true
+                  AND m.is_encrypted = false
+                  AND p.user_id = ?
+                  AND p.left_at IS NULL
+                GROUP BY c.id
+            ", [$user->id]);
+
+            foreach ($unencryptedInEncrypted as $anomaly) {
+                $anomalies[] = [
+                    'type' => 'unencrypted_message_in_encrypted_conversation',
+                    'conversation_id' => $anomaly->conversation_id,
+                    'message_count' => $anomaly->message_count,
+                    'severity' => 'high',
+                    'detected_at' => now()->toISOString(),
+                ];
+            }
+            
+            // Detect encryption keys without corresponding participants
+            $orphanedKeys = EncryptionKey::where('user_id', $user->id)
+                ->whereDoesntHave('conversation.participants', function ($query) use ($user) {
+                    $query->where('user_id', $user->id)
+                          ->whereNull('left_at');
+                })
+                ->get();
+
+            foreach ($orphanedKeys as $key) {
+                $anomalies[] = [
+                    'type' => 'orphaned_encryption_key',
+                    'conversation_id' => $key->conversation_id,
+                    'key_id' => $key->id,
+                    'severity' => 'medium',
+                    'detected_at' => now()->toISOString(),
+                ];
+            }
+            
+            // Detect inactive keys that should be active
+            $inactiveKeys = $user->encryptionKeys()
+                ->where('is_active', false)
+                ->whereHas('conversation.participants', function ($query) use ($user) {
+                    $query->where('user_id', $user->id)
+                          ->whereNull('left_at');
+                })
+                ->whereHas('conversation', function ($query) {
+                    $query->where('is_encrypted', true);
+                })
+                ->get();
+
+            foreach ($inactiveKeys as $key) {
+                $anomalies[] = [
+                    'type' => 'inactive_key_in_active_conversation',
+                    'conversation_id' => $key->conversation_id,
+                    'key_id' => $key->id,
+                    'severity' => 'medium',
+                    'detected_at' => now()->toISOString(),
+                ];
+            }
+
+            return response()->json([
+                'data' => [
+                    'total_anomalies' => count($anomalies),
+                    'anomaly_types' => array_unique(array_column($anomalies, 'type')),
+                    'details' => $anomalies,
+                    'scan_completed_at' => now()->toISOString(),
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to detect anomalies',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function getAuditLog(Conversation $conversation)
+    {
+        $this->authorize('view', $conversation);
+        
+        try {
+            // Get activity logs related to encryption for this conversation
+            $auditEntries = \Spatie\Activitylog\Models\Activity::where('subject_type', 'App\Models\Chat\Conversation')
+                ->where('subject_id', $conversation->id)
+                ->where('description', 'like', '%encryption%')
+                ->orWhere('description', 'like', '%key%')
+                ->orWhere('properties->encryption_operation', '!=', null)
+                ->orderBy('created_at', 'desc')
+                ->limit(100)
+                ->get()
+                ->map(function ($activity) {
+                    return [
+                        'id' => $activity->id,
+                        'operation' => $activity->description,
+                        'user_id' => $activity->causer_id,
+                        'user_name' => $activity->causer?->name,
+                        'timestamp' => $activity->created_at->toISOString(),
+                        'properties' => $activity->properties ?? [],
+                        'changes' => $activity->changes ?? [],
+                    ];
+                });
+
+            return response()->json([
+                'data' => [
+                    'conversation_id' => $conversation->id,
+                    'audit_entries' => $auditEntries,
+                    'total_entries' => $auditEntries->count(),
+                    'retrieved_at' => now()->toISOString(),
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Failed to get audit log',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
 }
