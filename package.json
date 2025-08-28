@@ -94,6 +94,7 @@
         "typescript": "^5.7.2",
         "vaul": "^1.1.2",
         "vite": "^7.0.4",
+        "ziggy-js": "^2.5.3",
         "zod": "^4.0.17"
     },
     "optionalDependencies": {
