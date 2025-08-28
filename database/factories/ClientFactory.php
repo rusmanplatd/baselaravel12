@@ -23,7 +23,7 @@ class ClientFactory extends Factory
     public function definition(): array
     {
         return [
-            'id' => $this->faker->uuid(),
+            'id' => $this->faker->ulid(),
             'owner_id' => User::factory(),
             'owner_type' => User::class,
             'name' => $this->faker->company().' App',

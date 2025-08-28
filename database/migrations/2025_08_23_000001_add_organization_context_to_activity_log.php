@@ -9,7 +9,7 @@ return new class extends Migration
     public function up()
     {
         Schema::table('activity_log', function (Blueprint $table) {
-            $table->ulid('organization_id')->nullable()->after('batch_uuid');
+            $table->ulid('organization_id')->nullable()->after('batch_ulid');
             $table->string('tenant_id')->nullable()->after('organization_id');
 
             $table->index(['organization_id', 'created_at']);

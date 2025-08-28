@@ -68,7 +68,7 @@ class MessageFactory extends Factory
             'type' => 'file',
             'content' => null,
             'file_name' => $this->faker->word().'.pdf',
-            'file_path' => 'chat-files/'.$this->faker->uuid().'.encrypted',
+            'file_path' => 'chat-files/'.$this->faker->ulid().'.encrypted',
             'file_size' => $this->faker->numberBetween(1024, 1024 * 1024), // 1KB to 1MB
             'mime_type' => 'application/pdf',
             'encryption_iv' => base64_encode($this->faker->randomBytes(16)),
@@ -85,7 +85,7 @@ class MessageFactory extends Factory
             'type' => 'file',
             'content' => null,
             'file_name' => $this->faker->word().'.jpg',
-            'file_path' => 'chat-files/'.$this->faker->uuid().'.encrypted',
+            'file_path' => 'chat-files/'.$this->faker->ulid().'.encrypted',
             'file_size' => $this->faker->numberBetween(1024 * 10, 1024 * 1024 * 5), // 10KB to 5MB
             'mime_type' => 'image/jpeg',
             'encryption_iv' => base64_encode($this->faker->randomBytes(16)),

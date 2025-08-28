@@ -10,13 +10,13 @@ return new class extends Migration
     {
         Schema::create('snapshots', function (Blueprint $table) {
             $table->ulid('id')->primary();
-            $table->uuid('aggregate_uuid');
+            $table->ulid('aggregate_ulid');
             $table->unsignedBigInteger('aggregate_version');
             $table->jsonb('state');
 
             $table->timestampsTz();
 
-            $table->index('aggregate_uuid');
+            $table->index('aggregate_ulid');
         });
     }
 };

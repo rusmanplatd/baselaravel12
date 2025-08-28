@@ -70,7 +70,7 @@ export interface Activity {
     causer_id: string | null;
     event: string | null;
     properties: Record<string, any>;
-    batch_uuid: string | null;
+    batch_ulid: string | null;
     organization_id: string | null;
     tenant_id: string | null;
     created_at: string;

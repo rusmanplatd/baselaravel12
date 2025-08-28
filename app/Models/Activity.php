@@ -23,7 +23,7 @@ class Activity extends BaseActivity
         'causer_type',
         'causer_id',
         'properties',
-        'batch_uuid',
+        'batch_ulid',
         'organization_id',
         'tenant_id',
     ];

@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('oauth_audit_logs', function (Blueprint $table) {
             $table->id();
             $table->string('event_type'); // authorize, token, userinfo, revoke, etc.
-            $table->uuid('client_id')->nullable();
+            $table->ulid('client_id')->nullable();
             $table->char('user_id', 26)->nullable();
             $table->ipAddress('ip_address');
             $table->string('user_agent')->nullable();

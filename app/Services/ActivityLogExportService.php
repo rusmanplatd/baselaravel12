@@ -205,8 +205,8 @@ class ActivityLogExportService
                     case 'properties':
                         $data['properties'] = json_encode($activity->properties);
                         break;
-                    case 'batch_uuid':
-                        $data['batch_uuid'] = $activity->batch_uuid;
+                    case 'batch_ulid':
+                        $data['batch_ulid'] = $activity->batch_ulid;
                         break;
                     case 'created_at':
                         $data['created_at'] = $activity->created_at->format('Y-m-d H:i:s');
@@ -327,7 +327,7 @@ class ActivityLogExportService
                 'organization_name' => 'Organization Name',
                 'organization_code' => 'Organization Code',
                 'properties' => 'Properties',
-                'batch_uuid' => 'Batch UUID',
+                'batch_ulid' => 'Batch UUID',
                 'created_at' => 'Created At',
                 'updated_at' => 'Updated At',
                 default => ucfirst(str_replace(['_', '.'], ' ', $column)),
@@ -374,7 +374,7 @@ class ActivityLogExportService
             ],
             'metadata' => [
                 'properties' => 'Properties (JSON)',
-                'batch_uuid' => 'Batch UUID',
+                'batch_ulid' => 'Batch UUID',
                 'updated_at' => 'Updated At',
             ],
         ];

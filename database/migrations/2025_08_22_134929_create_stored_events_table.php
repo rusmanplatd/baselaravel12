@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('stored_events', function (Blueprint $table) {
             $table->ulid('id')->primary();
-            $table->uuid('aggregate_uuid')->nullable();
+            $table->ulid('aggregate_ulid')->nullable();
             $table->unsignedBigInteger('aggregate_version')->nullable();
             $table->unsignedTinyInteger('event_version')->default(1);
             $table->string('event_class');
@@ -18,9 +18,9 @@ return new class extends Migration
             $table->jsonb('meta_data');
             $table->timestampTz('created_at');
             $table->index('event_class');
-            $table->index('aggregate_uuid');
+            $table->index('aggregate_ulid');
 
-            $table->unique(['aggregate_uuid', 'aggregate_version']);
+            $table->unique(['aggregate_ulid', 'aggregate_version']);
         });
     }
 };

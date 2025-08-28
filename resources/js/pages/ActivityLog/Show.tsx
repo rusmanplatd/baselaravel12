@@ -34,11 +34,11 @@ export default function ActivityLogShow({ activity }: Props) {
         if (value === null || value === undefined) {
             return 'N/A';
         }
-        
+
         if (typeof value === 'object') {
             return JSON.stringify(value, null, 2);
         }
-        
+
         return String(value);
     };
 
@@ -122,13 +122,13 @@ export default function ActivityLogShow({ activity }: Props) {
                                     </div>
                                 </div>
 
-                                {activity.batch_uuid && (
+                                {activity.batch_ulid && (
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">
                                             Batch UUID
                                         </label>
                                         <p className="text-sm text-gray-900 font-mono">
-                                            {activity.batch_uuid}
+                                            {activity.batch_ulid}
                                         </p>
                                     </div>
                                 )}
