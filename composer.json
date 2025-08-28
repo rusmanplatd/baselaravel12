@@ -83,6 +83,7 @@
         ],
         "test": [
             "@php artisan config:clear --ansi",
+            "@php artisan migrate:fresh --seed --graceful --ansi",
             "@php artisan test"
         ]
     },

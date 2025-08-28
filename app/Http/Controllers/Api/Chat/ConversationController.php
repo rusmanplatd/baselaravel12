@@ -143,6 +143,7 @@ class ConversationController extends Controller
                                 $symmetricKey,
                                 $userKeyPair['public_key']
                             ),
+                            'public_key' => $userKeyPair['public_key'],
                             'key_version' => 1,
                             'algorithm' => $algorithm,
                             'key_strength' => $keyStrength,
@@ -479,6 +480,7 @@ class ConversationController extends Controller
                             $symmetricKey,
                             $userKeyPair['public_key']
                         ),
+                        'public_key' => $userKeyPair['public_key'],
                         'key_version' => 1,
                         'algorithm' => $algorithm,
                         'key_strength' => $keyStrength,

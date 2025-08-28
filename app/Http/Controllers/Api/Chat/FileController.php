@@ -58,6 +58,8 @@ class FileController extends Controller
                 'file_name' => $fileData['file_name'],
                 'file_mime_type' => $fileData['mime_type'],
                 'file_size' => $fileData['file_size'],
+                'file_iv' => $fileData['encryption_iv'], // Store file IV for decryption
+                'file_tag' => $fileData['encryption_tag'], // Store file tag for decryption
             ]);
 
             $conversation->update(['last_message_at' => now()]);
@@ -98,7 +100,7 @@ class FileController extends Controller
             $this->getUserPrivateKey(auth()->id())
         );
 
-        $fileData = $this->fileService->retrieveFile($filePath, $symmetricKey);
+        $fileData = $this->fileService->retrieveFile($filePath, $symmetricKey, $message->file_iv, $message->file_tag);
 
         return response($fileData['contents'])
             ->header('Content-Type', $message->file_mime_type)

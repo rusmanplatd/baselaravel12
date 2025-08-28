@@ -143,7 +143,7 @@ class ChatFileService
         return $deletedCount;
     }
 
-    public function retrieveFile(string $filePath, string $symmetricKey): array
+    public function retrieveFile(string $filePath, string $symmetricKey, ?string $iv = null, ?string $tag = null): array
     {
         try {
             if (! Storage::disk('chat-files')->exists($filePath)) {
@@ -151,7 +151,7 @@ class ChatFileService
             }
 
             $encryptedContents = Storage::disk('chat-files')->get($filePath);
-            $decryptedContents = $this->decryptFileContents($encryptedContents, $symmetricKey);
+            $decryptedContents = $this->decryptFileContents($encryptedContents, $symmetricKey, $iv, $tag);
 
             return [
                 'contents' => $decryptedContents,

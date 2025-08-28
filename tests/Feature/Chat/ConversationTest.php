@@ -173,7 +173,7 @@ class ConversationTest extends TestCase
 
         $response = $this->deleteJson("/api/v1/chat/conversations/{$conversation->id}");
 
-        $response->assertStatus(200);
+        $response->assertStatus(204);
         $this->assertSoftDeleted($conversation);
     }
 

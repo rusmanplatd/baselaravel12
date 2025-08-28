@@ -933,7 +933,7 @@ describe('Rate Limiting', function () {
 
 describe('File Download API', function () {
     beforeEach(function () {
-        $this->conversation = Conversation::factory()->create([
+        $this->conversation = Conversation::factory()->encrypted()->create([
             'created_by' => $this->user->id,
         ]);
 
@@ -942,6 +942,47 @@ describe('File Download API', function () {
             'user_id' => $this->user->id,
             'role' => 'member',
         ]);
+
+        // Set up encryption keys
+        $encryptionService = app(\App\Services\ChatEncryptionService::class);
+        $keyPair = $encryptionService->generateKeyPair();
+        $this->user->update(['public_key' => $keyPair['public_key']]);
+        
+        // Create a device for the user
+        $device = \App\Models\UserDevice::create([
+            'user_id' => $this->user->id,
+            'device_name' => 'Test Device',
+            'device_type' => 'web',
+            'platform' => 'web',
+            'public_key' => $keyPair['public_key'],
+            'device_fingerprint' => 'test-fingerprint-' . time(),
+            'last_used_at' => now(),
+            'is_trusted' => true,
+        ]);
+
+        // Cache the private key (required for decryption)
+        $cacheKey = 'user_private_key_' . $this->user->id;
+        $encryptedPrivateKey = $encryptionService->encryptForStorage($keyPair['private_key']);
+        cache()->put($cacheKey, $encryptedPrivateKey, now()->addHours(24));
+
+        // Create encryption key
+        EncryptionKey::create([
+            'conversation_id' => $this->conversation->id,
+            'user_id' => $this->user->id,
+            'device_id' => $device->id,
+            'device_fingerprint' => $device->device_fingerprint,
+            'encrypted_key' => $encryptionService->encryptSymmetricKey(
+                $encryptionService->generateSymmetricKey(),
+                $keyPair['public_key']
+            ),
+            'public_key' => $keyPair['public_key'],
+            'key_version' => 1,
+            'algorithm' => 'RSA-4096-OAEP',
+            'key_strength' => 4096,
+            'is_active' => true,
+        ]);
+        
+        $this->userKeyPair = $keyPair;
     });
 
     it('can download file with valid token', function () {
@@ -950,17 +991,17 @@ describe('File Download API', function () {
         // Upload file first
         $file = UploadedFile::fake()->create('document.pdf', 100, 'application/pdf');
 
-        $uploadResponse = $this->postJson("/api/v1/chat/conversations/{$this->conversation->id}/messages", [
-            'type' => 'file',
+        $uploadResponse = $this->postJson("/api/v1/chat/conversations/{$this->conversation->id}/upload", [
             'file' => $file,
+            'caption' => 'Sharing a document',
         ]);
 
         $uploadResponse->assertStatus(201);
 
         $fileUrl = $uploadResponse->json('file_url');
 
-        // Download file
-        $response = $this->get($fileUrl);
+        // Download file (with authentication)
+        $response = $this->getJson($fileUrl);
 
         $response->assertStatus(200);
         $response->assertHeader('Content-Type', 'application/pdf');
@@ -974,8 +1015,22 @@ describe('File Download API', function () {
     });
 
     it('rejects invalid download tokens', function () {
-        $response = $this->get('/api/v1/chat/files/invalid-path/download?token=invalid&expires='.(time() + 3600));
-
+        // First create a valid file to test with
+        $this->actingAs($this->user, 'api');
+        $file = UploadedFile::fake()->create('test.txt', 10, 'text/plain');
+        $uploadResponse = $this->postJson("/api/v1/chat/conversations/{$this->conversation->id}/upload", [
+            'file' => $file,
+            'caption' => 'Test file',
+        ]);
+        $uploadResponse->assertStatus(201);
+        $fileUrl = $uploadResponse->json('file_url');
+        
+        // Extract the encoded path from the URL
+        preg_match('/files\/([^\/]+)\/download/', $fileUrl, $matches);
+        $encodedPath = $matches[1];
+        
+        // Test with invalid token
+        $response = $this->getJson("/api/v1/chat/files/{$encodedPath}/download?token=invalid&expires=".(time() + 3600));
         $response->assertStatus(403);
     });
 });

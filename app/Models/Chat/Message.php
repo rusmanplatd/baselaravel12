@@ -45,6 +45,8 @@ class Message extends Model
         'file_name',
         'file_mime_type',
         'file_size',
+        'file_iv',
+        'file_tag',
     ];
 
     protected $casts = [
