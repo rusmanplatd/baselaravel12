@@ -8,12 +8,15 @@ This is a Laravel 12 + React fullstack application using:
 - **Backend**: Laravel 12 with Inertia.js for SPA functionality
 - **Frontend**: React 19 with TypeScript, Vite for bundling
 - **UI Library**: shadcn/ui components with Radix UI primitives and Tailwind CSS v4
-- **Testing**: Pest (PHP) for backend, no frontend testing setup currently
-- **Database**: Postgresql (default), migrations in `database/migrations/`
-- **SSR**: Enabled via Inertia.js server-side rendering
+- **Testing**: Pest (PHP) for backend, Playwright for E2E tests
+- **Database**: PostgreSQL (default), migrations in `database/migrations/`
+- **SSR**: Enabled via Inertia.js server-side rendering (port 13714)
 - **Authentication**: Laravel Passport for OAuth 2.0/OIDC, Laravel Breeze-style UI flows, WebAuthn/Passkeys support
 - **Extensions**: Multiple Spatie packages (permissions, activity logs, event sourcing)
 - **Organization Management**: Hierarchical organization structure with units, positions, and memberships
+- **Chat System**: End-to-end encrypted chat with multi-device support
+- **File Storage**: MinIO S3-compatible storage with encrypted file handling
+- **Containerization**: Docker Compose setup for local, dev, staging, and production environments
 
 ## Development Commands
 
@@ -50,29 +53,84 @@ npm run format:check # Check formatting
 ./vendor/bin/pint    # Laravel Pint (PHP formatting)
 ```
 
+### E2E and Testing
+```bash
+npm run test:e2e        # Run all Playwright E2E tests
+npm run test:e2e:ui     # Run E2E tests with UI mode
+npm run test:e2e:headed # Run E2E tests in headed mode
+npm run test:e2e:debug  # Debug E2E tests
+
+./scripts/test-e2ee.sh     # Comprehensive E2EE chat testing
+./scripts/test-e2ee.sh unit        # Run only unit tests
+./scripts/test-e2ee.sh multidevice # Run only multi-device tests
+
+php artisan test --filter=Chat      # Run specific chat test group
+```
+
+### Docker Development
+```bash
+make help           # Show all available commands
+make install        # Install and setup the project
+make local          # Start local development environment
+make local-fresh    # Start with fresh database
+make test           # Run complete test suite
+make logs service=app # Show logs for specific service
+make shell          # Open shell in app container
+make clean          # Clean up Docker resources
+```
+
 ## Project Structure
 
 ### Backend (Laravel)
-- **Routes**: `routes/web.php` (main), `routes/auth.php` (authentication), `routes/oauth.php` (OAuth/OIDC), `routes/api.php` (API endpoints)
-- **Controllers**: `app/Http/Controllers/` - organized by feature (Auth/, OAuth/, Api/Organization*)
-- **Models**: `app/Models/` - includes User, Organization hierarchy (Organization, OrganizationUnit, OrganizationPosition, OrganizationMembership)
-- **Middleware**: `app/Http/Middleware/` - includes HandleInertiaRequests for Inertia.js, HandleAppearance, OAuthRateLimiter
-- **Config**: Multiple configurations for Spatie packages, Passport OAuth, and Inertia.js (SSR on port 13714)
+- **Routes**: 
+  - `routes/web.php` - Main web routes
+  - `routes/webs/auth.php` - Authentication routes
+  - `routes/webs/oauth.php` - OAuth/OIDC routes
+  - `routes/webs/settings.php` - Settings routes
+  - `routes/api.php` - API endpoints
+  - `routes/channels.php` - Broadcasting channels
+- **Controllers**: `app/Http/Controllers/` organized by feature:
+  - `Api/Chat/` - Chat system controllers (Conversation, Message, Encryption, etc.)
+  - `Api/` - Organization, User, Permission, Role controllers
+  - `Auth/` - Authentication controllers
+  - `OAuth/` - OAuth 2.0 server controllers
+  - `Settings/` - Profile and password management
+- **Models**: `app/Models/` including:
+  - Organization hierarchy: `Organization`, `OrganizationUnit`, `OrganizationPosition`, `OrganizationMembership`
+  - Chat system: `Chat/Conversation`, `Chat/Message`, `Chat/EncryptionKey`, `Chat/Participant`
+  - Authentication: `User`, `UserDevice`, `UserMfaSetting`
+  - OAuth: `Client`, `OAuthAuditLog`, `OAuthScope`
+- **Services**: `app/Services/` - Business logic (ChatEncryptionService, ChatFileService, etc.)
+- **Middleware**: `app/Http/Middleware/` - Rate limiting, permissions, chat security, tenant context
 
 ### Frontend (React)
 - **Entry Points**: 
   - `resources/js/app.tsx` - client-side entry
   - `resources/js/ssr.tsx` - server-side rendering entry
-- **Pages**: `resources/js/pages/` - Inertia.js pages (auth/, settings/, dashboard.tsx, welcome.tsx)
-- **Components**: `resources/js/components/` - reusable components and ui/ directory (shadcn/ui)
-- **Layouts**: `resources/js/layouts/` - app layouts (auth/, app/, settings/)
-- **Hooks**: `resources/js/hooks/` - custom React hooks
-- **Types**: `resources/js/types/` - TypeScript definitions
+- **Pages**: `resources/js/pages/` - Inertia.js pages:
+  - `chat.tsx` - Main chat interface
+  - `dashboard.tsx` - Dashboard
+  - `welcome.tsx` - Landing page
+- **Components**: `resources/js/components/` - reusable components and shadcn/ui components
+- **Layouts**: `resources/js/layouts/` - app layouts (app-layout, auth-layout)
+- **Hooks**: `resources/js/hooks/` - custom React hooks:
+  - `useChat.ts` - Chat functionality
+  - `useE2EE.ts` - End-to-end encryption
+  - `useChatPagination.ts` - Chat message pagination
+  - `usePermissions.tsx` - Permission checking
+- **Services**: `resources/js/services/` - Frontend services:
+  - `MultiDeviceE2EEService.ts` - Multi-device encryption
+  - `OptimizedE2EEService.ts` - Performance optimized encryption
+  - `SecurityMonitoringService.ts` - Security monitoring
+- **Types**: `resources/js/types/` - TypeScript definitions (chat.ts, index.d.ts)
+- **Utils**: `resources/js/utils/` - Utility functions and encryption helpers
 
 ### Configuration
-- **TypeScript**: Path aliases configured (`@/*` maps to `resources/js/*`)
-- **shadcn/ui**: Configured in `components.json` with Tailwind CSS integration
-- **Vite**: Configured for Laravel with React and Tailwind CSS support
+- **TypeScript**: Path aliases configured (`@/*` maps to `resources/js/*`), strict mode enabled
+- **shadcn/ui**: Configured in `components.json` with Tailwind CSS integration, Lucide icons
+- **Vite**: Configured for Laravel with React, Tailwind CSS v4, and SSR support
+- **Docker**: Multi-environment setup (local, dev, staging, prod) with Docker Compose
+- **Storage**: MinIO S3-compatible storage configuration for encrypted file handling
 
 ## Key Integrations
 
@@ -94,25 +152,57 @@ npm run format:check # Check formatting
 
 ## Testing
 
-### Backend Tests
+### Backend Tests (Pest)
 ```bash
 php artisan test                    # Run all Pest tests
 php artisan test --filter=Auth      # Run specific test group
 php artisan test tests/Feature/     # Run feature tests only
+php artisan test --stop-on-failure  # Stop on first failure
+composer test                       # Run tests via composer (includes setup)
 ```
 
 Tests are located in:
-- `tests/Feature/` - feature tests including auth flows
-- `tests/Unit/` - unit tests
+- `tests/Feature/` - Feature tests including auth flows, chat, E2EE, organization management
+- `tests/Unit/` - Unit tests for services and utilities
+- `tests/e2e/` - End-to-end tests using Playwright
+
+### E2E Tests (Playwright)
+```bash
+npm run test:e2e        # Run all E2E tests
+npm run test:e2e:ui     # Run with Playwright UI
+npm run test:e2e:headed # Run in headed browser mode
+npm run test:e2e:debug  # Debug mode
+```
+
+E2E test categories:
+- Chat functionality and messaging
+- End-to-end encryption workflows
+- Multi-device encryption scenarios  
+- Authentication and authorization flows
+- Organization management features
+
+### Specialized Testing Scripts
+```bash
+./scripts/test-e2ee.sh          # Comprehensive E2EE testing suite
+./scripts/test-e2ee.sh unit     # Unit tests only
+./scripts/test-e2ee.sh security # Security validation tests
+./scripts/test-minio.sh         # MinIO integration testing
+```
 
 ### Database
-- Uses pgsql by default
+- Uses PostgreSQL by default (configurable via Docker Compose)
 - Extensive migration set including:
   - OAuth 2.0/OIDC tables (Passport) with organization-scoped clients
-  - Organization hierarchy tables (organizations, units, positions, memberships)
+  - Organization hierarchy tables (organizations, units, positions, memberships)  
+  - Chat system tables (conversations, messages, encryption keys, participants)
   - Permission tables (Spatie), activity logs, event sourcing, multitenancy
   - Passkeys/WebAuthn support tables
-- Seeders available in `database/seeders/` including organizational structure seeders
+  - User device management and trusted device tracking
+- Comprehensive seeders in `database/seeders/`:
+  - Organizational structure and position hierarchies
+  - OAuth clients and scopes
+  - Permission system setup
+  - Industry-specific permissions
 
 ## Key Features
 
@@ -131,16 +221,48 @@ Tests are located in:
 - **Rate Limiting**: Separate rate limits for different OAuth endpoints
 - **Audit Logging**: Complete audit trail for OAuth operations with tenant context
 
+### End-to-End Encrypted Chat System
+- **Multi-Device Support**: Seamless encryption across multiple user devices
+- **Key Management**: Sophisticated encryption key generation, rotation, and recovery
+- **File Encryption**: Encrypted file uploads and downloads with thumbnail support
+- **Performance Optimized**: Bulk encryption/decryption operations for better performance
+- **Security Monitoring**: Real-time security anomaly detection and forensic audit trails
+- **Cross-Platform Compatibility**: Support for different device types and encryption implementations
+
 ### Security Features
 - **WebAuthn/Passkeys**: Modern passwordless authentication
 - **Two-Factor Authentication**: TOTP/Google Authenticator support
-- **Rate Limiting**: Comprehensive rate limiting across OAuth and auth endpoints
+- **Rate Limiting**: Comprehensive rate limiting across OAuth, auth, and chat endpoints  
 - **Activity Logging**: Full activity logging with Spatie activity log package
+- **Trusted Device Management**: Device registration and trust verification
+- **Session Management**: Advanced session tracking and termination capabilities
+- **Security Audit Trails**: Comprehensive logging for OAuth operations and chat encryption events
 
 ## Development Notes
 
-- Concurrency script in `composer.json` runs all services together
-- SSR requires Node.js server on port 13714
-- Tailwind CSS v4 configuration with CSS variables
-- ESLint + Prettier configured for code formatting
-- TypeScript strict mode enabled
+### Key Development Patterns
+- **Service Layer**: Business logic separated into dedicated service classes (`app/Services/`)
+- **Repository Pattern**: Models use factories for testing with comprehensive relationship support
+- **Event-Driven Architecture**: Laravel events for chat notifications, presence updates, and security alerts
+- **Multi-Tenant Architecture**: Organization-scoped permissions and OAuth clients with tenant context
+- **API Rate Limiting**: Different rate limits for various endpoint categories (auth, chat, OAuth)
+
+### Environment Setup
+- **Concurrency Scripts**: `composer dev` and `composer dev:ssr` run multiple services in parallel
+- **Docker Integration**: Full containerization with separate configs for local/dev/staging/prod
+- **SSR Configuration**: Inertia.js server-side rendering on port 13714
+- **File Storage**: MinIO S3-compatible storage with encryption support
+- **Database Testing**: Separate test database with comprehensive seeding
+
+### Code Quality Tools
+- **Backend**: Laravel Pint for PHP formatting, Pest for testing
+- **Frontend**: ESLint + Prettier with TypeScript strict mode
+- **E2E Testing**: Playwright with comprehensive chat and encryption test suites
+- **Specialized Testing**: Custom scripts for E2EE validation and performance benchmarking
+
+### Key Configuration Files
+- `composer.json` - Development scripts and dependency management
+- `docker-compose.yml` - Local development environment
+- `vite.config.ts` - Frontend build configuration with SSR support
+- `components.json` - shadcn/ui configuration
+- `tsconfig.json` - TypeScript configuration with path aliases
