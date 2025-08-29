@@ -227,8 +227,8 @@ class User extends Authenticatable implements HasPasskeys
             ->wherePivot('status', 'active')
             ->wherePivot('start_date', '<=', now())
             ->where(function ($query) {
-                $query->wherePivotNull('end_date')
-                    ->orWherePivot('end_date', '>=', now());
+                $query->whereNull('organization_memberships.end_date')
+                    ->orWhere('organization_memberships.end_date', '>=', now());
             });
     }
 
