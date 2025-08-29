@@ -127,7 +127,7 @@ class ChatEncryptionService
 
             $encrypted = base64_decode($encryptedKey, true);
             if ($encrypted === false) {
-                throw new DecryptionException('Invalid base64 encoded symmetric key');
+                throw new DecryptionException('Invalid base64 encoded symmetric encryption key');
             }
 
             $decrypted = '';

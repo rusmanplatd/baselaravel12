@@ -569,7 +569,7 @@ class MessageController extends Controller
                 'user_id' => $userId,
                 'error' => $e->getMessage(),
             ]);
-            throw new \RuntimeException('Unable to obtain private key for user');
+            throw new \RuntimeException('Unable to obtain private key for user - encryption service unavailable');
         }
     }
 }

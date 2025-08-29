@@ -1061,17 +1061,54 @@ class EncryptionController extends Controller
             $anomalies = [];
             $user = auth()->user();
 
-            // All conversations are encrypted in E2EE, so this anomaly check is no longer needed
-            $unencryptedInEncrypted = [];
+            // Detect conversations where user is participant but has no encryption key (orphan conversations)
+            $userConversations = $user->activeConversations()->pluck('chat_conversations.id');
+            $conversationsWithKeys = $user->encryptionKeys()->pluck('conversation_id')->unique();
+            $orphanConversations = $userConversations->diff($conversationsWithKeys);
 
-            foreach ($unencryptedInEncrypted as $anomaly) {
-                $anomalies[] = [
-                    'type' => 'unencrypted_message_in_encrypted_conversation',
-                    'conversation_id' => $anomaly->conversation_id,
-                    'message_count' => $anomaly->message_count,
-                    'severity' => 'high',
-                    'detected_at' => now()->toISOString(),
-                ];
+            foreach ($orphanConversations as $conversationId) {
+                $conversation = Conversation::find($conversationId);
+                if (!$conversation) continue;
+
+                $messageCount = $conversation->messages()->count();
+                if ($messageCount > 0) {
+                    $anomalies[] = [
+                        'type' => 'unencrypted_message_in_encrypted_conversation',
+                        'conversation_id' => $conversationId,
+                        'message_count' => $messageCount,
+                        'severity' => 'high',
+                        'detected_at' => now()->toISOString(),
+                    ];
+                }
+            }
+
+            // Detect messages without proper encryption in conversations where user has encryption keys
+            foreach ($conversationsWithKeys as $conversationId) {
+                $conversation = Conversation::find($conversationId);
+                if (!$conversation) continue;
+
+                // Check for messages that don't have proper encrypted_content structure
+                $suspiciousMessages = $conversation->messages()
+                    ->where(function($query) {
+                        $query->whereNull('encrypted_content')
+                            ->orWhere('encrypted_content', '')
+                            ->orWhere('encrypted_content', '{}')
+                            // PostgreSQL JSON syntax for checking if JSON is valid and has required fields
+                            ->orWhereRaw("encrypted_content::json->>'data' IS NULL")
+                            ->orWhereRaw("encrypted_content::json->>'iv' IS NULL")
+                            ->orWhereRaw("encrypted_content::json->>'hmac' IS NULL");
+                    })
+                    ->count();
+
+                if ($suspiciousMessages > 0) {
+                    $anomalies[] = [
+                        'type' => 'unencrypted_message_in_encrypted_conversation',
+                        'conversation_id' => $conversationId,
+                        'message_count' => $suspiciousMessages,
+                        'severity' => 'high',
+                        'detected_at' => now()->toISOString(),
+                    ];
+                }
             }
 
             // Detect encryption keys without corresponding participants
