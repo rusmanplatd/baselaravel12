@@ -39,11 +39,32 @@ class User extends Authenticatable implements HasPasskeys
      */
     protected $fillable = [
         'name',
+        'first_name',
+        'middle_name',
+        'last_name',
         'username',
+        'nickname',
         'email',
         'password',
         'avatar',
         'public_key',
+        'profile_url',
+        'website',
+        'gender',
+        'birthdate',
+        'zoneinfo',
+        'locale',
+        'street_address',
+        'locality',
+        'region',
+        'postal_code',
+        'country',
+        'formatted_address',
+        'phone_number',
+        'phone_verified_at',
+        'profile_updated_at',
+        'external_id',
+        'social_links',
     ];
 
     /**
@@ -66,13 +87,52 @@ class User extends Authenticatable implements HasPasskeys
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'birthdate' => 'date',
+            'phone_verified_at' => 'datetime',
+            'profile_updated_at' => 'datetime',
+            'social_links' => 'array',
         ];
+    }
+
+    public function getAvatarUrlAttribute(): ?string
+    {
+        if (!$this->avatar) {
+            return null;
+        }
+
+        if (str_starts_with($this->avatar, 'http')) {
+            return $this->avatar;
+        }
+
+        return asset('storage/' . $this->avatar);
+    }
+
+    public function getFormattedAddressAttribute(): ?string
+    {
+        if ($this->formatted_address) {
+            return $this->formatted_address;
+        }
+
+        $addressParts = array_filter([
+            $this->street_address,
+            $this->locality,
+            $this->region,
+            $this->postal_code,
+            $this->country
+        ]);
+
+        return !empty($addressParts) ? implode(', ', $addressParts) : null;
     }
 
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['name', 'username', 'email', 'avatar'])
+            ->logOnly([
+                'name', 'first_name', 'middle_name', 'last_name', 'username', 'nickname', 'email', 
+                'avatar', 'profile_url', 'website', 'gender', 'birthdate', 'zoneinfo', 'locale',
+                'street_address', 'locality', 'region', 'postal_code', 'country', 'phone_number',
+                'external_id'
+            ])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
             ->setDescriptionForEvent(fn (string $eventName) => "User {$eventName}")

@@ -118,7 +118,7 @@ class OAuthController extends Controller
                     'description' => $availableScopes[$scope]['description'],
                 ];
             }, $validScopes),
-            'user' => Auth::user()->only(['name', 'email']),
+            'user' => Auth::user()->only(['name', 'first_name', 'middle_name', 'last_name', 'nickname', 'email', 'avatar_url', 'profile_url']),
             'state' => $request->state,
             'response_type' => $request->response_type,
             'code_challenge' => $request->code_challenge,
@@ -204,13 +204,26 @@ class OAuthController extends Controller
         $userinfo = ['sub' => $user->id];
 
         if (in_array('profile', $scopes)) {
-            $userinfo = array_merge($userinfo, [
+            $profileData = [
                 'name' => $user->name,
                 'given_name' => $user->first_name,
                 'family_name' => $user->last_name,
                 'picture' => $user->avatar_url,
                 'preferred_username' => $user->username,
-            ]);
+            ];
+
+            // Add optional OIDC standard profile claims
+            if ($user->middle_name) $profileData['middle_name'] = $user->middle_name;
+            if ($user->nickname) $profileData['nickname'] = $user->nickname;
+            if ($user->profile_url) $profileData['profile'] = $user->profile_url;
+            if ($user->website) $profileData['website'] = $user->website;
+            if ($user->gender) $profileData['gender'] = $user->gender;
+            if ($user->birthdate) $profileData['birthdate'] = $user->birthdate->format('Y-m-d');
+            if ($user->zoneinfo) $profileData['zoneinfo'] = $user->zoneinfo;
+            if ($user->locale) $profileData['locale'] = $user->locale;
+            if ($user->profile_updated_at) $profileData['updated_at'] = $user->profile_updated_at->timestamp;
+
+            $userinfo = array_merge($userinfo, $profileData);
         }
 
         if (in_array('email', $scopes)) {
@@ -218,6 +231,38 @@ class OAuthController extends Controller
                 'email' => $user->email,
                 'email_verified' => $user->email_verified_at !== null,
             ]);
+        }
+
+        if (in_array('address', $scopes)) {
+            $address = [];
+            if ($user->street_address) $address['street_address'] = $user->street_address;
+            if ($user->locality) $address['locality'] = $user->locality;
+            if ($user->region) $address['region'] = $user->region;
+            if ($user->postal_code) $address['postal_code'] = $user->postal_code;
+            if ($user->country) $address['country'] = $user->country;
+            if ($user->formatted_address) $address['formatted'] = $user->formatted_address;
+            
+            if (!empty($address)) {
+                $userinfo['address'] = $address;
+            }
+        }
+
+        if (in_array('phone', $scopes)) {
+            if ($user->phone_number) {
+                $userinfo['phone_number'] = $user->phone_number;
+                $userinfo['phone_number_verified'] = $user->phone_verified_at !== null;
+            }
+        }
+
+        // Add custom claims for extended profile information
+        if (in_array('https://api.yourcompany.com/auth/userinfo.profile', $scopes)) {
+            if ($user->external_id) {
+                $userinfo['external_id'] = $user->external_id;
+            }
+            
+            if ($user->social_links) {
+                $userinfo['social_links'] = $user->social_links;
+            }
         }
 
         if (in_array('https://api.yourcompany.com/auth/organization.readonly', $scopes) || in_array('https://api.yourcompany.com/auth/organization', $scopes) || in_array('https://api.yourcompany.com/auth/organization.admin', $scopes)) {
@@ -275,7 +320,15 @@ class OAuthController extends Controller
             'subject_types_supported' => ['public'],
             'id_token_signing_alg_values_supported' => ['RS256'],
             'token_endpoint_auth_methods_supported' => ['client_secret_post', 'client_secret_basic'],
-            'claims_supported' => ['sub', 'iss', 'aud', 'exp', 'iat', 'name', 'given_name', 'family_name', 'email', 'email_verified', 'picture', 'preferred_username'],
+            'claims_supported' => [
+                // Standard OIDC claims
+                'sub', 'iss', 'aud', 'exp', 'iat', 'name', 'given_name', 'middle_name', 'family_name', 
+                'nickname', 'preferred_username', 'profile', 'picture', 'website', 'email', 'email_verified', 
+                'gender', 'birthdate', 'zoneinfo', 'locale', 'phone_number', 'phone_number_verified', 
+                'address', 'updated_at',
+                // Custom claims
+                'external_id', 'social_links', 'organizations', 'tenants'
+            ],
         ]);
     }
 

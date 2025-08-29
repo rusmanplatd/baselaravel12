@@ -57,6 +57,18 @@ class PassportOAuthSeeder extends Seeder
                 'description' => 'Access your email address',
                 'is_default' => true,
             ],
+            [
+                'identifier' => 'address',
+                'name' => 'Address Information',
+                'description' => 'Access your address information',
+                'is_default' => false,
+            ],
+            [
+                'identifier' => 'phone',
+                'name' => 'Phone Number',
+                'description' => 'Access your phone number',
+                'is_default' => false,
+            ],
 
             // Google-style organization management scopes
             [
@@ -279,7 +291,7 @@ class PassportOAuthSeeder extends Seeder
                     'https://staging.yourcompany.com/oauth/callback',
                 ],
                 'allowed_scopes' => [
-                    'openid', 'profile', 'email', 'offline_access',
+                    'openid', 'profile', 'email', 'address', 'phone', 'address', 'phone', 'offline_access',
                     'https://api.yourcompany.com/auth/organization.readonly',
                     'https://api.yourcompany.com/auth/organization.members',
                     'https://api.yourcompany.com/auth/userinfo.profile',
@@ -304,7 +316,7 @@ class PassportOAuthSeeder extends Seeder
                     'https://mobile.yourcompany.com/callback',
                 ],
                 'allowed_scopes' => [
-                    'openid', 'profile', 'email', 'offline_access',
+                    'openid', 'profile', 'email', 'address', 'phone', 'address', 'phone', 'offline_access',
                     'https://api.yourcompany.com/auth/mobile',
                     'https://api.yourcompany.com/auth/organization.readonly',
                     'https://api.yourcompany.com/auth/userinfo.profile',
@@ -329,7 +341,7 @@ class PassportOAuthSeeder extends Seeder
                     'https://dashboard.yourcompany.com/oauth/callback',
                 ],
                 'allowed_scopes' => [
-                    'openid', 'profile', 'email',
+                    'openid', 'profile', 'email', 'address', 'phone',
                     'https://api.yourcompany.com/auth/organization',
                     'https://api.yourcompany.com/auth/organization.admin',
                     'https://api.yourcompany.com/auth/organization.members',
@@ -358,7 +370,7 @@ class PassportOAuthSeeder extends Seeder
                     'https://dev-tools.yourcompany.com/oauth/callback',
                 ],
                 'allowed_scopes' => [
-                    'openid', 'profile', 'email',
+                    'openid', 'profile', 'email', 'address', 'phone',
                     'https://api.yourcompany.com/auth/platform.full',
                     'https://api.yourcompany.com/auth/webhooks',
                     'https://api.yourcompany.com/auth/integrations',
@@ -381,7 +393,7 @@ class PassportOAuthSeeder extends Seeder
                     'https://integration.partner.example.com/auth/return',
                 ],
                 'allowed_scopes' => [
-                    'openid', 'profile', 'email',
+                    'openid', 'profile', 'email', 'address', 'phone',
                     'https://api.yourcompany.com/auth/organization.readonly',
                     'https://api.yourcompany.com/auth/userinfo.profile',
                     'https://api.yourcompany.com/auth/integrations',
@@ -419,7 +431,7 @@ class PassportOAuthSeeder extends Seeder
                     'https://support.yourcompany.com/oauth/callback',
                 ],
                 'allowed_scopes' => [
-                    'openid', 'profile', 'email',
+                    'openid', 'profile', 'email', 'address', 'phone',
                     'https://api.yourcompany.com/auth/organization.members',
                     'https://api.yourcompany.com/auth/userinfo.profile',
                     'https://api.yourcompany.com/auth/chat.readonly',
@@ -439,7 +451,7 @@ class PassportOAuthSeeder extends Seeder
                     'https://files.yourcompany.com/oauth/callback',
                 ],
                 'allowed_scopes' => [
-                    'openid', 'profile', 'email',
+                    'openid', 'profile', 'email', 'address', 'phone',
                     'https://api.yourcompany.com/auth/files',
                     'https://api.yourcompany.com/auth/files.readonly',
                     'https://api.yourcompany.com/auth/organization.readonly',
