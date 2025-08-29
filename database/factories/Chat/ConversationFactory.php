@@ -72,4 +72,29 @@ class ConversationFactory extends Factory
             'encryption_info' => $info,
         ]);
     }
+
+    /**
+     * Indicate that the conversation is encrypted (default behavior).
+     */
+    public function encrypted(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'encryption_algorithm' => 'AES-256-GCM',
+            'key_strength' => 256,
+            'encryption_info' => [],
+        ]);
+    }
+
+    /**
+     * Indicate that the conversation is unencrypted (for testing edge cases).
+     * Note: In practice, all conversations should be encrypted.
+     */
+    public function unencrypted(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'encryption_algorithm' => null,
+            'key_strength' => null,
+            'encryption_info' => null,
+        ]);
+    }
 }
