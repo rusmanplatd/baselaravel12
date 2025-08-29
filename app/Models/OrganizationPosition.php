@@ -27,6 +27,8 @@ class OrganizationPosition extends Model
         'max_salary',
         'is_active',
         'max_incumbents',
+        'created_by',
+        'updated_by',
     ];
 
     protected $casts = [

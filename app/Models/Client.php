@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Laravel\Passport\Client as PassportClient;
 use Spatie\Activitylog\LogOptions;
@@ -9,7 +10,17 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 class Client extends PassportClient
 {
-    use LogsActivity;
+    use HasUlids, LogsActivity;
+
+    /**
+     * Initialize the trait - override to fix compatibility with Passport.
+     *
+     * @return void
+     */
+    public function initializeHasUniqueStringIds(): void
+    {
+        $this->usesUniqueIds = true;
+    }
 
     protected $fillable = [
         'owner_id',

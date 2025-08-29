@@ -8,6 +8,7 @@ use App\Models\Chat\Message;
 use App\Models\Client;
 use App\Models\Organization;
 use App\Models\OrganizationPosition;
+use App\Models\OrganizationPositionLevel;
 use App\Models\OrganizationUnit;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -77,6 +78,7 @@ class NewActivityLoggingTest extends TestCase
             'unit_type' => 'department',
             'is_active' => true,
             'created_by' => $user->id,
+            'updated_by' => $user->id,
         ]);
 
         $activity = Activity::where('subject_id', $orgUnit->id)
@@ -101,16 +103,28 @@ class NewActivityLoggingTest extends TestCase
             'unit_type' => 'department',
             'is_active' => true,
             'created_by' => $user->id,
+            'updated_by' => $user->id,
+        ]);
+
+        $positionLevel = OrganizationPositionLevel::create([
+            'code' => 'LEVEL_1',
+            'name' => 'Level 1',
+            'hierarchy_level' => 1,
+            'is_active' => true,
+            'created_by' => $user->id,
+            'updated_by' => $user->id,
         ]);
 
         $position = OrganizationPosition::create([
             'organization_id' => $organization->id,
             'organization_unit_id' => $orgUnit->id,
+            'organization_position_level_id' => $positionLevel->id,
             'position_code' => 'TEST_POS',
             'title' => 'Test Position',
             'is_active' => true,
             'max_incumbents' => 1,
             'created_by' => $user->id,
+            'updated_by' => $user->id,
         ]);
 
         $activity = Activity::where('subject_id', $position->id)
@@ -195,6 +209,8 @@ class NewActivityLoggingTest extends TestCase
             'name' => 'Test Unit',
             'unit_type' => 'department',
             'is_active' => true,
+            'created_by' => $user->id,
+            'updated_by' => $user->id,
         ]);
 
         // Verify log names
