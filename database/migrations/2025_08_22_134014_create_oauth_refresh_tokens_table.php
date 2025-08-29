@@ -16,6 +16,8 @@ return new class extends Migration
             $table->char('access_token_id', 80)->index();
             $table->boolean('revoked');
             $table->dateTime('expires_at')->nullable();
+
+            $table->foreign('access_token_id')->references('id')->on('oauth_access_tokens')->onDelete('cascade');
         });
     }
 

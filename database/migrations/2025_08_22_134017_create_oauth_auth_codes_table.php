@@ -13,11 +13,15 @@ return new class extends Migration
     {
         Schema::create('oauth_auth_codes', function (Blueprint $table) {
             $table->char('id', 80)->primary();
-            $table->foreignId('user_id')->index();
+            $table->ulid('user_id')->index();
             $table->ulid('client_id');
             $table->text('scopes')->nullable();
             $table->boolean('revoked');
             $table->dateTime('expires_at')->nullable();
+
+            $table->foreign('user_id')->references('id')->on('sys_users')->onDelete('cascade');
+            $table->foreign('client_id')->references('id')->on('oauth_clients')->onDelete('cascade');
+            $table->index('client_id');
         });
     }
 
