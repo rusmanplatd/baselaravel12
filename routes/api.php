@@ -273,6 +273,26 @@ Route::middleware('auth:api')->prefix('v1')->group(function () {
         Route::post('conversations/{conversation}/typing', [\App\Http\Controllers\Api\Chat\PresenceController::class, 'setTyping'])->name('conversations.typing');
         Route::delete('conversations/{conversation}/typing', [\App\Http\Controllers\Api\Chat\PresenceController::class, 'stopTyping'])->name('conversations.typing.stop');
         Route::get('conversations/{conversation}/typing', [\App\Http\Controllers\Api\Chat\PresenceController::class, 'getTypingUsers'])->name('conversations.typing.get');
+
+        // Channels (search route must come before resource route to avoid conflicts)
+        Route::get('channels/search', [\App\Http\Controllers\Api\Chat\ChannelController::class, 'searchChannels'])
+            ->name('channels.search')
+            ->middleware('throttle:30,1');
+        
+        Route::apiResource('channels', \App\Http\Controllers\Api\Chat\ChannelController::class)
+            ->middleware('throttle:60,1');
+        Route::post('channels/{channel}/join', [\App\Http\Controllers\Api\Chat\ChannelController::class, 'join'])
+            ->name('channels.join')
+            ->middleware('throttle:20,1');
+        Route::post('channels/{channel}/leave', [\App\Http\Controllers\Api\Chat\ChannelController::class, 'leave'])
+            ->name('channels.leave')
+            ->middleware('throttle:20,1');
+        Route::post('channels/{channel}/invite', [\App\Http\Controllers\Api\Chat\ChannelController::class, 'inviteUser'])
+            ->name('channels.invite')
+            ->middleware('throttle:10,1');
+        Route::get('channels/{channel}/members', [\App\Http\Controllers\Api\Chat\ChannelController::class, 'getMembers'])
+            ->name('channels.members')
+            ->middleware('throttle:60,1');
     });
 
     // Key Recovery and Backup Management

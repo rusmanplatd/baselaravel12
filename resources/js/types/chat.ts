@@ -200,3 +200,49 @@ export interface ThreadNavigation {
   messageId: string;
   position: 'root' | 'reply';
 }
+
+export interface Channel {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  visibility: 'public' | 'private';
+  avatar_url?: string;
+  metadata?: Record<string, unknown>;
+  status: 'active' | 'archived' | 'deleted';
+  conversation_id: string;
+  organization_id?: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  conversation?: Conversation;
+  creator?: User;
+  organization?: {
+    id: string;
+    name: string;
+  };
+}
+
+export interface ChannelMember {
+  id: string;
+  channel_id: string;
+  user_id: string;
+  role: 'member' | 'admin' | 'owner';
+  joined_at: string;
+  left_at?: string;
+  user?: User;
+}
+
+export interface ChannelSearchResult {
+  channels: Channel[];
+  total: number;
+  per_page: number;
+  current_page: number;
+}
+
+export interface ChannelInviteResponse {
+  message: string;
+  participants?: Participant[];
+  added_count: number;
+  errors?: string[];
+}

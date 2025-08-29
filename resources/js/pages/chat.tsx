@@ -1,6 +1,6 @@
 import { Head } from '@inertiajs/react';
 import { User } from '@/types';
-import ChatLayout from '@/components/chat/ChatLayout';
+import ChatLayoutWithChannels from '@/components/chat/ChatLayoutWithChannels';
 import AppLayout from '@/layouts/app-layout';
 
 interface ChatPageProps {
@@ -16,7 +16,7 @@ export default function Chat({ auth, inviteCode }: ChatPageProps) {
       <Head title="Chat" />
       
       <div className="h-screen">
-        <ChatLayout user={auth.user} inviteCode={inviteCode} />
+        <ChatLayoutWithChannels user={auth.user} inviteCode={inviteCode} />
       </div>
     </AppLayout>
   );

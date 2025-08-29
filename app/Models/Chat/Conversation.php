@@ -64,6 +64,11 @@ class Conversation extends Model
         return $this->hasMany(EncryptionKey::class);
     }
 
+    public function channel(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Channel::class);
+    }
+
     public function isDirectConversation(): bool
     {
         return $this->type === 'direct';
