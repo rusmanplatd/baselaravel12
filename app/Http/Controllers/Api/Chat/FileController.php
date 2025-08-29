@@ -66,7 +66,15 @@ class FileController extends Controller
 
             $message->load('sender:id,name,email');
             $message->content = $validated['caption'] ?? '';
-            $message->file_url = $this->fileService->getFileUrl($fileData['file_path']);
+            
+            // Generate secure download URL with embedded encryption information
+            $message->file_url = $this->fileService->generateDownloadUrl(
+                $fileData['file_path'],
+                $fileData['file_name'],
+                $symmetricKey,
+                $fileData['encryption_iv'],
+                $fileData['encryption_tag']
+            );
 
             return response()->json($message, 201);
         });
@@ -74,15 +82,14 @@ class FileController extends Controller
 
     public function download(Request $request, string $encodedPath)
     {
-        // Check for token-based access first
+        // Check for secure token-based access
         $token = $request->input('token');
-        $expires = $request->input('expires');
 
-        if ($token && $expires) {
-            return $this->downloadWithToken($request, $encodedPath, $token, $expires);
+        if ($token) {
+            return $this->downloadWithToken($request, $token);
         }
 
-        // Fallback to auth-based access
+        // Auth-based access for direct downloads
         $filePath = base64_decode($encodedPath);
 
         // Find the message to check permissions
@@ -108,41 +115,79 @@ class FileController extends Controller
             ->header('Content-Length', $message->file_size);
     }
 
-    private function downloadWithToken(Request $request, string $encodedPath, string $token, string $expires)
+    private function downloadWithToken(Request $request, string $token)
     {
-        // Check if token is expired
-        if (time() > (int) $expires) {
-            return response()->json(['error' => 'Download token expired'], 403);
+        // Verify and extract token data
+        $tokenData = $this->fileService->verifyDownloadToken($token);
+        
+        if (!$tokenData) {
+            return response()->json(['error' => 'Invalid or expired download token'], 403);
         }
 
-        $filePath = base64_decode($encodedPath);
+        // Find the message to get metadata
+        $message = Message::where('file_path', $tokenData['file_path'])->firstOrFail();
 
-        // Generate expected token
-        $expectedToken = hash_hmac('sha256', $filePath.$expires, config('app.key'));
-
-        // Check if token is valid
-        if (! hash_equals($expectedToken, $token)) {
-            return response()->json(['error' => 'Invalid download token'], 403);
-        }
-
-        // Find the message
-        $message = Message::where('file_path', $filePath)->firstOrFail();
-
-        // For token-based downloads, we'll use a default symmetric key or retrieve from message
-        // TODO: In a real implementation, the key would be embedded in the secure token
         try {
-            // Try to get file contents directly for token-based access
-            // TODO: in production you'd embed encryption info in the token
-            $fileData = $this->fileService->retrieveFile($filePath, 'dummy-key');
+            // Use encryption information from the token
+            $fileData = $this->fileService->retrieveFile(
+                $tokenData['file_path'], 
+                $tokenData['symmetric_key'],
+                $tokenData['iv'],
+                $tokenData['tag']
+            );
 
             return response($fileData['contents'])
                 ->header('Content-Type', $message->file_mime_type)
-                ->header('Content-Disposition', 'attachment; filename="'.$message->file_name.'"')
+                ->header('Content-Disposition', 'attachment; filename="' . $tokenData['file_name'] . '"')
                 ->header('Content-Length', $message->file_size);
+
         } catch (\Exception $e) {
-            // If decryption fails, return error
+            Log::error('Secure token file download failed', [
+                'file_path' => $tokenData['file_path'],
+                'error' => $e->getMessage(),
+            ]);
             return response()->json(['error' => 'Unable to decrypt file'], 500);
         }
+    }
+
+
+    public function thumbnail(Request $request, string $encodedPath)
+    {
+        $filePath = base64_decode($encodedPath);
+        
+        // Find the message to check permissions
+        $message = Message::where('file_path', $filePath)->firstOrFail();
+        $this->authorize('view', $message->conversation);
+
+        // Only generate thumbnails for image files
+        if (!str_starts_with($message->file_mime_type, 'image/')) {
+            return response()->json(['error' => 'Thumbnails only available for images'], 400);
+        }
+
+        $encryptionKey = auth()->user()
+            ->getActiveEncryptionKeyForConversation($message->conversation_id);
+
+        if (!$encryptionKey) {
+            return response()->json(['error' => 'Unable to decrypt thumbnail'], 403);
+        }
+
+        $symmetricKey = $encryptionKey->decryptSymmetricKey(
+            $this->getUserPrivateKey(auth()->id())
+        );
+
+        // Get thumbnail path
+        $thumbnailPath = $this->getThumbnailPath($filePath);
+        
+        // Get decrypted thumbnail content
+        $thumbnailContent = $this->fileService->getThumbnailContent($thumbnailPath, $symmetricKey);
+        
+        if (!$thumbnailContent) {
+            return response()->json(['error' => 'Thumbnail not found'], 404);
+        }
+
+        return response($thumbnailContent)
+            ->header('Content-Type', 'image/jpeg')
+            ->header('Cache-Control', 'public, max-age=3600');
     }
 
     public function delete(Message $message)
@@ -166,6 +211,12 @@ class FileController extends Controller
         }
 
         return 'file';
+    }
+
+    private function getThumbnailPath(string $filePath): string
+    {
+        $pathInfo = pathinfo($filePath);
+        return $pathInfo['dirname'].'/thumbnails/'.$pathInfo['filename'].'_thumb.jpg';
     }
 
     private function getUserPrivateKey(string $userId): string

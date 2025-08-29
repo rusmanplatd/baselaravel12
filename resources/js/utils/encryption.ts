@@ -694,50 +694,375 @@ export class ChatEncryption {
   }
 }
 
-// Storage utilities for managing keys securely
+// Storage utilities for managing keys securely with IndexedDB and encryption
 export class SecureStorage {
   private static readonly STORAGE_PREFIX = 'chat_e2ee_';
+  private static readonly DB_NAME = 'chat_encryption_db';
+  private static readonly DB_VERSION = 1;
+  private static readonly STORE_NAME = 'encrypted_keys';
+  private static db: IDBDatabase | null = null;
+  private static encryptionKey: CryptoKey | null = null;
 
   /**
-   * Store private key securely (consider using IndexedDB for production)
+   * Initialize the IndexedDB database and encryption key
    */
-  static storePrivateKey(userId: string, privateKey: string): void {
-    // TODO: In production, consider using IndexedDB with encryption
-    sessionStorage.setItem(`${this.STORAGE_PREFIX}private_key_${userId}`, privateKey);
+  private static async initializeDB(): Promise<void> {
+    if (this.db) return;
+
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(this.DB_NAME, this.DB_VERSION);
+
+      request.onerror = () => reject(new Error('Failed to open IndexedDB'));
+      request.onsuccess = () => {
+        this.db = request.result;
+        resolve();
+      };
+
+      request.onupgradeneeded = (event) => {
+        const db = (event.target as IDBOpenDBRequest).result;
+        if (!db.objectStoreNames.contains(this.STORE_NAME)) {
+          const store = db.createObjectStore(this.STORE_NAME, { keyPath: 'id' });
+          store.createIndex('userId', 'userId', { unique: false });
+          store.createIndex('type', 'type', { unique: false });
+        }
+      };
+    });
+  }
+
+  /**
+   * Generate or retrieve the master encryption key for local storage
+   */
+  private static async getMasterKey(): Promise<CryptoKey> {
+    if (this.encryptionKey) return this.encryptionKey;
+
+    // Try to get existing key from localStorage
+    const storedKeyData = localStorage.getItem(`${this.STORAGE_PREFIX}master_key`);
+    
+    if (storedKeyData) {
+      try {
+        const keyData = JSON.parse(storedKeyData);
+        this.encryptionKey = await window.crypto.subtle.importKey(
+          'jwk',
+          keyData,
+          { name: 'AES-GCM' },
+          false,
+          ['encrypt', 'decrypt']
+        );
+        return this.encryptionKey;
+      } catch (error) {
+        console.warn('Failed to import existing master key, generating new one');
+      }
+    }
+
+    // Generate new master key
+    this.encryptionKey = await window.crypto.subtle.generateKey(
+      { name: 'AES-GCM', length: 256 },
+      true,
+      ['encrypt', 'decrypt']
+    );
+
+    // Export and store the key
+    const exportedKey = await window.crypto.subtle.exportKey('jwk', this.encryptionKey);
+    localStorage.setItem(`${this.STORAGE_PREFIX}master_key`, JSON.stringify(exportedKey));
+
+    return this.encryptionKey;
+  }
+
+  /**
+   * Encrypt data using the master key
+   */
+  private static async encryptData(data: string): Promise<{ encrypted: ArrayBuffer; iv: Uint8Array }> {
+    const masterKey = await this.getMasterKey();
+    const encoder = new TextEncoder();
+    const dataBytes = encoder.encode(data);
+    const iv = window.crypto.getRandomValues(new Uint8Array(12));
+    
+    const encrypted = await window.crypto.subtle.encrypt(
+      { name: 'AES-GCM', iv },
+      masterKey,
+      dataBytes
+    );
+
+    return { encrypted, iv };
+  }
+
+  /**
+   * Decrypt data using the master key
+   */
+  private static async decryptData(encryptedData: ArrayBuffer, iv: Uint8Array): Promise<string> {
+    const masterKey = await this.getMasterKey();
+    
+    const decrypted = await window.crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv: iv as Uint8Array },
+      masterKey,
+      encryptedData
+    );
+
+    const decoder = new TextDecoder();
+    return decoder.decode(decrypted);
+  }
+
+  /**
+   * Store private key securely using IndexedDB with encryption
+   */
+  static async storePrivateKey(userId: string, privateKey: string): Promise<void> {
+    try {
+      await this.initializeDB();
+      const { encrypted, iv } = await this.encryptData(privateKey);
+      
+      if (!this.db) throw new Error('Database not initialized');
+
+      const transaction = this.db.transaction([this.STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(this.STORE_NAME);
+
+      const keyData = {
+        id: `private_key_${userId}`,
+        userId,
+        type: 'private_key',
+        encryptedData: Array.from(new Uint8Array(encrypted)),
+        iv: Array.from(iv),
+        createdAt: new Date().toISOString(),
+      };
+
+      await new Promise<void>((resolve, reject) => {
+        const request = store.put(keyData);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(new Error('Failed to store private key'));
+      });
+    } catch (error) {
+      console.error('Failed to store private key:', error);
+      // Fallback to sessionStorage for compatibility
+      sessionStorage.setItem(`${this.STORAGE_PREFIX}private_key_${userId}`, privateKey);
+    }
   }
 
   /**
    * Retrieve private key
    */
-  static getPrivateKey(userId: string): string | null {
-    return sessionStorage.getItem(`${this.STORAGE_PREFIX}private_key_${userId}`);
+  static async getPrivateKey(userId: string): Promise<string | null> {
+    try {
+      await this.initializeDB();
+      
+      if (!this.db) throw new Error('Database not initialized');
+
+      const transaction = this.db.transaction([this.STORE_NAME], 'readonly');
+      const store = transaction.objectStore(this.STORE_NAME);
+
+      const keyData = await new Promise<any>((resolve, reject) => {
+        const request = store.get(`private_key_${userId}`);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(new Error('Failed to retrieve private key'));
+      });
+
+      if (!keyData) return null;
+
+      const encryptedArray = new Uint8Array(keyData.encryptedData);
+      const iv = new Uint8Array(keyData.iv);
+      
+      return await this.decryptData(encryptedArray.buffer, iv);
+    } catch (error) {
+      console.error('Failed to retrieve private key from IndexedDB:', error);
+      // Fallback to sessionStorage
+      return sessionStorage.getItem(`${this.STORAGE_PREFIX}private_key_${userId}`);
+    }
   }
 
   /**
    * Clear stored keys
    */
-  static clearKeys(userId: string): void {
+  static async clearKeys(userId: string): Promise<void> {
+    try {
+      await this.initializeDB();
+      
+      if (!this.db) throw new Error('Database not initialized');
+
+      const transaction = this.db.transaction([this.STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(this.STORE_NAME);
+      const index = store.index('userId');
+
+      await new Promise<void>((resolve, reject) => {
+        const request = index.openCursor(IDBKeyRange.only(userId));
+        request.onsuccess = (event) => {
+          const cursor = (event.target as IDBRequest).result;
+          if (cursor) {
+            cursor.delete();
+            cursor.continue();
+          } else {
+            resolve();
+          }
+        };
+        request.onerror = () => reject(new Error('Failed to clear keys'));
+      });
+    } catch (error) {
+      console.error('Failed to clear keys from IndexedDB:', error);
+    }
+
+    // Also clear sessionStorage fallback
     sessionStorage.removeItem(`${this.STORAGE_PREFIX}private_key_${userId}`);
+    sessionStorage.removeItem(`${this.STORAGE_PREFIX}conv_key_${userId}`);
   }
 
   /**
    * Store conversation symmetric key temporarily
    */
-  static storeConversationKey(conversationId: string, key: string): void {
-    sessionStorage.setItem(`${this.STORAGE_PREFIX}conv_key_${conversationId}`, key);
+  static async storeConversationKey(conversationId: string, key: string): Promise<void> {
+    try {
+      await this.initializeDB();
+      const { encrypted, iv } = await this.encryptData(key);
+      
+      if (!this.db) throw new Error('Database not initialized');
+
+      const transaction = this.db.transaction([this.STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(this.STORE_NAME);
+
+      const keyData = {
+        id: `conv_key_${conversationId}`,
+        conversationId,
+        type: 'conversation_key',
+        encryptedData: Array.from(new Uint8Array(encrypted)),
+        iv: Array.from(iv),
+        createdAt: new Date().toISOString(),
+        // Auto-expire after 24 hours for security
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      };
+
+      await new Promise<void>((resolve, reject) => {
+        const request = store.put(keyData);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(new Error('Failed to store conversation key'));
+      });
+    } catch (error) {
+      console.error('Failed to store conversation key:', error);
+      // Fallback to sessionStorage
+      sessionStorage.setItem(`${this.STORAGE_PREFIX}conv_key_${conversationId}`, key);
+    }
   }
 
   /**
    * Retrieve conversation symmetric key
    */
-  static getConversationKey(conversationId: string): string | null {
-    return sessionStorage.getItem(`${this.STORAGE_PREFIX}conv_key_${conversationId}`);
+  static async getConversationKey(conversationId: string): Promise<string | null> {
+    try {
+      await this.initializeDB();
+      
+      if (!this.db) throw new Error('Database not initialized');
+
+      const transaction = this.db.transaction([this.STORE_NAME], 'readonly');
+      const store = transaction.objectStore(this.STORE_NAME);
+
+      const keyData = await new Promise<any>((resolve, reject) => {
+        const request = store.get(`conv_key_${conversationId}`);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(new Error('Failed to retrieve conversation key'));
+      });
+
+      if (!keyData) return null;
+
+      // Check expiration
+      if (new Date(keyData.expiresAt) < new Date()) {
+        // Key expired, delete it
+        store.delete(`conv_key_${conversationId}`);
+        return null;
+      }
+
+      const encryptedArray = new Uint8Array(keyData.encryptedData);
+      const iv = new Uint8Array(keyData.iv);
+      
+      return await this.decryptData(encryptedArray.buffer, iv);
+    } catch (error) {
+      console.error('Failed to retrieve conversation key from IndexedDB:', error);
+      // Fallback to sessionStorage
+      return sessionStorage.getItem(`${this.STORAGE_PREFIX}conv_key_${conversationId}`);
+    }
   }
 
   /**
    * Clear conversation keys
    */
-  static clearConversationKey(conversationId: string): void {
+  static async clearConversationKey(conversationId: string): Promise<void> {
+    try {
+      await this.initializeDB();
+      
+      if (!this.db) throw new Error('Database not initialized');
+
+      const transaction = this.db.transaction([this.STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(this.STORE_NAME);
+
+      await new Promise<void>((resolve, reject) => {
+        const request = store.delete(`conv_key_${conversationId}`);
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(new Error('Failed to clear conversation key'));
+      });
+    } catch (error) {
+      console.error('Failed to clear conversation key from IndexedDB:', error);
+    }
+
+    // Also clear sessionStorage fallback
     sessionStorage.removeItem(`${this.STORAGE_PREFIX}conv_key_${conversationId}`);
+  }
+
+  /**
+   * Clean up expired keys (maintenance function)
+   */
+  static async cleanupExpiredKeys(): Promise<void> {
+    try {
+      await this.initializeDB();
+      
+      if (!this.db) throw new Error('Database not initialized');
+
+      const transaction = this.db.transaction([this.STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(this.STORE_NAME);
+      const now = new Date();
+
+      await new Promise<void>((resolve, reject) => {
+        const request = store.openCursor();
+        request.onsuccess = (event) => {
+          const cursor = (event.target as IDBRequest).result;
+          if (cursor) {
+            const record = cursor.value;
+            if (record.expiresAt && new Date(record.expiresAt) < now) {
+              cursor.delete();
+            }
+            cursor.continue();
+          } else {
+            resolve();
+          }
+        };
+        request.onerror = () => reject(new Error('Failed to cleanup expired keys'));
+      });
+    } catch (error) {
+      console.error('Failed to cleanup expired keys:', error);
+    }
+  }
+
+  /**
+   * Get storage statistics for debugging
+   */
+  static async getStorageStats(): Promise<{ totalKeys: number; privateKeys: number; conversationKeys: number }> {
+    try {
+      await this.initializeDB();
+      
+      if (!this.db) return { totalKeys: 0, privateKeys: 0, conversationKeys: 0 };
+
+      const transaction = this.db.transaction([this.STORE_NAME], 'readonly');
+      const store = transaction.objectStore(this.STORE_NAME);
+
+      return new Promise((resolve, reject) => {
+        const request = store.getAll();
+        request.onsuccess = () => {
+          const records = request.result;
+          const stats = {
+            totalKeys: records.length,
+            privateKeys: records.filter(r => r.type === 'private_key').length,
+            conversationKeys: records.filter(r => r.type === 'conversation_key').length,
+          };
+          resolve(stats);
+        };
+        request.onerror = () => reject(new Error('Failed to get storage stats'));
+      });
+    } catch (error) {
+      console.error('Failed to get storage stats:', error);
+      return { totalKeys: 0, privateKeys: 0, conversationKeys: 0 };
+    }
   }
 }

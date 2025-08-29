@@ -122,15 +122,78 @@ class ChatFileService
         }
     }
 
-    public function generateDownloadUrl(string $filePath, string $fileName, int $expiresInSeconds = 3600): string
+
+    public function generateDownloadUrl(string $filePath, string $fileName, string $symmetricKey, ?string $iv = null, ?string $tag = null, int $expiresInSeconds = 3600): string
     {
-        $token = base64_encode(json_encode([
+        $expires = time() + $expiresInSeconds;
+        
+        // Create payload with encryption information
+        $payload = [
             'file_path' => $filePath,
             'file_name' => $fileName,
-            'expires' => time() + $expiresInSeconds,
+            'expires' => $expires,
+            'symmetric_key' => base64_encode($symmetricKey),
+            'iv' => $iv ? base64_encode($iv) : null,
+            'tag' => $tag ? base64_encode($tag) : null,
+        ];
+
+        // Encrypt the payload using application key
+        $encryptedPayload = $this->encryptTokenPayload(json_encode($payload));
+        
+        // Create HMAC signature
+        $signature = hash_hmac('sha256', $encryptedPayload . $expires, config('app.key'));
+        
+        $secureToken = base64_encode(json_encode([
+            'data' => $encryptedPayload,
+            'signature' => $signature,
+            'expires' => $expires,
         ]));
 
-        return "/api/chat/files/download/?token={$token}&expires=".(time() + $expiresInSeconds);
+        return "/api/chat/files/download/?token={$secureToken}";
+    }
+
+    public function verifyDownloadToken(string $token): ?array
+    {
+        try {
+            $decoded = json_decode(base64_decode($token), true);
+            
+            if (!$decoded || !isset($decoded['data'], $decoded['signature'], $decoded['expires'])) {
+                return null;
+            }
+
+            // Check expiration
+            if (time() > $decoded['expires']) {
+                return null;
+            }
+
+            // Verify signature
+            $expectedSignature = hash_hmac('sha256', $decoded['data'] . $decoded['expires'], config('app.key'));
+            if (!hash_equals($expectedSignature, $decoded['signature'])) {
+                return null;
+            }
+
+            // Decrypt payload
+            $payload = $this->decryptTokenPayload($decoded['data']);
+            $data = json_decode($payload, true);
+
+            if (!$data) {
+                return null;
+            }
+
+            // Decode encryption information
+            return [
+                'file_path' => $data['file_path'],
+                'file_name' => $data['file_name'],
+                'symmetric_key' => base64_decode($data['symmetric_key']),
+                'iv' => $data['iv'] ? base64_decode($data['iv']) : null,
+                'tag' => $data['tag'] ? base64_decode($data['tag']) : null,
+                'expires' => $data['expires'],
+            ];
+
+        } catch (\Exception $e) {
+            Log::warning('Secure token verification failed', ['error' => $e->getMessage()]);
+            return null;
+        }
     }
 
     public function deleteMultipleFiles(array $filePaths): int
@@ -180,10 +243,16 @@ class ChatFileService
 
             $result = Storage::disk('chat-files')->delete($filePath);
 
-            // Also delete thumbnail if it exists
+            // Also delete thumbnail and its metadata if it exists
             $thumbnailPath = $this->getThumbnailPath($filePath);
             if (Storage::disk('chat-files')->exists($thumbnailPath)) {
                 Storage::disk('chat-files')->delete($thumbnailPath);
+                
+                // Delete thumbnail metadata
+                $metadataPath = $this->getThumbnailMetadataPath($thumbnailPath);
+                if (Storage::disk('chat-files')->exists($metadataPath)) {
+                    Storage::disk('chat-files')->delete($metadataPath);
+                }
             }
 
             Log::info('File deleted successfully', ['file_path' => $filePath]);
@@ -286,14 +355,17 @@ class ChatFileService
                 return null;
             }
 
-            // Upload thumbnail to MinIO
+            // Upload encrypted thumbnail to MinIO
             $thumbnailContents = file_get_contents($tempThumbnailPath);
             if ($thumbnailContents === false) {
                 unlink($tempThumbnailPath);
                 return null;
             }
 
-            $stored = Storage::disk('chat-files')->put($thumbnailPath, $thumbnailContents);
+            // Encrypt the thumbnail content
+            $thumbnailEncryption = $this->encryptFileContents($thumbnailContents, $symmetricKey);
+            
+            $stored = Storage::disk('chat-files')->put($thumbnailPath, $thumbnailEncryption['encrypted_content']);
 
             // Clean up temporary file
             unlink($tempThumbnailPath);
@@ -302,9 +374,8 @@ class ChatFileService
                 return null;
             }
 
-            // TODO: Encrypt the thumbnail
-            // For now, we'll store thumbnails unencrypted for performance
-            // but you could encrypt them similar to the main file
+            // Store encryption metadata for thumbnail retrieval
+            $this->storeThumbnailEncryptionData($thumbnailPath, $thumbnailEncryption['iv'], $thumbnailEncryption['tag']);
 
             return $thumbnailPath;
         } catch (\Exception $e) {
@@ -450,5 +521,99 @@ class ChatFileService
             Log::error('File decryption failed', ['error' => $e->getMessage()]);
             throw new DecryptionException('File decryption failed: '.$e->getMessage(), $e);
         }
+    }
+
+    public function getThumbnailContent(string $thumbnailPath, string $symmetricKey): ?string
+    {
+        try {
+            if (!Storage::disk('chat-files')->exists($thumbnailPath)) {
+                return null;
+            }
+
+            // Get encrypted thumbnail content
+            $encryptedContent = Storage::disk('chat-files')->get($thumbnailPath);
+            
+            // Get encryption metadata
+            $encryptionData = $this->getThumbnailEncryptionData($thumbnailPath);
+            if (!$encryptionData) {
+                Log::warning('Thumbnail encryption metadata not found', ['path' => $thumbnailPath]);
+                return null;
+            }
+
+            // Decrypt thumbnail content
+            return $this->decryptFileContents($encryptedContent, $symmetricKey, $encryptionData['iv'], $encryptionData['tag']);
+
+        } catch (\Exception $e) {
+            Log::error('Thumbnail decryption failed', [
+                'thumbnail_path' => $thumbnailPath,
+                'error' => $e->getMessage(),
+            ]);
+            return null;
+        }
+    }
+
+    private function storeThumbnailEncryptionData(string $thumbnailPath, string $iv, string $tag): void
+    {
+        $metadataPath = $this->getThumbnailMetadataPath($thumbnailPath);
+        $encryptionData = json_encode([
+            'iv' => $iv,
+            'tag' => $tag,
+            'created_at' => time(),
+        ]);
+
+        Storage::disk('chat-files')->put($metadataPath, $encryptionData);
+    }
+
+    private function getThumbnailEncryptionData(string $thumbnailPath): ?array
+    {
+        $metadataPath = $this->getThumbnailMetadataPath($thumbnailPath);
+        
+        if (!Storage::disk('chat-files')->exists($metadataPath)) {
+            return null;
+        }
+
+        $encryptionData = Storage::disk('chat-files')->get($metadataPath);
+        $decoded = json_decode($encryptionData, true);
+
+        return $decoded ?: null;
+    }
+
+    private function getThumbnailMetadataPath(string $thumbnailPath): string
+    {
+        $pathInfo = pathinfo($thumbnailPath);
+        return $pathInfo['dirname'] . '/' . $pathInfo['filename'] . '.meta';
+    }
+
+    private function encryptTokenPayload(string $payload): string
+    {
+        $key = hash('sha256', config('app.key'), true);
+        $iv = random_bytes(16);
+        $encrypted = openssl_encrypt($payload, 'AES-256-CBC', $key, OPENSSL_RAW_DATA, $iv);
+        
+        if ($encrypted === false) {
+            throw new \RuntimeException('Token encryption failed');
+        }
+        
+        return base64_encode($iv . $encrypted);
+    }
+
+    private function decryptTokenPayload(string $encryptedPayload): string
+    {
+        $data = base64_decode($encryptedPayload);
+        if ($data === false || strlen($data) < 16) {
+            throw new \RuntimeException('Invalid encrypted payload');
+        }
+        
+        $key = hash('sha256', config('app.key'), true);
+        $iv = substr($data, 0, 16);
+        $encrypted = substr($data, 16);
+        
+        $decrypted = openssl_decrypt($encrypted, 'AES-256-CBC', $key, OPENSSL_RAW_DATA, $iv);
+        
+        if ($decrypted === false) {
+            throw new \RuntimeException('Token decryption failed');
+        }
+        
+        return $decrypted;
     }
 }

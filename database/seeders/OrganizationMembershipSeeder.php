@@ -547,10 +547,72 @@ class OrganizationMembershipSeeder extends Seeder
      */
     private function assignOrganizationSpecificPermissions(User $user, array $organizationIds): void
     {
-        // TODO
-        // This is where you could assign organization-specific permissions
-        // For now, roles handle most permissions, but you could add direct permissions here
-        // Example: $user->givePermissionTo('specific-permission', $organizationId);
+        foreach ($organizationIds as $organizationId) {
+            // Set team context for organization-specific permissions
+            setPermissionsTeamId($organizationId);
+            
+            // Assign organization-specific permissions based on user role context
+            $userMemberships = OrganizationMembership::where('user_id', $user->id)
+                ->where('organization_id', $organizationId)
+                ->get();
+                
+            foreach ($userMemberships as $membership) {
+                // Assign permissions based on membership type
+                switch ($membership->membership_type) {
+                    case 'owner':
+                        $user->givePermissionTo([
+                            'org:admin',
+                            'org_member:admin',
+                            'org_unit:admin',
+                            'org_position:admin',
+                            'oauth_app:admin',
+                            'audit_log:admin',
+                        ]);
+                        break;
+                        
+                    case 'admin':
+                        $user->givePermissionTo([
+                            'org:write',
+                            'org_member:write',
+                            'org_unit:write',
+                            'org_position:write',
+                            'oauth_app:write',
+                            'audit_log:read',
+                        ]);
+                        break;
+                        
+                    case 'manager':
+                        $user->givePermissionTo([
+                            'org:read',
+                            'org_member:read',
+                            'org_member:write',
+                            'org_unit:read',
+                            'org_position:read',
+                            'oauth_app:read',
+                        ]);
+                        break;
+                        
+                    case 'member':
+                        $user->givePermissionTo([
+                            'org:read',
+                            'profile:read',
+                            'profile:write',
+                        ]);
+                        break;
+                        
+                    case 'contractor':
+                    case 'guest':
+                        $user->givePermissionTo([
+                            'profile:read',
+                            'profile:write',
+                        ]);
+                        break;
+                }
+            }
+        }
+        
+        // Reset team context
+        setPermissionsTeamId(null);
     }
 
     /**

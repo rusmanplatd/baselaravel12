@@ -215,16 +215,20 @@ describe('File Retrieval and Decryption', function () {
 
         $downloadUrl = $this->fileService->generateDownloadUrl(
             $storeResult['file_path'],
-            $storeResult['file_name']
+            $storeResult['file_name'],
+            $this->symmetricKey,
+            $storeResult['encryption_iv'],
+            $storeResult['encryption_tag']
         );
 
         expect($downloadUrl)->toBeString();
         expect($downloadUrl)->toContain('/api/chat/files/download/');
 
-        // URL should contain encoded parameters
+        // URL should contain secure token
         $urlComponents = parse_url($downloadUrl);
         expect($urlComponents['query'])->toContain('token=');
-        expect($urlComponents['query'])->toContain('expires=');
+        expect($urlComponents['query'])->not->toContain('expires='); // No longer using expires parameter
+        expect($urlComponents['query'])->not->toContain('secure='); // No longer using secure parameter
     });
 
     it('generates download URLs with expiration', function () {
@@ -234,19 +238,23 @@ describe('File Retrieval and Decryption', function () {
         $downloadUrl = $this->fileService->generateDownloadUrl(
             $storeResult['file_path'],
             $storeResult['file_name'],
+            $this->symmetricKey,
+            $storeResult['encryption_iv'],
+            $storeResult['encryption_tag'],
             3600 // 1 hour
         );
 
         parse_str(parse_url($downloadUrl)['query'], $params);
 
-        expect($params)->toHaveKey('expires');
+        // Secure tokens contain encrypted data, not direct expires parameter
+        expect($params)->toHaveKey('token');
+        expect($downloadUrl)->toContain('/api/chat/files/download/');
 
-        $expiresAt = (int) $params['expires'];
-        $expectedExpiration = time() + 3600;
-
-        // Allow 10 second tolerance
-        expect($expiresAt)->toBeGreaterThan($expectedExpiration - 10);
-        expect($expiresAt)->toBeLessThan($expectedExpiration + 10);
+        // Verify we can decode and verify the token
+        $tokenData = $this->fileService->verifyDownloadToken($params['token']);
+        expect($tokenData)->not->toBeNull();
+        expect($tokenData['file_path'])->toBe($storeResult['file_path']);
+        expect($tokenData['file_name'])->toBe($storeResult['file_name']);
     });
 });
 
