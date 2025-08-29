@@ -1021,18 +1021,26 @@ describe('File Download API', function () {
         $uploadResponse->assertStatus(201);
         $fileUrl = $uploadResponse->json('file_url');
 
-        // Extract the encoded path from file URL
+        // Extract the token from the file URL
         $parsedUrl = parse_url($fileUrl);
-        $pathParts = explode('/', $parsedUrl['path']);
-        $encodedPath = end($pathParts);
+        parse_str($parsedUrl['query'], $queryParams);
+        $validToken = $queryParams['token'];
 
-        // Create an expired token
-        $filePath = base64_decode($encodedPath);
-        $expiredTime = time() - 3600; // 1 hour ago
-        $expiredToken = hash_hmac('sha256', $filePath.$expiredTime, config('app.key'));
+        // Decode the token to extract its structure
+        $decoded = json_decode(base64_decode($validToken), true);
+        
+        // Modify the expiration to be in the past
+        $decoded['expires'] = time() - 3600; // 1 hour ago
+        
+        // Re-encode the expired token
+        $expiredToken = base64_encode(json_encode($decoded));
+
+        // Extract the encoded path from the URL
+        $pathParts = explode('/', $parsedUrl['path']);
+        $encodedPath = $pathParts[array_search('files', $pathParts) + 1];
 
         // Try to download with expired token
-        $response = $this->getJson("/api/v1/chat/files/{$encodedPath}/download?token={$expiredToken}&expires={$expiredTime}");
+        $response = $this->getJson("/api/v1/chat/files/{$encodedPath}/download?token={$expiredToken}");
 
         $response->assertStatus(403);
         $response->assertJson(['error' => 'Download token expired']);

@@ -149,27 +149,29 @@ class ChatFileService
             'expires' => $expires,
         ]));
 
-        return "/api/chat/files/download/?token={$secureToken}";
+        // Use base64 encoded placeholder for token-based downloads
+        $encodedPath = base64_encode('token-based-download');
+        return "/api/v1/chat/files/{$encodedPath}/download?token={$secureToken}";
     }
 
-    public function verifyDownloadToken(string $token): ?array
+    public function verifyDownloadToken(string $token): array
     {
         try {
             $decoded = json_decode(base64_decode($token), true);
             
             if (!$decoded || !isset($decoded['data'], $decoded['signature'], $decoded['expires'])) {
-                return null;
+                return ['success' => false, 'error' => 'invalid'];
             }
 
             // Check expiration
             if (time() > $decoded['expires']) {
-                return null;
+                return ['success' => false, 'error' => 'expired'];
             }
 
             // Verify signature
             $expectedSignature = hash_hmac('sha256', $decoded['data'] . $decoded['expires'], config('app.key'));
             if (!hash_equals($expectedSignature, $decoded['signature'])) {
-                return null;
+                return ['success' => false, 'error' => 'invalid'];
             }
 
             // Decrypt payload
@@ -177,22 +179,25 @@ class ChatFileService
             $data = json_decode($payload, true);
 
             if (!$data) {
-                return null;
+                return ['success' => false, 'error' => 'invalid'];
             }
 
             // Decode encryption information
             return [
-                'file_path' => $data['file_path'],
-                'file_name' => $data['file_name'],
-                'symmetric_key' => base64_decode($data['symmetric_key']),
-                'iv' => $data['iv'] ? base64_decode($data['iv']) : null,
-                'tag' => $data['tag'] ? base64_decode($data['tag']) : null,
-                'expires' => $data['expires'],
+                'success' => true,
+                'data' => [
+                    'file_path' => $data['file_path'],
+                    'file_name' => $data['file_name'],
+                    'symmetric_key' => base64_decode($data['symmetric_key']),
+                    'iv' => $data['iv'] ? base64_decode($data['iv']) : null,
+                    'tag' => $data['tag'] ? base64_decode($data['tag']) : null,
+                    'expires' => $data['expires'],
+                ]
             ];
 
         } catch (\Exception $e) {
             Log::warning('Secure token verification failed', ['error' => $e->getMessage()]);
-            return null;
+            return ['success' => false, 'error' => 'invalid'];
         }
     }
 

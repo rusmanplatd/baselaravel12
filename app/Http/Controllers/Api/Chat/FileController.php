@@ -118,11 +118,18 @@ class FileController extends Controller
     private function downloadWithToken(Request $request, string $token)
     {
         // Verify and extract token data
-        $tokenData = $this->fileService->verifyDownloadToken($token);
+        $tokenResult = $this->fileService->verifyDownloadToken($token);
         
-        if (!$tokenData) {
-            return response()->json(['error' => 'Invalid or expired download token'], 403);
+        if (!$tokenResult['success']) {
+            $errorMessage = match($tokenResult['error']) {
+                'expired' => 'Download token expired',
+                'invalid' => 'Invalid download token',
+                default => 'Invalid or expired download token'
+            };
+            return response()->json(['error' => $errorMessage], 403);
         }
+
+        $tokenData = $tokenResult['data'];
 
         // Find the message to get metadata
         $message = Message::where('file_path', $tokenData['file_path'])->firstOrFail();
