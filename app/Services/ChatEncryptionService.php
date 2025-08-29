@@ -157,9 +157,8 @@ class ChatEncryptionService
     public function encryptMessage(string $message, string $symmetricKey): array
     {
         try {
-            if (empty($message)) {
-                throw new EncryptionException('Message cannot be empty');
-            }
+            // Allow empty messages for file encryption use cases
+            // Empty files should be handled gracefully
 
             if (strlen($symmetricKey) !== self::KEY_SIZE) {
                 throw new EncryptionException('Invalid symmetric key length');

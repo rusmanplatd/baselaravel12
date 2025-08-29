@@ -239,11 +239,12 @@ describe('E2EE File and Media Encryption', function () {
         it('handles large image files efficiently', function () {
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
 
-            // Create larger fake image (1MB)
+            // Create larger fake content (1MB)
             $largeImageSize = 1024 * 1024; // 1MB
-            $largeImage = UploadedFile::fake()->create('large_image.jpg', $largeImageSize, 'image/jpeg');
-
-            $originalContent = file_get_contents($largeImage->getPathname());
+            $originalContent = str_repeat('A', $largeImageSize); // Create actual 1MB content
+            
+            // Create fake file with the content
+            $largeImage = UploadedFile::fake()->createWithContent('large_image.jpg', $originalContent);
 
             $startTime = microtime(true);
 
