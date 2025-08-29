@@ -22,7 +22,7 @@ class ClientController extends Controller
         $this->clients = $clients;
 
         $this->middleware('permission:oauth.client.view')->only(['index', 'show']);
-        $this->middleware('permission:oauth.client.create')->only(['store']);
+        // Store method permission is checked inside the method after validation
         $this->middleware('permission:oauth.client.edit')->only(['update']);
         $this->middleware('permission:oauth.client.delete')->only(['destroy']);
         $this->middleware('permission:oauth.client.regenerate')->only(['regenerateSecret']);
@@ -93,6 +93,13 @@ class ClientController extends Controller
 
     public function store(StoreClientRequest $request)
     {
+        // Check permission after validation
+        if (!Auth::user()->can('oauth.client.create')) {
+            return response()->json([
+                'error' => 'forbidden',
+                'message' => 'You do not have permission to perform this action.',
+            ], 403);
+        }
 
         // Validate user has management access to the organization
         $userManagementOrgs = Auth::user()->memberships()

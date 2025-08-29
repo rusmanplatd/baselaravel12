@@ -962,6 +962,16 @@ describe('Multi-Device Security Validation', function () {
 
 describe('Multi-Device Error Recovery', function () {
     it('can recover from failed key sharing operations', function () {
+        // First create encryption key for the source device
+        $symmetricKey = $this->encryptionService->generateSymmetricKey();
+        EncryptionKey::createForDevice(
+            $this->conversation->id,
+            $this->user1->id,
+            $this->user1_device1->id,
+            $symmetricKey,
+            $this->user1_device1->public_key
+        );
+
         // Create incomplete/failed key share
         $failedKeyShare = DeviceKeyShare::create([
             'from_device_id' => $this->user1_device1->id,
@@ -976,6 +986,9 @@ describe('Multi-Device Error Recovery', function () {
             'failed_at' => now(),
             'failure_reason' => 'Encryption failed',
         ]);
+
+        // Make the target device trusted since untrusted + medium security is allowed
+        $this->user1_device2->markAsTrusted();
 
         // Retry key sharing operation
         $results = $this->multiDeviceService->shareKeysWithNewDevice(

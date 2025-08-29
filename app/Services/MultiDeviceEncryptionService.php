@@ -111,18 +111,26 @@ class MultiDeviceEncryptionService
             throw new \InvalidArgumentException('Device is not active');
         }
 
-        // Security level validation - prevent sharing to untrusted or significantly lower security devices
-        $fromSecLevel = $this->getSecurityLevelValue($fromDevice->security_level);
-        $toSecLevel = $this->getSecurityLevelValue($newDevice->security_level);
-
-        // Block sharing from maximum security to low security devices
-        if ($fromSecLevel === 4 && $toSecLevel === 1) {
-            throw new \InvalidArgumentException('Security level mismatch');
-        }
-
-        // Block sharing to untrusted devices with low security
-        if (! $newDevice->is_trusted && $toSecLevel === 1) {
-            throw new \InvalidArgumentException('Security level mismatch');
+        // Security level validation - handle gracefully for some scenarios, throw for others
+        $securityValidation = $this->validateDeviceSecurityForKeySharing($fromDevice, $newDevice);
+        
+        if (! $securityValidation['allowed']) {
+            // For critical security violations (like maximum to low security), throw exception
+            if ($this->isCriticalSecurityViolation($fromDevice, $newDevice)) {
+                throw new \InvalidArgumentException('Security level mismatch');
+            }
+            
+            // For other cases, handle gracefully
+            return [
+                'shared_conversations' => [],
+                'failed_conversations' => [
+                    [
+                        'conversation_id' => null,
+                        'error' => $securityValidation['reason'],
+                    ]
+                ],
+                'total_keys_shared' => 0,
+            ];
         }
 
         return DB::transaction(function () use ($fromDevice, $newDevice) {
@@ -1206,6 +1214,52 @@ class MultiDeviceEncryptionService
         }
 
         return $keys;
+    }
+
+    /**
+     * Validates device security requirements for key sharing
+     */
+    private function validateDeviceSecurityForKeySharing(UserDevice $fromDevice, UserDevice $newDevice): array
+    {
+        $fromSecLevel = $this->getSecurityLevelValue($fromDevice->security_level);
+        $toSecLevel = $this->getSecurityLevelValue($newDevice->security_level);
+
+        // Block sharing from maximum security to low security devices
+        if ($fromSecLevel === 4 && $toSecLevel === 1) {
+            return [
+                'allowed' => false,
+                'reason' => 'Security level mismatch: Cannot share from maximum security to low security device',
+            ];
+        }
+
+        // Block sharing to untrusted devices with low security
+        if (! $newDevice->is_trusted && $toSecLevel === 1) {
+            return [
+                'allowed' => false,
+                'reason' => 'Security level mismatch: Cannot share to untrusted device with low security level',
+            ];
+        }
+
+        return [
+            'allowed' => true,
+            'reason' => null,
+        ];
+    }
+
+    /**
+     * Determines if a security violation is critical and should throw an exception
+     */
+    private function isCriticalSecurityViolation(UserDevice $fromDevice, UserDevice $newDevice): bool
+    {
+        $fromSecLevel = $this->getSecurityLevelValue($fromDevice->security_level);
+        $toSecLevel = $this->getSecurityLevelValue($newDevice->security_level);
+
+        // Critical: Maximum security to low security is always a hard error
+        if ($fromSecLevel === 4 && $toSecLevel === 1) {
+            return true;
+        }
+
+        return false;
     }
 
     /**

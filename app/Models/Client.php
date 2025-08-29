@@ -42,14 +42,14 @@ class Client extends PassportClient
         'logo_url',
     ];
 
-    protected $casts = [
-        'revoked' => 'bool',
-        'redirect_uris' => 'json',  // Database field
-        'grant_types' => 'json',    // Database field
-        'allowed_scopes' => 'array',
-        'user_access_rules' => 'array',
-        'last_used_at' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return array_merge(parent::casts(), [
+            'allowed_scopes' => 'array',
+            'user_access_rules' => 'array',
+            'last_used_at' => 'datetime',
+        ]);
+    }
 
     protected $hidden = [
         'secret',

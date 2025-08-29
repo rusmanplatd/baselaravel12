@@ -75,6 +75,12 @@ Route::prefix('v1')->group(function () {
 
 // Authenticated API routes
 Route::middleware('auth:api')->prefix('v1')->group(function () {
+    // OAuth Client Management API
+    Route::prefix('oauth')->name('api.oauth.')->group(function () {
+        Route::apiResource('clients', \App\Http\Controllers\OAuth\ClientController::class);
+        Route::post('clients/{client}/regenerate-secret', [\App\Http\Controllers\OAuth\ClientController::class, 'regenerateSecret'])
+            ->name('clients.regenerate-secret');
+    });
     // User Security Profile
     Route::prefix('security')->name('api.security.')->group(function () {
         Route::get('/', [UserSecurityController::class, 'index'])->name('profile');

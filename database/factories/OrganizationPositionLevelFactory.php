@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -16,6 +17,8 @@ class OrganizationPositionLevelFactory extends Factory
      */
     public function definition(): array
     {
+        $user = User::factory()->create();
+        
         return [
             'code' => $this->faker->unique()->regexify('[A-Z]{3}[0-9]{2}'),
             'name' => $this->faker->jobTitle(),
@@ -23,8 +26,8 @@ class OrganizationPositionLevelFactory extends Factory
             'hierarchy_level' => $this->faker->numberBetween(1, 10),
             'is_active' => true,
             'sort_order' => $this->faker->numberBetween(1, 100),
-            'created_by' => null, // Will be set by tests if needed
-            'updated_by' => null,
+            'created_by' => $user->id,
+            'updated_by' => $user->id,
         ];
     }
 }

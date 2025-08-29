@@ -239,16 +239,15 @@ class OAuthController extends Controller
 
         if (in_array('https://api.yourcompany.com/auth/organization.readonly', $scopes) || in_array('https://api.yourcompany.com/auth/organization.admin', $scopes)) {
             $tenantData = [];
-            $activeMemberships = $user->memberships()->active()->with('organization.tenant')->get();
+            $activeMemberships = $user->memberships()->active()->with('organization')->get();
             foreach ($activeMemberships as $membership) {
-                if ($membership->organization->tenant) {
-                    $tenantData[] = [
-                        'id' => $membership->organization->tenant->id,
-                        'name' => $membership->organization->tenant->name,
-                        'domain' => $membership->organization->tenant->domain,
-                        'organization_id' => $membership->organization->id,
-                    ];
-                }
+                // Organization acts as the tenant in this system
+                $tenantData[] = [
+                    'id' => $membership->organization->id,
+                    'name' => $membership->organization->name,
+                    'domain' => strtolower($membership->organization->organization_code).'.example.com',
+                    'organization_id' => $membership->organization->id,
+                ];
             }
             $userinfo['tenants'] = $tenantData;
         }
@@ -413,11 +412,10 @@ class OAuthController extends Controller
                 }
             }
 
-            if ($organization->tenant) {
-                $tenantScopes = ['https://api.yourcompany.com/auth/organization.readonly', 'https://api.yourcompany.com/auth/organization.admin'];
-                if (! $hasOrganizationAccess) {
-                    $validScopes = array_diff($validScopes, $tenantScopes);
-                }
+            // Organization acts as the tenant in this system
+            $tenantScopes = ['https://api.yourcompany.com/auth/organization.readonly', 'https://api.yourcompany.com/auth/organization.admin'];
+            if (! $hasOrganizationAccess) {
+                $validScopes = array_diff($validScopes, $tenantScopes);
             }
         }
 

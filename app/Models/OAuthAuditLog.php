@@ -128,7 +128,7 @@ class OAuthAuditLog extends Model
         if (isset($data['client_id'])) {
             $client = \Laravel\Passport\Client::find($data['client_id']);
             if ($client && $client->organization_id) {
-                $organization = \App\Models\Organization::with('tenant')->find($client->organization_id);
+                $organization = \App\Models\Organization::find($client->organization_id);
                 if ($organization) {
                     $contextData['organization_id'] = $organization->id;
                     $contextData['organization_context'] = [
@@ -139,10 +139,9 @@ class OAuthAuditLog extends Model
                         'path' => $organization->path,
                     ];
 
-                    if ($organization->tenant) {
-                        $contextData['tenant_id'] = $organization->tenant->id;
-                        $contextData['tenant_domain'] = $organization->tenant->domain;
-                    }
+                    // Organization acts as the tenant in this system
+                    $contextData['tenant_id'] = $organization->id;
+                    $contextData['tenant_domain'] = strtolower($organization->organization_code).'.example.com';
                 }
             }
         }

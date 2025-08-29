@@ -10,6 +10,7 @@ use App\Models\OrganizationPositionLevel;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Auth\Permission;
 use Tests\TestCase;
 
 class ClientAccessControlTest extends TestCase
@@ -48,6 +49,14 @@ class ClientAccessControlTest extends TestCase
             'membership_type' => 'employee',
             'status' => 'active',
         ]);
+
+        // Give user OAuth client permissions
+        setPermissionsTeamId($this->organization->id);
+        $permission = Permission::firstOrCreate(
+            ['name' => 'oauth.client.create', 'guard_name' => 'web'],
+            ['created_by' => $this->user->id, 'updated_by' => $this->user->id]
+        );
+        $this->user->givePermissionTo('oauth.client.create');
     }
 
     public function test_client_allows_all_users_access()
@@ -132,7 +141,7 @@ class ClientAccessControlTest extends TestCase
         $position = OrganizationPosition::factory()->create([
             'organization_id' => $this->organization->id,
             'organization_position_level_id' => $positionLevel->id,
-            'name' => 'Department Manager',
+            'title' => 'Department Manager',
         ]);
 
         // Update user's membership with position
@@ -158,7 +167,7 @@ class ClientAccessControlTest extends TestCase
         $client = Client::factory()->create([
             'organization_id' => $this->organization->id,
             'user_access_scope' => 'organization_members',
-            'redirect' => ['https://example.com/callback'],
+            'redirect_uris' => ['https://example.com/callback'],
         ]);
 
         $response = $this->get('/oauth/authorize?'.http_build_query([
@@ -188,7 +197,7 @@ class ClientAccessControlTest extends TestCase
         $client = Client::factory()->create([
             'organization_id' => $this->organization->id,
             'user_access_scope' => 'all_users',
-            'redirect' => ['https://example.com/callback'],
+            'redirect_uris' => ['https://example.com/callback'],
         ]);
 
         // Test with organization member
@@ -238,12 +247,12 @@ class ClientAccessControlTest extends TestCase
             $allUsersClient->getAccessScopeDescription()
         );
 
-        $this->assertStringContains(
+        $this->assertStringContainsString(
             'Test Organization',
             $orgMembersClient->getAccessScopeDescription()
         );
 
-        $this->assertStringContains(
+        $this->assertStringContainsString(
             'custom rule',
             $customClient->getAccessScopeDescription()
         );
@@ -276,9 +285,9 @@ class ClientAccessControlTest extends TestCase
 
     public function test_client_validation_requires_user_access_scope()
     {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
-        $response = $this->postJson('/api/oauth/clients', [
+        $response = $this->postJson('/api/v1/oauth/clients', [
             'name' => 'Test Client',
             'redirect_uris' => ['https://example.com/callback'],
             'organization_id' => $this->organization->id,
@@ -292,9 +301,9 @@ class ClientAccessControlTest extends TestCase
 
     public function test_client_validation_for_custom_rules()
     {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
-        $response = $this->postJson('/api/oauth/clients', [
+        $response = $this->postJson('/api/v1/oauth/clients', [
             'name' => 'Test Client',
             'redirect_uris' => ['https://example.com/callback'],
             'organization_id' => $this->organization->id,
@@ -309,9 +318,9 @@ class ClientAccessControlTest extends TestCase
 
     public function test_client_validation_for_email_domains()
     {
-        $this->actingAs($this->user);
+        $this->actingAs($this->user, 'api');
 
-        $response = $this->postJson('/api/oauth/clients', [
+        $response = $this->postJson('/api/v1/oauth/clients', [
             'name' => 'Test Client',
             'redirect_uris' => ['https://example.com/callback'],
             'organization_id' => $this->organization->id,
