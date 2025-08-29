@@ -242,7 +242,7 @@ describe('E2EE File and Media Encryption', function () {
             // Create larger fake content (1MB)
             $largeImageSize = 1024 * 1024; // 1MB
             $originalContent = str_repeat('A', $largeImageSize); // Create actual 1MB content
-            
+
             // Create fake file with the content
             $largeImage = UploadedFile::fake()->createWithContent('large_image.jpg', $originalContent);
 

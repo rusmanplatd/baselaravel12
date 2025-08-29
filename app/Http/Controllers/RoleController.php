@@ -65,18 +65,20 @@ class RoleController extends Controller
         $role = Role::create([
             'name' => $validated['name'],
             'guard_name' => 'web',
-            'team_id' => $validated['team_id'] ?? null,
+            'team_id' => $validated['team_id'] ?? getPermissionsTeamId(),
+            'created_by' => auth()->id(),
+            'updated_by' => auth()->id(),
         ]);
 
         if (! empty($validated['permissions'])) {
             $role->syncPermissions($validated['permissions']);
         }
 
-        ActivityLogService::log('role', 'created', $role->id, [
+        ActivityLogService::logSystem('created', "Role '{$role->name}' created", [
             'role_name' => $role->name,
             'team_id' => $role->team_id,
             'permissions_count' => count($validated['permissions'] ?? []),
-        ]);
+        ], $role);
 
         return redirect()->route('roles.index')
             ->with('success', 'Role created successfully.');
@@ -110,16 +112,17 @@ class RoleController extends Controller
 
         $role->update([
             'name' => $validated['name'],
+            'updated_by' => auth()->id(),
         ]);
 
         if (array_key_exists('permissions', $validated)) {
             $role->syncPermissions($validated['permissions'] ?? []);
         }
 
-        ActivityLogService::log('role', 'updated', $role->id, [
+        ActivityLogService::logSystem('updated', "Role '{$role->name}' updated", [
             'role_name' => $role->name,
             'permissions_count' => count($validated['permissions'] ?? []),
-        ]);
+        ], $role);
 
         return redirect()->route('roles.index')
             ->with('success', 'Role updated successfully.');
@@ -136,7 +139,7 @@ class RoleController extends Controller
 
         $role->delete();
 
-        ActivityLogService::log('role', 'deleted', $role->id, [
+        ActivityLogService::logSystem('deleted', "Role '{$roleName}' deleted", [
             'role_name' => $roleName,
         ]);
 
@@ -162,9 +165,9 @@ class RoleController extends Controller
                     continue; // Skip roles that have users assigned
                 }
 
-                ActivityLogService::log('role', 'bulk_deleted', $role->id, [
+                ActivityLogService::logSystem('bulk_deleted', "Role '{$role->name}' bulk deleted", [
                     'role_name' => $role->name,
-                ]);
+                ], $role);
 
                 $role->delete();
             }
@@ -193,10 +196,10 @@ class RoleController extends Controller
             foreach ($roles as $role) {
                 $role->syncPermissions($permissions);
 
-                ActivityLogService::log('role', 'bulk_permissions_assigned', $role->id, [
+                ActivityLogService::logSystem('bulk_permissions_assigned', "Role '{$role->name}' bulk permissions assigned", [
                     'role_name' => $role->name,
                     'permissions_count' => count($permissionNames),
-                ]);
+                ], $role);
             }
         });
 

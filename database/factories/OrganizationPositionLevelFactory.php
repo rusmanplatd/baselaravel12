@@ -18,7 +18,7 @@ class OrganizationPositionLevelFactory extends Factory
     public function definition(): array
     {
         $user = User::factory()->create();
-        
+
         return [
             'code' => $this->faker->unique()->regexify('[A-Z]{3}[0-9]{2}'),
             'name' => $this->faker->jobTitle(),

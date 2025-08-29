@@ -22,7 +22,7 @@ beforeEach(function () {
     setPermissionsTeamId($this->organization->id);
     $this->user->givePermissionTo($this->permissions);
 
-    $this->actingAs($this->user, 'api');
+    $this->actingAs($this->user);
 });
 
 test('can view roles index page', function () {
@@ -172,7 +172,7 @@ test('can search roles', function () {
 test('unauthorized user cannot access role management', function () {
     $unauthorizedUser = User::factory()->create();
 
-    $this->actingAs($unauthorizedUser, 'api');
+    $this->actingAs($unauthorizedUser);
 
     $response = $this->get(route('roles.index'));
 

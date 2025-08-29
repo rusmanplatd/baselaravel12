@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\OAuth;
 
+use App\Models\Auth\Permission;
 use App\Models\Client;
 use App\Models\Organization;
 use App\Models\OrganizationMembership;
@@ -10,7 +11,6 @@ use App\Models\OrganizationPositionLevel;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
-use App\Models\Auth\Permission;
 use Tests\TestCase;
 
 class ClientAccessControlTest extends TestCase
@@ -46,17 +46,21 @@ class ClientAccessControlTest extends TestCase
         OrganizationMembership::factory()->create([
             'user_id' => $this->user->id,
             'organization_id' => $this->organization->id,
-            'membership_type' => 'employee',
+            'membership_type' => 'manager',
             'status' => 'active',
         ]);
 
         // Give user OAuth client permissions
         setPermissionsTeamId($this->organization->id);
-        $permission = Permission::firstOrCreate(
+        $webPermission = Permission::firstOrCreate(
             ['name' => 'oauth.client.create', 'guard_name' => 'web'],
             ['created_by' => $this->user->id, 'updated_by' => $this->user->id]
         );
-        $this->user->givePermissionTo('oauth.client.create');
+        $apiPermission = Permission::firstOrCreate(
+            ['name' => 'oauth.client.create', 'guard_name' => 'api'],
+            ['created_by' => $this->user->id, 'updated_by' => $this->user->id]
+        );
+        $this->user->givePermissionTo([$webPermission, $apiPermission]);
     }
 
     public function test_client_allows_all_users_access()
@@ -337,11 +341,16 @@ class ClientAccessControlTest extends TestCase
 
     public function test_client_without_organization_is_rejected()
     {
+        // Since organization_id is required at the database level,
+        // we test the userHasAccess method with a different organization
+        $otherOrganization = Organization::factory()->create();
+        
         $client = Client::factory()->create([
-            'organization_id' => null,  // No organization
-            'user_access_scope' => 'all_users',
+            'organization_id' => $otherOrganization->id,
+            'user_access_scope' => 'organization_members',
         ]);
 
+        // User is not a member of the other organization, so access should be denied
         $this->assertFalse($client->userHasAccess($this->user));
         $this->assertFalse($client->userHasAccess($this->otherUser));
     }

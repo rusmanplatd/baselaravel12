@@ -8,7 +8,6 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\ValidationException;
 
 class KeyRecoveryController extends Controller
 {
@@ -32,9 +31,9 @@ class KeyRecoveryController extends Controller
         try {
             $userId = Auth::id();
             $masterPassword = $request->input('master_password');
-            
+
             $backup = $this->keyRecoveryService->createUserBackup($userId, $masterPassword);
-            
+
             $filename = null;
             if ($request->boolean('store_backup', false)) {
                 $filename = $this->keyRecoveryService->storeBackup($backup);
@@ -75,13 +74,13 @@ class KeyRecoveryController extends Controller
             $userId = Auth::id();
             $sinceTimestamp = Carbon::parse($request->input('since_timestamp'));
             $masterPassword = $request->input('master_password');
-            
+
             $backup = $this->keyRecoveryService->createIncrementalBackup(
                 $userId,
                 $sinceTimestamp,
                 $masterPassword
             );
-            
+
             $filename = null;
             if ($request->boolean('store_backup', false)) {
                 $filename = $this->keyRecoveryService->storeBackup($backup);
@@ -132,8 +131,8 @@ class KeyRecoveryController extends Controller
 
             return response()->json([
                 'success' => $result['success'],
-                'message' => $result['success'] 
-                    ? 'Backup restored successfully' 
+                'message' => $result['success']
+                    ? 'Backup restored successfully'
                     : 'Backup restoration completed with errors',
                 'restored_count' => $result['restored_count'],
                 'total_conversations' => $result['total_conversations'],
@@ -243,7 +242,7 @@ class KeyRecoveryController extends Controller
     public function performEmergencyRecovery(Request $request): JsonResponse
     {
         // Check if user has admin permissions
-        if (!Auth::user()->hasRole('admin') && !Auth::user()->can('perform emergency recovery')) {
+        if (! Auth::user()->hasRole('admin') && ! Auth::user()->can('perform emergency recovery')) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized. Admin privileges required.',
@@ -272,8 +271,8 @@ class KeyRecoveryController extends Controller
 
             return response()->json([
                 'success' => $result['success'],
-                'message' => $result['success'] 
-                    ? 'Emergency recovery completed successfully' 
+                'message' => $result['success']
+                    ? 'Emergency recovery completed successfully'
                     : 'Emergency recovery completed with errors',
                 'recovery_id' => $result['recovery_id'],
                 'user_id' => $result['user_id'],

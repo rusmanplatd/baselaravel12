@@ -90,12 +90,21 @@ class MessageNotFoundException extends ChatException
 
 class EncryptionException extends ChatException
 {
-    public function __construct(string $operation, ?Throwable $previous = null)
+    public function __construct(string $message, ?string $operation = null, ?Throwable $previous = null)
     {
+        // If no operation is provided, treat the first parameter as the full message
+        if ($operation === null) {
+            $fullMessage = $message;
+            $context = [];
+        } else {
+            $fullMessage = "Encryption operation failed: {$operation}";
+            $context = ['operation' => $operation];
+        }
+
         parent::__construct(
-            "Encryption operation failed: {$operation}",
+            $fullMessage,
             'ENCRYPTION_FAILED',
-            ['operation' => $operation],
+            $context,
             0,
             $previous
         );

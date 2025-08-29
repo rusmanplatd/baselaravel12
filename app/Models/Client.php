@@ -14,8 +14,6 @@ class Client extends PassportClient
 
     /**
      * Initialize the trait - override to fix compatibility with Passport.
-     *
-     * @return void
      */
     public function initializeHasUniqueStringIds(): void
     {

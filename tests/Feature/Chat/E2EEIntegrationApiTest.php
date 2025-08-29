@@ -33,8 +33,8 @@ describe('E2EE Integration and API Comprehensive Tests', function () {
 
         // Cache private keys so the API can access them
         $encryptionService = app(\App\Services\ChatEncryptionService::class);
-        cache()->put('user_private_key_' . $this->user1->id, $encryptionService->encryptForStorage($keyPair1['private_key']), now()->addHours(24));
-        cache()->put('user_private_key_' . $this->user2->id, $encryptionService->encryptForStorage($keyPair2['private_key']), now()->addHours(24));
+        cache()->put('user_private_key_'.$this->user1->id, $encryptionService->encryptForStorage($keyPair1['private_key']), now()->addHours(24));
+        cache()->put('user_private_key_'.$this->user2->id, $encryptionService->encryptForStorage($keyPair2['private_key']), now()->addHours(24));
 
         // Create conversation (always encrypted in E2EE)
         $this->conversation = Conversation::factory()->create();
@@ -144,7 +144,7 @@ describe('E2EE Integration and API Comprehensive Tests', function () {
 
             if ($response->status() === 201) {
                 $messageData = $response->json();
-                if (!$messageData || !isset($messageData['sender_id'])) {
+                if (! $messageData || ! isset($messageData['sender_id'])) {
                     dump('Send message response:', $messageData);
                 }
                 expect($messageData['sender_id'])->toBe($this->user1->id);
@@ -253,11 +253,11 @@ describe('E2EE Integration and API Comprehensive Tests', function () {
 
             if ($response->status() === 201) {
                 $messageData = $response->json();
-                if (!$messageData || !isset($messageData['type'])) {
+                if (! $messageData || ! isset($messageData['type'])) {
                     dump('File upload response:', $messageData);
                 }
                 expect($messageData['type'])->toBe('file');
-                
+
                 // Verify file metadata is preserved in metadata field
                 $message = Message::find($messageData['id']);
                 expect($message->metadata)->toHaveKey('file_name');
@@ -280,7 +280,7 @@ describe('E2EE Integration and API Comprehensive Tests', function () {
             expect(in_array($response->status(), [200, 201]))->toBeTrue(); // API returns 200 for existing or 201 for new conversation
 
             $conversationData = $response->json();
-            if (!$conversationData || !isset($conversationData['encryption_algorithm'])) {
+            if (! $conversationData || ! isset($conversationData['encryption_algorithm'])) {
                 dump('Create conversation response:', $conversationData);
             }
             expect($conversationData['encryption_algorithm'])->toBe('AES-256-GCM');
@@ -318,12 +318,12 @@ describe('E2EE Integration and API Comprehensive Tests', function () {
             $newUser->update(['public_key' => $newKeyPair['public_key']]);
 
             // Cache the private key for the new user
-            cache()->put('user_private_key_' . $newUser->id, $this->encryptionService->encryptForStorage($newKeyPair['private_key']), now()->addHours(24));
+            cache()->put('user_private_key_'.$newUser->id, $this->encryptionService->encryptForStorage($newKeyPair['private_key']), now()->addHours(24));
 
             $response = $this->postJson("/api/v1/chat/conversations/{$groupConversation->id}/participants", [
                 'user_ids' => [$newUser->id],
             ]);
-            
+
             expect($response->status())->toBe(200); // API returns 200 for successful participant addition
 
             // Verify participant was added
@@ -435,7 +435,7 @@ describe('E2EE Integration and API Comprehensive Tests', function () {
             $response_data = $response->json();
             expect($response_data['success_count'])->toBe(3);
             expect($response_data['total_count'])->toBe(3);
-            
+
             $decryptedMessages = $response_data['decrypted_messages'];
             expect(count($decryptedMessages))->toBe(3);
 
@@ -472,7 +472,7 @@ describe('E2EE Integration and API Comprehensive Tests', function () {
                 // Add messages to conversation
                 for ($j = 0; $j < 3; $j++) {
                     $encrypted = $this->encryptionService->encryptMessage("Message $j", $this->symmetricKey);
-                    
+
                     Message::create([
                         'conversation_id' => $conv->id,
                         'sender_id' => $this->user1->id,
@@ -503,7 +503,7 @@ describe('E2EE Integration and API Comprehensive Tests', function () {
 
             $responseData = $response->json();
             expect($responseData)->toHaveKey('data');
-            
+
             $exportData = $responseData['data'];
             expect($exportData['export_id'])->not()->toBeNull();
             expect($exportData['conversations_count'])->toBe(3);
@@ -544,7 +544,7 @@ describe('E2EE Integration and API Comprehensive Tests', function () {
 
             $responseData = $response->json();
             expect($responseData)->toHaveKey('data');
-            
+
             $updateResults = $responseData['data'];
             expect($updateResults['updated_count'])->toBeGreaterThan(0);
             expect($updateResults['failed_count'])->toBeGreaterThanOrEqual(0);

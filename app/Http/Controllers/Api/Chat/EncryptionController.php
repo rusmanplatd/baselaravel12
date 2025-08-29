@@ -11,7 +11,6 @@ use App\Services\ChatEncryptionService;
 use App\Services\MultiDeviceEncryptionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -1068,7 +1067,9 @@ class EncryptionController extends Controller
 
             foreach ($orphanConversations as $conversationId) {
                 $conversation = Conversation::find($conversationId);
-                if (!$conversation) continue;
+                if (! $conversation) {
+                    continue;
+                }
 
                 $messageCount = $conversation->messages()->count();
                 if ($messageCount > 0) {
@@ -1085,11 +1086,13 @@ class EncryptionController extends Controller
             // Detect messages without proper encryption in conversations where user has encryption keys
             foreach ($conversationsWithKeys as $conversationId) {
                 $conversation = Conversation::find($conversationId);
-                if (!$conversation) continue;
+                if (! $conversation) {
+                    continue;
+                }
 
                 // Check for messages that don't have proper encrypted_content structure
                 $suspiciousMessages = $conversation->messages()
-                    ->where(function($query) {
+                    ->where(function ($query) {
                         $query->whereNull('encrypted_content')
                             ->orWhere('encrypted_content', '')
                             ->orWhere('encrypted_content', '{}')

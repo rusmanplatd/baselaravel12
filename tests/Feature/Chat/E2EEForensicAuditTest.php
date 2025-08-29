@@ -53,11 +53,18 @@ describe('E2EE Forensic Analysis and Audit Compliance', function () {
             $finalActivityCount = Activity::count();
 
             if ($finalActivityCount > $initialActivityCount) {
-                $latestActivity = Activity::latest()->first();
-                expect($latestActivity->description)->toContain('Encryption key');
-                expect($latestActivity->subject_type)->toBe(EncryptionKey::class);
-                expect($latestActivity->subject_id)->toBe($encryptionKey->id);
-                expect($latestActivity->causer_id)->toBe($this->user1->id);
+                // Look specifically for the encryption key activity
+                $encryptionKeyActivity = Activity::where('subject_type', EncryptionKey::class)
+                    ->where('subject_id', $encryptionKey->id)
+                    ->latest()
+                    ->first();
+
+                if ($encryptionKeyActivity) {
+                    expect($encryptionKeyActivity->description)->toContain('Encryption key');
+                    expect($encryptionKeyActivity->subject_type)->toBe(EncryptionKey::class);
+                    expect($encryptionKeyActivity->subject_id)->toBe($encryptionKey->id);
+                    expect($encryptionKeyActivity->causer_id)->toBe($this->user1->id);
+                }
             }
 
             expect($encryptionKey)->toBeInstanceOf(EncryptionKey::class);

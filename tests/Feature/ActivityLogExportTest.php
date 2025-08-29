@@ -12,7 +12,7 @@ beforeEach(function () {
     if (Permission::count() === 0) {
         $this->artisan('db:seed', ['--class' => 'PermissionSeeder']);
     }
-    
+
     $this->exportService = app(ActivityLogExportService::class);
 
     // Create organization
@@ -41,7 +41,7 @@ beforeEach(function () {
 
     // Get existing admin role (should be seeded)
     $adminRole = Role::where('name', 'organization-admin')->first();
-    
+
     // Create a user role with limited permissions
     $userRole = Role::factory()->create([
         'name' => 'user',
@@ -91,7 +91,7 @@ function createTestActivities()
 it('allows admin to access export all endpoint', function () {
     // Set the team context for Spatie permissions first
     setPermissionsTeamId($this->organization->id);
-    
+
     $this->actingAs($this->adminUser);
 
     $response = $this->postJson(route('activity-log.export.all'), [
@@ -107,7 +107,7 @@ it('allows admin to access export all endpoint', function () {
 it('allows admin to access export filtered endpoint', function () {
     // Set the team context for Spatie permissions first
     setPermissionsTeamId($this->organization->id);
-    
+
     $this->actingAs($this->adminUser);
 
     $response = $this->postJson(route('activity-log.export.filtered'), [
@@ -127,7 +127,7 @@ it('allows admin to access export filtered endpoint', function () {
 it('prevents regular user from accessing export endpoints', function () {
     // Set the team context for Spatie permissions first
     setPermissionsTeamId($this->organization->id);
-    
+
     $this->actingAs($this->regularUser);
 
     $response = $this->postJson(route('activity-log.export.all'), [
@@ -178,7 +178,7 @@ it('returns correct data from validate export endpoint', function () {
 it('validates required parameters for export', function () {
     // Set the team context for Spatie permissions first
     setPermissionsTeamId($this->organization->id);
-    
+
     $this->actingAs($this->adminUser);
 
     // Test missing format
@@ -202,7 +202,7 @@ it('validates required parameters for export', function () {
 it('validates date range for filtered export', function () {
     // Set the team context for Spatie permissions first
     setPermissionsTeamId($this->organization->id);
-    
+
     $this->actingAs($this->adminUser);
 
     // Test invalid date range (from_date after to_date)
@@ -222,7 +222,7 @@ it('validates date range for filtered export', function () {
 it('returns available columns for export', function () {
     // Set the team context for Spatie permissions first
     setPermissionsTeamId($this->organization->id);
-    
+
     $this->actingAs($this->adminUser);
 
     $response = $this->get(route('activity-log.export.columns'));
@@ -277,7 +277,7 @@ it('can export filtered activities through service', function () {
 it('respects user permissions when exporting', function () {
     // Set the team context for Spatie permissions first
     setPermissionsTeamId($this->organization->id);
-    
+
     // Regular user should only see their own activities
     $result = $this->exportService->exportAll($this->regularUser, 'csv');
 
@@ -318,7 +318,7 @@ it('handles custom column selection', function () {
 it('shows export button for admin users on activity log index', function () {
     // Set the team context for Spatie permissions first
     setPermissionsTeamId($this->organization->id);
-    
+
     $this->actingAs($this->adminUser);
 
     $response = $this->get(route('activity-log.index'));
@@ -332,7 +332,7 @@ it('shows export button for admin users on activity log index', function () {
 it('hides export button for regular users on activity log index', function () {
     // Set the team context for Spatie permissions first
     setPermissionsTeamId($this->organization->id);
-    
+
     $this->actingAs($this->regularUser);
 
     $response = $this->get(route('activity-log.index'));

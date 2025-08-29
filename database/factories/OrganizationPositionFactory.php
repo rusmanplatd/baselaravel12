@@ -21,7 +21,7 @@ class OrganizationPositionFactory extends Factory
     public function definition(): array
     {
         $user = User::factory()->create();
-        
+
         return [
             'organization_id' => Organization::factory(),
             'organization_unit_id' => OrganizationUnit::factory(),
@@ -30,8 +30,8 @@ class OrganizationPositionFactory extends Factory
             'title' => $this->faker->jobTitle(),
             'job_description' => $this->faker->paragraph(),
             'qualifications' => json_encode([
-                $this->faker->word() . ' degree',
-                $this->faker->numberBetween(1, 10) . '+ years experience',
+                $this->faker->word().' degree',
+                $this->faker->numberBetween(1, 10).'+ years experience',
             ]),
             'responsibilities' => json_encode([
                 $this->faker->sentence(),

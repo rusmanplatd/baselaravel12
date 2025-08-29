@@ -119,7 +119,7 @@ Route::middleware('auth:api')->prefix('v1')->group(function () {
         // Bulk operations (must come before resource routes to avoid conflicts)
         Route::post('conversations/bulk-export', [\App\Http\Controllers\Api\Chat\ConversationController::class, 'bulkExport'])->name('conversations.bulk-export');
         Route::patch('conversations/bulk-update-encryption', [\App\Http\Controllers\Api\Chat\ConversationController::class, 'bulkUpdateEncryption'])->name('conversations.bulk-update-encryption');
-        
+
         // Conversations
         Route::apiResource('conversations', \App\Http\Controllers\Api\Chat\ConversationController::class)
             ->middleware('throttle:60,1');

@@ -28,7 +28,7 @@ beforeEach(function () {
     setPermissionsTeamId($this->organization->id);
     $this->user->givePermissionTo($this->permissions);
 
-    $this->actingAs($this->user, 'api');
+    $this->actingAs($this->user);
 });
 
 test('can view permissions index page', function () {
@@ -179,7 +179,7 @@ test('can filter permissions by guard', function () {
 test('unauthorized user cannot access permission management', function () {
     $unauthorizedUser = User::factory()->create();
 
-    $this->actingAs($unauthorizedUser, 'api');
+    $this->actingAs($unauthorizedUser);
 
     $response = $this->get(route('permissions.index'));
 

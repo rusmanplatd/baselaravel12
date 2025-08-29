@@ -60,6 +60,8 @@ class PermissionController extends Controller
         $permission = Permission::create([
             'name' => $validated['name'],
             'guard_name' => $validated['guard_name'] ?? 'web',
+            'created_by' => auth()->id(),
+            'updated_by' => auth()->id(),
         ]);
 
         ActivityLogService::logSystem('created', "Permission '{$permission->name}' created", [
@@ -94,6 +96,7 @@ class PermissionController extends Controller
         $permission->update([
             'name' => $validated['name'],
             'guard_name' => $validated['guard_name'] ?? $permission->guard_name,
+            'updated_by' => auth()->id(),
         ]);
 
         ActivityLogService::logSystem('updated', "Permission '{$permission->name}' updated", [

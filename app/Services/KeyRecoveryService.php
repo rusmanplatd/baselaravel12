@@ -8,7 +8,6 @@ use App\Models\User;
 use App\Models\UserDevice;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -30,7 +29,7 @@ class KeyRecoveryService
         try {
             $user = User::findOrFail($userId);
             $backupId = 'backup-'.date('Y-m-d-H-i-s').'-'.bin2hex(random_bytes(8));
-            
+
             // Get all encryption keys for the user
             $encryptionKeys = $user->encryptionKeys()
                 ->with(['conversation', 'device'])
@@ -88,7 +87,7 @@ class KeyRecoveryService
             // Calculate checksum for integrity verification
             $checksum = hash('sha256', json_encode([
                 'conversations' => $backupData['conversations'],
-                'devices' => $backupData['devices']
+                'devices' => $backupData['devices'],
             ]));
             $backupData['checksum'] = $checksum;
 
@@ -98,7 +97,7 @@ class KeyRecoveryService
                 $backupData = [
                     'encrypted' => true,
                     'backup_id' => $backupId,
-                    'data' => $encryptedBackup
+                    'data' => $encryptedBackup,
                 ];
             }
 
@@ -115,9 +114,9 @@ class KeyRecoveryService
             Log::error('Failed to create user backup', [
                 'user_id' => $userId,
                 'exception' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
-            throw new EncryptionException('Backup creation failed: ' . $e->getMessage(), $e);
+            throw new EncryptionException('Backup creation failed: '.$e->getMessage(), $e);
         }
     }
 
@@ -166,7 +165,7 @@ class KeyRecoveryService
                 $backupData = [
                     'encrypted' => true,
                     'backup_id' => $backupId,
-                    'data' => $encryptedBackup
+                    'data' => $encryptedBackup,
                 ];
             }
 
@@ -182,9 +181,9 @@ class KeyRecoveryService
         } catch (\Exception $e) {
             Log::error('Failed to create incremental backup', [
                 'user_id' => $userId,
-                'exception' => $e->getMessage()
+                'exception' => $e->getMessage(),
             ]);
-            throw new EncryptionException('Incremental backup creation failed: ' . $e->getMessage(), $e);
+            throw new EncryptionException('Incremental backup creation failed: '.$e->getMessage(), $e);
         }
     }
 
@@ -196,14 +195,14 @@ class KeyRecoveryService
         try {
             // Decrypt backup if it's encrypted
             if (isset($backupData['encrypted']) && $backupData['encrypted']) {
-                if (!$masterPassword) {
+                if (! $masterPassword) {
                     throw new EncryptionException('Master password required for encrypted backup');
                 }
                 $backupData = $this->decryptBackup($backupData['data'], $masterPassword);
             }
 
             // Validate backup integrity
-            if (!$this->validateBackupIntegrity($backupData)) {
+            if (! $this->validateBackupIntegrity($backupData)) {
                 throw new EncryptionException('Backup integrity validation failed');
             }
 
@@ -230,7 +229,7 @@ class KeyRecoveryService
                             ->where('device_id', $device->id)
                             ->first();
 
-                        if (!$existingKey) {
+                        if (! $existingKey) {
                             EncryptionKey::create([
                                 'conversation_id' => $convData['conversation_id'],
                                 'user_id' => $user->id,
@@ -249,12 +248,12 @@ class KeyRecoveryService
                     } catch (\Exception $e) {
                         $errors[] = [
                             'conversation_id' => $convData['conversation_id'],
-                            'error' => $e->getMessage()
+                            'error' => $e->getMessage(),
                         ];
                         Log::warning('Failed to restore encryption key', [
                             'conversation_id' => $convData['conversation_id'],
                             'user_id' => $user->id,
-                            'error' => $e->getMessage()
+                            'error' => $e->getMessage(),
                         ]);
                     }
                 }
@@ -273,7 +272,7 @@ class KeyRecoveryService
                 'user_id' => $userId,
                 'restored_count' => $restoredCount,
                 'total_conversations' => count($backupData['conversations']),
-                'errors_count' => count($errors)
+                'errors_count' => count($errors),
             ]);
 
             return $result;
@@ -281,9 +280,9 @@ class KeyRecoveryService
         } catch (\Exception $e) {
             Log::error('Failed to restore from backup', [
                 'exception' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace' => $e->getTraceAsString(),
             ]);
-            throw new EncryptionException('Backup restoration failed: ' . $e->getMessage(), $e);
+            throw new EncryptionException('Backup restoration failed: '.$e->getMessage(), $e);
         }
     }
 
@@ -336,7 +335,7 @@ class KeyRecoveryService
                     } catch (\Exception $e) {
                         $errors[] = [
                             'conversation_id' => $convData['conversation_id'],
-                            'error' => $e->getMessage()
+                            'error' => $e->getMessage(),
                         ];
                     }
                 }
@@ -359,7 +358,7 @@ class KeyRecoveryService
                 'recovery_id' => $recoveryId,
                 'user_id' => $userId,
                 'admin_user_id' => $adminUserId,
-                'restored_count' => $restoredCount
+                'restored_count' => $restoredCount,
             ]);
 
             return $result;
@@ -368,9 +367,9 @@ class KeyRecoveryService
             Log::error('Emergency recovery failed', [
                 'user_id' => $userId,
                 'admin_user_id' => $adminUserId,
-                'exception' => $e->getMessage()
+                'exception' => $e->getMessage(),
             ]);
-            throw new EncryptionException('Emergency recovery failed: ' . $e->getMessage(), $e);
+            throw new EncryptionException('Emergency recovery failed: '.$e->getMessage(), $e);
         }
     }
 
@@ -379,26 +378,27 @@ class KeyRecoveryService
      */
     public function validateBackupIntegrity(array $backupData): bool
     {
-        if (!isset($backupData['checksum'])) {
+        if (! isset($backupData['checksum'])) {
             return false; // Older backup format without checksum
         }
 
         $dataForChecksum = [
             'conversations' => $backupData['conversations'] ?? [],
-            'devices' => $backupData['devices'] ?? []
+            'devices' => $backupData['devices'] ?? [],
         ];
 
         $calculatedChecksum = hash('sha256', json_encode($dataForChecksum));
+
         return hash_equals($backupData['checksum'], $calculatedChecksum);
     }
 
     /**
      * Store backup securely in storage
      */
-    public function storeBackup(array $backupData, string $filename = null): string
+    public function storeBackup(array $backupData, ?string $filename = null): string
     {
-        if (!$filename) {
-            $filename = 'backup-' . ($backupData['backup_id'] ?? date('Y-m-d-H-i-s')) . '.json';
+        if (! $filename) {
+            $filename = 'backup-'.($backupData['backup_id'] ?? date('Y-m-d-H-i-s')).'.json';
         }
 
         $disk = Storage::disk('backups');
@@ -406,7 +406,7 @@ class KeyRecoveryService
 
         Log::info('Backup stored successfully', [
             'filename' => $filename,
-            'backup_id' => $backupData['backup_id'] ?? 'unknown'
+            'backup_id' => $backupData['backup_id'] ?? 'unknown',
         ]);
 
         return $filename;
@@ -418,14 +418,14 @@ class KeyRecoveryService
     public function loadBackup(string $filename): array
     {
         $disk = Storage::disk('backups');
-        
-        if (!$disk->exists($filename)) {
+
+        if (! $disk->exists($filename)) {
             throw new EncryptionException("Backup file not found: {$filename}");
         }
 
         $backupData = json_decode($disk->get($filename), true);
-        
-        if (!$backupData) {
+
+        if (! $backupData) {
             throw new EncryptionException("Invalid backup file format: {$filename}");
         }
 
@@ -443,7 +443,7 @@ class KeyRecoveryService
         return [
             'user_id' => $userId,
             'user_email' => $user->email,
-            'has_public_key' => !empty($user->public_key),
+            'has_public_key' => ! empty($user->public_key),
             'total_conversations' => $encryptionKeys->groupBy('conversation_id')->count(),
             'total_encryption_keys' => $encryptionKeys->count(),
             'active_keys' => $encryptionKeys->where('is_active', true)->count(),
@@ -466,19 +466,19 @@ class KeyRecoveryService
         if ($totalKeys === 0) {
             $recommendations[] = [
                 'type' => 'warning',
-                'message' => 'No encryption keys found. Set up end-to-end encryption first.'
+                'message' => 'No encryption keys found. Set up end-to-end encryption first.',
             ];
         } elseif ($totalKeys > 0) {
             $recommendations[] = [
                 'type' => 'info',
-                'message' => "You have {$totalKeys} encryption keys. Consider creating a backup."
+                'message' => "You have {$totalKeys} encryption keys. Consider creating a backup.",
             ];
         }
 
         if ($totalKeys >= 5) {
             $recommendations[] = [
                 'type' => 'suggestion',
-                'message' => 'With multiple conversations, consider automated daily backups.'
+                'message' => 'With multiple conversations, consider automated daily backups.',
             ];
         }
 
@@ -513,7 +513,7 @@ class KeyRecoveryService
             'device_type' => 'web',
             'platform' => 'recovery',
             'public_key' => $publicKey,
-            'device_fingerprint' => 'recovery-' . $userId . '-' . time(),
+            'device_fingerprint' => 'recovery-'.$userId.'-'.time(),
             'last_used_at' => now(),
             'is_trusted' => true,
         ]);
@@ -531,7 +531,7 @@ class KeyRecoveryService
             'device_type' => 'web',
             'platform' => 'emergency',
             'public_key' => $publicKey,
-            'device_fingerprint' => 'emergency-' . $userId . '-' . time(),
+            'device_fingerprint' => 'emergency-'.$userId.'-'.time(),
             'last_used_at' => now(),
             'is_trusted' => true,
         ]);

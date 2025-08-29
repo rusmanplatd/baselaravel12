@@ -19,11 +19,11 @@ class OrganizationUnitFactory extends Factory
     public function definition(): array
     {
         $user = User::factory()->create();
-        
+
         return [
             'organization_id' => Organization::factory(),
             'unit_code' => $this->faker->unique()->regexify('[A-Z]{3}[0-9]{3}'),
-            'name' => $this->faker->company() . ' ' . $this->faker->randomElement(['Department', 'Division', 'Team']),
+            'name' => $this->faker->company().' '.$this->faker->randomElement(['Department', 'Division', 'Team']),
             'unit_type' => $this->faker->randomElement([
                 'board_of_commissioners',
                 'board_of_directors',

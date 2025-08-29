@@ -24,13 +24,13 @@ class ChatEncryptionService
         try {
             // Use smaller keys in testing environment for performance
             $actualKeySize = $keySize ?? (app()->environment('testing') ? 2048 : self::RSA_KEY_SIZE);
-            
+
             $config = [
                 'digest_alg' => 'sha512',
                 'private_key_bits' => $actualKeySize,
                 'private_key_type' => OPENSSL_KEYTYPE_RSA,
             ];
-            
+
             // Only add config path if it exists to avoid OpenSSL warnings
             $configPath = config('app.openssl_config_path');
             if ($configPath && file_exists($configPath)) {

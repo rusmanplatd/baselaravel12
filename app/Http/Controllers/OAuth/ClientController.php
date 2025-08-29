@@ -64,8 +64,10 @@ class ClientController extends Controller
 
         $availableOrganizations = Auth::user()->memberships()
             ->active()
-            ->whereHas('organizationPosition.organizationPositionLevel', function ($q) {
-                $q->whereIn('code', ['c_level', 'vice_president', 'director', 'senior_manager', 'manager']);
+            ->where(function ($query) {
+                $query->whereHas('organizationPosition.organizationPositionLevel', function ($q) {
+                    $q->whereIn('code', ['c_level', 'vice_president', 'director', 'senior_manager', 'manager']);
+                })->orWhereIn('membership_type', ['manager', 'board_member']);
             })
             ->with('organization')
             ->get()
@@ -93,19 +95,14 @@ class ClientController extends Controller
 
     public function store(StoreClientRequest $request)
     {
-        // Check permission after validation
-        if (!Auth::user()->can('oauth.client.create')) {
-            return response()->json([
-                'error' => 'forbidden',
-                'message' => 'You do not have permission to perform this action.',
-            ], 403);
-        }
 
         // Validate user has management access to the organization
         $userManagementOrgs = Auth::user()->memberships()
             ->active()
-            ->whereHas('organizationPosition.organizationPositionLevel', function ($q) {
-                $q->whereIn('code', ['c_level', 'vice_president', 'director', 'senior_manager', 'manager']);
+            ->where(function ($query) {
+                $query->whereHas('organizationPosition.organizationPositionLevel', function ($q) {
+                    $q->whereIn('code', ['c_level', 'vice_president', 'director', 'senior_manager', 'manager']);
+                })->orWhereIn('membership_type', ['manager', 'board_member']);
             })
             ->pluck('organization_id');
 
@@ -239,8 +236,10 @@ class ClientController extends Controller
     {
         $userManagementOrgs = Auth::user()->memberships()
             ->active()
-            ->whereHas('organizationPosition.organizationPositionLevel', function ($q) {
-                $q->whereIn('code', ['c_level', 'vice_president', 'director', 'senior_manager', 'manager']);
+            ->where(function ($query) {
+                $query->whereHas('organizationPosition.organizationPositionLevel', function ($q) {
+                    $q->whereIn('code', ['c_level', 'vice_president', 'director', 'senior_manager', 'manager']);
+                })->orWhereIn('membership_type', ['manager', 'board_member']);
             })
             ->pluck('organization_id');
 
@@ -264,8 +263,10 @@ class ClientController extends Controller
     {
         $userManagementOrgs = Auth::user()->memberships()
             ->active()
-            ->whereHas('organizationPosition.organizationPositionLevel', function ($q) {
-                $q->whereIn('code', ['c_level', 'vice_president', 'director', 'senior_manager', 'manager']);
+            ->where(function ($query) {
+                $query->whereHas('organizationPosition.organizationPositionLevel', function ($q) {
+                    $q->whereIn('code', ['c_level', 'vice_president', 'director', 'senior_manager', 'manager']);
+                })->orWhereIn('membership_type', ['manager', 'board_member']);
             })
             ->pluck('organization_id');
 

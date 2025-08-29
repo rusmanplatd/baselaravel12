@@ -145,6 +145,11 @@ class Message extends Model
         string $symmetricKey,
         array $additionalData = []
     ): self {
+        // Validate that content is not empty
+        if (empty($content)) {
+            throw new \App\Exceptions\EncryptionException('Message cannot be empty');
+        }
+
         $encryptionService = app(ChatEncryptionService::class);
 
         $encrypted = $encryptionService->encryptMessage($content, $symmetricKey);

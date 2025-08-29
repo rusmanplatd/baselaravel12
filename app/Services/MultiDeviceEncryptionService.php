@@ -113,13 +113,13 @@ class MultiDeviceEncryptionService
 
         // Security level validation - handle gracefully for some scenarios, throw for others
         $securityValidation = $this->validateDeviceSecurityForKeySharing($fromDevice, $newDevice);
-        
+
         if (! $securityValidation['allowed']) {
             // For critical security violations (like maximum to low security), throw exception
             if ($this->isCriticalSecurityViolation($fromDevice, $newDevice)) {
                 throw new \InvalidArgumentException('Security level mismatch');
             }
-            
+
             // For other cases, handle gracefully
             return [
                 'shared_conversations' => [],
@@ -127,7 +127,7 @@ class MultiDeviceEncryptionService
                     [
                         'conversation_id' => null,
                         'error' => $securityValidation['reason'],
-                    ]
+                    ],
                 ],
                 'total_keys_shared' => 0,
             ];
