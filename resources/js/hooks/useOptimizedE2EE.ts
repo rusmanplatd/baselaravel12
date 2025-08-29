@@ -99,7 +99,7 @@ export function useOptimizedE2EE(userId?: string): UseOptimizedE2EEReturn {
 
       if (result !== null) {
         stopTimer(true, {
-          dataSize: encryptedData.content.length,
+          dataSize: encryptedData.data.length,
           keyType: 'optimized'
         });
       } else {

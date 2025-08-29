@@ -59,7 +59,7 @@ export function SecurityMonitor() {
       setRefreshing(true);
       
       // Load security report
-      const report = await multiDeviceE2EEService.getSecurityReport();
+      const report = await multiDeviceE2EEService.getDeviceSecurityReport();
       
       setMetrics({
         overallSecurityScore: report.integrityReport.securityScore,

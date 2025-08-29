@@ -29,7 +29,7 @@ export class E2EEPerformanceMonitor {
   /**
    * Start timing an operation
    */
-  startOperation(operation: string): () => void {
+  startOperation(operation: string): (success?: boolean, details?: { dataSize?: number; keyType?: string; error?: string }) => void {
     const startTime = performance.now();
     const startTimestamp = new Date().toISOString();
 

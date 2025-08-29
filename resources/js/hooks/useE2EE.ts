@@ -53,7 +53,7 @@ export function useE2EE(userId?: string): UseE2EEReturn {
       setError(null);
       
       // Check if keys already exist
-      const storedPrivateKey = userId ? SecureStorage.getPrivateKey(userId) : null;
+      const storedPrivateKey = userId ? await SecureStorage.getPrivateKey(userId) : null;
       
       if (!storedPrivateKey) {
         // Generate new key pair
@@ -151,7 +151,7 @@ export function useE2EE(userId?: string): UseE2EEReturn {
       }
 
       // Get conversation symmetric key
-      let conversationKey = SecureStorage.getConversationKey(conversationId);
+      let conversationKey = await SecureStorage.getConversationKey(conversationId);
       
       if (!conversationKey) {
         // Fetch encrypted key from server
@@ -159,7 +159,7 @@ export function useE2EE(userId?: string): UseE2EEReturn {
         const keyData = await response.json();
 
         if (keyData.encrypted_key) {
-          const privateKey = SecureStorage.getPrivateKey(userId);
+          const privateKey = await SecureStorage.getPrivateKey(userId);
           if (!privateKey) {
             throw new Error('No private key available');
           }
@@ -173,7 +173,7 @@ export function useE2EE(userId?: string): UseE2EEReturn {
           const keyBytes = await window.crypto.subtle.exportKey('raw', symmetricKeyCrypto);
           conversationKey = btoa(String.fromCharCode(...new Uint8Array(keyBytes)));
           
-          SecureStorage.storeConversationKey(conversationId, conversationKey);
+          await SecureStorage.storeConversationKey(conversationId, conversationKey);
         } else {
           throw new Error('No encryption key found for conversation');
         }
@@ -207,7 +207,7 @@ export function useE2EE(userId?: string): UseE2EEReturn {
         throw new Error('User ID required for decryption');
       }
 
-      const conversationKey = SecureStorage.getConversationKey(conversationId);
+      const conversationKey = await SecureStorage.getConversationKey(conversationId);
       if (!conversationKey) {
         throw new Error('No conversation key available');
       }
@@ -279,7 +279,7 @@ export function useE2EE(userId?: string): UseE2EEReturn {
       // Store locally first
       const keyBytes = await window.crypto.subtle.exportKey('raw', symmetricKey);
       const keyBase64 = btoa(String.fromCharCode(...new Uint8Array(keyBytes)));
-      SecureStorage.storeConversationKey(conversationId, keyBase64);
+      await SecureStorage.storeConversationKey(conversationId, keyBase64);
 
       // Encrypt the symmetric key for each participant and send to server
       const encryptedKeysForParticipants: Array<{
@@ -369,7 +369,7 @@ export function useE2EE(userId?: string): UseE2EEReturn {
       // Get user's key data
       const keyData = {
         user_id: userId,
-        private_key: userId ? SecureStorage.getPrivateKey(userId) : null,
+        private_key: userId ? await SecureStorage.getPrivateKey(userId) : null,
         conversation_keys: JSON.parse(sessionStorage.getItem('chat_e2ee_conv_keys_all') || '{}')
       };
 
@@ -401,7 +401,7 @@ export function useE2EE(userId?: string): UseE2EEReturn {
           
           // Store individual conversation keys
           for (const [conversationId, key] of Object.entries(keyData.conversation_keys)) {
-            SecureStorage.storeConversationKey(conversationId, key as string);
+            await SecureStorage.storeConversationKey(conversationId, key as string);
           }
         }
         
@@ -427,7 +427,7 @@ export function useE2EE(userId?: string): UseE2EEReturn {
         throw new Error('User ID required for encryption');
       }
 
-      const conversationKey = SecureStorage.getConversationKey(conversationId);
+      const conversationKey = await SecureStorage.getConversationKey(conversationId);
       if (!conversationKey) {
         throw new Error('No conversation key available');
       }
@@ -460,7 +460,7 @@ export function useE2EE(userId?: string): UseE2EEReturn {
         throw new Error('User ID required for decryption');
       }
 
-      const conversationKey = SecureStorage.getConversationKey(conversationId);
+      const conversationKey = await SecureStorage.getConversationKey(conversationId);
       if (!conversationKey) {
         throw new Error('No conversation key available');
       }

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { router } from '@inertiajs/react';
 import { Conversation, Message, User, VoiceRecording, ReactionSummary, E2EEStatus } from '@/types/chat';
-import { multiDeviceE2EEService } from '@/services/MultiDeviceE2EEService';
+import { multiDeviceE2EEService, SecurityReport } from '@/services/MultiDeviceE2EEService';
 
 interface UseChatReturn {
   conversations: Conversation[];
@@ -53,7 +53,7 @@ export function useChat(user: any): UseChatReturn {
   const [error, setError] = useState<string | null>(null);
   const [encryptionReady, setEncryptionReady] = useState(false);
   const [deviceRegistered, setDeviceRegistered] = useState(false);
-  const [deviceSecurityStatus, setDeviceSecurityStatus] = useState(null);
+  const [deviceSecurityStatus, setDeviceSecurityStatus] = useState<SecurityReport | null>(null);
   const [e2eeStatus, setE2eeStatus] = useState<E2EEStatus>({
     enabled: false,
     keyGenerated: false,
@@ -157,8 +157,8 @@ export function useChat(user: any): UseChatReturn {
 
   const registerDevice = useCallback(async (deviceInfo: any) => {
     try {
-      const result = await multiDeviceE2EEService.registerDevice(deviceInfo);
-      if (result.success) {
+      const result = await multiDeviceE2EEService.registerDevice();
+      if (result.device) {
         setDeviceRegistered(true);
         setEncryptionReady(true);
         setE2eeStatus({
@@ -168,7 +168,6 @@ export function useChat(user: any): UseChatReturn {
           version: '2.0'
         });
       }
-      return result;
     } catch (error) {
       console.error('Failed to register device:', error);
       throw error;
@@ -178,7 +177,7 @@ export function useChat(user: any): UseChatReturn {
   const setupConversationEncryption = useCallback(async (conversationId: string) => {
     try {
       // Use multi-device service to setup conversation encryption
-      await multiDeviceE2EEService.setupConversationEncryption(conversationId);
+      await multiDeviceE2EEService.setupConversationEncryption(conversationId, []);
     } catch (error) {
       console.error('Failed to setup conversation encryption:', error);
     }
@@ -313,8 +312,8 @@ export function useChat(user: any): UseChatReturn {
           if (encryptedData) {
             messageData = {
               ...messageData,
-              encrypted_content: encryptedData.encryptedContent,
-              content_hash: encryptedData.contentHash,
+              encrypted_content: encryptedData.data,
+              content_hash: encryptedData.hash,
             };
           } else {
             messageData.content = content;
