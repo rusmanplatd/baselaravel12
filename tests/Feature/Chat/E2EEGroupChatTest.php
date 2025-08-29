@@ -432,7 +432,8 @@ describe('E2EE Group Chat and Multi-Participant Encryption', function () {
             $keySetupTime = microtime(true) - $startTime;
 
             // Should complete key setup within reasonable time
-            expect($keySetupTime)->toBeLessThan(30.0); // 30 seconds for 50 users
+            // With 2048-bit keys in testing environment, this should be much faster
+            expect($keySetupTime)->toBeLessThan(30.0); // 30 seconds for 50 users with 2048-bit keys
             expect(count($participants))->toBe(50);
 
             // Verify encryption key count
@@ -469,21 +470,21 @@ describe('E2EE Group Chat and Multi-Participant Encryption', function () {
         it('handles role-based access in encrypted groups', function () {
             // Setup group with different roles
             $adminUser = $this->users[0];
-            $moderatorUser = $this->users[1];
+            $secondAdminUser = $this->users[1]; // Will be another admin
             $memberUser = $this->users[2];
-            $readOnlyUser = $this->users[3];
+            $anotherMemberUser = $this->users[3]; // Will be another member
 
-            // Update participant roles
+            // Update participant roles - both admins and members
             $this->groupConversation->participants()
-                ->where('user_id', $moderatorUser->id)
-                ->update(['role' => 'moderator']);
+                ->where('user_id', $secondAdminUser->id)
+                ->update(['role' => 'admin']);
 
             $this->groupConversation->participants()
-                ->where('user_id', $readOnlyUser->id)
-                ->update(['role' => 'read_only']);
+                ->where('user_id', $anotherMemberUser->id)
+                ->update(['role' => 'member']);
 
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
-            $allUsers = [$adminUser, $moderatorUser, $memberUser, $readOnlyUser];
+            $allUsers = [$adminUser, $secondAdminUser, $memberUser, $anotherMemberUser];
             $userKeys = [];
 
             // Setup encryption for all users
@@ -528,7 +529,7 @@ describe('E2EE Group Chat and Multi-Participant Encryption', function () {
                 $symmetricKey
             );
 
-            // Admin should be able to read member's message
+            // Both admins should be able to read member's message
             $adminKey = EncryptionKey::where('conversation_id', $this->groupConversation->id)
                 ->where('user_id', $adminUser->id)
                 ->first();

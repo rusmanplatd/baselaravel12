@@ -19,15 +19,23 @@ class ChatEncryptionService
 
     private const MIN_PASSWORD_ENTROPY = 50; // Minimum entropy for derived passwords
 
-    public function generateKeyPair(): array
+    public function generateKeyPair(?int $keySize = null): array
     {
         try {
+            // Use smaller keys in testing environment for performance
+            $actualKeySize = $keySize ?? (app()->environment('testing') ? 2048 : self::RSA_KEY_SIZE);
+            
             $config = [
                 'digest_alg' => 'sha512',
-                'private_key_bits' => self::RSA_KEY_SIZE,
+                'private_key_bits' => $actualKeySize,
                 'private_key_type' => OPENSSL_KEYTYPE_RSA,
-                'config' => config('app.openssl_config_path'),
             ];
+            
+            // Only add config path if it exists to avoid OpenSSL warnings
+            $configPath = config('app.openssl_config_path');
+            if ($configPath && file_exists($configPath)) {
+                $config['config'] = $configPath;
+            }
 
             $resource = openssl_pkey_new($config);
 

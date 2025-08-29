@@ -9,6 +9,7 @@ on:
 jobs:
   backend-tests:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
 
     services:
       postgres:
@@ -87,6 +88,7 @@ jobs:
 
   frontend-tests:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
 
     steps:
     - uses: actions/checkout@v4
@@ -117,6 +119,7 @@ jobs:
 
   e2e-tests:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     needs: [backend-tests, frontend-tests]
 
     services:
@@ -208,6 +211,7 @@ jobs:
 
   security-check:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
 
     steps:
     - uses: actions/checkout@v4
