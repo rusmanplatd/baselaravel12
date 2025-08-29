@@ -12,20 +12,35 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('oauth_device_codes', function (Blueprint $table) {
-            $table->char('id', 80)->primary();
-            $table->ulid('user_id')->nullable()->index();
+            // Primary key - use device_code as primary key (Google-like)
+            $table->string('device_code')->primary();
+            
+            // Core device flow fields
+            $table->string('user_code')->unique();
             $table->ulid('client_id');
-            $table->char('user_code', 8)->unique();
-            $table->text('scopes');
-            $table->boolean('revoked');
-            $table->dateTime('user_approved_at')->nullable();
-            $table->dateTime('last_polled_at')->nullable();
-            $table->dateTime('expires_at')->nullable();
+            $table->ulid('user_id')->nullable();
+            $table->json('scopes')->nullable();
+            
+            // Device flow specific fields (Google-like)
+            $table->timestamp('expires_at');
+            $table->timestamp('last_polled_at')->nullable();
+            $table->integer('poll_count')->default(0);
+            $table->enum('status', ['pending', 'authorized', 'denied', 'expired'])->default('pending');
+            $table->string('verification_uri');
+            $table->string('verification_uri_complete')->nullable();
+            $table->integer('interval')->default(5);
+            
+            // Standard timestamps
+            $table->timestamps();
 
+            // Foreign key constraints
             $table->foreign('user_id')->references('id')->on('sys_users')->onDelete('cascade');
             $table->foreign('client_id')->references('id')->on('oauth_clients')->onDelete('cascade');
 
-            $table->index('client_id');
+            // Performance indexes
+            $table->index(['user_code', 'status']);
+            $table->index(['client_id', 'status']);
+            $table->index(['status', 'expires_at']);
         });
     }
 

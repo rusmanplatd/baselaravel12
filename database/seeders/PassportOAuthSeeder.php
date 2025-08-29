@@ -302,7 +302,7 @@ class PassportOAuthSeeder extends Seeder
                     'https://api.yourcompany.com/auth/files',
                     'https://api.yourcompany.com/auth/devices',
                 ],
-                'grant_types' => ['authorization_code', 'refresh_token'],
+                'grant_types' => ['authorization_code', 'refresh_token', 'urn:ietf:params:oauth:grant-type:device_code'],
             ],
 
             // Mobile Application
@@ -327,7 +327,7 @@ class PassportOAuthSeeder extends Seeder
                     'https://api.yourcompany.com/auth/devices',
                     'https://api.yourcompany.com/auth/security',
                 ],
-                'grant_types' => ['authorization_code', 'refresh_token'],
+                'grant_types' => ['authorization_code', 'refresh_token', 'urn:ietf:params:oauth:grant-type:device_code'],
             ],
 
             // Management Dashboard - Organization members only
@@ -350,7 +350,7 @@ class PassportOAuthSeeder extends Seeder
                     'https://api.yourcompany.com/auth/audit.readonly',
                     'https://api.yourcompany.com/auth/finance.readonly',
                 ],
-                'grant_types' => ['authorization_code', 'refresh_token'],
+                'grant_types' => ['authorization_code', 'refresh_token', 'urn:ietf:params:oauth:grant-type:device_code'],
             ],
 
             // Developer Tools - Custom access
@@ -437,7 +437,7 @@ class PassportOAuthSeeder extends Seeder
                     'https://api.yourcompany.com/auth/chat.readonly',
                     'https://api.yourcompany.com/auth/audit.readonly',
                 ],
-                'grant_types' => ['authorization_code', 'refresh_token'],
+                'grant_types' => ['authorization_code', 'refresh_token', 'urn:ietf:params:oauth:grant-type:device_code'],
             ],
 
             // File Storage Service

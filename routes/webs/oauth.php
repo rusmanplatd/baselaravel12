@@ -27,10 +27,32 @@ Route::prefix('oauth')->group(function () {
         ->middleware(['throttle:oauth_token'])
         ->name('oauth.revoke');
 
+    // Device Authorization Grant (RFC 8628)
+    Route::post('device_authorization', [OAuthController::class, 'deviceAuthorization'])
+        ->middleware(['throttle:oauth_device'])
+        ->name('oauth.device_authorization');
+    Route::get('device', [OAuthController::class, 'deviceVerification'])
+        ->name('oauth.device_verification');
+    Route::post('device', [OAuthController::class, 'deviceApprove'])
+        ->middleware(['auth:web', 'throttle:oauth_device'])
+        ->name('oauth.device_approve');
+
+    // Token and consent management endpoints
+    Route::get('tokeninfo', [OAuthController::class, 'tokenInfo'])
+        ->middleware(['auth:api', 'throttle:oauth_userinfo'])
+        ->name('oauth.tokeninfo');
+
     Route::middleware('auth:web')->group(function () {
         Route::resource('clients', ClientController::class);
         Route::post('clients/{client}/regenerate-secret', [ClientController::class, 'regenerateSecret'])
             ->name('clients.regenerate-secret');
+            
+        // User consent management (like Google's account permissions)
+        Route::get('consents', [OAuthController::class, 'userConsents'])
+            ->name('oauth.consents');
+        Route::delete('consents/{consent}', [OAuthController::class, 'revokeConsent'])
+            ->name('oauth.consents.revoke');
+            
         Route::get('analytics', [\App\Http\Controllers\OAuth\AnalyticsController::class, 'dashboard'])
             ->name('oauth.analytics');
         Route::get('analytics/chart-data', [\App\Http\Controllers\OAuth\AnalyticsController::class, 'chartData'])

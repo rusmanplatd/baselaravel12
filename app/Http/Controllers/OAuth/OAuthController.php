@@ -7,6 +7,7 @@ use App\Http\Requests\OAuth\ApproveRequest;
 use App\Http\Requests\OAuth\AuthorizeRequest;
 use App\Http\Requests\OAuth\IntrospectRequest;
 use App\Models\Client;
+use App\Models\DeviceCode;
 use App\Models\OAuthAuditLog;
 use App\Models\OAuthScope;
 use App\Models\Organization;
@@ -87,7 +88,7 @@ class OAuthController extends Controller
         $existingConsent = UserConsent::where([
             'user_id' => Auth::id(),
             'client_id' => $client->id,
-        ])->first();
+        ])->active()->first();
 
         if ($existingConsent && $this->scopesMatch($existingConsent->scopes, $validScopes)) {
             OAuthAuditLog::logEvent('authorize', [
@@ -146,11 +147,32 @@ class OAuthController extends Controller
             ], 403);
         }
 
+        $scopeDetails = [];
+        $availableScopes = $this->getAvailableScopes($client->organization);
+        
+        foreach ($request->scopes as $scope) {
+            $scopeDetails[] = [
+                'scope' => $scope,
+                'name' => $availableScopes[$scope]['name'] ?? $scope,
+                'description' => $availableScopes[$scope]['description'] ?? '',
+                'granted_at' => now()->toISOString(),
+            ];
+        }
+
         UserConsent::updateOrCreate([
             'user_id' => Auth::id(),
             'client_id' => $client->id,
         ], [
             'scopes' => $request->scopes,
+            'scope_details' => $scopeDetails,
+            'status' => 'active',
+            'granted_by_ip' => $request->ip(),
+            'granted_user_agent' => $request->userAgent(),
+            'expires_at' => now()->addYear(), // Consents expire after 1 year
+            'usage_stats' => [
+                'granted_at' => now()->toISOString(),
+                'access_count' => 0,
+            ],
         ]);
 
         OAuthAuditLog::logEvent('authorize', [
@@ -184,6 +206,157 @@ class OAuthController extends Controller
         }
 
         return redirect($redirectUri.'?'.http_build_query($params));
+    }
+
+    public function deviceAuthorization(Request $request)
+    {
+        $request->validate([
+            'client_id' => 'required|string',
+            'scope' => 'sometimes|string',
+        ]);
+
+        $client = Client::with('organization')->find($request->client_id);
+        if (!$client) {
+            return response()->json([
+                'error' => 'invalid_client',
+                'error_description' => 'The client credentials are invalid'
+            ], 400);
+        }
+
+        // Check if client supports device flow
+        $grantTypes = is_string($client->grant_types) 
+            ? json_decode($client->grant_types, true) 
+            : $client->grant_types;
+            
+        if (!in_array('urn:ietf:params:oauth:grant-type:device_code', $grantTypes ?? [])) {
+            return response()->json([
+                'error' => 'unsupported_grant_type',
+                'error_description' => 'Client does not support device authorization grant'
+            ], 400);
+        }
+
+        $requestedScopes = explode(' ', $request->scope ?? 'openid');
+        $organization = $client->organization;
+        $availableScopes = $this->getAvailableScopes($organization);
+        $validScopes = array_intersect($requestedScopes, array_keys($availableScopes));
+
+        $deviceCode = DeviceCode::generateDeviceCode();
+        $userCode = DeviceCode::generateUserCode();
+        $baseUrl = config('app.url');
+        
+        $verificationUri = $baseUrl . '/oauth/device';
+        $verificationUriComplete = $verificationUri . '?user_code=' . $userCode;
+
+        DeviceCode::create([
+            'device_code' => $deviceCode,
+            'user_code' => $userCode,
+            'client_id' => $client->id,
+            'scopes' => $validScopes,
+            'expires_at' => now()->addMinutes(10),
+            'verification_uri' => $verificationUri,
+            'verification_uri_complete' => $verificationUriComplete,
+            'interval' => 5,
+        ]);
+
+        OAuthAuditLog::logEvent('device_authorization', [
+            'client_id' => $client->id,
+            'user_code' => $userCode,
+            'scopes' => $validScopes,
+        ]);
+
+        return response()->json([
+            'device_code' => $deviceCode,
+            'user_code' => $userCode,
+            'verification_uri' => $verificationUri,
+            'verification_uri_complete' => $verificationUriComplete,
+            'expires_in' => 600,
+            'interval' => 5,
+        ]);
+    }
+
+    public function deviceVerification(Request $request)
+    {
+        $userCode = $request->input('user_code') ?? $request->query('user_code');
+        
+        if (!Auth::check()) {
+            return redirect()->route('login')->with('device_user_code', $userCode);
+        }
+
+        if (!$userCode) {
+            return Inertia::render('OAuth/DeviceCodeEntry');
+        }
+
+        $deviceCode = DeviceCode::where('user_code', $userCode)->active()->first();
+        
+        if (!$deviceCode) {
+            return Inertia::render('OAuth/DeviceCodeEntry', [
+                'error' => 'Invalid or expired code'
+            ]);
+        }
+
+        $client = $deviceCode->client;
+        $organization = $client->organization;
+        $availableScopes = $this->getAvailableScopes($organization);
+
+        return Inertia::render('OAuth/DeviceAuthorize', [
+            'device_code' => $deviceCode,
+            'client' => [
+                'id' => $client->id,
+                'name' => $client->name,
+                'organization' => [
+                    'id' => $organization->id,
+                    'name' => $organization->name,
+                    'code' => $organization->organization_code,
+                ],
+            ],
+            'scopes' => array_map(function ($scope) use ($availableScopes) {
+                return [
+                    'id' => $scope,
+                    'name' => $availableScopes[$scope]['name'] ?? $scope,
+                    'description' => $availableScopes[$scope]['description'] ?? '',
+                ];
+            }, $deviceCode->scopes ?? []),
+            'user' => Auth::user()->only(['name', 'first_name', 'middle_name', 'last_name', 'nickname', 'email', 'avatar_url', 'profile_url']),
+        ]);
+    }
+
+    public function deviceApprove(Request $request)
+    {
+        $request->validate([
+            'user_code' => 'required|string',
+            'action' => 'required|in:approve,deny',
+        ]);
+
+        $deviceCode = DeviceCode::where('user_code', $request->user_code)->active()->first();
+        
+        if (!$deviceCode) {
+            return response()->json([
+                'error' => 'Invalid or expired code'
+            ], 400);
+        }
+
+        if ($request->action === 'approve') {
+            $deviceCode->markAsAuthorized(Auth::user());
+            
+            OAuthAuditLog::logEvent('device_approved', [
+                'client_id' => $deviceCode->client_id,
+                'user_id' => Auth::id(),
+                'user_code' => $deviceCode->user_code,
+                'scopes' => $deviceCode->scopes,
+            ]);
+
+            return response()->json(['message' => 'Device authorized successfully']);
+        } else {
+            $deviceCode->markAsDenied();
+            
+            OAuthAuditLog::logError('device_denied', 'access_denied', 'User denied device authorization', [
+                'client_id' => $deviceCode->client_id,
+                'user_id' => Auth::id(),
+                'user_code' => $deviceCode->user_code,
+            ]);
+
+            return response()->json(['message' => 'Device authorization denied']);
+        }
     }
 
     public function userinfo(Request $request)
@@ -313,13 +486,15 @@ class OAuthController extends Controller
             'registration_endpoint' => $baseUrl.'/oauth/clients',
             'introspection_endpoint' => $baseUrl.'/oauth/introspect',
             'revocation_endpoint' => $baseUrl.'/oauth/revoke',
+            'device_authorization_endpoint' => $baseUrl.'/oauth/device_authorization',
             'scopes_supported' => array_keys($this->getAvailableScopes(new Organization)),
             'response_types_supported' => ['code', 'token', 'id_token', 'code token', 'code id_token', 'token id_token', 'code token id_token'],
             'response_modes_supported' => ['query', 'fragment'],
-            'grant_types_supported' => ['authorization_code', 'refresh_token', 'client_credentials'],
+            'grant_types_supported' => ['authorization_code', 'refresh_token', 'client_credentials', 'urn:ietf:params:oauth:grant-type:device_code'],
             'subject_types_supported' => ['public'],
             'id_token_signing_alg_values_supported' => ['RS256'],
             'token_endpoint_auth_methods_supported' => ['client_secret_post', 'client_secret_basic'],
+            'code_challenge_methods_supported' => ['plain', 'S256'],
             'claims_supported' => [
                 // Standard OIDC claims
                 'sub', 'iss', 'aud', 'exp', 'iat', 'name', 'given_name', 'middle_name', 'family_name', 
@@ -393,6 +568,125 @@ class OAuthController extends Controller
             ->update(['revoked' => true]);
 
         return response()->json(['revoked' => true]);
+    }
+
+    public function userConsents(Request $request)
+    {
+        $consents = UserConsent::where('user_id', Auth::id())
+            ->active()
+            ->with('client.organization')
+            ->orderBy('last_used_at', 'desc')
+            ->get()
+            ->map(function ($consent) {
+                return [
+                    'id' => $consent->id,
+                    'client' => [
+                        'id' => $consent->client->id,
+                        'name' => $consent->client->name,
+                        'description' => $consent->client->description,
+                        'website' => $consent->client->website,
+                        'logo_url' => $consent->client->logo_url,
+                        'organization' => [
+                            'name' => $consent->client->organization->name,
+                            'code' => $consent->client->organization->organization_code,
+                        ],
+                    ],
+                    'scopes' => $consent->scope_details ?? [],
+                    'granted_at' => $consent->created_at,
+                    'last_used_at' => $consent->last_used_at,
+                    'expires_at' => $consent->expires_at,
+                    'usage_stats' => $consent->usage_stats ?? [],
+                    'granted_by_ip' => $consent->granted_by_ip,
+                ];
+            });
+
+        return response()->json(['consents' => $consents]);
+    }
+
+    public function revokeConsent(Request $request, $consentId)
+    {
+        $consent = UserConsent::where('user_id', Auth::id())
+            ->where('id', $consentId)
+            ->active()
+            ->first();
+
+        if (!$consent) {
+            return response()->json([
+                'error' => 'consent_not_found',
+                'error_description' => 'Consent not found or already revoked'
+            ], 404);
+        }
+
+        $consent->revoke();
+
+        // Revoke all active tokens for this client-user combination
+        DB::table('oauth_access_tokens')
+            ->where('user_id', Auth::id())
+            ->where('client_id', $consent->client_id)
+            ->update(['revoked' => true]);
+
+        DB::table('oauth_refresh_tokens')
+            ->whereIn('access_token_id', function ($query) use ($consent) {
+                $query->select('id')
+                      ->from('oauth_access_tokens')
+                      ->where('user_id', Auth::id())
+                      ->where('client_id', $consent->client_id);
+            })
+            ->update(['revoked' => true]);
+
+        OAuthAuditLog::logEvent('consent_revoked', [
+            'client_id' => $consent->client_id,
+            'user_id' => Auth::id(),
+            'consent_id' => $consent->id,
+            'revoked_scopes' => $consent->scopes,
+        ]);
+
+        return response()->json(['message' => 'Consent revoked successfully']);
+    }
+
+    public function tokenInfo(Request $request)
+    {
+        $token = $request->bearerToken();
+        
+        if (!$token) {
+            return response()->json(['error' => 'missing_token'], 400);
+        }
+
+        $tokenModel = DB::table('oauth_access_tokens')
+            ->select([
+                'id', 'client_id', 'user_id', 'scopes', 'created_at', 
+                'updated_at', 'expires_at', 'revoked'
+            ])
+            ->where('id', $token)
+            ->first();
+
+        if (!$tokenModel || $tokenModel->revoked) {
+            return response()->json(['error' => 'invalid_token'], 401);
+        }
+
+        if (now()->isAfter($tokenModel->expires_at)) {
+            return response()->json(['error' => 'token_expired'], 401);
+        }
+
+        $client = Client::with('organization')->find($tokenModel->client_id);
+        $user = User::find($tokenModel->user_id);
+
+        return response()->json([
+            'active' => true,
+            'client_id' => $tokenModel->client_id,
+            'client_name' => $client->name,
+            'organization' => [
+                'name' => $client->organization->name,
+                'code' => $client->organization->organization_code,
+            ],
+            'user_id' => $tokenModel->user_id,
+            'username' => $user->email,
+            'scope' => implode(' ', json_decode($tokenModel->scopes, true)),
+            'exp' => strtotime($tokenModel->expires_at),
+            'iat' => strtotime($tokenModel->created_at),
+            'issued_at' => $tokenModel->created_at,
+            'expires_at' => $tokenModel->expires_at,
+        ]);
     }
 
     private function generateAuthorizationCode($client, $scopes, $request)

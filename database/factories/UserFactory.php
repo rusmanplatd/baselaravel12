@@ -37,7 +37,9 @@ class UserFactory extends Factory
             'profile_url' => fake()->optional(0.2)->url(),
             'website' => fake()->optional(0.3)->url(),
             'gender' => fake()->optional(0.7)->randomElement(['male', 'female', 'other']),
-            'birthdate' => fake()->optional(0.8)->dateTimeBetween('-80 years', '-18 years')->format('Y-m-d'),
+            'birthdate' => fake()->optional(0.8)->passthrough(
+                fake()->dateTimeBetween('-80 years', '-18 years')->format('Y-m-d')
+            ),
             'zoneinfo' => fake()->timezone(),
             'locale' => fake()->randomElement(['en-US', 'en-GB', 'es-ES', 'fr-FR', 'de-DE', 'ja-JP', 'zh-CN']),
             'street_address' => fake()->streetAddress(),
