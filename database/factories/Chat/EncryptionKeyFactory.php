@@ -7,6 +7,7 @@ namespace Database\Factories\Chat;
 use App\Models\Chat\Conversation;
 use App\Models\Chat\EncryptionKey;
 use App\Models\User;
+use App\Models\UserDevice;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -31,8 +32,13 @@ class EncryptionKeyFactory extends Factory
         return [
             'conversation_id' => Conversation::factory(),
             'user_id' => User::factory(),
+            'device_id' => UserDevice::factory(),
+            'device_fingerprint' => $this->faker->sha256(),
             'public_key' => $this->generateMockPublicKey(),
-            'encrypted_key' => base64_encode($this->faker->randomBytes(1024)),
+            'encrypted_key' => base64_encode(random_bytes(1024)),
+            'key_version' => 1,
+            'algorithm' => 'RSA-4096-OAEP',
+            'key_strength' => 4096,
             'is_active' => true,
         ];
     }
@@ -43,7 +49,7 @@ class EncryptionKeyFactory extends Factory
     private function generateMockPublicKey(): string
     {
         return "-----BEGIN PUBLIC KEY-----\n".
-               chunk_split(base64_encode($this->faker->randomBytes(270)), 64).
+               chunk_split(base64_encode(random_bytes(270)), 64).
                '-----END PUBLIC KEY-----';
     }
 }

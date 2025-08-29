@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\UserDevice;
 use App\Services\ChatEncryptionService;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Spatie\Activitylog\LogOptions;
@@ -13,7 +14,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 class EncryptionKey extends Model
 {
-    use HasUlids, LogsActivity;
+    use HasFactory, HasUlids, LogsActivity;
 
     protected $table = 'chat_encryption_keys';
 
@@ -136,7 +137,7 @@ class EncryptionKey extends Model
 
         // If no fingerprint provided, get it from the device
         if (empty($deviceFingerprint)) {
-            $device = \App\Models\UserDevice::find($deviceId);
+            $device = UserDevice::find($deviceId);
             if (! $device) {
                 throw new \InvalidArgumentException('Device not found');
             }

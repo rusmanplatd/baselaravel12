@@ -280,8 +280,10 @@ describe('Key Derivation', function () {
 
 describe('Error Handling and Validation', function () {
     it('validates input parameters', function () {
-        expect(fn () => $this->encryptionService->encryptMessage('', 'key'))
-            ->toThrow(EncryptionException::class, 'Message cannot be empty');
+        // Empty messages are now allowed for file encryption use cases
+        // Test with invalid key length instead
+        expect(fn () => $this->encryptionService->encryptMessage('test', 'key'))
+            ->toThrow(EncryptionException::class, 'Invalid symmetric key length');
 
         expect(fn () => $this->encryptionService->decryptMessage('content', 'iv', ''))
             ->toThrow(DecryptionException::class);
