@@ -2,6 +2,23 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Naming Conventions and Code Style
+
+### Naming Rules
+- **NO marketing adjectives**: Never use "advanced", "enhanced", "improved", "better", "superior", "features", "premium", or similar terms in code names
+- **Be descriptive and direct**: Use specific, functional names that describe what the code does
+- **Avoid redundancy**: Don't use "features" suffix (e.g., `useE2EE` not `useE2EEFeatures`)
+- **Keep it simple**: Prefer shorter, clearer names over verbose ones
+- **Examples**:
+  - ✅ `useE2EE`, `MessageScheduler`, `DisappearingMessages`
+  - ❌ `useAdvancedE2EE`, `EnhancedMessageScheduler`, `ImprovedFeatures`
+
+### Integration over Creation
+- Always integrate new functionality into existing hooks/components when possible
+- Only create separate files when functionality is truly distinct
+- Prefer extending existing interfaces over creating new ones
+- Merge related functionality rather than creating parallel systems
+
 ## Architecture Overview
 
 This is a Laravel 12 + React fullstack application using:

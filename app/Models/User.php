@@ -39,6 +39,7 @@ class User extends Authenticatable implements HasPasskeys
      */
     protected $fillable = [
         'name',
+        'username',
         'email',
         'password',
         'avatar',
@@ -71,7 +72,7 @@ class User extends Authenticatable implements HasPasskeys
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['name', 'email', 'avatar'])
+            ->logOnly(['name', 'username', 'email', 'avatar'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
             ->setDescriptionForEvent(fn (string $eventName) => "User {$eventName}")

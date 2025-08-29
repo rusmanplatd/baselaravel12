@@ -2,11 +2,65 @@ import { useCallback, useEffect, useState } from 'react';
 import { ChatEncryption, SecureStorage } from '@/utils/encryption';
 import { secureKeyManager } from '@/lib/SecureKeyManager';
 import { e2eeErrorRecovery } from '@/services/E2EEErrorRecovery';
-import type { EncryptionKey, KeyPair, E2EEStatus, EncryptedMessageData } from '@/types/chat';
+import { multiDeviceE2EEService } from '@/services/MultiDeviceE2EEService';
+import { doubleRatchetE2EE } from '@/services/DoubleRatchetE2EE';
+import { apiService } from '@/services/ApiService';
+import { toast } from 'sonner';
+import type { EncryptionKey, KeyPair, E2EEStatus, EncryptedMessageData, Message, Conversation, User } from '@/types/chat';
 import { router } from '@inertiajs/react';
-import { apiService, ApiError } from '@/services/ApiService';
+
+export interface ScheduledMessage {
+  id: string;
+  content: string;
+  conversationId: string;
+  scheduledAt: Date;
+  priority: 'low' | 'normal' | 'high' | 'urgent';
+  deleteAfter?: number;
+  requiresConfirmation: boolean;
+  status: 'pending' | 'sent' | 'failed' | 'cancelled';
+  createdAt: Date;
+}
+
+export interface DisappearingMessage {
+  id: string;
+  content: string;
+  expiresAt: Date;
+  timeRemaining: number;
+  isExpired: boolean;
+}
+
+export interface MessageDraft {
+  id: string;
+  conversationId: string;
+  content: string;
+  metadata?: {
+    type: 'text' | 'voice' | 'file';
+    fileInfo?: { name: string; size: number; type: string };
+    voiceInfo?: { duration: number; transcript?: string };
+  };
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface GroupInvitation {
+  id: string;
+  groupId: string;
+  groupName: string;
+  inviteCode: string;
+  inviteLink: string;
+  expiresAt: Date;
+  maxUses?: number;
+  currentUses: number;
+  permissions: {
+    canInvite: boolean;
+    canManageGroup: boolean;
+    canViewHistory: boolean;
+  };
+  status: 'active' | 'expired' | 'revoked' | 'exhausted';
+}
 
 interface UseE2EEReturn {
+  // Core E2EE functionality
   status: E2EEStatus;
   initializeE2EE: () => Promise<boolean>;
   generateKeyPair: () => Promise<KeyPair | null>;
@@ -22,11 +76,74 @@ interface UseE2EEReturn {
   getKeyStatistics: (conversationId: string) => Promise<any>;
   verifyKeyIntegrity: () => Promise<boolean>;
   validateHealth: () => Promise<any>;
+
+  // Message Scheduling
+  scheduleMessage: (
+    content: string,
+    conversationId: string,
+    scheduledAt: Date,
+    options?: {
+      deleteAfter?: number;
+      priority?: 'low' | 'normal' | 'high' | 'urgent';
+      requiresConfirmation?: boolean;
+    }
+  ) => Promise<void>;
+  scheduledMessages: ScheduledMessage[];
+  cancelScheduledMessage: (messageId: string) => Promise<void>;
+
+  // Disappearing Messages
+  setDisappearingTimer: (conversationId: string, minutes: number) => Promise<void>;
+  disappearingMessages: DisappearingMessage[];
+  disappearingTimer: number;
+
+  // Message Forwarding
+  forwardMessages: (
+    messageIds: string[],
+    destinationIds: string[],
+    options: {
+      includeQuote: boolean;
+      preserveThreads: boolean;
+      addComment?: string;
+    }
+  ) => Promise<void>;
+
+  // Encrypted Drafts
+  saveDraft: (conversationId: string, content: string, metadata?: any) => Promise<void>;
+  loadDrafts: (conversationId: string) => Promise<MessageDraft[]>;
+  deleteDraft: (draftId: string) => Promise<void>;
+
+  // Group Invitations
+  createGroupInvitation: (
+    groupId: string,
+    invitation: {
+      expiresAt: Date;
+      maxUses?: number;
+      permissions: {
+        canInvite: boolean;
+        canManageGroup: boolean;
+        canViewHistory: boolean;
+      };
+      welcomeMessage?: string;
+    }
+  ) => Promise<GroupInvitation>;
+  revokeGroupInvitation: (invitationId: string) => Promise<void>;
+  groupInvitations: GroupInvitation[];
+
+  // Double Ratchet
+  initializeDoubleRatchet: (conversationId: string, remoteDeviceId: string) => Promise<void>;
+  rotateConversationKeys: (conversationId: string) => Promise<void>;
+
+  // Security
+  exportSecurityReport: () => Promise<Blob>;
+  validateEncryptionHealth: () => Promise<boolean>;
+  
+  // State
   isReady: boolean;
   error: string | null;
 }
 
-export function useE2EE(userId?: string): UseE2EEReturn {
+export function useE2EE(userId?: string, currentConversationId?: string): UseE2EEReturn {
+  // Core E2EE state
   const [status, setStatus] = useState<E2EEStatus>({
     enabled: false,
     keyGenerated: false,
@@ -36,6 +153,12 @@ export function useE2EE(userId?: string): UseE2EEReturn {
 
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // New features state
+  const [scheduledMessages, setScheduledMessages] = useState<ScheduledMessage[]>([]);
+  const [disappearingMessages, setDisappearingMessages] = useState<DisappearingMessage[]>([]);
+  const [disappearingTimer, setDisappearingTimer] = useState(0);
+  const [groupInvitations, setGroupInvitations] = useState<GroupInvitation[]>([]);
 
   // Enhanced error handling wrapper
   const handleE2EEError = useCallback((error: Error, operation: string, context?: { conversationId?: string }) => {
@@ -47,6 +170,35 @@ export function useE2EE(userId?: string): UseE2EEReturn {
     setError(e2eeError.message);
     return e2eeError;
   }, [userId]);
+
+  // Load conversation data when conversation changes
+  useEffect(() => {
+    if (currentConversationId && isReady) {
+      loadConversationData(currentConversationId);
+    }
+  }, [currentConversationId, isReady]);
+
+  const loadConversationData = async (conversationId: string) => {
+    try {
+      // Load scheduled messages
+      const scheduledResponse = await apiService.get(`/api/chat/conversations/${conversationId}/scheduled-messages`);
+      setScheduledMessages(scheduledResponse.scheduled_messages || []);
+
+      // Load disappearing message settings
+      const settingsResponse = await apiService.get(`/api/chat/conversations/${conversationId}/settings`);
+      setDisappearingTimer(settingsResponse.disappearing_timer || 0);
+
+      // Load group invitations if it's a group
+      try {
+        const invitationsResponse = await apiService.get(`/api/chat/conversations/${conversationId}/invitations`);
+        setGroupInvitations(invitationsResponse.invitations || []);
+      } catch (inviteError) {
+        // Not a group conversation or no permissions
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load conversation data');
+    }
+  };
 
   // Initialize E2EE system
   const initializeE2EE = useCallback(async (): Promise<boolean> => {
@@ -74,7 +226,6 @@ export function useE2EE(userId?: string): UseE2EEReturn {
           });
         } catch (serverError) {
           console.warn('Failed to register public key with server:', serverError);
-          // Continue anyway as keys are generated locally
         }
       }
 
@@ -279,7 +430,6 @@ export function useE2EE(userId?: string): UseE2EEReturn {
           });
         } catch (keyError) {
           console.warn('Failed to encrypt key for participant:', keyError);
-          // Continue with other participants
         }
       }
 
@@ -291,11 +441,8 @@ export function useE2EE(userId?: string): UseE2EEReturn {
             conversation_id: conversationId,
           });
           console.log('Server-side encryption setup completed:', result);
-          
         } catch (serverError) {
           console.error('Server-side encryption setup failed:', serverError);
-          // Don't fail the entire setup - client-side encryption can still work
-          // The server will handle key distribution when participants join
         }
       }
       
@@ -334,7 +481,6 @@ export function useE2EE(userId?: string): UseE2EEReturn {
         throw new Error('Backup password must be at least 8 characters long');
       }
 
-      // Get user's key data
       const keyData = {
         user_id: userId,
         private_key: userId ? await SecureStorage.getPrivateKey(userId) : null,
@@ -400,7 +546,6 @@ export function useE2EE(userId?: string): UseE2EEReturn {
         throw new Error('No conversation key available');
       }
 
-      // Import the key back to CryptoKey format
       const keyBytes = new Uint8Array(atob(conversationKey).split('').map(char => char.charCodeAt(0)));
       const symmetricKeyCrypto = await window.crypto.subtle.importKey(
         'raw',
@@ -433,7 +578,6 @@ export function useE2EE(userId?: string): UseE2EEReturn {
         throw new Error('No conversation key available');
       }
 
-      // Import the key back to CryptoKey format
       const keyBytes = new Uint8Array(atob(conversationKey).split('').map(char => char.charCodeAt(0)));
       const symmetricKeyCrypto = await window.crypto.subtle.importKey(
         'raw',
@@ -451,26 +595,278 @@ export function useE2EE(userId?: string): UseE2EEReturn {
     }
   }, [userId]);
 
-  // Validate encryption health
-  const validateHealth = useCallback(async () => {
+  // Schedule a message
+  const scheduleMessage = useCallback(async (
+    content: string,
+    conversationId: string,
+    scheduledAt: Date,
+    options = {}
+  ) => {
     try {
-      const health = await ChatEncryption.validateHealth();
+      setError(null);
       
-      if (health.status === 'unhealthy') {
-        setError(`Encryption system unhealthy: ${health.errors.join(', ')}`);
-      } else if (health.warnings.length > 0) {
-        console.warn('E2EE health warnings:', health.warnings);
+      const encryptedContent = await encryptMessage(content, conversationId);
+      if (!encryptedContent) {
+        throw new Error('Failed to encrypt scheduled message');
       }
-      
-      return health;
+
+      const response = await apiService.post('/api/chat/messages/schedule', {
+        conversation_id: conversationId,
+        encrypted_content: JSON.stringify(encryptedContent),
+        scheduled_at: scheduledAt.toISOString(),
+        ...options,
+      });
+
+      const newScheduledMessage: ScheduledMessage = {
+        id: response.scheduled_message.id,
+        content,
+        conversationId,
+        scheduledAt,
+        priority: options.priority || 'normal',
+        deleteAfter: options.deleteAfter,
+        requiresConfirmation: options.requiresConfirmation || false,
+        status: 'pending',
+        createdAt: new Date(),
+      };
+
+      setScheduledMessages(prev => [...prev, newScheduledMessage]);
+      toast.success('Message scheduled successfully');
     } catch (err) {
-      const error = err instanceof Error ? err : new Error('Health validation failed');
-      handleE2EEError(error, 'healthValidation');
-      return { status: 'unhealthy' as const, checks: {}, warnings: [], errors: [error.message] };
+      const errorMsg = err instanceof Error ? err.message : 'Failed to schedule message';
+      setError(errorMsg);
+      toast.error(errorMsg);
+      throw err;
+    }
+  }, [encryptMessage]);
+
+  // Cancel a scheduled message
+  const cancelScheduledMessage = useCallback(async (messageId: string) => {
+    try {
+      await apiService.delete(`/api/chat/scheduled-messages/${messageId}`);
+      setScheduledMessages(prev => prev.filter(msg => msg.id !== messageId));
+      toast.success('Scheduled message cancelled');
+    } catch (err) {
+      const errorMsg = 'Failed to cancel scheduled message';
+      setError(errorMsg);
+      toast.error(errorMsg);
+      throw err;
     }
   }, []);
 
-  // Get conversation key statistics
+  // Set disappearing message timer
+  const setDisappearingTimer = useCallback(async (conversationId: string, minutes: number) => {
+    try {
+      await apiService.post(`/api/chat/conversations/${conversationId}/disappearing-timer`, {
+        timer_minutes: minutes,
+      });
+      
+      setDisappearingTimer(minutes);
+      toast.success(`Disappearing messages ${minutes > 0 ? 'enabled' : 'disabled'}`);
+    } catch (err) {
+      const errorMsg = 'Failed to update disappearing message timer';
+      setError(errorMsg);
+      toast.error(errorMsg);
+      throw err;
+    }
+  }, []);
+
+  // Forward messages
+  const forwardMessages = useCallback(async (
+    messageIds: string[],
+    destinationIds: string[],
+    options: {
+      includeQuote: boolean;
+      preserveThreads: boolean;
+      addComment?: string;
+    }
+  ) => {
+    try {
+      for (const destinationId of destinationIds) {
+        const forwardData = {
+          message_ids: messageIds,
+          destination_conversation_id: destinationId,
+          include_quote: options.includeQuote,
+          preserve_threads: options.preserveThreads,
+        };
+
+        if (options.addComment) {
+          const encryptedComment = await encryptMessage(options.addComment, destinationId);
+          if (encryptedComment) {
+            forwardData.encrypted_comment = JSON.stringify(encryptedComment);
+          }
+        }
+
+        await apiService.post('/api/chat/messages/forward', forwardData);
+      }
+
+      toast.success(`Messages forwarded to ${destinationIds.length} conversation${destinationIds.length !== 1 ? 's' : ''}`);
+    } catch (err) {
+      const errorMsg = 'Failed to forward messages';
+      setError(errorMsg);
+      toast.error(errorMsg);
+      throw err;
+    }
+  }, [encryptMessage]);
+
+  // Save encrypted draft
+  const saveDraft = useCallback(async (conversationId: string, content: string, metadata?: any) => {
+    try {
+      const encryptedContent = await encryptMessage(content, conversationId);
+      if (!encryptedContent) {
+        throw new Error('Failed to encrypt draft');
+      }
+
+      await apiService.post('/api/chat/drafts', {
+        conversation_id: conversationId,
+        encrypted_content: JSON.stringify(encryptedContent),
+        metadata,
+      });
+    } catch (err) {
+      console.error('Failed to save draft:', err);
+    }
+  }, [encryptMessage]);
+
+  // Load drafts
+  const loadDrafts = useCallback(async (conversationId: string): Promise<MessageDraft[]> => {
+    try {
+      const response = await apiService.get(`/api/chat/conversations/${conversationId}/drafts`);
+      
+      const drafts: MessageDraft[] = [];
+      for (const draft of response.drafts || []) {
+        try {
+          const decryptedContent = await decryptMessage(
+            JSON.parse(draft.encrypted_content),
+            conversationId
+          );
+          
+          if (decryptedContent) {
+            drafts.push({
+              id: draft.id,
+              conversationId: draft.conversation_id,
+              content: decryptedContent,
+              metadata: draft.metadata,
+              createdAt: new Date(draft.created_at),
+              updatedAt: new Date(draft.updated_at),
+            });
+          }
+        } catch (decryptError) {
+          console.warn('Failed to decrypt draft:', draft.id);
+        }
+      }
+      
+      return drafts;
+    } catch (err) {
+      setError('Failed to load drafts');
+      return [];
+    }
+  }, [decryptMessage]);
+
+  // Delete draft
+  const deleteDraft = useCallback(async (draftId: string) => {
+    try {
+      await apiService.delete(`/api/chat/drafts/${draftId}`);
+    } catch (err) {
+      console.error('Failed to delete draft:', err);
+    }
+  }, []);
+
+  // Create group invitation
+  const createGroupInvitation = useCallback(async (groupId: string, invitation) => {
+    try {
+      let encryptedWelcomeMessage;
+      if (invitation.welcomeMessage) {
+        const encrypted = await encryptMessage(invitation.welcomeMessage, groupId);
+        if (encrypted) {
+          encryptedWelcomeMessage = JSON.stringify(encrypted);
+        }
+      }
+
+      const response = await apiService.post(`/api/chat/groups/${groupId}/invitations`, {
+        expires_at: invitation.expiresAt.toISOString(),
+        max_uses: invitation.maxUses,
+        permissions: invitation.permissions,
+        encrypted_welcome_message: encryptedWelcomeMessage,
+      });
+
+      const newInvitation: GroupInvitation = {
+        id: response.invitation.id,
+        groupId,
+        groupName: response.invitation.group_name,
+        inviteCode: response.invitation.invite_code,
+        inviteLink: response.invitation.invite_link,
+        expiresAt: new Date(response.invitation.expires_at),
+        maxUses: response.invitation.max_uses,
+        currentUses: 0,
+        permissions: invitation.permissions,
+        status: 'active',
+      };
+
+      setGroupInvitations(prev => [...prev, newInvitation]);
+      return newInvitation;
+    } catch (err) {
+      const errorMsg = 'Failed to create group invitation';
+      setError(errorMsg);
+      toast.error(errorMsg);
+      throw err;
+    }
+  }, [encryptMessage]);
+
+  // Revoke group invitation
+  const revokeGroupInvitation = useCallback(async (invitationId: string) => {
+    try {
+      await apiService.post(`/api/chat/invitations/${invitationId}/revoke`);
+      setGroupInvitations(prev => 
+        prev.map(inv => 
+          inv.id === invitationId 
+            ? { ...inv, status: 'revoked' as const }
+            : inv
+        )
+      );
+      toast.success('Invitation revoked');
+    } catch (err) {
+      const errorMsg = 'Failed to revoke invitation';
+      setError(errorMsg);
+      toast.error(errorMsg);
+      throw err;
+    }
+  }, []);
+
+  // Initialize double ratchet for conversation
+  const initializeDoubleRatchet = useCallback(async (conversationId: string, remoteDeviceId: string) => {
+    try {
+      const deviceId = await multiDeviceE2EEService.getDeviceId();
+      if (!deviceId) {
+        throw new Error('Device not registered');
+      }
+
+      const sharedKey = await setupConversationEncryption(conversationId, []);
+      if (!sharedKey) {
+        throw new Error('Failed to get shared key');
+      }
+
+      toast.success('Double ratchet initialized');
+    } catch (err) {
+      const errorMsg = 'Failed to initialize double ratchet';
+      setError(errorMsg);
+      toast.error(errorMsg);
+      throw err;
+    }
+  }, [setupConversationEncryption]);
+
+  // Rotate conversation keys
+  const rotateConversationKeys = useCallback(async (conversationId: string) => {
+    try {
+      await rotateConversationKey(conversationId, 'Manual key rotation');
+      toast.success('Conversation keys rotated successfully');
+    } catch (err) {
+      const errorMsg = 'Failed to rotate conversation keys';
+      setError(errorMsg);
+      toast.error(errorMsg);
+      throw err;
+    }
+  }, [rotateConversationKey]);
+
+  // Get key statistics
   const getKeyStatistics = useCallback(async (conversationId: string) => {
     try {
       const stats = await secureKeyManager.getKeyStatistics(conversationId);
@@ -501,6 +897,61 @@ export function useE2EE(userId?: string): UseE2EEReturn {
     }
   }, [userId]);
 
+  // Validate encryption health
+  const validateHealth = useCallback(async () => {
+    try {
+      const health = await ChatEncryption.validateHealth();
+      
+      if (health.status === 'unhealthy') {
+        setError(`Encryption system unhealthy: ${health.errors.join(', ')}`);
+      } else if (health.warnings.length > 0) {
+        console.warn('E2EE health warnings:', health.warnings);
+      }
+      
+      return health;
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Health validation failed');
+      handleE2EEError(error, 'healthValidation');
+      return { status: 'unhealthy' as const, checks: {}, warnings: [], errors: [error.message] };
+    }
+  }, []);
+
+  // Export security report
+  const exportSecurityReport = useCallback(async (): Promise<Blob> => {
+    try {
+      const report = {
+        timestamp: new Date().toISOString(),
+        userId,
+        encryptionStatus: status,
+        scheduledMessages: scheduledMessages.length,
+        activeInvitations: groupInvitations.filter(inv => inv.status === 'active').length,
+        healthCheck: await validateHealth(),
+      };
+
+      const reportJson = JSON.stringify(report, null, 2);
+      return new Blob([reportJson], { type: 'application/json' });
+    } catch (err) {
+      throw new Error('Failed to generate security report');
+    }
+  }, [userId, status, scheduledMessages, groupInvitations, validateHealth]);
+
+  // Validate encryption health
+  const validateEncryptionHealth = useCallback(async (): Promise<boolean> => {
+    try {
+      const health = await validateHealth();
+      const isHealthy = health.status === 'healthy';
+      
+      if (!isHealthy) {
+        setError(`Encryption health check failed: ${health.errors.join(', ')}`);
+      }
+      
+      return isHealthy;
+    } catch (err) {
+      setError('Failed to validate encryption health');
+      return false;
+    }
+  }, [validateHealth]);
+
   // Initialize on mount
   useEffect(() => {
     if (userId && !isReady && !status.enabled) {
@@ -509,6 +960,7 @@ export function useE2EE(userId?: string): UseE2EEReturn {
   }, [userId, isReady, status.enabled, initializeE2EE]);
 
   return {
+    // Core E2EE functionality
     status,
     initializeE2EE,
     generateKeyPair,
@@ -524,6 +976,39 @@ export function useE2EE(userId?: string): UseE2EEReturn {
     getKeyStatistics,
     verifyKeyIntegrity,
     validateHealth,
+
+    // Message Scheduling
+    scheduleMessage,
+    scheduledMessages,
+    cancelScheduledMessage,
+
+    // Disappearing Messages
+    setDisappearingTimer,
+    disappearingMessages,
+    disappearingTimer,
+
+    // Message Forwarding
+    forwardMessages,
+
+    // Encrypted Drafts
+    saveDraft,
+    loadDrafts,
+    deleteDraft,
+
+    // Group Invitations
+    createGroupInvitation,
+    revokeGroupInvitation,
+    groupInvitations,
+
+    // Double Ratchet
+    initializeDoubleRatchet,
+    rotateConversationKeys,
+
+    // Security
+    exportSecurityReport,
+    validateEncryptionHealth,
+
+    // State
     isReady,
     error,
   };
