@@ -7,6 +7,7 @@ import { ChatEncryption } from '@/utils/encryption';
 import { secureKeyManager } from '@/lib/SecureKeyManager';
 import { autoKeyExchange } from '@/lib/AutoKeyExchange';
 import type { EncryptedMessageData } from '@/types/chat';
+import { apiService, ApiError } from '@/services/ApiService';
 
 export type E2EEErrorType = 
   | 'ENCRYPTION_FAILED'
@@ -344,14 +345,8 @@ export class E2EEErrorRecovery {
 
   private async requestKeyRefresh(conversationId: string): Promise<boolean> {
     try {
-      const response = await fetch(`/api/chat/conversations/${conversationId}/refresh-keys`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
-        }
-      });
-      return response.ok;
+      await apiService.post(`/api/chat/conversations/${conversationId}/refresh-keys`, {});
+      return true;
     } catch {
       return false;
     }
@@ -377,14 +372,8 @@ export class E2EEErrorRecovery {
 
   private async requestKeyDistribution(conversationId: string): Promise<boolean> {
     try {
-      const response = await fetch(`/api/chat/conversations/${conversationId}/request-keys`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
-        }
-      });
-      return response.ok;
+      await apiService.post(`/api/chat/conversations/${conversationId}/request-keys`, {});
+      return true;
     } catch {
       return false;
     }
@@ -536,11 +525,8 @@ export class E2EEErrorRecovery {
 
   private async getConversationParticipants(conversationId: string): Promise<any[] | null> {
     try {
-      const response = await fetch(`/api/chat/conversations/${conversationId}/participants`);
-      if (response.ok) {
-        const data = await response.json();
-        return data.participants || [];
-      }
+      const data = await apiService.get<{ participants?: any[] }>(`/api/chat/conversations/${conversationId}/participants`);
+      return data.participants || [];
     } catch {}
     return null;
   }

@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { Message } from '@/types/chat';
+import { apiService, ApiError } from '@/services/ApiService';
 
 interface UseChatPaginationReturn {
   messages: Message[];
@@ -30,21 +31,7 @@ export function useChatPagination(conversationId: string): UseChatPaginationRetu
       if (before) params.set('before', before);
       params.set('limit', '50');
 
-      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-      const response = await fetch(`/api/v1/chat/conversations/${conversationId}/messages?${params}`, {
-        headers: {
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-TOKEN': csrfToken || '',
-        },
-        credentials: 'same-origin',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to load messages');
-      }
-
-      const result = await response.json();
+      const result = await apiService.get<{ data?: Message[]; meta?: { has_more?: boolean } }>(`/api/v1/chat/conversations/${conversationId}/messages?${params}`);
       const newMessages = result.data || [];
 
       setMessages(prev => [...newMessages.reverse(), ...prev]);

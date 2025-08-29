@@ -417,7 +417,7 @@ export default function DeviceSetup({ onSetupComplete, onSetupError }: DeviceSet
                   <div className="bg-blue-50 p-4 rounded-lg">
                     <h4 className="font-medium mb-2">Verification Required</h4>
                     <div className="text-sm text-blue-700 space-y-1">
-                      <p><strong>Method:</strong> {verificationChallenge.verificationType.replace('_', ' ')}</p>
+                      <p><strong>Method:</strong> {(verificationChallenge.verificationType || verificationChallenge.verification_type || 'unknown').replace('_', ' ')}</p>
                       <p><strong>Expires:</strong> 
                         <span className="flex items-center ml-1">
                           <ClockIcon className="h-4 w-4 mr-1" />

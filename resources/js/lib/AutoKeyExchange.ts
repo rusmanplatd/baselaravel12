@@ -6,6 +6,7 @@
 import { ChatEncryption } from '@/utils/encryption';
 import { secureKeyManager } from './SecureKeyManager';
 import type { User, Conversation } from '@/types/chat';
+import { apiService, ApiError } from '@/services/ApiService';
 
 export interface KeyExchangeOptions {
   conversationId: string;
@@ -240,13 +241,12 @@ class AutoKeyExchangeManager {
       }
 
       // Fetch from server
-      const response = await fetch(`/api/users/${userId}/public-key`);
-      if (response.ok) {
-        const data = await response.json();
+      try {
+        const data = await apiService.get<{ public_key?: string }>(`/api/users/${userId}/public-key`);
         return data.public_key || null;
+      } catch {
+        return null;
       }
-
-      return null;
     } catch (error) {
       console.error(`Failed to get public key for user ${userId}:`, error);
       return null;
@@ -268,15 +268,8 @@ class AutoKeyExchangeManager {
       });
 
       // Register public key with server
-      await fetch('/api/chat/encryption/register-key', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
-        },
-        body: JSON.stringify({
-          public_key: keyPair.public_key
-        })
+      await apiService.post('/api/chat/encryption/register-key', {
+        public_key: keyPair.public_key
       });
 
       return true;
@@ -314,18 +307,10 @@ class AutoKeyExchangeManager {
     participantKeys: ParticipantKeyData[]
   ): Promise<boolean> {
     try {
-      const response = await fetch(`/api/chat/conversations/${conversationId}/distribute-keys`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
-        },
-        body: JSON.stringify({
-          participant_keys: participantKeys
-        })
+      await apiService.post(`/api/chat/conversations/${conversationId}/distribute-keys`, {
+        participant_keys: participantKeys
       });
-
-      return response.ok;
+      return true;
     } catch (error) {
       console.error('Failed to distribute keys:', error);
       return false;
@@ -340,22 +325,14 @@ class AutoKeyExchangeManager {
     participantKeys: ParticipantKeyData[]
   ): Promise<boolean> {
     try {
-      const response = await fetch(`/api/chat/conversations/${conversationId}/backup-keys`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
-        },
-        body: JSON.stringify({
-          backup_data: {
-            conversation_id: conversationId,
-            participant_keys: participantKeys,
-            created_at: new Date().toISOString()
-          }
-        })
+      await apiService.post(`/api/chat/conversations/${conversationId}/backup-keys`, {
+        backup_data: {
+          conversation_id: conversationId,
+          participant_keys: participantKeys,
+          created_at: new Date().toISOString()
+        }
       });
-
-      return response.ok;
+      return true;
     } catch (error) {
       console.error('Failed to create server backup:', error);
       return false;
@@ -367,16 +344,9 @@ class AutoKeyExchangeManager {
    */
   private async recordKeyRotation(conversationId: string, reason: string): Promise<void> {
     try {
-      await fetch(`/api/chat/conversations/${conversationId}/key-rotation`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
-        },
-        body: JSON.stringify({
-          reason,
-          timestamp: new Date().toISOString()
-        })
+      await apiService.post(`/api/chat/conversations/${conversationId}/key-rotation`, {
+        reason,
+        timestamp: new Date().toISOString()
       });
     } catch (error) {
       console.error('Failed to record key rotation:', error);

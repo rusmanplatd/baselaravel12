@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { UserSearchCombobox } from '@/components/ui/user-search-combobox';
 import { toast } from 'sonner';
 import { User } from '@/types';
+import { apiService, ApiError } from '@/services/ApiService';
 import { 
   UserGroupIcon, 
   PlusIcon,
@@ -68,19 +69,7 @@ export default function CreateGroupDialog({ onCreateGroup, trigger }: CreateGrou
 
     // Fetch user details from API using the email
     try {
-      const response = await fetch(`/api/v1/users/by-email?email=${encodeURIComponent(email)}`, {
-        headers: {
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-        },
-        credentials: 'same-origin',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch user details');
-      }
-
-      const userData = await response.json();
+      const userData = await apiService.get<User>(`/api/v1/users/by-email?email=${encodeURIComponent(email)}`);
       
       // Add the user to selected members
       setSelectedMembers([...selectedMembers, {

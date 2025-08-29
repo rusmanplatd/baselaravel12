@@ -13,6 +13,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
+import { apiService, ApiError } from '@/services/ApiService';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Check, ChevronsUpDown, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -70,19 +71,7 @@ export function UserSearchCombobox({
     try {
       setLoading(true);
       
-      const response = await fetch(`/api/v1/users/suggestions?q=${encodeURIComponent(query)}`, {
-        headers: {
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-        },
-        credentials: 'same-origin',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to search users');
-      }
-
-      const data: SearchResult[] = await response.json();
+      const data: SearchResult[] = await apiService.get<SearchResult[]>(`/api/v1/users/suggestions?q=${encodeURIComponent(query)}`);
       
       // Transform avatar paths to full URLs
       const transformedData = data.map(user => ({

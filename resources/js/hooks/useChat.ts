@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { router } from '@inertiajs/react';
 import { Conversation, Message, User, VoiceRecording, ReactionSummary, E2EEStatus } from '@/types/chat';
 import { multiDeviceE2EEService, SecurityReport } from '@/services/MultiDeviceE2EEService';
+import { apiService, ApiError } from '@/services/ApiService';
 
 interface UseChatReturn {
   conversations: Conversation[];
@@ -62,49 +63,28 @@ export function useChat(user: any): UseChatReturn {
   });
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [typingUsers, setTypingUsers] = useState<Array<{ id: string; name: string }>>([]);
-  const [accessToken, setAccessToken] = useState<string | null>(null);
 
   const handleError = useCallback((err: any) => {
     console.error('Chat error:', err);
     setError(err.response?.data?.message || err.message || 'An error occurred');
   }, []);
 
-  const generateAccessToken = useCallback(async () => {
+  // Remove the old token generation logic since we're using ApiService
+  // const generateAccessToken = useCallback(async () => {
+  //   // This is now handled by ApiService
+  // }, []);
+
+  const getApiHeaders = useCallback(async () => {
     try {
-      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-      const response = await fetch('/api/generate-token', {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-TOKEN': csrfToken || '',
-        },
-        credentials: 'same-origin',
-      });
-      
-      if (!response.ok) throw new Error('Failed to generate access token');
-      
-      const data = await response.json();
-      setAccessToken(data.access_token);
-      return data.access_token;
+      return await apiService.getHeaders();
     } catch (error) {
-      console.error('Failed to generate access token:', error);
+      if (error instanceof ApiError && error.status === 401) {
+        // User needs to authenticate
+        handleError(error);
+      }
       throw error;
     }
   }, []);
-
-  const getApiHeaders = useCallback(() => {
-    const headers: HeadersInit = {
-      'Accept': 'application/json',
-      'X-Requested-With': 'XMLHttpRequest',
-    };
-
-    if (accessToken) {
-      headers['Authorization'] = `Bearer ${accessToken}`;
-    }
-
-    return headers;
-  }, [accessToken]);
 
   const initializeEncryption = useCallback(async () => {
     try {
@@ -217,27 +197,16 @@ export function useChat(user: any): UseChatReturn {
   const loadConversations = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
       
-      // Ensure we have an access token
-      let token = accessToken;
-      if (!token) {
-        token = await generateAccessToken();
-      }
-      
-      const response = await fetch('/api/v1/chat/conversations', {
-        headers: getApiHeaders(),
-      });
-      
-      if (!response.ok) throw new Error('Failed to load conversations');
-      
-      const data = await response.json();
-      setConversations(data.data || data);
+      const data = await apiService.get<{ data?: Conversation[]; conversations?: Conversation[] }>('/api/v1/chat/conversations');
+      setConversations(data.data || data.conversations || []);
     } catch (err) {
       handleError(err);
     } finally {
       setLoading(false);
     }
-  }, [handleError, accessToken, generateAccessToken, getApiHeaders]);
+  }, [handleError]);
 
   const loadMessages = useCallback(async (conversationId: string) => {
     try {
@@ -246,19 +215,7 @@ export function useChat(user: any): UseChatReturn {
       // Setup conversation encryption first
       await setupConversationEncryption(conversationId);
       
-      // Ensure we have an access token
-      let token = accessToken;
-      if (!token) {
-        token = await generateAccessToken();
-      }
-      
-      const response = await fetch(`/api/v1/chat/conversations/${conversationId}/messages`, {
-        headers: getApiHeaders(),
-      });
-      
-      if (!response.ok) throw new Error('Failed to load messages');
-      
-      const rawMessages = await response.json();
+      const rawMessages = await apiService.get<Message[]>(`/api/v1/chat/conversations/${conversationId}/messages`);
       const decryptedMessages = await decryptMessages(rawMessages.reverse() || []);
       setMessages(decryptedMessages);
     } catch (err) {
@@ -266,7 +223,7 @@ export function useChat(user: any): UseChatReturn {
     } finally {
       setLoading(false);
     }
-  }, [handleError, setupConversationEncryption, decryptMessages, accessToken, generateAccessToken, getApiHeaders]);
+  }, [handleError, setupConversationEncryption, decryptMessages]);
 
   const sendMessage = useCallback(async (content: string, options?: {
     type?: 'text' | 'voice';
@@ -326,26 +283,7 @@ export function useChat(user: any): UseChatReturn {
         messageData.content = content;
       }
 
-      // Ensure we have an access token
-      let token = accessToken;
-      if (!token) {
-        token = await generateAccessToken();
-      }
-
-      const headers = {
-        ...getApiHeaders(),
-        'Content-Type': 'application/json',
-      };
-
-      const response = await fetch(`/api/v1/chat/conversations/${activeConversation.id}/messages`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(messageData),
-      });
-      
-      if (!response.ok) throw new Error('Failed to send message');
-      
-      const rawMessage = await response.json();
+      const rawMessage = await apiService.post<Message>(`/api/v1/chat/conversations/${activeConversation.id}/messages`, messageData);
       
       // Decrypt the returned message for display
       const decryptedMessage = encryptionReady && deviceRegistered && rawMessage.encrypted_content
@@ -374,58 +312,27 @@ export function useChat(user: any): UseChatReturn {
     } catch (err) {
       handleError(err);
     }
-  }, [activeConversation, handleError, encryptionReady, accessToken, generateAccessToken, getApiHeaders]);
+  }, [activeConversation, handleError, encryptionReady]);
 
   const createConversation = useCallback(async (participants: string[], name?: string) => {
     try {
-      // Ensure we have an access token
-      let token = accessToken;
-      if (!token) {
-        token = await generateAccessToken();
-      }
-
-      const headers = {
-        ...getApiHeaders(),
-        'Content-Type': 'application/json',
-      };
-
-      const response = await fetch('/api/v1/chat/conversations', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          type: participants.length === 1 ? 'direct' : 'group',
-          participants,
-          name,
-        }),
+      const newConversation = await apiService.post<Conversation>('/api/v1/chat/conversations', {
+        type: participants.length === 1 ? 'direct' : 'group',
+        participants,
+        name,
       });
       
-      if (!response.ok) throw new Error('Failed to create conversation');
-      
-      const newConversation = await response.json();
       setConversations(prev => [newConversation, ...prev]);
       setActiveConversation(newConversation);
     } catch (err) {
       handleError(err);
     }
-  }, [handleError, accessToken, generateAccessToken, getApiHeaders]);
+  }, [handleError]);
 
   // New feature methods
   const toggleReaction = useCallback(async (messageId: string, emoji: string) => {
     try {
-      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-      const response = await fetch(`/api/v1/chat/messages/${messageId}/reactions/toggle`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-TOKEN': csrfToken || '',
-        },
-        credentials: 'same-origin',
-        body: JSON.stringify({ emoji }),
-      });
-      
-      if (!response.ok) throw new Error('Failed to toggle reaction');
+      await apiService.post(`/api/v1/chat/messages/${messageId}/reactions/toggle`, { emoji });
       
       // In a real app, you'd update the message reactions in state
       // For now, we'll reload messages to see the change
@@ -439,17 +346,7 @@ export function useChat(user: any): UseChatReturn {
 
   const markAsRead = useCallback(async (messageId: string) => {
     try {
-      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-      await fetch(`/api/v1/chat/messages/${messageId}/read-receipts`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-TOKEN': csrfToken || '',
-        },
-        credentials: 'same-origin',
-      });
+      await apiService.post(`/api/v1/chat/messages/${messageId}/read-receipts`, {});
     } catch (err) {
       handleError(err);
     }
@@ -459,29 +356,10 @@ export function useChat(user: any): UseChatReturn {
     if (!activeConversation) return;
     
     try {
-      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-      
       if (isTyping) {
-        await fetch(`/api/v1/chat/conversations/${activeConversation.id}/typing`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRF-TOKEN': csrfToken || '',
-          },
-          credentials: 'same-origin',
-        });
+        await apiService.post(`/api/v1/chat/conversations/${activeConversation.id}/typing`, {});
       } else {
-        await fetch(`/api/v1/chat/conversations/${activeConversation.id}/typing`, {
-          method: 'DELETE',
-          headers: {
-            'Accept': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRF-TOKEN': csrfToken || '',
-          },
-          credentials: 'same-origin',
-        });
+        await apiService.delete(`/api/v1/chat/conversations/${activeConversation.id}/typing`);
       }
     } catch (err) {
       handleError(err);
@@ -492,17 +370,7 @@ export function useChat(user: any): UseChatReturn {
     if (!activeConversation || !query.trim()) return [];
     
     try {
-      const response = await fetch(`/api/v1/chat/conversations/${activeConversation.id}/messages/search?q=${encodeURIComponent(query)}`, {
-        headers: {
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-        },
-        credentials: 'same-origin',
-      });
-      
-      if (!response.ok) throw new Error('Failed to search messages');
-      
-      const results = await response.json();
+      const results = await apiService.get<Message[]>(`/api/v1/chat/conversations/${activeConversation.id}/messages/search?q=${encodeURIComponent(query)}`);
       return await decryptMessages(results);
     } catch (err) {
       handleError(err);
@@ -513,30 +381,13 @@ export function useChat(user: any): UseChatReturn {
   // Group management functions
   const createGroup = useCallback(async (groupData: { name: string; description?: string; participants: string[] }) => {
     try {
-      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-      const response = await fetch('/api/v1/chat/conversations', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-TOKEN': csrfToken || '',
-        },
-        credentials: 'same-origin',
-        body: JSON.stringify({
-          type: 'group',
-          name: groupData.name,
-          description: groupData.description,
-          participants: groupData.participants,
-        }),
+      const newGroup = await apiService.post<Conversation>('/api/v1/chat/conversations', {
+        type: 'group',
+        name: groupData.name,
+        description: groupData.description,
+        participants: groupData.participants,
       });
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create group');
-      }
-      
-      const newGroup = await response.json();
       setConversations(prev => [newGroup, ...prev]);
       setActiveConversation(newGroup);
     } catch (err: any) {
@@ -549,22 +400,7 @@ export function useChat(user: any): UseChatReturn {
     if (!activeConversation) return;
     
     try {
-      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-      const response = await fetch(`/api/v1/chat/conversations/${activeConversation.id}/settings`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-TOKEN': csrfToken || '',
-        },
-        credentials: 'same-origin',
-        body: JSON.stringify(settings),
-      });
-      
-      if (!response.ok) throw new Error('Failed to update group settings');
-      
-      const updatedConversation = await response.json();
+      const updatedConversation = await apiService.put<{ conversation: Conversation }>(`/api/v1/chat/conversations/${activeConversation.id}/settings`, settings);
       setActiveConversation(updatedConversation.conversation);
       setConversations(prev => 
         prev.map(conv => 
@@ -580,23 +416,10 @@ export function useChat(user: any): UseChatReturn {
     if (!activeConversation) return;
     
     try {
-      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-      const response = await fetch(`/api/v1/chat/conversations/${activeConversation.id}/participants/role`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-TOKEN': csrfToken || '',
-        },
-        credentials: 'same-origin',
-        body: JSON.stringify({
-          user_id: userId,
-          role: role,
-        }),
+      await apiService.put(`/api/v1/chat/conversations/${activeConversation.id}/participants/role`, {
+        user_id: userId,
+        role: role,
       });
-      
-      if (!response.ok) throw new Error('Failed to update participant role');
       
       // Update the conversation participants in state
       setActiveConversation(prev => {
@@ -617,22 +440,9 @@ export function useChat(user: any): UseChatReturn {
     if (!activeConversation) return;
     
     try {
-      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-      const response = await fetch(`/api/v1/chat/conversations/${activeConversation.id}/participants`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-TOKEN': csrfToken || '',
-        },
-        credentials: 'same-origin',
-        body: JSON.stringify({
-          user_id: userId,
-        }),
+      await apiService.delete(`/api/v1/chat/conversations/${activeConversation.id}/participants`, {
+        user_id: userId,
       });
-      
-      if (!response.ok) throw new Error('Failed to remove participant');
       
       // Update the conversation participants in state
       setActiveConversation(prev => {
@@ -653,22 +463,7 @@ export function useChat(user: any): UseChatReturn {
     }
     
     try {
-      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-      const response = await fetch(`/api/v1/chat/conversations/${activeConversation.id}/invite-link`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-TOKEN': csrfToken || '',
-        },
-        credentials: 'same-origin',
-        body: JSON.stringify(options),
-      });
-      
-      if (!response.ok) throw new Error('Failed to generate invite link');
-      
-      return await response.json();
+      return await apiService.post<{ invite_url: string }>(`/api/v1/chat/conversations/${activeConversation.id}/invite-link`, options);
     } catch (err) {
       handleError(err);
       throw err;
@@ -677,27 +472,10 @@ export function useChat(user: any): UseChatReturn {
 
   const joinByInvite = useCallback(async (inviteCode: string) => {
     try {
-      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-      const response = await fetch(`/api/v1/chat/join/${inviteCode}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-TOKEN': csrfToken || '',
-        },
-        credentials: 'same-origin',
-        body: JSON.stringify({
-          invite_code: inviteCode,
-        }),
+      const result = await apiService.post<{ conversation: Conversation }>(`/api/v1/chat/join/${inviteCode}`, {
+        invite_code: inviteCode,
       });
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to join group');
-      }
-      
-      const result = await response.json();
       const conversation = result.conversation;
       
       // Add to conversations list and set as active
@@ -718,18 +496,8 @@ export function useChat(user: any): UseChatReturn {
     
     const pollTypingUsers = async () => {
       try {
-        const response = await fetch(`/api/v1/chat/conversations/${activeConversation.id}/typing`, {
-          headers: {
-            'Accept': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-          },
-          credentials: 'same-origin',
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          setTypingUsers(data.typing_users || []);
-        }
+        const data = await apiService.get<{ typing_users: Array<{ id: string; name: string }> }>(`/api/v1/chat/conversations/${activeConversation.id}/typing`);
+        setTypingUsers(data.typing_users || []);
       } catch (err) {
         // Silent fail for typing status
       }
@@ -739,31 +507,16 @@ export function useChat(user: any): UseChatReturn {
     return () => clearInterval(interval);
   }, [activeConversation]);
 
-  useEffect(() => {
-    // Initialize access token first
-    const initializeAuth = async () => {
-      if (!accessToken) {
-        try {
-          await generateAccessToken();
-        } catch (error) {
-          console.error('Failed to initialize API authentication:', error);
-        }
-      }
-    };
-    
-    initializeAuth();
-  }, [generateAccessToken, accessToken]);
+  // ApiService handles authentication automatically, no manual token initialization needed
 
   useEffect(() => {
     initializeEncryption();
   }, [initializeEncryption]);
 
   useEffect(() => {
-    // Only load conversations after we have an access token
-    if (accessToken) {
-      loadConversations();
-    }
-  }, [loadConversations, accessToken]);
+    // ApiService handles authentication, load conversations immediately
+    loadConversations();
+  }, [loadConversations]);
 
   useEffect(() => {
     if (activeConversation) {

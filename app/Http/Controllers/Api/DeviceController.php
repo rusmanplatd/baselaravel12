@@ -57,7 +57,7 @@ class DeviceController extends Controller
             'platform' => 'nullable|string|max:100',
             'user_agent' => 'nullable|string|max:500',
             'device_capabilities' => 'nullable|array',
-            'device_capabilities.*' => 'string|in:messaging,encryption,passkey,biometric,file_sharing,video_call',
+            'device_capabilities.*' => 'string|in:messaging,encryption,passkey,biometric,file_sharing,video_call,offline',
             'security_level' => 'nullable|string|in:low,medium,high,maximum',
             'device_info' => 'nullable|array',
         ]);

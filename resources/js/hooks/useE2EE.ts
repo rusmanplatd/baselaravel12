@@ -4,6 +4,7 @@ import { secureKeyManager } from '@/lib/SecureKeyManager';
 import { e2eeErrorRecovery } from '@/services/E2EEErrorRecovery';
 import type { EncryptionKey, KeyPair, E2EEStatus, EncryptedMessageData } from '@/types/chat';
 import { router } from '@inertiajs/react';
+import { apiService, ApiError } from '@/services/ApiService';
 
 interface UseE2EEReturn {
   status: E2EEStatus;
@@ -68,15 +69,8 @@ export function useE2EE(userId?: string): UseE2EEReturn {
 
         // Register public key with server
         try {
-          await fetch('/api/chat/encryption/register-key', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-            },
-            body: JSON.stringify({
-              public_key: keyPair.public_key,
-            }),
+          await apiService.post('/api/chat/encryption/register-key', {
+            public_key: keyPair.public_key,
           });
         } catch (serverError) {
           console.warn('Failed to register public key with server:', serverError);
@@ -155,8 +149,7 @@ export function useE2EE(userId?: string): UseE2EEReturn {
       
       if (!conversationKey) {
         // Fetch encrypted key from server
-        const response = await fetch(`/api/chat/conversations/${conversationId}/encryption-key`);
-        const keyData = await response.json();
+        const keyData = await apiService.get<{ encrypted_key?: string }>(`/api/chat/conversations/${conversationId}/encryption-key`);
 
         if (keyData.encrypted_key) {
           const privateKey = await SecureStorage.getPrivateKey(userId);
@@ -237,20 +230,9 @@ export function useE2EE(userId?: string): UseE2EEReturn {
     reason?: string
   ): Promise<boolean> => {
     try {
-      const response = await fetch(`/api/chat/conversations/${conversationId}/rotate-key`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-        },
-        body: JSON.stringify({
-          reason: reason || 'Manual key rotation',
-        }),
+      await apiService.post(`/api/chat/conversations/${conversationId}/rotate-key`, {
+        reason: reason || 'Manual key rotation',
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to rotate conversation key');
-      }
 
       // Clear old conversation key
       SecureStorage.clearConversationKey(conversationId);
@@ -304,24 +286,10 @@ export function useE2EE(userId?: string): UseE2EEReturn {
       // Send encrypted keys to server
       if (encryptedKeysForParticipants.length > 0) {
         try {
-          const response = await fetch(`/api/chat/conversations/${conversationId}/setup-encryption`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-            },
-            body: JSON.stringify({
-              encrypted_keys: encryptedKeysForParticipants,
-              conversation_id: conversationId,
-            }),
+          const result = await apiService.post(`/api/chat/conversations/${conversationId}/setup-encryption`, {
+            encrypted_keys: encryptedKeysForParticipants,
+            conversation_id: conversationId,
           });
-
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Failed to setup server-side encryption');
-          }
-
-          const result = await response.json();
           console.log('Server-side encryption setup completed:', result);
           
         } catch (serverError) {

@@ -5,6 +5,7 @@
 
 import { E2EEError, E2EEErrorHandler, E2EEErrorCode } from './E2EEErrors';
 import { securityMonitor, SecurityEventType } from './SecurityMonitoringService';
+import { apiService, ApiError } from './ApiService';
 
 export interface DeviceInfo {
   id?: string;
@@ -229,14 +230,8 @@ class MultiDeviceE2EEService {
     }
 
     return await E2EEErrorHandler.withRetry(async () => {
-      const response = await fetch('/api/v1/chat/devices', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Device-Fingerprint': this.currentDevice!.fingerprint,
-          'X-CSRF-TOKEN': this.getCSRFToken(),
-        },
-        body: JSON.stringify({
+      try {
+        const result = await apiService.post<{ device: any; verification?: DeviceVerificationChallenge }>('/api/v1/chat/devices', {
           device_name: this.currentDevice!.name,
           device_type: this.currentDevice!.type,
           public_key: this.currentDevice!.publicKey,
@@ -251,21 +246,28 @@ class MultiDeviceE2EEService {
             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
             language: navigator.language,
           },
-        }),
-      });
+        }, {
+          headers: {
+            'X-Device-Fingerprint': this.currentDevice!.fingerprint,
+          },
+        });
 
-      const result = await E2EEErrorHandler.handleApiResponse(response);
+        // Update current device with server info
+        if (this.currentDevice) {
+          this.currentDevice.id = result.device.id;
+          this.currentDevice.isTrusted = result.device.is_trusted;
+          this.setSecureStorage('current_device', this.currentDevice);
+          // Mark device as registered
+          this.setSecureStorage('device_registered', 'true');
+        }
 
-      // Update current device with server info
-      if (this.currentDevice) {
-        this.currentDevice.id = result.device.id;
-        this.currentDevice.isTrusted = result.device.is_trusted;
-        this.setSecureStorage('current_device', this.currentDevice);
-        // Mark device as registered
-        this.setSecureStorage('device_registered', 'true');
+        return result;
+      } catch (error) {
+        if (error instanceof ApiError) {
+          throw E2EEError.apiError(error.message, error.status);
+        }
+        throw error;
       }
-
-      return result;
     }).then(result => {
       // Log successful device registration
       if (this.currentDevice?.id) {
@@ -308,20 +310,11 @@ class MultiDeviceE2EEService {
       throw E2EEError.deviceNotInitialized();
     }
 
-    const verificationResponse = await fetch(`/api/v1/chat/devices/${this.currentDevice.id}/verify`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': this.getCSRFToken(),
-      },
-      body: JSON.stringify({
+    try {
+      const result = await apiService.post<{ device: { is_trusted: boolean; verified_at: string } }>(`/api/v1/chat/devices/${this.currentDevice.id}/verify`, {
         challenge_id: challengeId,
         response,
-      }),
-    });
-
-    try {
-      const result = await E2EEErrorHandler.handleApiResponse(verificationResponse);
+      });
 
       // Update device trust status
       if (this.currentDevice) {
@@ -367,29 +360,30 @@ class MultiDeviceE2EEService {
    * Get list of user devices
    */
   async getUserDevices(): Promise<DeviceInfo[]> {
-    const response = await fetch('/api/v1/chat/devices', {
-      headers: {
-        'X-Device-Fingerprint': this.currentDevice?.fingerprint || '',
-        'X-CSRF-TOKEN': this.getCSRFToken(),
-      },
-    });
+    try {
+      const result = await apiService.get<{ devices: any[] }>('/api/v1/chat/devices', {
+        headers: {
+          'X-Device-Fingerprint': this.currentDevice?.fingerprint || '',
+        },
+      });
 
-    if (!response.ok) {
-      throw new Error('Failed to fetch devices');
+      return result.devices.map((device: any) => ({
+        id: device.id,
+        name: device.device_name,
+        type: device.device_type,
+        platform: device.platform,
+        fingerprint: device.short_fingerprint,
+        isTrusted: device.is_trusted,
+        isActive: true,
+        lastUsed: device.last_used_at ? new Date(device.last_used_at) : undefined,
+        // Other fields would be filled from detailed device info if needed
+      }));
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw E2EEError.apiError(error.message, error.status);
+      }
+      throw error;
     }
-
-    const result = await response.json();
-    return result.devices.map((device: any) => ({
-      id: device.id,
-      name: device.device_name,
-      type: device.device_type,
-      platform: device.platform,
-      fingerprint: device.short_fingerprint,
-      isTrusted: device.is_trusted,
-      isActive: true,
-      lastUsed: device.last_used_at ? new Date(device.last_used_at) : undefined,
-      // Other fields would be filled from detailed device info if needed
-    }));
   }
 
   /**
@@ -491,23 +485,10 @@ class MultiDeviceE2EEService {
       throw new Error('Device not registered');
     }
 
-    const response = await fetch(`/api/v1/chat/conversations/${conversationId}/setup-encryption-multidevice`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': this.getCSRFToken(),
-      },
-      body: JSON.stringify({
-        device_keys: participantDevices.map(deviceId => ({ device_id: deviceId })),
-        initiating_device_id: this.currentDevice.id,
-      }),
+    const result = await apiService.post(`/api/v1/chat/conversations/${conversationId}/setup-encryption-multidevice`, {
+      device_keys: participantDevices.map(deviceId => ({ device_id: deviceId })),
+      initiating_device_id: this.currentDevice.id,
     });
-
-    if (!response.ok) {
-      throw new Error('Failed to setup conversation encryption');
-    }
-
-    const result = await response.json();
 
     // Cache the conversation key
     await this.getConversationKey(conversationId);
@@ -521,21 +502,10 @@ class MultiDeviceE2EEService {
       throw new Error('Device not registered');
     }
 
-    const response = await fetch(`/api/v1/chat/conversations/${conversationId}/rotate-key-multidevice`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': this.getCSRFToken(),
-      },
-      body: JSON.stringify({
-        initiating_device_id: this.currentDevice.id,
-        reason,
-      }),
+    await apiService.post(`/api/v1/chat/conversations/${conversationId}/rotate-key-multidevice`, {
+      initiating_device_id: this.currentDevice.id,
+      reason,
     });
-
-    if (!response.ok) {
-      throw new Error('Failed to rotate conversation keys');
-    }
 
     // Clear cached keys to force reload
     this.conversationKeys.delete(conversationId);
@@ -551,17 +521,7 @@ class MultiDeviceE2EEService {
       throw new Error('Device not registered');
     }
 
-    const response = await fetch(`/api/v1/chat/devices/${this.currentDevice.id}/security-report`, {
-      headers: {
-        'X-CSRF-TOKEN': this.getCSRFToken(),
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to get security report');
-    }
-
-    const result = await response.json();
+    const result = await apiService.get(`/api/v1/chat/devices/${this.currentDevice.id}/security-report`);
     return {
       ...result,
       generatedAt: new Date(result.generated_at),
@@ -576,54 +536,23 @@ class MultiDeviceE2EEService {
       throw new Error('Device not registered or trusted');
     }
 
-    const response = await fetch(`/api/v1/chat/devices/${targetDeviceId}/share-keys`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': this.getCSRFToken(),
-      },
-      body: JSON.stringify({
-        from_device_fingerprint: this.currentDevice.fingerprint,
-      }),
+    await apiService.post(`/api/v1/chat/devices/${targetDeviceId}/share-keys`, {
+      from_device_fingerprint: this.currentDevice.fingerprint,
     });
-
-    if (!response.ok) {
-      throw new Error('Failed to share keys with device');
-    }
   }
 
   /**
    * Trust a device
    */
   async trustDevice(deviceId: string): Promise<void> {
-    const response = await fetch(`/api/v1/chat/devices/${deviceId}/trust`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': this.getCSRFToken(),
-      },
-      body: JSON.stringify({}),
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to trust device');
-    }
+    await apiService.post(`/api/v1/chat/devices/${deviceId}/trust`, {});
   }
 
   /**
    * Remove a device
    */
   async removeDevice(deviceId: string): Promise<void> {
-    const response = await fetch(`/api/v1/chat/devices/${deviceId}`, {
-      method: 'DELETE',
-      headers: {
-        'X-CSRF-TOKEN': this.getCSRFToken(),
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to remove device');
-    }
+    await apiService.delete(`/api/v1/chat/devices/${deviceId}`);
   }
 
   // Private helper methods
@@ -639,23 +568,10 @@ class MultiDeviceE2EEService {
       return cachedKey;
     }
 
-    const response = await fetch(`/api/v1/chat/conversations/${conversationId}/device-key`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': this.getCSRFToken(),
-      },
-      body: JSON.stringify({
-        device_id: this.currentDevice.id,
-        key_version: keyVersion,
-      }),
+    const result = await apiService.post<{ encrypted_key: string }>(`/api/v1/chat/conversations/${conversationId}/device-key`, {
+      device_id: this.currentDevice.id,
+      key_version: keyVersion,
     });
-
-    if (!response.ok) {
-      throw new Error('Failed to get conversation key');
-    }
-
-    const result = await response.json();
     const conversationKey: ConversationKey = {
       keyId: result.key_id,
       encryptedKey: result.encrypted_key,
@@ -1246,39 +1162,22 @@ class MultiDeviceE2EEService {
   }
 
   private async syncMessageToDevice(messageData: MessageSyncData, targetDevice: any): Promise<void> {
-    const response = await fetch(`/api/v1/chat/devices/${targetDevice.id}/sync-message`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': this.getCSRFToken(),
-      },
-      body: JSON.stringify({
-        message_id: messageData.messageId,
-        conversation_id: messageData.conversationId,
-        encrypted_content: messageData.encryptedContent,
-        source_device_id: this.currentDevice!.id,
-        timestamp: messageData.timestamp,
-      }),
+    await apiService.post(`/api/v1/chat/devices/${targetDevice.id}/sync-message`, {
+      message_id: messageData.messageId,
+      conversation_id: messageData.conversationId,
+      encrypted_content: messageData.encryptedContent,
+      source_device_id: this.currentDevice!.id,
+      timestamp: messageData.timestamp,
     });
-
-    await E2EEErrorHandler.handleApiResponse(response);
   }
 
   private async requestMessagesFromDevice(device: any, conversationId: string, fromTimestamp: number): Promise<EncryptedMessage[]> {
-    const response = await fetch(`/api/v1/chat/devices/${device.id}/request-messages`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': this.getCSRFToken(),
-      },
-      body: JSON.stringify({
-        conversation_id: conversationId,
-        from_timestamp: fromTimestamp,
-        requesting_device_id: this.currentDevice!.id,
-      }),
+    const result = await apiService.post<{ messages?: EncryptedMessage[] }>(`/api/v1/chat/devices/${device.id}/request-messages`, {
+      conversation_id: conversationId,
+      from_timestamp: fromTimestamp,
+      requesting_device_id: this.currentDevice!.id,
     });
 
-    const result = await E2EEErrorHandler.handleApiResponse(response);
     return result.messages || [];
   }
 
@@ -1483,20 +1382,11 @@ class MultiDeviceE2EEService {
     }
 
     return await E2EEErrorHandler.withRetry(async () => {
-      const response = await fetch(`/api/v1/chat/devices/${this.currentDevice!.id}/verification/initiate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': this.getCSRFToken(),
-        },
-        body: JSON.stringify({
-          verification_type: options.method,
-          timeout: options.timeout || 300, // 5 minutes default
-          requires_biometric: options.requiresBiometric || false,
-        }),
+      const result = await apiService.post<any>(`/api/v1/chat/devices/${this.currentDevice!.id}/verification/initiate`, {
+        verification_type: options.method,
+        timeout: options.timeout || 300, // 5 minutes default
+        requires_biometric: options.requiresBiometric || false,
       });
-
-      const result = await E2EEErrorHandler.handleApiResponse(response);
 
       return {
         challengeId: result.challenge.challenge_id,
@@ -1525,21 +1415,12 @@ class MultiDeviceE2EEService {
     }
 
     try {
-      const verificationResponse = await fetch(`/api/v1/chat/devices/${this.currentDevice.id}/verification/complete`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': this.getCSRFToken(),
-        },
-        body: JSON.stringify({
-          challenge_id: challengeId,
-          response,
-          trust_device: options?.trustDevice !== false,
-          remember_device: options?.rememberDevice !== false,
-        }),
+      const result = await apiService.post<{ device: { is_trusted: boolean; verified_at: string }, success: boolean }>(`/api/v1/chat/devices/${this.currentDevice.id}/verification/complete`, {
+        challenge_id: challengeId,
+        response,
+        trust_device: options?.trustDevice !== false,
+        remember_device: options?.rememberDevice !== false,
       });
-
-      const result = await E2EEErrorHandler.handleApiResponse(verificationResponse);
 
       // Update device trust status
       if (this.currentDevice && result.device) {
@@ -1565,15 +1446,7 @@ class MultiDeviceE2EEService {
       throw E2EEError.deviceNotInitialized();
     }
 
-    const response = await fetch(`/api/v1/chat/devices/${this.currentDevice.id}/verification/qr`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': this.getCSRFToken(),
-      },
-    });
-
-    const result = await E2EEErrorHandler.handleApiResponse(response);
+    const result = await apiService.post<{ qr_code: string; verification_url: string }>(`/api/v1/chat/devices/${this.currentDevice.id}/verification/qr`, {});
     return {
       qrCode: result.qr_code,
       verificationUrl: result.verification_url,
@@ -1581,19 +1454,19 @@ class MultiDeviceE2EEService {
   }
 
   private async getDevices(): Promise<any[]> {
-    const response = await fetch('/api/v1/chat/devices', {
-      headers: {
-        'X-Device-Fingerprint': this.currentDevice?.fingerprint || '',
-        'X-CSRF-TOKEN': this.getCSRFToken(),
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch devices');
+    try {
+      const result = await apiService.get('/api/v1/chat/devices', {
+        headers: {
+          'X-Device-Fingerprint': this.currentDevice?.fingerprint || '',
+        },
+      });
+      return result.devices || [];
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw E2EEError.apiError(error.message, error.status, error.details);
+      }
+      throw error;
     }
-
-    const result = await response.json();
-    return result.devices || [];
   }
 
   private getCSRFToken(): string {

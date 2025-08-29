@@ -8,6 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { apiService, ApiError } from '@/services/ApiService';
 import { 
   Download, 
   Upload, 
@@ -70,15 +71,7 @@ export function KeyBackupManager({ className }: KeyBackupManagerProps) {
   const loadRecoveryStatus = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/v1/key-recovery/status', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      const data = await response.json();
+      const data = await apiService.get('/api/v1/key-recovery/status');
       if (data.success) {
         setRecoveryStatus(data.status);
       } else {
