@@ -295,7 +295,10 @@ describe('Error Handling and Validation', function () {
 
         // This should either work or throw a proper EncryptionException
         try {
-            $this->encryptionService->encryptMessage($message, $invalidKey);
+            $result = $this->encryptionService->encryptMessage($message, $invalidKey);
+            // If no exception is thrown, verify the result structure
+            expect($result)->toHaveKeys(['data', 'iv', 'hash']);
+            expect($result['data'])->toBeString();
         } catch (EncryptionException $e) {
             expect($e->getMessage())->toContain('Encryption failed');
         }
@@ -573,11 +576,20 @@ describe('Health Validation', function () {
         // Actual slow performance would be hardware dependent
         $health = $this->encryptionService->validateEncryptionHealth();
 
+        // Verify the health check has the required structure
+        expect($health)->toHaveKeys(['status', 'checks', 'warnings', 'errors']);
+        expect($health['checks'])->toHaveKey('key_generation');
+        expect($health['checks']['key_generation'])->toHaveKey('duration_ms');
+
         // If key generation takes more than 5 seconds, it should warn
         if ($health['checks']['key_generation']['duration_ms'] > 5000) {
             expect($health['warnings'])->toContain(
                 'Key generation is slow ('.$health['checks']['key_generation']['duration_ms'].'ms)'
             );
+        } else {
+            // If performance is good, verify no slow performance warnings
+            $slowWarnings = array_filter($health['warnings'], fn ($warning) => str_contains($warning, 'slow'));
+            expect($slowWarnings)->toBeEmpty();
         }
     });
 });

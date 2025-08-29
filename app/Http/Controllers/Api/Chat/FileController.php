@@ -132,7 +132,7 @@ class FileController extends Controller
         // TODO: In a real implementation, the key would be embedded in the secure token
         try {
             // Try to get file contents directly for token-based access
-            // This is a simplified approach - in production you'd embed encryption info in the token
+            // TODO: in production you'd embed encryption info in the token
             $fileData = $this->fileService->retrieveFile($filePath, 'dummy-key');
 
             return response($fileData['contents'])

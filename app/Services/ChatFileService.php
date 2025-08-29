@@ -271,7 +271,7 @@ class ChatFileService
 
             // Create temporary file for thumbnail generation
             $tempThumbnailPath = tempnam(sys_get_temp_dir(), 'thumbnail_');
-            
+
             // Try to use Intervention Image if available, otherwise fallback to GD
             if (class_exists(\Intervention\Image\ImageManagerStatic::class)) {
                 $image = \Intervention\Image\ImageManagerStatic::make($file->getPathname());
@@ -294,7 +294,7 @@ class ChatFileService
             }
 
             $stored = Storage::disk('chat-files')->put($thumbnailPath, $thumbnailContents);
-            
+
             // Clean up temporary file
             unlink($tempThumbnailPath);
 
@@ -302,7 +302,7 @@ class ChatFileService
                 return null;
             }
 
-            // Encrypt the thumbnail if needed (optional for thumbnails)
+            // TODO: Encrypt the thumbnail
             // For now, we'll store thumbnails unencrypted for performance
             // but you could encrypt them similar to the main file
 
