@@ -99,7 +99,7 @@ function createTestActivities()
 }
 
 it('allows admin to access export all endpoint', function () {
-    $this->actingAs($this->adminUser);
+    $this->actingAs($this->adminUser, 'api');
 
     // Set the team context for Spatie permissions
     setPermissionsTeamId($this->organization->id);
@@ -115,7 +115,7 @@ it('allows admin to access export all endpoint', function () {
 });
 
 it('allows admin to access export filtered endpoint', function () {
-    $this->actingAs($this->adminUser);
+    $this->actingAs($this->adminUser, 'api');
 
     // Set the team context for Spatie permissions
     setPermissionsTeamId($this->organization->id);
@@ -135,7 +135,7 @@ it('allows admin to access export filtered endpoint', function () {
 });
 
 it('prevents regular user from accessing export endpoints', function () {
-    $this->actingAs($this->regularUser);
+    $this->actingAs($this->regularUser, 'api');
 
     $response = $this->postJson(route('activity-log.export.all'), [
         'format' => 'csv',
@@ -159,7 +159,7 @@ it('redirects unauthenticated users trying to access export endpoints', function
 });
 
 it('returns correct data from validate export endpoint', function () {
-    $this->actingAs($this->adminUser);
+    $this->actingAs($this->adminUser, 'api');
     setPermissionsTeamId($this->organization->id);
 
     $response = $this->postJson(route('activity-log.export.validate'), [
@@ -183,7 +183,7 @@ it('returns correct data from validate export endpoint', function () {
 });
 
 it('validates required parameters for export', function () {
-    $this->actingAs($this->adminUser);
+    $this->actingAs($this->adminUser, 'api');
     setPermissionsTeamId($this->organization->id);
 
     // Test missing format
@@ -205,7 +205,7 @@ it('validates required parameters for export', function () {
 });
 
 it('validates date range for filtered export', function () {
-    $this->actingAs($this->adminUser);
+    $this->actingAs($this->adminUser, 'api');
     setPermissionsTeamId($this->organization->id);
 
     // Test invalid date range (from_date after to_date)
@@ -223,7 +223,7 @@ it('validates date range for filtered export', function () {
 });
 
 it('returns available columns for export', function () {
-    $this->actingAs($this->adminUser);
+    $this->actingAs($this->adminUser, 'api');
     setPermissionsTeamId($this->organization->id);
 
     $response = $this->get(route('activity-log.export.columns'));
@@ -314,7 +314,7 @@ it('handles custom column selection', function () {
 });
 
 it('shows export button for admin users on activity log index', function () {
-    $this->actingAs($this->adminUser);
+    $this->actingAs($this->adminUser, 'api');
     setPermissionsTeamId($this->organization->id);
 
     $response = $this->get(route('activity-log.index'));

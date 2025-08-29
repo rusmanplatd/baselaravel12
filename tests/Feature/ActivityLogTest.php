@@ -103,7 +103,7 @@ test('activity log service logs auth events correctly', function () {
     $user = User::factory()->create();
 
     // Authenticate the user for the activity log
-    $this->actingAs($user);
+    $this->actingAs($user, 'api');
 
     ActivityLogService::logAuth('login', 'User logged in successfully', [
         'ip_address' => '127.0.0.1',
@@ -122,7 +122,7 @@ test('activity log service logs organization events correctly', function () {
     $user = User::factory()->create();
     $organization = Organization::factory()->create();
 
-    $this->actingAs($user);
+    $this->actingAs($user, 'api');
 
     ActivityLogService::logOrganization('updated', 'Organization settings updated', [
         'changed_fields' => ['name', 'description'],
@@ -138,7 +138,7 @@ test('activity log service logs organization events correctly', function () {
 test('activity log service logs oauth events correctly', function () {
     $user = User::factory()->create();
 
-    $this->actingAs($user);
+    $this->actingAs($user, 'api');
 
     ActivityLogService::logOAuth('client_created', 'OAuth client created', [
         'client_name' => 'Test Client',
@@ -171,7 +171,7 @@ test('activity queries work with scopes', function () {
     // Clear all activities from previous tests
     Activity::truncate();
 
-    $this->actingAs($user);
+    $this->actingAs($user, 'api');
 
     ActivityLogService::logAuth('login', 'User logged in', [], $user);
     ActivityLogService::logOrganization('created', 'Organization created', []);
@@ -189,7 +189,7 @@ test('activity log respects tenant scoping when available', function () {
     $user = User::factory()->create();
     $organization = Organization::factory()->create();
 
-    $this->actingAs($user);
+    $this->actingAs($user, 'api');
 
     // Simulate tenant context by setting organization_id directly
     $activity = ActivityLogService::logAuth('login', 'User logged in', [], $user);

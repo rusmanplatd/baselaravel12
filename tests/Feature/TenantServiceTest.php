@@ -79,7 +79,7 @@ class TenantServiceTest extends TestCase
             'start_date' => now()->subDays(30),
         ]);
 
-        $this->actingAs($user);
+        $this->actingAs($user, 'api');
 
         $tenants = TenantService::getUserTenants($user);
 
@@ -101,7 +101,7 @@ class TenantServiceTest extends TestCase
             'start_date' => now()->subDays(30),
         ]);
 
-        $this->actingAs($user);
+        $this->actingAs($user, 'api');
 
         $this->assertTrue(TenantService::canAccessTenant($accessibleOrg, $user));
         $this->assertFalse(TenantService::canAccessTenant($inaccessibleOrg, $user));
@@ -127,7 +127,7 @@ class TenantServiceTest extends TestCase
             'start_date' => now()->subDays(30),
         ]);
 
-        $this->actingAs($user);
+        $this->actingAs($user, 'api');
 
         $defaultTenant = TenantService::getDefaultTenant($user);
 
@@ -155,7 +155,7 @@ class TenantServiceTest extends TestCase
             'start_date' => now()->subDays(30),
         ]);
 
-        $this->actingAs($user);
+        $this->actingAs($user, 'api');
 
         // Switch to org1
         $success1 = TenantService::switchTenant($org1->id);
