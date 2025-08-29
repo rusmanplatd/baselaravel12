@@ -12,9 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('chat_conversations', function (Blueprint $table) {
-            $table->boolean('is_encrypted')->default(false)->after('metadata');
-            $table->string('encryption_algorithm')->nullable()->after('is_encrypted');
-            $table->integer('key_strength')->nullable()->after('encryption_algorithm');
+            $table->string('encryption_algorithm')->default('AES-256-GCM')->after('metadata');
+            $table->integer('key_strength')->default(256)->after('encryption_algorithm');
+            $table->json('encryption_info')->nullable()->after('key_strength');
         });
     }
 
@@ -24,7 +24,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('chat_conversations', function (Blueprint $table) {
-            $table->dropColumn(['is_encrypted', 'encryption_algorithm', 'key_strength']);
+            $table->dropColumn(['encryption_algorithm', 'key_strength', 'encryption_info']);
         });
     }
 };

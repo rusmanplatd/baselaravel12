@@ -94,12 +94,24 @@ class EncryptionController extends Controller
 
             // Create encryption key records for successful encryptions
             foreach ($bulkResult['encrypted_keys'] as $userId => $keyData) {
-                EncryptionKey::create([
-                    'conversation_id' => $conversation->id,
-                    'user_id' => $userId,
-                    'encrypted_key' => $keyData['encrypted_key'],
-                    'public_key' => $keyData['public_key'],
-                ]);
+                // Use EncryptionKey::createForUser which handles device_id properly
+                $user = \App\Models\User::find($userId);
+                if ($user) {
+                    try {
+                        EncryptionKey::createForUser(
+                            $conversation->id,
+                            $userId,
+                            $newSymmetricKey,
+                            $user->public_key
+                        );
+                    } catch (\Exception $e) {
+                        Log::warning('Failed to create encryption key during rotation', [
+                            'user_id' => $userId,
+                            'conversation_id' => $conversation->id,
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
+                }
             }
 
             // Log the rotation event
@@ -505,11 +517,25 @@ class EncryptionController extends Controller
             $encryptedMessages = [];
             foreach ($messages as $message) {
                 if ($message->encrypted_content) {
-                    $encryptedMessages[$message->id] = [
-                        'data' => $message->encrypted_content,
-                        'hmac' => $message->content_hmac,
-                        'hash' => $message->content_hash,
-                    ];
+                    try {
+                        $encryptedData = json_decode($message->encrypted_content, true);
+                        if ($encryptedData && isset($encryptedData['data']) && isset($encryptedData['iv'])) {
+                            $encryptedMessages[$message->id] = $encryptedData;
+                        } else {
+                            // Fallback for old format
+                            $encryptedMessages[$message->id] = [
+                                'data' => $message->encrypted_content,
+                                'hmac' => $message->content_hmac,
+                                'hash' => $message->content_hash,
+                            ];
+                        }
+                    } catch (\Exception $e) {
+                        // Skip invalid messages
+                        Log::warning('Invalid encrypted_content format', [
+                            'message_id' => $message->id,
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
                 }
             }
 
@@ -1035,18 +1061,8 @@ class EncryptionController extends Controller
             $anomalies = [];
             $user = auth()->user();
 
-            // Detect unencrypted messages in encrypted conversations
-            $unencryptedInEncrypted = DB::select('
-                SELECT c.id as conversation_id, COUNT(m.id) as message_count
-                FROM chat_conversations c
-                INNER JOIN chat_participants p ON c.id = p.conversation_id
-                INNER JOIN chat_messages m ON c.id = m.conversation_id
-                WHERE c.is_encrypted = true
-                  AND m.is_encrypted = false
-                  AND p.user_id = ?
-                  AND p.left_at IS NULL
-                GROUP BY c.id
-            ', [$user->id]);
+            // All conversations are encrypted in E2EE, so this anomaly check is no longer needed
+            $unencryptedInEncrypted = [];
 
             foreach ($unencryptedInEncrypted as $anomaly) {
                 $anomalies[] = [
@@ -1076,15 +1092,12 @@ class EncryptionController extends Controller
                 ];
             }
 
-            // Detect inactive keys that should be active
+            // Detect inactive keys that should be active (all conversations are encrypted in E2EE)
             $inactiveKeys = $user->encryptionKeys()
                 ->where('is_active', false)
                 ->whereHas('conversation.participants', function ($query) use ($user) {
                     $query->where('user_id', $user->id)
                         ->whereNull('left_at');
-                })
-                ->whereHas('conversation', function ($query) {
-                    $query->where('is_encrypted', true);
                 })
                 ->get();
 

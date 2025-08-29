@@ -33,7 +33,6 @@ describe('E2EE Key Recovery and Backup System', function () {
 
         // Create test conversation with encryption (older timestamp)
         $this->conversation = Conversation::factory()->create([
-            'is_encrypted' => true,
             'created_at' => now()->subWeeks(2), // Ensure it's older than incremental backup tests
         ]);
 
@@ -74,7 +73,7 @@ describe('E2EE Key Recovery and Backup System', function () {
             $keys = [];
 
             for ($i = 0; $i < 5; $i++) {
-                $conv = Conversation::factory()->create(['is_encrypted' => true]);
+                $conv = Conversation::factory()->create();
                 $conversations[] = $conv;
 
                 Participant::create([
@@ -217,7 +216,6 @@ describe('E2EE Key Recovery and Backup System', function () {
             $newConversations = [];
             for ($i = 0; $i < 3; $i++) {
                 $conv = Conversation::factory()->create([
-                    'is_encrypted' => true,
                     'created_at' => now()->subDays(3), // After initial backup
                 ]);
                 $newConversations[] = $conv;
@@ -349,7 +347,7 @@ describe('E2EE Key Recovery and Backup System', function () {
             $allKeys = [];
 
             for ($i = 0; $i < 5; $i++) {
-                $conv = Conversation::factory()->create(['is_encrypted' => true]);
+                $conv = Conversation::factory()->create();
                 $conversations[] = $conv;
 
                 Participant::create([
@@ -611,7 +609,7 @@ describe('E2EE Key Recovery and Backup System', function () {
 
             // Recoverable conversations (have backup)
             for ($i = 0; $i < 3; $i++) {
-                $conv = Conversation::factory()->create(['is_encrypted' => true]);
+                $conv = Conversation::factory()->create();
                 $recoverableConvs[] = $conv;
 
                 Participant::create([
@@ -630,7 +628,7 @@ describe('E2EE Key Recovery and Backup System', function () {
 
             // Lost conversations (no backup available)
             for ($i = 0; $i < 2; $i++) {
-                $conv = Conversation::factory()->create(['is_encrypted' => true]);
+                $conv = Conversation::factory()->create();
                 $lostConvs[] = $conv;
 
                 Participant::create([
@@ -920,7 +918,7 @@ describe('E2EE Key Recovery and Backup System', function () {
             expect($incrementalBackup['size_bytes'])->toBeLessThan($fullBackup['size_bytes']);
 
             // Incremental with changes
-            $newConversation = Conversation::factory()->create(['is_encrypted' => true]);
+            $newConversation = Conversation::factory()->create();
             Participant::create([
                 'conversation_id' => $newConversation->id,
                 'user_id' => $this->user1->id,

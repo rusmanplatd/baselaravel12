@@ -41,9 +41,8 @@ class ConversationController extends Controller
             'description' => 'nullable|string|max:1000',
             'participants' => 'required|array|min:1',
             'participants.*' => 'required|string',
-            'is_encrypted' => 'nullable|boolean',
-            'encryption_algorithm' => 'nullable|string|in:RSA-4096-OAEP,RSA-2048-OAEP',
-            'key_strength' => 'nullable|integer|in:2048,4096',
+            'encryption_algorithm' => 'nullable|string|in:RSA-4096-OAEP,RSA-2048-OAEP,AES-256-GCM,ChaCha20-Poly1305',
+            'key_strength' => 'nullable|integer|in:128,256,2048,4096',
         ]);
 
         if ($validated['type'] === 'direct' && count($validated['participants']) !== 1) {
@@ -94,25 +93,21 @@ class ConversationController extends Controller
         }
 
         return DB::transaction(function () use ($validated, $participants) {
-            $isEncrypted = $validated['is_encrypted'] ?? true; // Default to encrypted
-            $algorithm = $validated['encryption_algorithm'] ?? 'RSA-4096-OAEP';
-            $keyStrength = $validated['key_strength'] ?? 4096;
+            // All conversations are encrypted in E2EE
+            $algorithm = $validated['encryption_algorithm'] ?? 'AES-256-GCM';
+            $keyStrength = $validated['key_strength'] ?? 256;
 
             $conversation = Conversation::create([
                 'name' => $validated['name'] ?? null,
                 'type' => $validated['type'],
                 'description' => $validated['description'] ?? null,
                 'created_by' => auth()->id(),
-                'is_encrypted' => $isEncrypted,
-                'encryption_algorithm' => $isEncrypted ? $algorithm : null,
-                'key_strength' => $isEncrypted ? $keyStrength : null,
+                'encryption_algorithm' => $algorithm,
+                'key_strength' => $keyStrength,
             ]);
 
-            // Only generate encryption keys if the conversation is encrypted
-            $symmetricKey = null;
-            if ($isEncrypted) {
-                $symmetricKey = $this->encryptionService->generateSymmetricKey();
-            }
+            // Always generate encryption keys since all conversations are encrypted in E2EE
+            $symmetricKey = $this->encryptionService->generateSymmetricKey();
 
             foreach ($participants as $index => $userId) {
                 $role = $userId === auth()->id() ? 'owner' : 'member';
@@ -124,8 +119,8 @@ class ConversationController extends Controller
                     'joined_at' => now(),
                 ]);
 
-                // Only create encryption keys if conversation is encrypted
-                if ($isEncrypted && $symmetricKey) {
+                // Always create encryption keys since all conversations are encrypted in E2EE
+                if ($symmetricKey) {
                     $userKeyPair = $this->getUserKeyPair($userId);
 
                     // Get user's device for key creation (use primary device)
@@ -446,9 +441,8 @@ class ConversationController extends Controller
             'key_strength' => 'nullable|integer|in:2048,4096',
         ]);
 
-        if ($conversation->is_encrypted) {
-            return response()->json(['error' => 'Conversation is already encrypted'], 422);
-        }
+        // All conversations are always encrypted in E2EE
+        return response()->json(['error' => 'All conversations are already encrypted in E2EE'], 422);
 
         return DB::transaction(function () use ($conversation, $validated) {
             $algorithm = $validated['algorithm'] ?? 'RSA-4096-OAEP';
@@ -500,9 +494,8 @@ class ConversationController extends Controller
     {
         $this->authorize('update', $conversation);
 
-        if (! $conversation->is_encrypted) {
-            return response()->json(['error' => 'Conversation is not encrypted'], 422);
-        }
+        // All conversations are always encrypted in E2EE, so this method is not needed anymore
+        return response()->json(['error' => 'Cannot disable encryption in E2EE - all conversations are always encrypted'], 422);
 
         return DB::transaction(function () use ($conversation) {
             $conversation->disableEncryption();
@@ -808,7 +801,6 @@ class ConversationController extends Controller
                     'id' => $conversation->id,
                     'name' => $conversation->name,
                     'type' => $conversation->type,
-                    'is_encrypted' => $conversation->is_encrypted,
                     'created_at' => $conversation->created_at,
                     'messages_count' => $messages->count(),
                     'messages' => $messages->map(function ($message) {
@@ -817,7 +809,6 @@ class ConversationController extends Controller
                             'sender' => $message->sender,
                             'content' => $message->content,
                             'message_type' => $message->message_type,
-                            'is_encrypted' => $message->is_encrypted,
                             'created_at' => $message->created_at,
                         ];
                     })->toArray(),
@@ -858,15 +849,13 @@ class ConversationController extends Controller
             'conversation_ids' => 'required|array|min:1|max:20',
             'conversation_ids.*' => 'required|string',
             'encryption_settings' => 'required|array',
-            'encryption_settings.enable_encryption' => 'required|boolean',
-            'encryption_settings.algorithm' => 'nullable|string|in:RSA-4096-OAEP,RSA-2048-OAEP',
-            'encryption_settings.key_strength' => 'nullable|integer|in:2048,4096',
+            'encryption_settings.algorithm' => 'nullable|string|in:RSA-4096-OAEP,RSA-2048-OAEP,AES-256-GCM,ChaCha20-Poly1305',
+            'encryption_settings.key_strength' => 'nullable|integer|in:128,256,2048,4096',
         ]);
 
         try {
             $user = auth()->user();
             $conversationIds = $validated['conversation_ids'];
-            $enableEncryption = $validated['encryption_settings']['enable_encryption'];
 
             // Verify user has admin access to all requested conversations
             $conversations = Conversation::whereIn('id', $conversationIds)
@@ -889,50 +878,13 @@ class ConversationController extends Controller
 
             foreach ($conversations as $conversation) {
                 try {
-                    if ($enableEncryption && ! $conversation->is_encrypted) {
-                        // Enable encryption
-                        $algorithm = $validated['encryption_settings']['algorithm'] ?? 'RSA-4096-OAEP';
-                        $keyStrength = $validated['encryption_settings']['key_strength'] ?? 4096;
+                    // All conversations are always encrypted in E2EE
+                    // Just update encryption settings if requested
+                    $algorithm = $validated['encryption_settings']['algorithm'] ?? 'AES-256-GCM';
+                    $keyStrength = $validated['encryption_settings']['key_strength'] ?? 256;
 
-                        $conversation->enableEncryption($algorithm, $keyStrength);
-
-                        // Generate encryption keys for all participants
-                        $symmetricKey = $this->encryptionService->generateSymmetricKey();
-                        $activeParticipants = $conversation->activeParticipants()->get();
-
-                        foreach ($activeParticipants as $participant) {
-                            $userKeyPair = $this->getUserKeyPair($participant->user_id);
-
-                            $userDevice = \App\Models\UserDevice::where('user_id', $participant->user_id)
-                                ->where('is_trusted', true)
-                                ->first();
-
-                            if ($userDevice) {
-                                EncryptionKey::create([
-                                    'conversation_id' => $conversation->id,
-                                    'user_id' => $participant->user_id,
-                                    'device_id' => $userDevice->id,
-                                    'device_fingerprint' => $userDevice->device_fingerprint,
-                                    'encrypted_key' => $this->encryptionService->encryptSymmetricKey(
-                                        $symmetricKey,
-                                        $userKeyPair['public_key']
-                                    ),
-                                    'public_key' => $userKeyPair['public_key'],
-                                    'key_version' => 1,
-                                    'algorithm' => $algorithm,
-                                    'key_strength' => $keyStrength,
-                                    'is_active' => true,
-                                ]);
-                            }
-                        }
-
-                        $updatedCount++;
-
-                    } elseif (! $enableEncryption && $conversation->is_encrypted) {
-                        // Disable encryption
-                        $conversation->disableEncryption();
-                        $updatedCount++;
-                    }
+                    $conversation->updateEncryptionSettings($algorithm, $keyStrength);
+                    $updatedCount++;
 
                 } catch (\Exception $e) {
                     $failedCount++;
@@ -946,7 +898,7 @@ class ConversationController extends Controller
                     'failed_count' => $failedCount,
                     'total_count' => $conversations->count(),
                     'errors' => $errors,
-                    'operation' => $enableEncryption ? 'enable_encryption' : 'disable_encryption',
+                    'operation' => 'update_encryption_settings',
                     'completed_at' => now()->toISOString(),
                 ],
             ]);

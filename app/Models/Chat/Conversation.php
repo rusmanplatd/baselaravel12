@@ -27,16 +27,16 @@ class Conversation extends Model
         'status',
         'last_message_at',
         'created_by',
-        'is_encrypted',
         'encryption_algorithm',
         'key_strength',
+        'encryption_info',
     ];
 
     protected $casts = [
         'metadata' => 'array',
         'last_message_at' => 'datetime',
-        'is_encrypted' => 'boolean',
         'key_strength' => 'integer',
+        'encryption_info' => 'array',
     ];
 
     public function creator(): BelongsTo
@@ -76,33 +76,24 @@ class Conversation extends Model
 
     public function isEncrypted(): bool
     {
-        return $this->is_encrypted === true;
+        return true; // All conversations are always encrypted in E2EE
     }
 
-    public function enableEncryption(string $algorithm = 'RSA-4096-OAEP', int $keyStrength = 4096): void
+    public function updateEncryptionSettings(string $algorithm = 'AES-256-GCM', int $keyStrength = 256, array $info = []): void
     {
         $this->update([
-            'is_encrypted' => true,
             'encryption_algorithm' => $algorithm,
             'key_strength' => $keyStrength,
-        ]);
-    }
-
-    public function disableEncryption(): void
-    {
-        $this->update([
-            'is_encrypted' => false,
-            'encryption_algorithm' => null,
-            'key_strength' => null,
+            'encryption_info' => $info,
         ]);
     }
 
     public function getEncryptionInfo(): array
     {
         return [
-            'is_encrypted' => $this->is_encrypted,
-            'algorithm' => $this->encryption_algorithm,
-            'key_strength' => $this->key_strength,
+            'algorithm' => $this->encryption_algorithm ?? 'AES-256-GCM',
+            'key_strength' => $this->key_strength ?? 256,
+            'additional_info' => $this->encryption_info ?? [],
         ];
     }
 
@@ -125,18 +116,13 @@ class Conversation extends Model
 
     public function scopeEncrypted($query)
     {
-        return $query->where('is_encrypted', true);
-    }
-
-    public function scopeUnencrypted($query)
-    {
-        return $query->where('is_encrypted', false);
+        return $query; // All conversations are encrypted in E2EE
     }
 
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['name', 'type', 'description', 'status', 'is_encrypted', 'encryption_algorithm', 'key_strength'])
+            ->logOnly(['name', 'type', 'description', 'status', 'encryption_algorithm', 'key_strength', 'encryption_info'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
             ->setDescriptionForEvent(fn (string $eventName) => "Chat conversation {$eventName}")

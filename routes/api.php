@@ -110,6 +110,10 @@ Route::middleware('auth:api')->prefix('v1')->group(function () {
 
     // Chat API endpoints
     Route::prefix('chat')->name('api.chat.')->group(function () {
+        // Bulk operations (must come before resource routes to avoid conflicts)
+        Route::post('conversations/bulk-export', [\App\Http\Controllers\Api\Chat\ConversationController::class, 'bulkExport'])->name('conversations.bulk-export');
+        Route::patch('conversations/bulk-update-encryption', [\App\Http\Controllers\Api\Chat\ConversationController::class, 'bulkUpdateEncryption'])->name('conversations.bulk-update-encryption');
+        
         // Conversations
         Route::apiResource('conversations', \App\Http\Controllers\Api\Chat\ConversationController::class)
             ->middleware('throttle:60,1');
@@ -203,16 +207,10 @@ Route::middleware('auth:api')->prefix('v1')->group(function () {
         Route::post('conversations/{conversation}/rotate-key', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'rotateConversationKey'])->name('conversations.rotate-key');
         Route::post('conversations/{conversation}/setup-encryption', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'setupConversationEncryption'])->name('conversations.setup-encryption');
 
-        // Conversation-level encryption management
+        // Conversation-level encryption management (all conversations are always encrypted in E2EE)
         Route::get('conversations/{conversation}/encryption/status', [\App\Http\Controllers\Api\Chat\ConversationController::class, 'getEncryptionStatus'])
             ->name('conversations.encryption.status')
             ->middleware('throttle:60,1');
-        Route::post('conversations/{conversation}/encryption/enable', [\App\Http\Controllers\Api\Chat\ConversationController::class, 'enableEncryption'])
-            ->name('conversations.encryption.enable')
-            ->middleware('throttle:10,1');
-        Route::post('conversations/{conversation}/encryption/disable', [\App\Http\Controllers\Api\Chat\ConversationController::class, 'disableEncryption'])
-            ->name('conversations.encryption.disable')
-            ->middleware('throttle:10,1');
         Route::post('encryption/verify', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'verifyMessage'])->name('encryption.verify');
         Route::post('encryption/test', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'testEncryption'])->name('encryption.test');
 
@@ -229,10 +227,6 @@ Route::middleware('auth:api')->prefix('v1')->group(function () {
         Route::get('encryption/key-usage-stats', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'getKeyUsageStats'])->name('encryption.key-usage-stats');
         Route::get('encryption/detect-anomalies', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'detectAnomalies'])->name('encryption.detect-anomalies');
         Route::get('conversations/{conversation}/encryption/audit-log', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'getAuditLog'])->name('conversations.encryption.audit-log');
-
-        // Bulk operations
-        Route::post('conversations/bulk-export', [\App\Http\Controllers\Api\Chat\ConversationController::class, 'bulkExport'])->name('conversations.bulk-export');
-        Route::patch('conversations/bulk-update-encryption', [\App\Http\Controllers\Api\Chat\ConversationController::class, 'bulkUpdateEncryption'])->name('conversations.bulk-update-encryption');
 
         // Multi-Device E2EE endpoints
         Route::post('conversations/{conversation}/setup-encryption-multidevice', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'setupConversationEncryptionMultiDevice'])->name('conversations.setup-encryption-multidevice');

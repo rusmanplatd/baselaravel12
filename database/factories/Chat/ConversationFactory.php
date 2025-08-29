@@ -32,6 +32,9 @@ class ConversationFactory extends Factory
             'type' => $this->faker->randomElement(['direct', 'group']),
             'description' => $this->faker->optional()->sentence(),
             'created_by' => User::factory(),
+            'encryption_algorithm' => 'AES-256-GCM',
+            'key_strength' => 256,
+            'encryption_info' => [],
         ];
     }
 
@@ -59,26 +62,14 @@ class ConversationFactory extends Factory
     }
 
     /**
-     * Indicate that the conversation is encrypted.
+     * Configure conversation with specific encryption settings.
      */
-    public function encrypted(string $algorithm = 'RSA-4096-OAEP', int $keyStrength = 4096): static
+    public function withEncryption(string $algorithm = 'AES-256-GCM', int $keyStrength = 256, array $info = []): static
     {
         return $this->state(fn (array $attributes) => [
-            'is_encrypted' => true,
             'encryption_algorithm' => $algorithm,
             'key_strength' => $keyStrength,
-        ]);
-    }
-
-    /**
-     * Indicate that the conversation is not encrypted.
-     */
-    public function unencrypted(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'is_encrypted' => false,
-            'encryption_algorithm' => null,
-            'key_strength' => null,
+            'encryption_info' => $info,
         ]);
     }
 }
