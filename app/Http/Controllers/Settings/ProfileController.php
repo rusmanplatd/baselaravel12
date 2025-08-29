@@ -91,12 +91,12 @@ class ProfileController extends Controller
         $user = $request->user();
 
         // Delete old avatar if exists
-        if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
-            Storage::disk('public')->delete($user->avatar);
+        if ($user->avatar && Storage::disk('minio')->exists($user->avatar)) {
+            Storage::disk('minio')->delete($user->avatar);
         }
 
         // Store new avatar
-        $path = $request->file('avatar')->store('avatars', 'public');
+        $path = $request->file('avatar')->store('avatars', 'minio');
 
         // Update user avatar path
         $user->update(['avatar' => $path]);
@@ -110,7 +110,7 @@ class ProfileController extends Controller
 
         return response()->json([
             'message' => 'Avatar uploaded successfully',
-            'avatar_url' => asset('storage/'.$path),
+            'avatar_url' => Storage::disk('minio')->url($path),
         ]);
     }
 
@@ -123,8 +123,8 @@ class ProfileController extends Controller
 
         if ($user->avatar) {
             // Delete file from storage
-            if (Storage::disk('public')->exists($user->avatar)) {
-                Storage::disk('public')->delete($user->avatar);
+            if (Storage::disk('minio')->exists($user->avatar)) {
+                Storage::disk('minio')->delete($user->avatar);
             }
 
             // Clear avatar from database

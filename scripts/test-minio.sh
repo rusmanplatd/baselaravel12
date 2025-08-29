@@ -16,7 +16,7 @@ echo "✅ Docker is running"
 
 # Start services in background
 echo "🐳 Starting Docker services..."
-docker-compose up -d minio postgres redis
+docker compose up -d minio postgres redis
 
 # Wait for MinIO to be ready
 echo "⏳ Waiting for MinIO to be ready..."
@@ -28,7 +28,7 @@ if curl -f http://localhost:9000/minio/health/live > /dev/null 2>&1; then
     echo "✅ MinIO is healthy"
 else
     echo "❌ MinIO is not responding"
-    echo "💡 Try: docker-compose logs minio"
+    echo "💡 Try: docker compose logs minio"
     exit 1
 fi
 

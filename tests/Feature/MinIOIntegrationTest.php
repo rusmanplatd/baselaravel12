@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Storage;
 
 test('minio disk can store and retrieve files', function () {
     // Skip test if MinIO is not configured
-    if (config('filesystems.default') !== 'minio' && ! config('filesystems.disks.minio.endpoint')) {
+    if (! config('filesystems.disks.minio.endpoint')) {
         $this->markTestSkipped('MinIO is not configured');
     }
 
@@ -32,7 +32,7 @@ test('minio disk can store and retrieve files', function () {
 
 test('minio disk can handle file uploads', function () {
     // Skip test if MinIO is not configured
-    if (config('filesystems.default') !== 'minio' && ! config('filesystems.disks.minio.endpoint')) {
+    if (! config('filesystems.disks.minio.endpoint')) {
         $this->markTestSkipped('MinIO is not configured');
     }
 
@@ -40,8 +40,8 @@ test('minio disk can handle file uploads', function () {
 
     $disk = Storage::disk('minio');
 
-    // Create a fake uploaded file
-    $file = UploadedFile::fake()->create('test-document.pdf', 1024);
+    // Create a fake uploaded file with actual content
+    $file = UploadedFile::fake()->createWithContent('test-document.pdf', 'Test PDF content for MinIO integration test');
 
     // Store the file
     $path = $disk->putFile('uploads', $file);
@@ -49,8 +49,9 @@ test('minio disk can handle file uploads', function () {
     // Assert file was stored
     expect($disk->exists($path))->toBeTrue();
 
-    // Assert file size is correct
-    expect($disk->size($path))->toBe($file->getSize());
+    // Assert file has content
+    $content = $disk->get($path);
+    expect($content)->toContain('Test PDF content');
 
     // Clean up
     $disk->delete($path);
@@ -77,3 +78,38 @@ test('minio configuration is valid when enabled', function () {
     expect($config['driver'])->toBe('s3');
     expect($config['use_path_style_endpoint'])->toBeTrue();
 });
+
+test('minio real integration with actual storage', function () {
+    if (! config('filesystems.disks.minio.endpoint')) {
+        $this->markTestSkipped('MinIO is not configured');
+    }
+
+    $disk = Storage::disk('minio');
+    $testContent = 'Real MinIO integration test - ' . now()->toISOString();
+    $testFilename = 'test-integration-' . uniqid() . '.txt';
+
+    try {
+        // Store file
+        $success = $disk->put($testFilename, $testContent);
+        expect($success)->toBeTrue();
+
+        // Verify file exists
+        expect($disk->exists($testFilename))->toBeTrue();
+
+        // Verify file content
+        expect($disk->get($testFilename))->toBe($testContent);
+
+        // Verify file size
+        expect($disk->size($testFilename))->toBe(strlen($testContent));
+
+        // Verify we can get file metadata
+        $lastModified = $disk->lastModified($testFilename);
+        expect($lastModified)->toBeInt();
+        expect($lastModified)->toBeGreaterThan(0);
+    } finally {
+        // Cleanup - delete test file
+        if ($disk->exists($testFilename)) {
+            $disk->delete($testFilename);
+        }
+    }
+})->skip(fn() => app()->environment('testing') && !config('filesystems.disks.minio.endpoint'), 'MinIO not available in testing environment');

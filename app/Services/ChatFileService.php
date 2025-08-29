@@ -268,26 +268,37 @@ class ChatFileService
     {
         try {
             $thumbnailPath = 'chat/files/thumbnails/'.Str::uuid().'_thumb.jpg';
-            $fullThumbnailPath = Storage::disk('public')->path($thumbnailPath);
 
-            // Create thumbnail directory if it doesn't exist
-            $thumbnailDir = dirname($fullThumbnailPath);
-            if (! is_dir($thumbnailDir)) {
-                mkdir($thumbnailDir, 0755, true);
-            }
-
+            // Create temporary file for thumbnail generation
+            $tempThumbnailPath = tempnam(sys_get_temp_dir(), 'thumbnail_');
+            
             // Try to use Intervention Image if available, otherwise fallback to GD
             if (class_exists(\Intervention\Image\ImageManagerStatic::class)) {
                 $image = \Intervention\Image\ImageManagerStatic::make($file->getPathname());
                 $image->fit(200, 200, function ($constraint) {
                     $constraint->upsize();
                 });
-                $image->save($fullThumbnailPath, 80);
+                $image->save($tempThumbnailPath, 80);
             } elseif (extension_loaded('gd')) {
-                $this->generateThumbnailWithGD($file, $fullThumbnailPath);
+                $this->generateThumbnailWithGD($file, $tempThumbnailPath);
             } else {
                 Log::warning('No image processing library available for thumbnail generation');
+                return null;
+            }
 
+            // Upload thumbnail to MinIO
+            $thumbnailContents = file_get_contents($tempThumbnailPath);
+            if ($thumbnailContents === false) {
+                unlink($tempThumbnailPath);
+                return null;
+            }
+
+            $stored = Storage::disk('chat-files')->put($thumbnailPath, $thumbnailContents);
+            
+            // Clean up temporary file
+            unlink($tempThumbnailPath);
+
+            if (!$stored) {
                 return null;
             }
 
