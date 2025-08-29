@@ -86,9 +86,10 @@ class DatabaseSeeder extends Seeder
             OrganizationalStructureSeeder::class,
         ]);
 
-        // OAuth and scopes
+        // OAuth and scopes - comprehensive setup
         $this->call([
-            OAuthScopesSeeder::class,
+            PassportOAuthSeeder::class,
+            PersonalAccessTokenSeeder::class,
         ]);
 
         // Assign roles to demo users
