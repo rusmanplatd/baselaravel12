@@ -242,7 +242,62 @@ Route::middleware('auth:api')->prefix('v1')->group(function () {
         Route::delete('devices/{device}/revoke-access', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'revokeDeviceAccess'])->name('devices.revoke-access');
         Route::get('encryption/multidevice-health', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'getMultiDeviceHealth'])->name('encryption.multidevice-health');
 
-        // Device Management
+        // Multi-Device Quantum E2EE Management
+        Route::prefix('multidevice')->name('multidevice.')->group(function () {
+            // Device initialization and management
+            Route::post('initialize', [\App\Http\Controllers\Api\Chat\MultiDeviceController::class, 'initialize'])
+                ->name('initialize')
+                ->middleware('throttle:10,1');
+            Route::get('devices', [\App\Http\Controllers\Api\Chat\MultiDeviceController::class, 'index'])
+                ->name('devices.index')
+                ->middleware('throttle:60,1');
+            Route::post('devices/register', [\App\Http\Controllers\Api\Chat\MultiDeviceController::class, 'register'])
+                ->name('devices.register')
+                ->middleware('throttle:10,1');
+            Route::post('devices/{deviceId}/verify', [\App\Http\Controllers\Api\Chat\MultiDeviceController::class, 'verify'])
+                ->name('devices.verify')
+                ->middleware('throttle:20,1');
+            Route::delete('devices/{deviceId}', [\App\Http\Controllers\Api\Chat\MultiDeviceController::class, 'revoke'])
+                ->name('devices.revoke')
+                ->middleware('throttle:10,1');
+            Route::put('devices/{deviceId}', [\App\Http\Controllers\Api\Chat\MultiDeviceController::class, 'update'])
+                ->name('devices.update')
+                ->middleware('throttle:30,1');
+            Route::post('devices/{deviceId}/heartbeat', [\App\Http\Controllers\Api\Chat\MultiDeviceController::class, 'heartbeat'])
+                ->name('devices.heartbeat')
+                ->middleware('throttle:120,1');
+
+            // Key synchronization and rotation
+            Route::post('sync-keys/{deviceId?}', [\App\Http\Controllers\Api\Chat\MultiDeviceController::class, 'syncKeys'])
+                ->name('sync-keys')
+                ->middleware('throttle:20,1');
+            Route::post('rotate-keys/{deviceId?}', [\App\Http\Controllers\Api\Chat\MultiDeviceController::class, 'rotateKeys'])
+                ->name('rotate-keys')
+                ->middleware('throttle:10,1');
+
+            // Cross-device messaging
+            Route::post('messages/send', [\App\Http\Controllers\Api\Chat\MultiDeviceController::class, 'sendMessage'])
+                ->name('messages.send')
+                ->middleware('throttle:100,1');
+            Route::get('messages/{messageId}', [\App\Http\Controllers\Api\Chat\MultiDeviceController::class, 'getMessage'])
+                ->name('messages.get')
+                ->middleware('throttle:100,1');
+
+            // Security and monitoring
+            Route::get('metrics', [\App\Http\Controllers\Api\Chat\MultiDeviceController::class, 'metrics'])
+                ->name('metrics')
+                ->middleware('throttle:30,1');
+            Route::get('audit', [\App\Http\Controllers\Api\Chat\MultiDeviceController::class, 'audit'])
+                ->name('audit')
+                ->middleware('throttle:10,1');
+
+            // Device verification management
+            Route::get('pending-verification', [\App\Http\Controllers\Api\Chat\MultiDeviceController::class, 'pendingVerification'])
+                ->name('pending-verification')
+                ->middleware('throttle:30,1');
+        });
+
+        // Legacy Device Management (maintain backward compatibility)
         Route::apiResource('devices', \App\Http\Controllers\Api\DeviceController::class);
         Route::post('devices/{device}/trust', [\App\Http\Controllers\Api\DeviceController::class, 'trust'])->name('devices.trust');
         Route::post('devices/{device}/share-keys', [\App\Http\Controllers\Api\DeviceController::class, 'shareKeys'])->name('devices.share-keys');

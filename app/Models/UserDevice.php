@@ -2,15 +2,14 @@
 
 namespace App\Models;
 
-use App\Models\Chat\DeviceKeyShare;
-use App\Models\Chat\EncryptionKey;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class UserDevice extends Model
 {
@@ -20,199 +19,308 @@ class UserDevice extends Model
         'user_id',
         'device_name',
         'device_type',
-        'public_key',
-        'device_fingerprint',
-        'hardware_fingerprint',
         'platform',
         'user_agent',
-        'last_used_at',
+        'public_key',
+        'device_fingerprint',
         'is_trusted',
         'is_active',
         'verified_at',
+        'last_used_at',
+        'last_key_rotation_at',
         'device_capabilities',
         'security_level',
         'encryption_version',
         'auto_trust_expires_at',
+        'hardware_fingerprint',
         'device_info',
         'failed_auth_attempts',
         'locked_until',
-        'last_key_rotation_at',
     ];
 
     protected $casts = [
-        'last_used_at' => 'datetime',
-        'verified_at' => 'datetime',
-        'auto_trust_expires_at' => 'datetime',
-        'locked_until' => 'datetime',
-        'last_key_rotation_at' => 'datetime',
+        'public_key' => 'json',
+        'device_fingerprint' => 'json',
+        'device_capabilities' => 'json',
+        'hardware_fingerprint' => 'json',
+        'device_info' => 'json',
         'is_trusted' => 'boolean',
         'is_active' => 'boolean',
-        'device_capabilities' => 'array',
-        'device_info' => 'array',
-        'failed_auth_attempts' => 'integer',
+        'last_used_at' => 'datetime',
+        'verified_at' => 'datetime',
+        'last_key_rotation_at' => 'datetime',
+        'auto_trust_expires_at' => 'datetime',
+        'locked_until' => 'datetime',
     ];
 
     protected $hidden = [
-        'public_key',
+        'verification_token',
     ];
 
+    /**
+     * Boot the model.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($device) {
+            // Set default values for new devices
+            if (!isset($device->is_trusted)) {
+                $device->is_trusted = false;
+            }
+            if (!isset($device->is_active)) {
+                $device->is_active = true;
+            }
+        });
+    }
+
+    /**
+     * Get the user that owns the device.
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function encryptionKeys(): HasMany
+    /**
+     * Get the device session.
+     */
+    public function session(): HasOne
     {
-        return $this->hasMany(EncryptionKey::class, 'device_id');
+        return $this->hasOne(DeviceSession::class, 'user_device_id');
     }
 
-    public function createdEncryptionKeys(): HasMany
+    /**
+     * Get cross-device messages sent from this device.
+     */
+    public function sentMessages(): HasMany
     {
-        return $this->hasMany(EncryptionKey::class, 'created_by_device_id');
+        return $this->hasMany(CrossDeviceMessage::class, 'sender_device_id');
     }
 
-    public function outgoingKeyShares(): HasMany
+    /**
+     * Generate a unique device ID.
+     */
+    public static function generateDeviceId(): string
     {
-        return $this->hasMany(DeviceKeyShare::class, 'from_device_id');
+        do {
+            $deviceId = Str::random(32);
+        } while (self::where('device_id', $deviceId)->exists());
+
+        return $deviceId;
     }
 
-    public function incomingKeyShares(): HasMany
+    /**
+     * Generate a verification token.
+     */
+    public static function generateVerificationToken(): string
     {
-        return $this->hasMany(DeviceKeyShare::class, 'to_device_id');
+        return sprintf('%06d', random_int(100000, 999999));
     }
 
-    public function updateLastUsed(): void
+    /**
+     * Check if the device is online.
+     */
+    public function isOnline(): bool
     {
-        $this->update(['last_used_at' => now()]);
+        return $this->last_seen_at && $this->last_seen_at->gt(now()->subMinutes(5));
     }
 
-    public function markAsTrusted(): void
+    /**
+     * Check if the device verification has expired.
+     */
+    public function isVerificationExpired(): bool
+    {
+        return $this->verification_expires_at && $this->verification_expires_at->lt(now());
+    }
+
+    /**
+     * Update the last seen timestamp.
+     */
+    public function updateLastSeen(): void
     {
         $this->update([
-            'is_trusted' => true,
-            'verified_at' => now(),
+            'last_seen_at' => now(),
+            'last_ip' => request()->ip(),
         ]);
     }
 
-    public function deactivate(): void
+    /**
+     * Verify the device with a token.
+     */
+    public function verify(string $token): bool
     {
-        DB::transaction(function () {
-            $this->update([
-                'is_active' => false,
-                'is_trusted' => false,
-            ]);
-
-            // Deactivate all encryption keys for this device
-            $this->encryptionKeys()->update(['is_active' => false]);
-
-            // Cancel pending key shares
-            $this->outgoingKeyShares()->where('is_accepted', false)->update(['is_active' => false]);
-            $this->incomingKeyShares()->where('is_accepted', false)->update(['is_active' => false]);
-
-            Log::info('Device deactivated', [
-                'device_id' => $this->id,
-                'user_id' => $this->user_id,
-                'device_name' => $this->device_name,
-            ]);
-        });
-    }
-
-    public function scopeActive($query)
-    {
-        return $query->where('is_active', true);
-    }
-
-    public function scopeTrusted($query)
-    {
-        return $query->where('is_trusted', true);
-    }
-
-    public function scopeForUser($query, string $userId)
-    {
-        return $query->where('user_id', $userId);
-    }
-
-    public function scopeByFingerprint($query, string $fingerprint)
-    {
-        return $query->where('device_fingerprint', $fingerprint);
-    }
-
-    public function getDisplayNameAttribute(): string
-    {
-        return $this->device_name ?: ($this->platform ? ucfirst($this->platform).' Device' : 'Unknown Device');
-    }
-
-    public function getShortFingerprintAttribute(): string
-    {
-        return substr($this->device_fingerprint, 0, 8).'...';
-    }
-
-    public function canAccessConversation(string $conversationId): bool
-    {
-        if (! $this->is_active || ! $this->is_trusted) {
+        if ($this->verification_token !== $token) {
             return false;
         }
 
-        return $this->encryptionKeys()
-            ->where('conversation_id', $conversationId)
-            ->where('is_active', true)
-            ->exists();
+        if ($this->isVerificationExpired()) {
+            return false;
+        }
+
+        $this->update([
+            'is_trusted' => true,
+            'verification_status' => 'verified',
+            'verified_at' => now(),
+            'trust_level' => max($this->trust_level, 7),
+            'verification_token' => null,
+            'verification_expires_at' => null,
+        ]);
+
+        return true;
     }
 
-    public function hasCapability(string $capability): bool
+    /**
+     * Revoke the device.
+     */
+    public function revoke(): void
     {
-        return in_array($capability, $this->device_capabilities ?? []);
+        $this->update([
+            'is_trusted' => false,
+            'verification_status' => 'rejected',
+            'trust_level' => 0,
+        ]);
+
+        // Deactivate sessions
+        $this->session?->update(['is_active' => false]);
     }
 
-    public function requiresKeyRotation(): bool
+    /**
+     * Update trust level.
+     */
+    public function updateTrustLevel(int $level): void
     {
-        // Check if device has old encryption version
-        if ($this->encryption_version && $this->encryption_version < 2) {
-            return true;
-        }
-
-        // Check if device hasn't been used recently
-        if ($this->last_used_at && $this->last_used_at->diffInDays(now()) > 90) {
-            return true;
-        }
-
-        return false;
+        $this->update([
+            'trust_level' => max(0, min(10, $level)),
+        ]);
     }
 
-    public function isAutoTrustExpired(): bool
+    /**
+     * Update quantum security level.
+     */
+    public function updateQuantumSecurityLevel(int $level): void
     {
-        return $this->auto_trust_expires_at && $this->auto_trust_expires_at->isPast();
+        $this->update([
+            'quantum_security_level' => max(0, min(10, $level)),
+        ]);
     }
 
-    public function getSecurityScore(): int
+    /**
+     * Rotate device keys.
+     */
+    public function rotateKeys(array $newPublicKey, array $quantumKeyInfo): void
     {
-        $score = 0;
+        $this->update([
+            'public_key' => $newPublicKey,
+            'quantum_key_info' => $quantumKeyInfo,
+            'last_key_rotation_at' => now(),
+            'last_seen_at' => now(),
+        ]);
+    }
 
-        // Base score for active trusted device
-        if ($this->is_trusted && $this->is_active) {
-            $score += 50;
+    /**
+     * Get trusted devices for the user.
+     */
+    public static function getTrustedDevicesForUser(int $userId)
+    {
+        return self::where('user_id', $userId)
+            ->where('is_trusted', true)
+            ->where('verification_status', 'verified')
+            ->orderBy('last_seen_at', 'desc')
+            ->get();
+    }
+
+    /**
+     * Get device security metrics.
+     */
+    public function getSecurityMetrics(): array
+    {
+        return [
+            'device_id' => $this->device_id,
+            'trust_level' => $this->trust_level,
+            'quantum_security_level' => $this->quantum_security_level,
+            'verification_status' => $this->verification_status,
+            'is_online' => $this->isOnline(),
+            'last_seen' => $this->last_seen_at?->toISOString(),
+            'last_key_rotation' => $this->last_key_rotation_at?->toISOString(),
+            'created_at' => $this->created_at->toISOString(),
+        ];
+    }
+
+    /**
+     * Scope for trusted devices.
+     */
+    public function scopeTrusted($query)
+    {
+        return $query->where('is_trusted', true)
+                    ->where('verification_status', 'verified');
+    }
+
+    /**
+     * Scope for online devices.
+     */
+    public function scopeOnline($query)
+    {
+        return $query->where('last_seen_at', '>', now()->subMinutes(5));
+    }
+
+    /**
+     * Scope for devices needing key rotation.
+     */
+    public function scopeNeedsKeyRotation($query)
+    {
+        return $query->where(function ($q) {
+            $q->whereNull('last_key_rotation_at')
+              ->orWhere('last_key_rotation_at', '<', now()->subDay());
+        });
+    }
+
+    /**
+     * Get verification code for display.
+     */
+    public function getVerificationCode(): ?string
+    {
+        if ($this->verification_status !== 'pending' || $this->isVerificationExpired()) {
+            return null;
         }
 
-        // Bonus for verification
-        if ($this->verified_at) {
-            $score += 20;
-        }
+        return $this->verification_token;
+    }
 
-        // Bonus for recent usage
-        if ($this->last_used_at && $this->last_used_at->diffInDays(now()) < 7) {
-            $score += 15;
-        }
+    /**
+     * Check if device can be revoked.
+     */
+    public function canBeRevoked(): bool
+    {
+        return !$this->is_current_device && $this->is_trusted;
+    }
 
-        // Bonus for modern encryption
-        if ($this->encryption_version >= 2) {
-            $score += 10;
-        }
+    /**
+     * Get human-readable device type.
+     */
+    public function getDeviceTypeDisplayAttribute(): string
+    {
+        return match ($this->device_type) {
+            'desktop' => 'Desktop',
+            'mobile' => 'Mobile',
+            'tablet' => 'Tablet',
+            'web' => 'Web Browser',
+            default => 'Unknown',
+        };
+    }
 
-        // Penalty for old devices
-        if ($this->created_at->diffInMonths(now()) > 6) {
-            $score -= 5;
-        }
-
-        return min(100, max(0, $score));
+    /**
+     * Get human-readable verification status.
+     */
+    public function getVerificationStatusDisplayAttribute(): string
+    {
+        return match ($this->verification_status) {
+            'pending' => 'Pending Verification',
+            'verified' => 'Verified',
+            'rejected' => 'Rejected',
+            'expired' => 'Verification Expired',
+            default => 'Unknown',
+        };
     }
 }

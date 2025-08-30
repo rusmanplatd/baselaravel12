@@ -1,10 +1,11 @@
 import React from 'react';
-import { Shield, ShieldCheck, ShieldAlert, ShieldX, Key, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Shield, ShieldCheck, ShieldAlert, ShieldX, Key, AlertTriangle, CheckCircle, Zap, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { E2EEStatus } from '@/types/chat';
+import type { QuantumE2EEStatus } from '@/hooks/useE2EE';
 
 interface E2EEStatusIndicatorProps {
-  status: E2EEStatus;
+  status: E2EEStatus | QuantumE2EEStatus;
   size?: 'sm' | 'md' | 'lg';
   showText?: boolean;
   className?: string;
@@ -17,7 +18,75 @@ export function E2EEStatusIndicator({
   className 
 }: E2EEStatusIndicatorProps) {
   const getStatusConfig = () => {
-    if (!status.enabled) {
+    // Check if this is a quantum-safe status
+    const isQuantumStatus = 'quantumReady' in status;
+    
+    if (isQuantumStatus) {
+      const quantumStatus = status as QuantumE2EEStatus;
+      
+      if (!quantumStatus.quantumReady) {
+        return {
+          icon: ShieldX,
+          color: 'text-gray-400',
+          bgColor: 'bg-gray-100',
+          text: 'Quantum E2EE Disabled',
+          description: 'Quantum-safe end-to-end encryption is not enabled'
+        };
+      }
+
+      if (!quantumStatus.keyGenerated) {
+        return {
+          icon: ShieldAlert,
+          color: 'text-yellow-600',
+          bgColor: 'bg-yellow-50',
+          text: 'Generating Quantum Keys',
+          description: 'Generating quantum-resistant encryption keys...'
+        };
+      }
+
+      if (!quantumStatus.conversationKeysReady) {
+        return {
+          icon: Key,
+          color: 'text-blue-600',
+          bgColor: 'bg-blue-50',
+          text: 'Setting up Quantum E2EE',
+          description: 'Setting up quantum-safe conversation encryption...'
+        };
+      }
+
+      // Quantum E2EE is fully active
+      const securityLevel = quantumStatus.quantumSecurityLevel || 5;
+      if (securityLevel >= 9) {
+        return {
+          icon: Zap,
+          color: 'text-purple-600',
+          bgColor: 'bg-purple-50',
+          text: 'Quantum-Safe E2EE',
+          description: `Quantum-resistant encryption active (Security Level: ${securityLevel}/10) - ${quantumStatus.algorithm}`
+        };
+      } else if (securityLevel >= 7) {
+        return {
+          icon: Lock,
+          color: 'text-indigo-600',
+          bgColor: 'bg-indigo-50',
+          text: 'Quantum E2EE Active',
+          description: `Quantum-resistant encryption active (Security Level: ${securityLevel}/10) - ${quantumStatus.algorithm}`
+        };
+      } else {
+        return {
+          icon: ShieldCheck,
+          color: 'text-green-600',
+          bgColor: 'bg-green-50',
+          text: 'Quantum E2EE Active',
+          description: `Quantum-resistant encryption active (Security Level: ${securityLevel}/10) - ${quantumStatus.algorithm}`
+        };
+      }
+    }
+    
+    // Legacy E2EE status handling
+    const legacyStatus = status as E2EEStatus;
+    
+    if (!legacyStatus.enabled) {
       return {
         icon: ShieldX,
         color: 'text-gray-400',
@@ -27,7 +96,7 @@ export function E2EEStatusIndicator({
       };
     }
 
-    if (!status.keyGenerated) {
+    if (!legacyStatus.keyGenerated) {
       return {
         icon: ShieldAlert,
         color: 'text-yellow-600',
@@ -37,7 +106,7 @@ export function E2EEStatusIndicator({
       };
     }
 
-    if (!status.conversationKeysReady) {
+    if (!legacyStatus.conversationKeysReady) {
       return {
         icon: Key,
         color: 'text-blue-600',
@@ -103,7 +172,7 @@ export function E2EEStatusIndicator({
 }
 
 interface E2EEStatusBadgeProps {
-  status: E2EEStatus;
+  status: E2EEStatus | QuantumE2EEStatus;
   detailed?: boolean;
   className?: string;
 }
@@ -166,7 +235,7 @@ export function E2EEStatusBadge({ status, detailed = false, className }: E2EESta
 }
 
 interface E2EEStatusTooltipProps {
-  status: E2EEStatus;
+  status: E2EEStatus | QuantumE2EEStatus;
   children: React.ReactNode;
 }
 
