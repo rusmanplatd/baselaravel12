@@ -16,6 +16,7 @@ interface UseChatReturn {
     scheduledAt?: Date;
     voiceData?: VoiceRecording;
     replyToId?: string;
+    mentions?: any[];
   }) => Promise<void>;
   loadConversations: () => Promise<void>;
   loadMessages: (conversationId: string) => Promise<void>;
@@ -231,6 +232,7 @@ export function useChat(user: any): UseChatReturn {
     scheduledAt?: Date;
     voiceData?: VoiceRecording;
     replyToId?: string;
+    mentions?: any[];
   }) => {
     if (!activeConversation) return;
     
@@ -243,6 +245,11 @@ export function useChat(user: any): UseChatReturn {
       // Handle reply
       if (options?.replyToId) {
         messageData.reply_to_id = options.replyToId;
+      }
+
+      // Handle mentions
+      if (options?.mentions) {
+        messageData.mentions = options.mentions;
       }
 
       // Handle scheduling

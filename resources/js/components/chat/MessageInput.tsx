@@ -2,8 +2,15 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { PaperAirplaneIcon, MicrophoneIcon, PlusIcon, CalendarIcon } from '@heroicons/react/24/solid';
-import { Message, VoiceRecording } from '@/types/chat';
+import { Message, VoiceRecording, Participant, User } from '@/types/chat';
 import VoiceRecorder from './VoiceRecorder';
+import MentionAutocomplete from './MentionAutocomplete';
+import { 
+  parseMentions, 
+  convertToMessageMentions, 
+  getCurrentMentionQuery, 
+  insertMention 
+} from '@/utils/mentions';
 
 interface MessageInputProps {
   onSendMessage: (content: string, options?: {
@@ -12,12 +19,15 @@ interface MessageInputProps {
     scheduledAt?: Date;
     voiceData?: VoiceRecording;
     replyToId?: string;
+    mentions?: any[];
   }) => Promise<void>;
   replyingTo?: Message | null;
   onCancelReply?: () => void;
   onTyping?: (isTyping: boolean) => void;
   encryptionReady?: boolean;
   disabled?: boolean;
+  participants?: Participant[];
+  currentUserId: string;
 }
 
 export default function MessageInput({ 
@@ -26,7 +36,9 @@ export default function MessageInput({
   onCancelReply, 
   onTyping,
   encryptionReady = true,
-  disabled = false
+  disabled = false,
+  participants = [],
+  currentUserId
 }: MessageInputProps) {
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
@@ -35,6 +47,12 @@ export default function MessageInput({
   const [priority, setPriority] = useState<'low' | 'normal' | 'high' | 'urgent'>('normal');
   const [scheduledDate, setScheduledDate] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
+  
+  // Mention states
+  const [showMentionAutocomplete, setShowMentionAutocomplete] = useState(false);
+  const [mentionQuery, setMentionQuery] = useState('');
+  const [mentionQueryStart, setMentionQueryStart] = useState(0);
+  const [autocompletePosition, setAutocompletePosition] = useState({ top: 0, left: 0 });
   
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -56,6 +74,9 @@ export default function MessageInput({
     setMessage('');
     setSending(true);
     
+    // Hide mention autocomplete
+    setShowMentionAutocomplete(false);
+    
     // Stop typing indicator
     onTyping?.(false);
     if (typingTimeoutRef.current) {
@@ -67,11 +88,16 @@ export default function MessageInput({
         ? new Date(`${scheduledDate}T${scheduledTime}`)
         : undefined;
       
+      // Parse mentions from message
+      const parsedMentions = parseMentions(messageToSend);
+      const mentions = convertToMessageMentions(parsedMentions, participants);
+      
       await onSendMessage(messageToSend, {
         type: 'text',
         priority,
         scheduledAt,
         replyToId: replyingTo?.id,
+        mentions,
       });
 
       // Reset states
@@ -88,7 +114,38 @@ export default function MessageInput({
   };
 
   const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setMessage(e.target.value);
+    const newValue = e.target.value;
+    const cursorPosition = e.target.selectionStart || 0;
+    
+    setMessage(newValue);
+    
+    // Handle mention detection
+    const mentionQuery = getCurrentMentionQuery(newValue, cursorPosition);
+    if (mentionQuery) {
+      setMentionQuery(mentionQuery.query);
+      setMentionQueryStart(mentionQuery.start);
+      setShowMentionAutocomplete(true);
+      
+      // Calculate autocomplete position
+      if (textareaRef.current) {
+        const textarea = textareaRef.current;
+        const rect = textarea.getBoundingClientRect();
+        
+        // Approximate position based on line height and character position
+        const lineHeight = parseInt(getComputedStyle(textarea).lineHeight) || 20;
+        const lines = newValue.slice(0, mentionQuery.start).split('\n');
+        const currentLine = lines.length - 1;
+        const charPosition = lines[lines.length - 1].length;
+        
+        setAutocompletePosition({
+          top: rect.top - (lineHeight * 2), // Position above textarea
+          left: rect.left + (charPosition * 8), // Approximate character width
+        });
+      }
+    } else {
+      setShowMentionAutocomplete(false);
+      setMentionQuery('');
+    }
     
     // Handle typing indicator
     if (onTyping) {
@@ -130,7 +187,33 @@ export default function MessageInput({
     }
   };
 
+  const handleMentionSelect = (user: User) => {
+    if (!textareaRef.current) return;
+    
+    const cursorPosition = textareaRef.current.selectionStart || 0;
+    const result = insertMention(message, cursorPosition, user, mentionQueryStart);
+    
+    setMessage(result.newText);
+    setShowMentionAutocomplete(false);
+    setMentionQuery('');
+    
+    // Set cursor position after mention
+    setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.selectionStart = result.newCursorPosition;
+        textareaRef.current.selectionEnd = result.newCursorPosition;
+        textareaRef.current.focus();
+      }
+    }, 0);
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
+    // Don't handle Enter when mention autocomplete is showing
+    // (it's handled by the autocomplete component)
+    if (showMentionAutocomplete) {
+      return;
+    }
+    
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSubmit(e);
@@ -316,6 +399,17 @@ export default function MessageInput({
           )}
         </div>
       </div>
+      
+      {/* Mention Autocomplete */}
+      <MentionAutocomplete
+        query={mentionQuery}
+        participants={participants}
+        currentUserId={currentUserId}
+        onSelect={handleMentionSelect}
+        onClose={() => setShowMentionAutocomplete(false)}
+        position={autocompletePosition}
+        isVisible={showMentionAutocomplete}
+      />
     </div>
   );
 }

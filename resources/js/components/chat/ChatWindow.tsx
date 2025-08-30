@@ -282,6 +282,8 @@ export default function ChatWindow({
         }}
         encryptionReady={encryptionReady}
         disabled={!encryptionReady}
+        participants={conversation.participants || []}
+        currentUserId={currentUser.id}
       />
     </div>
   );

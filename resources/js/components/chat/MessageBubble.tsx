@@ -7,6 +7,7 @@ import { Shield, ShieldCheck, ShieldAlert } from 'lucide-react';
 import MessageReactions from './MessageReactions';
 import VoiceMessagePlayer from './VoiceMessagePlayer';
 import { E2EEStatusIndicator } from './E2EEStatusIndicator';
+import { renderMessageWithMentions } from '@/utils/mentions';
 
 interface MessageBubbleProps {
   message: Message;
@@ -159,7 +160,10 @@ export default function MessageBubble({
             <VoiceMessagePlayer message={message} />
           ) : (
             <div className="break-words">
-              {message.content || '[Message could not be decrypted]'}
+              {message.content ? 
+                renderMessageWithMentions(message.content, message.mentions, currentUserId) : 
+                '[Message could not be decrypted]'
+              }
             </div>
           )}
 

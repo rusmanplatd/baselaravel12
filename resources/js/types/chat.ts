@@ -53,6 +53,15 @@ export interface Participant {
   user?: User;
 }
 
+export interface MessageMention {
+  id: string;
+  user_id: string;
+  start_position: number;
+  end_position: number;
+  display_name: string;
+  user?: User;
+}
+
 export interface Message {
   id: string;
   conversation_id: string;
@@ -70,6 +79,7 @@ export interface Message {
   scheduled_at?: string;
   message_priority?: 'low' | 'normal' | 'high' | 'urgent';
   metadata?: Record<string, unknown>;
+  mentions?: MessageMention[];
   is_edited: boolean;
   edited_at?: string;
   status: 'sent' | 'delivered' | 'read' | 'failed' | 'scheduled';
