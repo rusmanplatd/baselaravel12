@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { User } from '@/types';
 import { Conversation, Message, ThreadViewMode, ThreadNavigation } from '@/types/chat';
 import MessageBubble from './MessageBubble';
-import MessageInput from './MessageInput';
+import TipTapMessageInput from './TipTapMessageInput';
 import TypingIndicator from './TypingIndicator';
 import ThreadView from './ThreadView';
 import { format } from 'date-fns';
@@ -49,7 +49,7 @@ export default function ChatWindow({
 }: ChatWindowProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-  
+
   // Thread view state
   const [showThreadView, setShowThreadView] = useState(false);
   const [threadMode, setThreadMode] = useState<ThreadViewMode>({
@@ -68,14 +68,14 @@ export default function ChatWindow({
 
   const getConversationName = () => {
     if (conversation.name) return conversation.name;
-    
+
     if (conversation.type === 'direct') {
       const otherParticipant = conversation.participants?.find(
         p => p.user_id !== currentUser.id
       );
       return otherParticipant?.user?.name || 'Unknown User';
     }
-    
+
     return `Group (${conversation.participants?.length || 0} members)`;
   };
 
@@ -86,12 +86,12 @@ export default function ChatWindow({
       );
       return otherParticipant?.user?.email || '';
     }
-    
+
     const memberNames = conversation.participants
       ?.filter(p => p.user?.name)
       .map(p => p.user!.name)
       .join(', ');
-    
+
     return memberNames || `${conversation.participants?.length || 0} members`;
   };
 
@@ -138,7 +138,7 @@ export default function ChatWindow({
               </p>
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-3">
             {hasThreads && (
               <button
@@ -172,7 +172,7 @@ export default function ChatWindow({
                     </div>
                   )}
                 </div>
-                
+
                 {onUpdateGroupSettings && onUpdateParticipantRole && onRemoveParticipant && onGenerateInviteLink && (
                   <GroupSettings
                     conversation={conversation}
@@ -226,13 +226,13 @@ export default function ChatWindow({
                       {format(new Date(date), 'MMMM d, yyyy')}
                     </div>
                   </div>
-                  
+
                   {/* Messages for this date */}
                   <div className="space-y-2">
                     {dateMessages.map((message, index) => {
                       const prevMessage = index > 0 ? dateMessages[index - 1] : null;
                       const showSender = !prevMessage || prevMessage.sender_id !== message.sender_id;
-                      
+
                       return (
                         <MessageBubble
                           key={message.id}
@@ -252,7 +252,7 @@ export default function ChatWindow({
                 </div>
               ))
             )}
-            
+
             {messages.length === 0 && !loading && (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center text-gray-500">
@@ -262,19 +262,19 @@ export default function ChatWindow({
                 </div>
               </div>
             )}
-            
+
             {/* Typing Indicator */}
             {typingUsers.length > 0 && (
               <TypingIndicator users={typingUsers} />
             )}
-            
+
             <div ref={messagesEndRef} />
           </div>
         )}
       </div>
 
       {/* Message Input */}
-      <MessageInput 
+      <TipTapMessageInput
         onSendMessage={onSendMessage}
         replyingTo={replyingTo}
         onCancelReply={() => onReplyClick?.(null)}
