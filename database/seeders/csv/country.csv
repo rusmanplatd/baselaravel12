@@ -193,3 +193,17 @@ VN,Vietnam,VNM,+84
 YE,Yemen,YEM,+967
 ZM,Zambia,ZMB,+260
 ZW,Zimbabwe,ZWE,+263
+INT,International,INT,
+EUR,Europe,EUR,
+ASI,Asia,ASI,
+AFR,Africa,AFR,
+SAM,South America,SAM,
+CAN_REG,Canada Region,CAR,
+CAC,Central America & Caribbean,CAC,
+OCE,Oceania,OCE,
+MDE,Middle East,MDE,
+NORD,Nordic Countries,NDC,
+BALT,Baltic Countries,BTC,
+BALK,Balkan Countries,BKC,
+CEUR,Central Europe,CEU,
+MED,Mediterranean,MED,

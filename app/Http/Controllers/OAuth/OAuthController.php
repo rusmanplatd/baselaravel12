@@ -11,6 +11,7 @@ use App\Models\DeviceCode;
 use App\Models\OAuthAuditLog;
 use App\Models\OAuthScope;
 use App\Models\Organization;
+use App\Models\User;
 use App\Models\UserConsent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -52,15 +53,8 @@ class OAuthController extends Controller
             : $client->redirect_uris;
 
         if (! $client || ! in_array($request->redirect_uri, $redirectUris)) {
-            OAuthAuditLog::logError('authorize', 'invalid_client', 'Client authentication failed', [
-                'client_id' => $request->client_id,
-                'redirect_uri' => $request->redirect_uri,
-            ]);
-
-            return response()->json([
-                'error' => 'invalid_client',
-                'error_description' => 'Client authentication failed',
-            ], 400);
+            return $this->errorResponse($request->redirect_uri, 'invalid_client',
+                'The client credentials are invalid.', $request->state);
         }
 
         // Check if user has access to this client based on access scope configuration
@@ -72,10 +66,8 @@ class OAuthController extends Controller
                 'access_scope' => $client->user_access_scope,
             ]);
 
-            return response()->json([
-                'error' => 'access_denied',
-                'error_description' => 'You do not have access to this OAuth client',
-            ], 403);
+            return $this->errorResponse($request->redirect_uri, 'access_denied',
+                'You do not have access to this application.', $request->state);
         }
 
         $organization = $client->organization;
@@ -90,35 +82,56 @@ class OAuthController extends Controller
             'client_id' => $client->id,
         ])->active()->first();
 
-        if ($existingConsent && $this->scopesMatch($existingConsent->scopes, $validScopes)) {
+        // Google-style incremental authorization (strictly enforced)
+        $includeGrantedScopes = $request->include_granted_scopes === 'true';
+        $hasNewScopes = ! $existingConsent || ! empty(array_diff($validScopes, $existingConsent->scopes ?? []));
+
+        // Google always requires include_granted_scopes for incremental auth
+        if ($existingConsent && ! $request->has('include_granted_scopes')) {
+            return $this->errorResponse($request->redirect_uri, 'invalid_request',
+                'Missing required parameter: include_granted_scopes', $request->state);
+        }
+
+        // Combine scopes according to Google's strict rules
+        $finalScopes = $validScopes;
+        if ($existingConsent && $includeGrantedScopes) {
+            $finalScopes = array_unique(array_merge($existingConsent->scopes, $validScopes));
+        }
+
+        // Auto-approve only if no new scopes AND not forced re-consent
+        if (! $hasNewScopes && $request->approval_prompt !== 'force' && $request->prompt !== 'consent') {
             OAuthAuditLog::logEvent('authorize', [
                 'client_id' => $client->id,
                 'user_id' => Auth::id(),
-                'scopes' => $validScopes,
-                'metadata' => ['auto_approved' => true],
+                'scopes' => $finalScopes,
+                'metadata' => ['auto_approved' => true, 'include_granted_scopes' => $includeGrantedScopes],
             ]);
 
-            return $this->generateAuthorizationCode($client, $validScopes, $request);
+            return $this->generateAuthorizationCode($client, $finalScopes, $request);
         }
+
+        // Categorize scopes for better UX
+        $categorizedScopes = $this->categorizeScopes($validScopes, $availableScopes);
+        $existingScopes = $existingConsent ? $existingConsent->scopes : [];
 
         return Inertia::render('OAuth/Authorize', [
             'client' => [
                 'id' => $client->id,
                 'name' => $client->name,
                 'redirect' => $request->redirect_uri,
+                'description' => $client->description,
+                'website' => $client->website,
+                'logo_url' => $client->logo_url,
                 'organization' => [
                     'id' => $organization->id,
                     'name' => $organization->name,
                     'code' => $organization->organization_code,
                 ],
             ],
-            'scopes' => array_map(function ($scope) use ($availableScopes) {
-                return [
-                    'id' => $scope,
-                    'name' => $availableScopes[$scope]['name'],
-                    'description' => $availableScopes[$scope]['description'],
-                ];
-            }, $validScopes),
+            'scopes' => $categorizedScopes,
+            'existingScopes' => $existingScopes,
+            'includeGrantedScopes' => $includeGrantedScopes,
+            'isIncremental' => $existingConsent && count($existingScopes) > 0,
             'user' => Auth::user()->only(['name', 'first_name', 'middle_name', 'last_name', 'nickname', 'email', 'avatar_url', 'profile_url']),
             'state' => $request->state,
             'response_type' => $request->response_type,
@@ -141,21 +154,60 @@ class OAuthController extends Controller
                 'access_scope' => $client->user_access_scope,
             ]);
 
-            return response()->json([
-                'error' => 'access_denied',
-                'error_description' => 'You do not have access to this OAuth client',
-            ], 403);
+            return $this->errorResponse($request->redirect_uri, 'access_denied',
+                'You do not have access to this application.', $request->state);
         }
 
-        $scopeDetails = [];
         $availableScopes = $this->getAvailableScopes($client->organization);
-        
-        foreach ($request->scopes as $scope) {
-            $scopeDetails[] = [
+        $existingConsent = UserConsent::where([
+            'user_id' => Auth::id(),
+            'client_id' => $client->id,
+        ])->active()->first();
+
+        // Google-style incremental authorization - strict enforcement
+        $requestedScopes = $request->scopes ?? [];
+        $includeGrantedScopes = $request->include_granted_scopes === 'true';
+
+        // Google requires include_granted_scopes for existing consents
+        if ($existingConsent && ! $request->has('include_granted_scopes')) {
+            return $this->errorResponse($request->redirect_uri, 'invalid_request',
+                'include_granted_scopes parameter is required when user has existing permissions', $request->state);
+        }
+
+        // Final scopes based on Google's behavior
+        $finalScopes = $requestedScopes;
+        if ($existingConsent && $includeGrantedScopes) {
+            $finalScopes = array_unique(array_merge($existingConsent->scopes, $requestedScopes));
+        } elseif ($existingConsent && ! $includeGrantedScopes) {
+            // Google behavior: only grant new scopes, revoke existing ones not in current request
+            $finalScopes = $requestedScopes;
+        }
+
+        // Track scope changes for audit
+        $newScopes = array_diff($finalScopes, $existingConsent->scopes ?? []);
+        $revokedScopes = $existingConsent ? array_diff($existingConsent->scopes, $finalScopes) : [];
+
+        // Prepare scope details with Google-style metadata
+        $scopeDetails = [];
+        foreach ($finalScopes as $scope) {
+            $isNew = in_array($scope, $newScopes);
+            $existingDetail = null;
+
+            if ($existingConsent && ! $isNew && isset($existingConsent->scope_details)) {
+                foreach ($existingConsent->scope_details as $detail) {
+                    if ($detail['scope'] === $scope) {
+                        $existingDetail = $detail;
+                        break;
+                    }
+                }
+            }
+
+            $scopeDetails[] = $existingDetail ?? [
                 'scope' => $scope,
                 'name' => $availableScopes[$scope]['name'] ?? $scope,
                 'description' => $availableScopes[$scope]['description'] ?? '',
-                'granted_at' => now()->toISOString(),
+                'granted_at' => $isNew ? now()->toISOString() : ($existingDetail['granted_at'] ?? now()->toISOString()),
+                'is_new' => $isNew,
             ];
         }
 
@@ -163,26 +215,37 @@ class OAuthController extends Controller
             'user_id' => Auth::id(),
             'client_id' => $client->id,
         ], [
-            'scopes' => $request->scopes,
+            'scopes' => $finalScopes,
             'scope_details' => $scopeDetails,
             'status' => 'active',
             'granted_by_ip' => $request->ip(),
             'granted_user_agent' => $request->userAgent(),
-            'expires_at' => now()->addYear(), // Consents expire after 1 year
-            'usage_stats' => [
-                'granted_at' => now()->toISOString(),
-                'access_count' => 0,
-            ],
+            'expires_at' => now()->addYear(),
+            'usage_stats' => array_merge(
+                $existingConsent->usage_stats ?? ['access_count' => 0],
+                [
+                    'last_updated' => now()->toISOString(),
+                    'incremental_grants' => ($existingConsent->usage_stats['incremental_grants'] ?? 0) + ($existingConsent ? 1 : 0),
+                ]
+            ),
         ]);
 
         OAuthAuditLog::logEvent('authorize', [
             'client_id' => $client->id,
             'user_id' => Auth::id(),
-            'scopes' => $request->scopes,
-            'metadata' => ['user_approved' => true],
+            'scopes' => $finalScopes,
+            'new_scopes' => $newScopes,
+            'revoked_scopes' => $revokedScopes,
+            'metadata' => [
+                'user_approved' => true,
+                'incremental' => $existingConsent !== null,
+                'include_granted_scopes' => $includeGrantedScopes,
+                'scope_changes' => count($newScopes) + count($revokedScopes),
+                'flow_type' => $existingConsent ? 'incremental' : 'initial',
+            ],
         ]);
 
-        return $this->generateAuthorizationCode($client, $request->scopes, $request);
+        return $this->generateAuthorizationCode($client, $finalScopes, $request);
     }
 
     public function deny(Request $request)
@@ -216,22 +279,22 @@ class OAuthController extends Controller
         ]);
 
         $client = Client::with('organization')->find($request->client_id);
-        if (!$client) {
+        if (! $client) {
             return response()->json([
                 'error' => 'invalid_client',
-                'error_description' => 'The client credentials are invalid'
+                'error_description' => 'The client credentials are invalid',
             ], 400);
         }
 
         // Check if client supports device flow
-        $grantTypes = is_string($client->grant_types) 
-            ? json_decode($client->grant_types, true) 
+        $grantTypes = is_string($client->grant_types)
+            ? json_decode($client->grant_types, true)
             : $client->grant_types;
-            
-        if (!in_array('urn:ietf:params:oauth:grant-type:device_code', $grantTypes ?? [])) {
+
+        if (! in_array('urn:ietf:params:oauth:grant-type:device_code', $grantTypes ?? [])) {
             return response()->json([
                 'error' => 'unsupported_grant_type',
-                'error_description' => 'Client does not support device authorization grant'
+                'error_description' => 'Client does not support device authorization grant',
             ], 400);
         }
 
@@ -243,9 +306,9 @@ class OAuthController extends Controller
         $deviceCode = DeviceCode::generateDeviceCode();
         $userCode = DeviceCode::generateUserCode();
         $baseUrl = config('app.url');
-        
-        $verificationUri = $baseUrl . '/oauth/device';
-        $verificationUriComplete = $verificationUri . '?user_code=' . $userCode;
+
+        $verificationUri = $baseUrl.'/oauth/device';
+        $verificationUriComplete = $verificationUri.'?user_code='.$userCode;
 
         DeviceCode::create([
             'device_code' => $deviceCode,
@@ -277,20 +340,20 @@ class OAuthController extends Controller
     public function deviceVerification(Request $request)
     {
         $userCode = $request->input('user_code') ?? $request->query('user_code');
-        
-        if (!Auth::check()) {
+
+        if (! Auth::check()) {
             return redirect()->route('login')->with('device_user_code', $userCode);
         }
 
-        if (!$userCode) {
+        if (! $userCode) {
             return Inertia::render('OAuth/DeviceCodeEntry');
         }
 
         $deviceCode = DeviceCode::where('user_code', $userCode)->active()->first();
-        
-        if (!$deviceCode) {
+
+        if (! $deviceCode) {
             return Inertia::render('OAuth/DeviceCodeEntry', [
-                'error' => 'Invalid or expired code'
+                'error' => 'Invalid or expired code',
             ]);
         }
 
@@ -328,16 +391,16 @@ class OAuthController extends Controller
         ]);
 
         $deviceCode = DeviceCode::where('user_code', $request->user_code)->active()->first();
-        
-        if (!$deviceCode) {
+
+        if (! $deviceCode) {
             return response()->json([
-                'error' => 'Invalid or expired code'
+                'error' => 'Invalid or expired code',
             ], 400);
         }
 
         if ($request->action === 'approve') {
             $deviceCode->markAsAuthorized(Auth::user());
-            
+
             OAuthAuditLog::logEvent('device_approved', [
                 'client_id' => $deviceCode->client_id,
                 'user_id' => Auth::id(),
@@ -348,7 +411,7 @@ class OAuthController extends Controller
             return response()->json(['message' => 'Device authorized successfully']);
         } else {
             $deviceCode->markAsDenied();
-            
+
             OAuthAuditLog::logError('device_denied', 'access_denied', 'User denied device authorization', [
                 'client_id' => $deviceCode->client_id,
                 'user_id' => Auth::id(),
@@ -386,15 +449,33 @@ class OAuthController extends Controller
             ];
 
             // Add optional OIDC standard profile claims
-            if ($user->middle_name) $profileData['middle_name'] = $user->middle_name;
-            if ($user->nickname) $profileData['nickname'] = $user->nickname;
-            if ($user->profile_url) $profileData['profile'] = $user->profile_url;
-            if ($user->website) $profileData['website'] = $user->website;
-            if ($user->gender) $profileData['gender'] = $user->gender;
-            if ($user->birthdate) $profileData['birthdate'] = $user->birthdate->format('Y-m-d');
-            if ($user->zoneinfo) $profileData['zoneinfo'] = $user->zoneinfo;
-            if ($user->locale) $profileData['locale'] = $user->locale;
-            if ($user->profile_updated_at) $profileData['updated_at'] = $user->profile_updated_at->timestamp;
+            if ($user->middle_name) {
+                $profileData['middle_name'] = $user->middle_name;
+            }
+            if ($user->nickname) {
+                $profileData['nickname'] = $user->nickname;
+            }
+            if ($user->profile_url) {
+                $profileData['profile'] = $user->profile_url;
+            }
+            if ($user->website) {
+                $profileData['website'] = $user->website;
+            }
+            if ($user->gender) {
+                $profileData['gender'] = $user->gender;
+            }
+            if ($user->birthdate) {
+                $profileData['birthdate'] = $user->birthdate->format('Y-m-d');
+            }
+            if ($user->zoneinfo) {
+                $profileData['zoneinfo'] = $user->zoneinfo;
+            }
+            if ($user->locale) {
+                $profileData['locale'] = $user->locale;
+            }
+            if ($user->profile_updated_at) {
+                $profileData['updated_at'] = $user->profile_updated_at->timestamp;
+            }
 
             $userinfo = array_merge($userinfo, $profileData);
         }
@@ -408,14 +489,26 @@ class OAuthController extends Controller
 
         if (in_array('address', $scopes)) {
             $address = [];
-            if ($user->street_address) $address['street_address'] = $user->street_address;
-            if ($user->locality) $address['locality'] = $user->locality;
-            if ($user->region) $address['region'] = $user->region;
-            if ($user->postal_code) $address['postal_code'] = $user->postal_code;
-            if ($user->country) $address['country'] = $user->country;
-            if ($user->formatted_address) $address['formatted'] = $user->formatted_address;
-            
-            if (!empty($address)) {
+            if ($user->street_address) {
+                $address['street_address'] = $user->street_address;
+            }
+            if ($user->locality) {
+                $address['locality'] = $user->locality;
+            }
+            if ($user->region) {
+                $address['region'] = $user->region;
+            }
+            if ($user->postal_code) {
+                $address['postal_code'] = $user->postal_code;
+            }
+            if ($user->country) {
+                $address['country'] = $user->country;
+            }
+            if ($user->formatted_address) {
+                $address['formatted'] = $user->formatted_address;
+            }
+
+            if (! empty($address)) {
                 $userinfo['address'] = $address;
             }
         }
@@ -432,7 +525,7 @@ class OAuthController extends Controller
             if ($user->external_id) {
                 $userinfo['external_id'] = $user->external_id;
             }
-            
+
             if ($user->social_links) {
                 $userinfo['social_links'] = $user->social_links;
             }
@@ -497,12 +590,12 @@ class OAuthController extends Controller
             'code_challenge_methods_supported' => ['plain', 'S256'],
             'claims_supported' => [
                 // Standard OIDC claims
-                'sub', 'iss', 'aud', 'exp', 'iat', 'name', 'given_name', 'middle_name', 'family_name', 
-                'nickname', 'preferred_username', 'profile', 'picture', 'website', 'email', 'email_verified', 
-                'gender', 'birthdate', 'zoneinfo', 'locale', 'phone_number', 'phone_number_verified', 
+                'sub', 'iss', 'aud', 'exp', 'iat', 'name', 'given_name', 'middle_name', 'family_name',
+                'nickname', 'preferred_username', 'profile', 'picture', 'website', 'email', 'email_verified',
+                'gender', 'birthdate', 'zoneinfo', 'locale', 'phone_number', 'phone_number_verified',
                 'address', 'updated_at',
                 // Custom claims
-                'external_id', 'social_links', 'organizations', 'tenants'
+                'external_id', 'social_links', 'organizations', 'tenants',
             ],
         ]);
     }
@@ -610,10 +703,10 @@ class OAuthController extends Controller
             ->active()
             ->first();
 
-        if (!$consent) {
+        if (! $consent) {
             return response()->json([
                 'error' => 'consent_not_found',
-                'error_description' => 'Consent not found or already revoked'
+                'error_description' => 'Consent not found or already revoked',
             ], 404);
         }
 
@@ -628,9 +721,9 @@ class OAuthController extends Controller
         DB::table('oauth_refresh_tokens')
             ->whereIn('access_token_id', function ($query) use ($consent) {
                 $query->select('id')
-                      ->from('oauth_access_tokens')
-                      ->where('user_id', Auth::id())
-                      ->where('client_id', $consent->client_id);
+                    ->from('oauth_access_tokens')
+                    ->where('user_id', Auth::id())
+                    ->where('client_id', $consent->client_id);
             })
             ->update(['revoked' => true]);
 
@@ -647,20 +740,20 @@ class OAuthController extends Controller
     public function tokenInfo(Request $request)
     {
         $token = $request->bearerToken();
-        
-        if (!$token) {
+
+        if (! $token) {
             return response()->json(['error' => 'missing_token'], 400);
         }
 
         $tokenModel = DB::table('oauth_access_tokens')
             ->select([
-                'id', 'client_id', 'user_id', 'scopes', 'created_at', 
-                'updated_at', 'expires_at', 'revoked'
+                'id', 'client_id', 'user_id', 'scopes', 'created_at',
+                'updated_at', 'expires_at', 'revoked',
             ])
             ->where('id', $token)
             ->first();
 
-        if (!$tokenModel || $tokenModel->revoked) {
+        if (! $tokenModel || $tokenModel->revoked) {
             return response()->json(['error' => 'invalid_token'], 401);
         }
 
@@ -734,7 +827,7 @@ class OAuthController extends Controller
 
     private function scopesMatch($existingScopes, $requestedScopes)
     {
-        return empty(array_diff($requestedScopes, $existingScopes));
+        return empty(array_diff($requestedScopes, $existingScopes ?? []));
     }
 
     private function validateScopesForUser($requestedScopes, $availableScopes, $organization, $userOrganizations)
@@ -767,5 +860,147 @@ class OAuthController extends Controller
         }
 
         return $validScopes;
+    }
+
+    private function errorResponse($redirectUri, $error, $errorDescription, $state = null, $errorUri = null)
+    {
+        OAuthAuditLog::logError('authorize', $error, $errorDescription);
+
+        // Google-style error mapping
+        $googleStyleErrors = [
+            'invalid_client' => [
+                'error' => 'unauthorized_client',
+                'description' => 'The client is not authorized to request an authorization code using this method.',
+            ],
+            'access_denied' => [
+                'error' => 'access_denied',
+                'description' => 'The resource owner or authorization server denied the request.',
+            ],
+            'unsupported_response_type' => [
+                'error' => 'unsupported_response_type',
+                'description' => 'The authorization server does not support obtaining an authorization code using this method.',
+            ],
+            'invalid_scope' => [
+                'error' => 'invalid_scope',
+                'description' => 'The requested scope is invalid, unknown, or malformed.',
+            ],
+            'server_error' => [
+                'error' => 'server_error',
+                'description' => 'The authorization server encountered an unexpected condition that prevented it from fulfilling the request.',
+            ],
+        ];
+
+        $mappedError = $googleStyleErrors[$error] ?? [
+            'error' => $error,
+            'description' => $errorDescription,
+        ];
+
+        if (! $redirectUri) {
+            $response = [
+                'error' => $mappedError['error'],
+                'error_description' => $mappedError['description'],
+            ];
+
+            if ($errorUri) {
+                $response['error_uri'] = $errorUri;
+            }
+
+            return response()->json($response, $this->getHttpStatusForError($mappedError['error']));
+        }
+
+        $params = [
+            'error' => $mappedError['error'],
+            'error_description' => $mappedError['description'],
+        ];
+
+        if ($state) {
+            $params['state'] = $state;
+        }
+
+        if ($errorUri) {
+            $params['error_uri'] = $errorUri;
+        }
+
+        return redirect($redirectUri.'?'.http_build_query($params));
+    }
+
+    private function getHttpStatusForError($error)
+    {
+        $statusMap = [
+            'invalid_request' => 400,
+            'unauthorized_client' => 401,
+            'access_denied' => 403,
+            'unsupported_response_type' => 400,
+            'invalid_scope' => 400,
+            'server_error' => 500,
+            'temporarily_unavailable' => 503,
+        ];
+
+        return $statusMap[$error] ?? 400;
+    }
+
+    private function categorizeScopes($scopes, $availableScopes)
+    {
+        $categories = [
+            'identity' => [
+                'title' => 'Basic info',
+                'description' => 'Access your basic profile information',
+                'scopes' => [],
+                'required' => true,
+            ],
+            'profile' => [
+                'title' => 'Profile',
+                'description' => 'View your personal profile information',
+                'scopes' => [],
+                'required' => false,
+            ],
+            'organization' => [
+                'title' => 'Organization access',
+                'description' => 'Access your organization information and memberships',
+                'scopes' => [],
+                'required' => false,
+            ],
+            'custom' => [
+                'title' => 'Additional permissions',
+                'description' => 'Other application-specific permissions',
+                'scopes' => [],
+                'required' => false,
+            ],
+        ];
+
+        foreach ($scopes as $scope) {
+            $scopeInfo = [
+                'id' => $scope,
+                'name' => $availableScopes[$scope]['name'] ?? $scope,
+                'description' => $availableScopes[$scope]['description'] ?? '',
+                'sensitive' => $this->isSensitiveScope($scope),
+            ];
+
+            if (in_array($scope, ['openid', 'offline_access'])) {
+                $categories['identity']['scopes'][] = $scopeInfo;
+            } elseif (in_array($scope, ['profile', 'email', 'phone', 'address'])) {
+                $categories['profile']['scopes'][] = $scopeInfo;
+            } elseif (strpos($scope, 'organization') !== false) {
+                $categories['organization']['scopes'][] = $scopeInfo;
+            } else {
+                $categories['custom']['scopes'][] = $scopeInfo;
+            }
+        }
+
+        // Remove empty categories
+        return array_filter($categories, function ($category) {
+            return ! empty($category['scopes']);
+        });
+    }
+
+    private function isSensitiveScope($scope)
+    {
+        $sensitiveScopes = [
+            'https://api.yourcompany.com/auth/organization.admin',
+            'https://api.yourcompany.com/auth/organization.members',
+            'offline_access',
+        ];
+
+        return in_array($scope, $sensitiveScopes) || strpos($scope, 'write') !== false || strpos($scope, 'admin') !== false;
     }
 }

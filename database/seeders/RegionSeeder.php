@@ -169,16 +169,25 @@ class RegionSeeder extends Seeder
         $csvData = $this->readCsvFile($csvPath);
         $cities = [];
 
-        $provinces = Province::pluck('id', 'code')->toArray();
+        $provinces = Province::with('country')->get()->groupBy('country.code')->map(function($countryProvinces) {
+            return $countryProvinces->pluck('id', 'code');
+        })->toArray();
 
         foreach ($csvData as $row) {
-            if (isset($row['kode']) && isset($row['nama'])) {
-                $provinceCode = substr($row['kode'], 0, 2);
+            if (isset($row['kode']) && isset($row['nama']) && isset($row['country_code']) && isset($row['province_code'])) {
+                $countryCode = $row['country_code'];
+                $provinceCode = $row['province_code'];
 
-                if (isset($provinces[$provinceCode])) {
+                // For Indonesian cities, use the province code directly
+                // For international cities, use the region code as province
+                $lookupCode = $provinceCode;
+
+                $provinceId = $provinces[$countryCode][$lookupCode] ?? null;
+
+                if ($provinceId) {
                     $cities[] = [
                         'id' => \Illuminate\Support\Str::ulid(),
-                        'province_id' => $provinces[$provinceCode],
+                        'province_id' => $provinceId,
                         'code' => $row['kode'],
                         'name' => $row['nama'],
                         'created_at' => now(),
@@ -186,6 +195,8 @@ class RegionSeeder extends Seeder
                         'created_by' => $systemUser->id,
                         'updated_by' => $systemUser->id,
                     ];
+                } else {
+                    $this->command->warn("Skipping city {$row['nama']} (code: {$row['kode']}) - Province not found for code: {$lookupCode}");
                 }
             }
         }

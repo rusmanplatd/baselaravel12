@@ -29,6 +29,8 @@ class ApproveRequest extends FormRequest
             'response_type' => 'required|in:code,token',
             'code_challenge' => 'sometimes|string|min:43|max:128',
             'code_challenge_method' => 'sometimes|string|in:plain,S256',
+            // Google-style incremental authorization
+            'include_granted_scopes' => 'nullable|string|in:true,false',
         ];
     }
 }

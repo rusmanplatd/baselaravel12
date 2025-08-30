@@ -2546,3 +2546,17 @@ ZA,MP,Mpumalanga
 ZA,NC,Northern Cape
 ZA,NW,North West
 ZA,WC,Western Cape
+INT,INT,International
+EUR,EUR,Europe
+ASI,ASI,Asia
+AFR,AFR,Africa
+SAM,SAM,South America
+CAN_REG,CAN_REG,Canada Region
+CAC,CAC,Central America & Caribbean
+OCE,OCE,Oceania
+MDE,MDE,Middle East
+NORD,NORD,Nordic Countries
+BALT,BALT,Baltic Countries
+BALK,BALK,Balkan Countries
+CEUR,CEUR,Central Europe
+MED,MED,Mediterranean
