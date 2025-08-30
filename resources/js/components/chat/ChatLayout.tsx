@@ -361,6 +361,7 @@ export default function ChatLayout({ user, inviteCode }: ChatLayoutProps) {
       <MentionNotifications
         messages={messages}
         currentUserId={user.id}
+        participants={activeConversation?.participants || []}
         conversationName={
           selectedChannel?.name || 
           activeConversation?.name || 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { User, Message } from '@/types/chat';
-import { messageHasMentionForUser } from '@/utils/mentions';
+import { User, Message, Participant } from '@/types/chat';
+import { messageHasMentionForUser, parseMentionsFromDecryptedContent } from '@/utils/mentions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { XMarkIcon, BellIcon } from '@heroicons/react/24/outline';
@@ -17,6 +17,7 @@ interface MentionNotificationProps {
   readonly messages: Message[];
   readonly currentUserId: string;
   readonly conversationName?: string;
+  readonly participants?: Participant[];
   readonly onNotificationClick?: (message: Message) => void;
   readonly onMarkAsRead?: (notificationId: string) => void;
 }
@@ -25,6 +26,7 @@ export default function MentionNotifications({
   messages,
   currentUserId,
   conversationName = 'Chat',
+  participants = [],
   onNotificationClick,
   onMarkAsRead
 }: MentionNotificationProps) {
@@ -37,8 +39,13 @@ export default function MentionNotifications({
       .filter(message => {
         // Only show notifications for messages that mention current user
         // and are not sent by current user
-        return message.sender_id !== currentUserId && 
-               messageHasMentionForUser(message, currentUserId);
+        if (message.sender_id === currentUserId || !message.content) {
+          return false;
+        }
+        
+        // Parse mentions client-side from decrypted content
+        const clientMentions = parseMentionsFromDecryptedContent(message.content, participants);
+        return clientMentions.some(mention => mention.user_id === currentUserId);
       })
       .slice(-5) // Only keep last 5 mentions
       .map(message => ({
@@ -64,7 +71,7 @@ export default function MentionNotifications({
       
       return () => clearTimeout(timer);
     }
-  }, [messages, currentUserId, conversationName]);
+  }, [messages, currentUserId, conversationName, participants]);
 
   const handleNotificationClick = (notification: MentionNotification) => {
     onNotificationClick?.(notification.message);
@@ -183,15 +190,20 @@ export default function MentionNotifications({
 }
 
 // Export utility hook for mention notifications
-export function useMentionNotifications(currentUserId: string) {
+export function useMentionNotifications(currentUserId: string, participants: Participant[] = []) {
   const [hasUnreadMentions, setHasUnreadMentions] = useState(false);
   const [mentionCount, setMentionCount] = useState(0);
 
   const checkForMentions = (messages: Message[]) => {
-    const mentions = messages.filter(message => 
-      message.sender_id !== currentUserId && 
-      messageHasMentionForUser(message, currentUserId)
-    );
+    const mentions = messages.filter(message => {
+      if (message.sender_id === currentUserId || !message.content) {
+        return false;
+      }
+      
+      // Parse mentions client-side from decrypted content
+      const clientMentions = parseMentionsFromDecryptedContent(message.content, participants);
+      return clientMentions.some(mention => mention.user_id === currentUserId);
+    });
     
     setMentionCount(mentions.length);
     setHasUnreadMentions(mentions.length > 0);

@@ -7,7 +7,7 @@ import { Shield, ShieldCheck, ShieldAlert } from 'lucide-react';
 import MessageReactions from './MessageReactions';
 import VoiceMessagePlayer from './VoiceMessagePlayer';
 import { E2EEStatusIndicator } from './E2EEStatusIndicator';
-import { renderMessageWithMentions } from '@/utils/mentions';
+import { renderMessageWithMentions, parseMentionsFromDecryptedContent } from '@/utils/mentions';
 
 interface MessageBubbleProps {
   message: Message;
@@ -16,6 +16,7 @@ interface MessageBubbleProps {
   isEncrypted?: boolean;
   encryptionVerified?: boolean;
   currentUserId: string;
+  participants?: any[];
   onReactionToggle?: (messageId: string, emoji: string) => void;
   onReplyClick?: (message: Message) => void;
 }
@@ -27,6 +28,7 @@ export default function MessageBubble({
   isEncrypted = false,
   encryptionVerified = false,
   currentUserId,
+  participants = [],
   onReactionToggle,
   onReplyClick
 }: MessageBubbleProps) {
@@ -160,10 +162,11 @@ export default function MessageBubble({
             <VoiceMessagePlayer message={message} />
           ) : (
             <div className="break-words">
-              {message.content ? 
-                renderMessageWithMentions(message.content, message.mentions, currentUserId) : 
-                '[Message could not be decrypted]'
-              }
+              {message.content ? (() => {
+                // Parse mentions client-side from decrypted content
+                const clientMentions = parseMentionsFromDecryptedContent(message.content, participants);
+                return renderMessageWithMentions(message.content, clientMentions, currentUserId);
+              })() : '[Message could not be decrypted]'}
             </div>
           )}
 

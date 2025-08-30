@@ -242,6 +242,7 @@ export default function ChatWindow({
                           isEncrypted={!!message.encrypted_content}
                           encryptionVerified={encryptionReady && !!message.encrypted_content}
                           currentUserId={currentUser.id}
+                          participants={conversation.participants || []}
                           onReactionToggle={onReactionToggle}
                           onReplyClick={onReplyClick}
                         />

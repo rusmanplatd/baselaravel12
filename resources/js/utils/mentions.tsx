@@ -42,7 +42,7 @@ export function parseMentions(content: string): ParsedMention[] {
 }
 
 /**
- * Convert parsed mentions to MessageMention format
+ * Convert parsed mentions to MessageMention format (client-side only)
  */
 export function convertToMessageMentions(
   parsedMentions: ParsedMention[], 
@@ -63,6 +63,17 @@ export function convertToMessageMentions(
       user: participant?.user
     };
   });
+}
+
+/**
+ * Parse mentions from decrypted message content (client-side only)
+ */
+export function parseMentionsFromDecryptedContent(
+  content: string,
+  participants: Participant[]
+): MessageMention[] {
+  const parsedMentions = parseMentions(content);
+  return convertToMessageMentions(parsedMentions, participants);
 }
 
 /**
