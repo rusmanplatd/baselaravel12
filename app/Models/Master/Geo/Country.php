@@ -4,13 +4,14 @@ namespace App\Models\Master\Geo;
 
 use App\Models\User;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\Request;
 
 class Country extends Model
 {
-    use HasUlids;
+    use HasUlids, HasFactory;
 
     protected $table = 'ref_country';
 
@@ -19,6 +20,8 @@ class Country extends Model
         'name',
         'iso_code',
         'phone_code',
+        'created_by',
+        'updated_by',
     ];
 
     protected $casts = [

@@ -4,12 +4,13 @@ namespace App\Models\Master\Geo;
 
 use App\Models\User;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 
 class District extends Model
 {
-    use HasUlids;
+    use HasUlids, HasFactory;
 
     public $table = 'ref_district';
 
@@ -17,6 +18,8 @@ class District extends Model
         'city_id',
         'code',
         'name',
+        'created_by',
+        'updated_by',
     ];
 
     protected $casts = [
@@ -43,6 +46,11 @@ class District extends Model
     public function city()
     {
         return $this->belongsTo(City::class, 'city_id');
+    }
+
+    public function villages()
+    {
+        return $this->hasMany(Village::class, 'district_id');
     }
 
     /*******************************
@@ -117,6 +125,10 @@ class District extends Model
 
     public function canDeleted(): bool
     {
+        if ($this->villages()->exists()) {
+            return false;
+        }
+
         return true;
     }
 

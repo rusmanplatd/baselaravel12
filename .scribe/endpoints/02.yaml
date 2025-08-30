@@ -62,7 +62,7 @@ endpoints:
     responses:
       -
         status: 200
-        content: '{"data":[{"id":1,"name":"admin","permissions":[{"name":"organization:admin"}]},{"id":2,"name":"member","permissions":[{"name":"organization:read"}]}],"meta":{"current_page":1,"total":2}}'
+        content: '{"data":[{"id":1,"name":"admin","permissions":[{"name":"org:admin"}]},{"id":2,"name":"member","permissions":[{"name":"org:read"}]}],"meta":{"current_page":1,"total":2}}'
         headers: []
         description: ''
         custom: []
@@ -180,14 +180,14 @@ endpoints:
         name: id
         description: 'The ID of the role.'
         required: true
-        example: 01k3ahgcrh158fp8ze1zv7v9dm
+        example: 01k3weadp8296j0999ygv1pfej
         type: string
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         custom: []
     cleanUrlParameters:
-      id: 01k3ahgcrh158fp8ze1zv7v9dm
+      id: 01k3weadp8296j0999ygv1pfej
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -196,7 +196,7 @@ endpoints:
     responses:
       -
         status: 200
-        content: '{"id":"01k3ahgcrh158fp8ze1zv7v9dm","team_id":"01k3ahgcgwbgdzwmy8an85afk4","name":"Super Admin","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","permissions":[{"id":"01k3ahgch7wxbk8trvdjkxxy0n","name":"view users","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgch7wxbk8trvdjkxxy0n"}},{"id":"01k3ahgchrfcmxgmy2mjjzvxv4","name":"create users","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgchrfcmxgmy2mjjzvxv4"}},{"id":"01k3ahgcj3dycqhbqc46f6c2r3","name":"edit users","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgcj3dycqhbqc46f6c2r3"}},{"id":"01k3ahgcjde0khrayg497ayfvg","name":"delete users","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgcjde0khrayg497ayfvg"}},{"id":"01k3ahgcjpdy8gs9q47yyysgpc","name":"view organizations","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgcjpdy8gs9q47yyysgpc"}},{"id":"01k3ahgcjz3g809h3v9jgccnxr","name":"create organizations","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgcjz3g809h3v9jgccnxr"}},{"id":"01k3ahgck9tahg0z3nb9t11cwy","name":"edit organizations","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgck9tahg0z3nb9t11cwy"}},{"id":"01k3ahgckj32svw6gzzhyz6q43","name":"delete organizations","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgckj32svw6gzzhyz6q43"}},{"id":"01k3ahgckvs01gzba6nxk8ghh5","name":"view organization units","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgckvs01gzba6nxk8ghh5"}},{"id":"01k3ahgcm3q6gh2yja4pcmt1wn","name":"create organization units","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgcm3q6gh2yja4pcmt1wn"}},{"id":"01k3ahgcmca4hhfswc5n0bwd54","name":"edit organization units","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgcmca4hhfswc5n0bwd54"}},{"id":"01k3ahgcmnq9zh4b6sbzpra8kd","name":"delete organization units","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgcmnq9zh4b6sbzpra8kd"}},{"id":"01k3ahgcmynqvax2z5jbapbqm5","name":"view organization positions","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgcmynqvax2z5jbapbqm5"}},{"id":"01k3ahgcn7dg8s2eeqjb41krdr","name":"create organization positions","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgcn7dg8s2eeqjb41krdr"}},{"id":"01k3ahgcnf9ga2jgnszt3ywwbe","name":"edit organization positions","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgcnf9ga2jgnszt3ywwbe"}},{"id":"01k3ahgcnrj2se0c0cmwj5wkbf","name":"delete organization positions","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgcnrj2se0c0cmwj5wkbf"}},{"id":"01k3ahgcp0cwgczct5f6983rk8","name":"view organization memberships","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgcp0cwgczct5f6983rk8"}},{"id":"01k3ahgcp99x5zsa9fb6w8em0n","name":"create organization memberships","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgcp99x5zsa9fb6w8em0n"}},{"id":"01k3ahgcpj0vxzncc76qd62enp","name":"edit organization memberships","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgcpj0vxzncc76qd62enp"}},{"id":"01k3ahgcpvvshkcemzfcxetpay","name":"delete organization memberships","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgcpvvshkcemzfcxetpay"}},{"id":"01k3ahgcq4a8yc6gs9ytw04rhz","name":"view system settings","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgcq4a8yc6gs9ytw04rhz"}},{"id":"01k3ahgcqd27c9kbhsxd3wbewg","name":"edit system settings","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgcqd27c9kbhsxd3wbewg"}},{"id":"01k3ahgcqntpr39b0wak3d5a3z","name":"view audit logs","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgcqntpr39b0wak3d5a3z"}},{"id":"01k3ahgcqywx6e2aq65va4hkfm","name":"manage roles","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgcqywx6e2aq65va4hkfm"}},{"id":"01k3ahgcr6nxx4h59t6bc9xyx5","name":"manage permissions","guard_name":"web","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":"01k3ahgcdg9dzsh45sdpbcff64","updated_by":"01k3ahgcdg9dzsh45sdpbcff64","pivot":{"role_id":"01k3ahgcrh158fp8ze1zv7v9dm","permission_id":"01k3ahgcr6nxx4h59t6bc9xyx5"}}],"users":[{"id":"01k3ahgcdg9dzsh45sdpbcff64","name":"Test User","email":"test@example.com","email_verified_at":"2025-08-23T04:03:09.000000Z","created_at":"2025-08-22T21:03:09.000000Z","updated_at":"2025-08-22T21:03:09.000000Z","created_by":null,"updated_by":null,"pivot":{"model_type":"App\\Models\\User","role_id":"01k3ahgcrh158fp8ze1zv7v9dm","model_id":"01k3ahgcdg9dzsh45sdpbcff64"}}]}'
+        content: '{"id":"01k3weadp8296j0999ygv1pfej","team_id":null,"name":"super-admin","guard_name":"web","created_at":"2025-08-29T19:53:48.000000Z","updated_at":"2025-08-29T19:53:48.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","permissions":[{"id":"01k3wead70v6d4y3p10s36tmx5","name":"user:read","guard_name":"web","created_at":"2025-08-29T19:53:47.000000Z","updated_at":"2025-08-29T19:53:47.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3wead70v6d4y3p10s36tmx5"}},{"id":"01k3wead7afz9tnfqazdee4e17","name":"user:write","guard_name":"web","created_at":"2025-08-29T19:53:47.000000Z","updated_at":"2025-08-29T19:53:47.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3wead7afz9tnfqazdee4e17"}},{"id":"01k3wead7kmbn7ramdv7bhzj99","name":"user:delete","guard_name":"web","created_at":"2025-08-29T19:53:47.000000Z","updated_at":"2025-08-29T19:53:47.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3wead7kmbn7ramdv7bhzj99"}},{"id":"01k3wead7xsjfqjmxjcxk45kmn","name":"user:impersonate","guard_name":"web","created_at":"2025-08-29T19:53:47.000000Z","updated_at":"2025-08-29T19:53:47.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3wead7xsjfqjmxjcxk45kmn"}},{"id":"01k3wead87fprg9n3m7ejvfx39","name":"org:read","guard_name":"web","created_at":"2025-08-29T19:53:47.000000Z","updated_at":"2025-08-29T19:53:47.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3wead87fprg9n3m7ejvfx39"}},{"id":"01k3wead8jd7a530xsd8fynbxa","name":"org:write","guard_name":"web","created_at":"2025-08-29T19:53:47.000000Z","updated_at":"2025-08-29T19:53:47.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3wead8jd7a530xsd8fynbxa"}},{"id":"01k3wead8wb20amrwpg9f0z0n5","name":"org:delete","guard_name":"web","created_at":"2025-08-29T19:53:47.000000Z","updated_at":"2025-08-29T19:53:47.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3wead8wb20amrwpg9f0z0n5"}},{"id":"01k3wead96m85netjrh691rzjs","name":"org:admin","guard_name":"web","created_at":"2025-08-29T19:53:47.000000Z","updated_at":"2025-08-29T19:53:47.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3wead96m85netjrh691rzjs"}},{"id":"01k3wead9f363gasqjv8q6v68f","name":"org_member:read","guard_name":"web","created_at":"2025-08-29T19:53:47.000000Z","updated_at":"2025-08-29T19:53:47.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3wead9f363gasqjv8q6v68f"}},{"id":"01k3wead9r33jxaghx01qjrgh1","name":"org_member:write","guard_name":"web","created_at":"2025-08-29T19:53:47.000000Z","updated_at":"2025-08-29T19:53:47.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3wead9r33jxaghx01qjrgh1"}},{"id":"01k3weada106a490hdfvkqmsqw","name":"org_member:delete","guard_name":"web","created_at":"2025-08-29T19:53:47.000000Z","updated_at":"2025-08-29T19:53:47.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3weada106a490hdfvkqmsqw"}},{"id":"01k3weada9f3fvyspx11j8sgry","name":"org_member:admin","guard_name":"web","created_at":"2025-08-29T19:53:47.000000Z","updated_at":"2025-08-29T19:53:47.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3weada9f3fvyspx11j8sgry"}},{"id":"01k3weadagnnbps829nsf93dqj","name":"org_unit:read","guard_name":"web","created_at":"2025-08-29T19:53:47.000000Z","updated_at":"2025-08-29T19:53:47.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3weadagnnbps829nsf93dqj"}},{"id":"01k3weadaqy6b2aqkvy8pb9q4g","name":"org_unit:write","guard_name":"web","created_at":"2025-08-29T19:53:47.000000Z","updated_at":"2025-08-29T19:53:47.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3weadaqy6b2aqkvy8pb9q4g"}},{"id":"01k3weadayggwfzpb9y95tagz5","name":"org_unit:delete","guard_name":"web","created_at":"2025-08-29T19:53:47.000000Z","updated_at":"2025-08-29T19:53:47.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3weadayggwfzpb9y95tagz5"}},{"id":"01k3weadb5c10sjv04ve4908ce","name":"org_unit:admin","guard_name":"web","created_at":"2025-08-29T19:53:47.000000Z","updated_at":"2025-08-29T19:53:47.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3weadb5c10sjv04ve4908ce"}},{"id":"01k3weadbdc6a37q3sf77t4g1p","name":"org_position:read","guard_name":"web","created_at":"2025-08-29T19:53:47.000000Z","updated_at":"2025-08-29T19:53:47.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3weadbdc6a37q3sf77t4g1p"}},{"id":"01k3weadbmkwvfwxftyahxxwj9","name":"org_position:write","guard_name":"web","created_at":"2025-08-29T19:53:47.000000Z","updated_at":"2025-08-29T19:53:47.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3weadbmkwvfwxftyahxxwj9"}},{"id":"01k3weadc1m4qabhnj28w3745g","name":"org_position:delete","guard_name":"web","created_at":"2025-08-29T19:53:47.000000Z","updated_at":"2025-08-29T19:53:47.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3weadc1m4qabhnj28w3745g"}},{"id":"01k3weadcdcmrq433yz2x1pw1w","name":"org_position:admin","guard_name":"web","created_at":"2025-08-29T19:53:47.000000Z","updated_at":"2025-08-29T19:53:47.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3weadcdcmrq433yz2x1pw1w"}},{"id":"01k3weadcr845gffj16exmtxs1","name":"oauth_app:read","guard_name":"web","created_at":"2025-08-29T19:53:47.000000Z","updated_at":"2025-08-29T19:53:47.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3weadcr845gffj16exmtxs1"}},{"id":"01k3weadd20dychavyz1yj2038","name":"oauth_app:write","guard_name":"web","created_at":"2025-08-29T19:53:47.000000Z","updated_at":"2025-08-29T19:53:47.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3weadd20dychavyz1yj2038"}},{"id":"01k3weaddbzw5v1mak7rybvphz","name":"oauth_app:delete","guard_name":"web","created_at":"2025-08-29T19:53:47.000000Z","updated_at":"2025-08-29T19:53:47.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3weaddbzw5v1mak7rybvphz"}},{"id":"01k3weaddpqwepn7emsbpybqx6","name":"oauth_app:admin","guard_name":"web","created_at":"2025-08-29T19:53:47.000000Z","updated_at":"2025-08-29T19:53:47.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3weaddpqwepn7emsbpybqx6"}},{"id":"01k3weade0w8eb7r9nvm056f4q","name":"oauth_token:read","guard_name":"web","created_at":"2025-08-29T19:53:47.000000Z","updated_at":"2025-08-29T19:53:47.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3weade0w8eb7r9nvm056f4q"}},{"id":"01k3weadea897sh9x0zcjcb6vy","name":"oauth_token:write","guard_name":"web","created_at":"2025-08-29T19:53:47.000000Z","updated_at":"2025-08-29T19:53:47.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3weadea897sh9x0zcjcb6vy"}},{"id":"01k3weadem4zzv9zwb0h9g3106","name":"oauth_token:delete","guard_name":"web","created_at":"2025-08-29T19:53:47.000000Z","updated_at":"2025-08-29T19:53:47.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3weadem4zzv9zwb0h9g3106"}},{"id":"01k3weadexyvtzv50q91p2p4pb","name":"audit_log:read","guard_name":"web","created_at":"2025-08-29T19:53:47.000000Z","updated_at":"2025-08-29T19:53:47.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3weadexyvtzv50q91p2p4pb"}},{"id":"01k3weadf72vnxh4g1pwnpe7gx","name":"audit_log:write","guard_name":"web","created_at":"2025-08-29T19:53:47.000000Z","updated_at":"2025-08-29T19:53:47.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3weadf72vnxh4g1pwnpe7gx"}},{"id":"01k3weadfhpz03qrwgatstspp9","name":"audit_log:delete","guard_name":"web","created_at":"2025-08-29T19:53:47.000000Z","updated_at":"2025-08-29T19:53:47.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3weadfhpz03qrwgatstspp9"}},{"id":"01k3weadftbce4w245padqmwpq","name":"audit_log:admin","guard_name":"web","created_at":"2025-08-29T19:53:47.000000Z","updated_at":"2025-08-29T19:53:47.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3weadftbce4w245padqmwpq"}},{"id":"01k3weadg76dtb8kgw7h3k91f7","name":"role:read","guard_name":"web","created_at":"2025-08-29T19:53:47.000000Z","updated_at":"2025-08-29T19:53:47.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3weadg76dtb8kgw7h3k91f7"}},{"id":"01k3weadghmb9krczsvm927ebp","name":"role:write","guard_name":"web","created_at":"2025-08-29T19:53:47.000000Z","updated_at":"2025-08-29T19:53:47.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3weadghmb9krczsvm927ebp"}},{"id":"01k3weadgtctz1fdwh4d8e1ne7","name":"role:delete","guard_name":"web","created_at":"2025-08-29T19:53:47.000000Z","updated_at":"2025-08-29T19:53:47.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3weadgtctz1fdwh4d8e1ne7"}},{"id":"01k3weadh4rsvkbaqge5d3w1wd","name":"role:admin","guard_name":"web","created_at":"2025-08-29T19:53:47.000000Z","updated_at":"2025-08-29T19:53:47.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3weadh4rsvkbaqge5d3w1wd"}},{"id":"01k3weadhe2zfqe8t1nwen28dw","name":"permission:read","guard_name":"web","created_at":"2025-08-29T19:53:47.000000Z","updated_at":"2025-08-29T19:53:47.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3weadhe2zfqe8t1nwen28dw"}},{"id":"01k3weadhr7q216g6kwa28ff36","name":"permission:write","guard_name":"web","created_at":"2025-08-29T19:53:47.000000Z","updated_at":"2025-08-29T19:53:47.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3weadhr7q216g6kwa28ff36"}},{"id":"01k3weadj2px9v29r54zzervx6","name":"permission:delete","guard_name":"web","created_at":"2025-08-29T19:53:47.000000Z","updated_at":"2025-08-29T19:53:47.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3weadj2px9v29r54zzervx6"}},{"id":"01k3weadjc40dgttgd33aj2hz5","name":"permission:admin","guard_name":"web","created_at":"2025-08-29T19:53:47.000000Z","updated_at":"2025-08-29T19:53:47.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3weadjc40dgttgd33aj2hz5"}},{"id":"01k3weadjpt778e8wgv5e0m6kj","name":"admin:org","guard_name":"web","created_at":"2025-08-29T19:53:47.000000Z","updated_at":"2025-08-29T19:53:47.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3weadjpt778e8wgv5e0m6kj"}},{"id":"01k3weadk0bgy5rjem7qzvv2jj","name":"admin:enterprise","guard_name":"web","created_at":"2025-08-29T19:53:48.000000Z","updated_at":"2025-08-29T19:53:48.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3weadk0bgy5rjem7qzvv2jj"}},{"id":"01k3weadk9d7fv7x3tcnw434vf","name":"site_admin","guard_name":"web","created_at":"2025-08-29T19:53:48.000000Z","updated_at":"2025-08-29T19:53:48.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3weadk9d7fv7x3tcnw434vf"}},{"id":"01k3weadkjtdx09mfyjtzyw955","name":"system:read","guard_name":"web","created_at":"2025-08-29T19:53:48.000000Z","updated_at":"2025-08-29T19:53:48.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3weadkjtdx09mfyjtzyw955"}},{"id":"01k3weadkt8h0hew0dbtrg24hk","name":"system:write","guard_name":"web","created_at":"2025-08-29T19:53:48.000000Z","updated_at":"2025-08-29T19:53:48.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3weadkt8h0hew0dbtrg24hk"}},{"id":"01k3weadmctms06qck6e1t28dn","name":"system:admin","guard_name":"web","created_at":"2025-08-29T19:53:48.000000Z","updated_at":"2025-08-29T19:53:48.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3weadmctms06qck6e1t28dn"}},{"id":"01k3weadmnqnhgjk800g7xkjaj","name":"profile:read","guard_name":"web","created_at":"2025-08-29T19:53:48.000000Z","updated_at":"2025-08-29T19:53:48.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3weadmnqnhgjk800g7xkjaj"}},{"id":"01k3weadmyz5eft2mfhc6psc43","name":"profile:write","guard_name":"web","created_at":"2025-08-29T19:53:48.000000Z","updated_at":"2025-08-29T19:53:48.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3weadmyz5eft2mfhc6psc43"}},{"id":"01k3weadn8dr7x4k8j68pv68y3","name":"security:read","guard_name":"web","created_at":"2025-08-29T19:53:48.000000Z","updated_at":"2025-08-29T19:53:48.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3weadn8dr7x4k8j68pv68y3"}},{"id":"01k3weadnjpwj22c011hh754vw","name":"security:write","guard_name":"web","created_at":"2025-08-29T19:53:48.000000Z","updated_at":"2025-08-29T19:53:48.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3weadnjpwj22c011hh754vw"}},{"id":"01k3weadnws0wm2h1vavgp0whq","name":"security:admin","guard_name":"web","created_at":"2025-08-29T19:53:48.000000Z","updated_at":"2025-08-29T19:53:48.000000Z","created_by":"01k3weac255tydzxj0sa5fj46s","updated_by":"01k3weac255tydzxj0sa5fj46s","pivot":{"role_id":"01k3weadp8296j0999ygv1pfej","permission_id":"01k3weadnws0wm2h1vavgp0whq"}}],"users":[]}'
         headers:
           cache-control: 'no-cache, private'
           content-type: application/json
@@ -236,14 +236,14 @@ endpoints:
         name: id
         description: 'The ID of the role.'
         required: true
-        example: 01k3ahgcrh158fp8ze1zv7v9dm
+        example: 01k3weadp8296j0999ygv1pfej
         type: string
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         custom: []
     cleanUrlParameters:
-      id: 01k3ahgcrh158fp8ze1zv7v9dm
+      id: 01k3weadp8296j0999ygv1pfej
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters:
@@ -306,14 +306,14 @@ endpoints:
         name: id
         description: 'The ID of the role.'
         required: true
-        example: 01k3ahgcrh158fp8ze1zv7v9dm
+        example: 01k3weadp8296j0999ygv1pfej
         type: string
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         custom: []
     cleanUrlParameters:
-      id: 01k3ahgcrh158fp8ze1zv7v9dm
+      id: 01k3weadp8296j0999ygv1pfej
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -338,6 +338,340 @@ endpoints:
       groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
+      title: 'Get permissions'
+      description: 'Retrieve a paginated list of permissions with their roles, optionally filtered by guard name'
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      guard_name:
+        name: guard_name
+        description: 'Filter by guard name'
+        required: false
+        example: web
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      search:
+        name: search
+        description: 'Search permissions by name'
+        required: false
+        example: organization
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      per_page:
+        name: per_page
+        description: 'Number of results per page'
+        required: false
+        example: 15
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanQueryParameters:
+      guard_name: web
+      search: organization
+      per_page: 15
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 200
+        content: '{"data":[{"id":1,"name":"org:read","guard_name":"web","roles":[{"name":"admin"}]},{"id":2,"name":"org:write","guard_name":"web","roles":[{"name":"manager"}]}],"meta":{"current_page":1,"total":2}}'
+        headers: []
+        description: ''
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - POST
+    uri: api/v1/permissions
+    metadata:
+      groupName: 'Role & Permission Management'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Create permission'
+      description: 'Create a new permission'
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      name:
+        name: name
+        description: 'The name of the permission. Must not be greater than 255 characters.'
+        required: true
+        example: 'org:read'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      guard_name:
+        name: guard_name
+        description: 'The guard name for this permission (optional). Must not be greater than 255 characters.'
+        required: false
+        example: web
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+    cleanBodyParameters:
+      name: 'org:read'
+      guard_name: web
+    fileParameters: []
+    responses:
+      -
+        status: 201
+        content: '{"message":"Permission created successfully","permission":{"id":1,"name":"organization:delete","guard_name":"web"}}'
+        headers: []
+        description: ''
+        custom: []
+      -
+        status: 400
+        content: '{"message":"Permission already exists"}'
+        headers: []
+        description: ''
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/v1/permissions/{id}'
+    metadata:
+      groupName: 'Role & Permission Management'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get permission'
+      description: 'Retrieve a specific permission with its roles'
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the permission.'
+        required: true
+        example: 01k3wead70v6d4y3p10s36tmx5
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      id: 01k3wead70v6d4y3p10s36tmx5
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 200
+        content: '{"id":1,"name":"org:read","guard_name":"web","roles":[{"name":"admin"}]}'
+        headers: []
+        description: ''
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - PUT
+      - PATCH
+    uri: 'api/v1/permissions/{id}'
+    metadata:
+      groupName: 'Role & Permission Management'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Update permission'
+      description: 'Update an existing permission'
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the permission.'
+        required: true
+        example: 01k3wead70v6d4y3p10s36tmx5
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      id: 01k3wead70v6d4y3p10s36tmx5
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      name:
+        name: name
+        description: 'The name of the permission. Must not be greater than 255 characters.'
+        required: true
+        example: 'org:read'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+      guard_name:
+        name: guard_name
+        description: 'The guard name for this permission (optional). Must not be greater than 255 characters.'
+        required: false
+        example: web
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        custom: []
+    cleanBodyParameters:
+      name: 'org:read'
+      guard_name: web
+    fileParameters: []
+    responses:
+      -
+        status: 200
+        content: '{"message":"Permission updated successfully","permission":{"id":1,"name":"organization:manage","guard_name":"web"}}'
+        headers: []
+        description: ''
+        custom: []
+      -
+        status: 400
+        content: '{"message":"Permission name already exists"}'
+        headers: []
+        description: ''
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - DELETE
+    uri: 'api/v1/permissions/{id}'
+    metadata:
+      groupName: 'Role & Permission Management'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Delete permission'
+      description: 'Delete a permission (only if not assigned to any roles)'
+      authenticated: true
+      deprecated: false
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        name: id
+        description: 'The ID of the permission.'
+        required: true
+        example: 01k3wead70v6d4y3p10s36tmx5
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        custom: []
+    cleanUrlParameters:
+      id: 01k3wead70v6d4y3p10s36tmx5
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 200
+        content: '{"message":"Permission deleted successfully"}'
+        headers: []
+        description: ''
+        custom: []
+      -
+        status: 400
+        content: '{"message":"Cannot delete permission that is assigned to roles"}'
+        headers: []
+        description: ''
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6g43cv8PD1aE5beadkZfhV6'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: api/v1/roles/permissions
+    metadata:
+      groupName: 'Role & Permission Management'
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
       title: 'Get all available permissions'
       description: ''
       authenticated: true
@@ -356,8 +690,11 @@ endpoints:
     fileParameters: []
     responses:
       -
-        status: 200
-        content: '[{"id":"01k3ahgcp99x5zsa9fb6w8em0n","name":"create organization memberships"},{"id":"01k3ahgcn7dg8s2eeqjb41krdr","name":"create organization positions"},{"id":"01k3ahgcjz3g809h3v9jgccnxr","name":"create organizations"},{"id":"01k3ahgcm3q6gh2yja4pcmt1wn","name":"create organization units"},{"id":"01k3ahgchrfcmxgmy2mjjzvxv4","name":"create users"},{"id":"01k3ahgcpvvshkcemzfcxetpay","name":"delete organization memberships"},{"id":"01k3ahgcnrj2se0c0cmwj5wkbf","name":"delete organization positions"},{"id":"01k3ahgckj32svw6gzzhyz6q43","name":"delete organizations"},{"id":"01k3ahgcmnq9zh4b6sbzpra8kd","name":"delete organization units"},{"id":"01k3ahgcjde0khrayg497ayfvg","name":"delete users"},{"id":"01k3ahgcpj0vxzncc76qd62enp","name":"edit organization memberships"},{"id":"01k3ahgcnf9ga2jgnszt3ywwbe","name":"edit organization positions"},{"id":"01k3ahgck9tahg0z3nb9t11cwy","name":"edit organizations"},{"id":"01k3ahgcmca4hhfswc5n0bwd54","name":"edit organization units"},{"id":"01k3ahgcqd27c9kbhsxd3wbewg","name":"edit system settings"},{"id":"01k3ahgcj3dycqhbqc46f6c2r3","name":"edit users"},{"id":"01k3ahgcr6nxx4h59t6bc9xyx5","name":"manage permissions"},{"id":"01k3ahgcqywx6e2aq65va4hkfm","name":"manage roles"},{"id":"01k3ahgcqntpr39b0wak3d5a3z","name":"view audit logs"},{"id":"01k3ahgcp0cwgczct5f6983rk8","name":"view organization memberships"},{"id":"01k3ahgcmynqvax2z5jbapbqm5","name":"view organization positions"},{"id":"01k3ahgcjpdy8gs9q47yyysgpc","name":"view organizations"},{"id":"01k3ahgckvs01gzba6nxk8ghh5","name":"view organization units"},{"id":"01k3ahgcq4a8yc6gs9ytw04rhz","name":"view system settings"},{"id":"01k3ahgch7wxbk8trvdjkxxy0n","name":"view users"}]'
+        status: 404
+        content: |-
+          {
+              "message": "No query results for model [App\\Models\\Auth\\Role] permissions"
+          }
         headers:
           cache-control: 'no-cache, private'
           content-type: application/json

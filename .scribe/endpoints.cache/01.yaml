@@ -169,14 +169,14 @@ endpoints:
         name: id
         description: 'The ID of the organization.'
         required: true
-        example: 01k3ahgcgwbgdzwmy8an85afk4
+        example: 01k3weae0psccctzhnj5ef538g
         type: string
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         custom: []
     cleanUrlParameters:
-      id: 01k3ahgcgwbgdzwmy8an85afk4
+      id: 01k3weae0psccctzhnj5ef538g
     queryParameters:
       include:
         name: include
@@ -233,14 +233,14 @@ endpoints:
         name: id
         description: 'The ID of the organization.'
         required: true
-        example: 01k3ahgcgwbgdzwmy8an85afk4
+        example: 01k3weae0psccctzhnj5ef538g
         type: string
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         custom: []
     cleanUrlParameters:
-      id: 01k3ahgcgwbgdzwmy8an85afk4
+      id: 01k3weae0psccctzhnj5ef538g
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -291,14 +291,14 @@ endpoints:
         name: id
         description: 'The ID of the organization.'
         required: true
-        example: 01k3ahgcgwbgdzwmy8an85afk4
+        example: 01k3weae0psccctzhnj5ef538g
         type: string
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         custom: []
     cleanUrlParameters:
-      id: 01k3ahgcgwbgdzwmy8an85afk4
+      id: 01k3weae0psccctzhnj5ef538g
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -465,14 +465,14 @@ endpoints:
         name: organization_id
         description: 'The ID of the organization.'
         required: true
-        example: 01k3ahgcgwbgdzwmy8an85afk4
+        example: 01k3weae0psccctzhnj5ef538g
         type: string
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         custom: []
     cleanUrlParameters:
-      organization_id: 01k3ahgcgwbgdzwmy8an85afk4
+      organization_id: 01k3weae0psccctzhnj5ef538g
     queryParameters:
       status:
         name: status
@@ -539,14 +539,14 @@ endpoints:
         name: organization_id
         description: 'The ID of the organization.'
         required: true
-        example: 01k3ahgcgwbgdzwmy8an85afk4
+        example: 01k3weae0psccctzhnj5ef538g
         type: string
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         custom: []
     cleanUrlParameters:
-      organization_id: 01k3ahgcgwbgdzwmy8an85afk4
+      organization_id: 01k3weae0psccctzhnj5ef538g
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -597,7 +597,7 @@ endpoints:
         name: organization_id
         description: 'The ID of the organization.'
         required: true
-        example: 01k3ahgcgwbgdzwmy8an85afk4
+        example: 01k3weae0psccctzhnj5ef538g
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -607,15 +607,15 @@ endpoints:
         name: membership_id
         description: 'The ID of the membership.'
         required: true
-        example: 01k3ahgfe5595rkvqzvxrdrg5t
+        example: 01k3web49wxewj49wzwxggfbw3
         type: string
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         custom: []
     cleanUrlParameters:
-      organization_id: 01k3ahgcgwbgdzwmy8an85afk4
-      membership_id: 01k3ahgfe5595rkvqzvxrdrg5t
+      organization_id: 01k3weae0psccctzhnj5ef538g
+      membership_id: 01k3web49wxewj49wzwxggfbw3
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -666,7 +666,7 @@ endpoints:
         name: organization_id
         description: 'The ID of the organization.'
         required: true
-        example: 01k3ahgcgwbgdzwmy8an85afk4
+        example: 01k3weae0psccctzhnj5ef538g
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -676,15 +676,15 @@ endpoints:
         name: membership_id
         description: 'The ID of the membership.'
         required: true
-        example: 01k3ahgfe5595rkvqzvxrdrg5t
+        example: 01k3web49wxewj49wzwxggfbw3
         type: string
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         custom: []
     cleanUrlParameters:
-      organization_id: 01k3ahgcgwbgdzwmy8an85afk4
-      membership_id: 01k3ahgfe5595rkvqzvxrdrg5t
+      organization_id: 01k3weae0psccctzhnj5ef538g
+      membership_id: 01k3web49wxewj49wzwxggfbw3
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -735,14 +735,14 @@ endpoints:
         name: organization_id
         description: 'The ID of the organization.'
         required: true
-        example: 01k3ahgcgwbgdzwmy8an85afk4
+        example: 01k3weae0psccctzhnj5ef538g
         type: string
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         custom: []
     cleanUrlParameters:
-      organization_id: 01k3ahgcgwbgdzwmy8an85afk4
+      organization_id: 01k3weae0psccctzhnj5ef538g
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -751,7 +751,7 @@ endpoints:
     responses:
       -
         status: 200
-        content: '[{"id":1,"name":"admin","permissions":[{"name":"organization:admin"}]},{"id":2,"name":"member","permissions":[{"name":"organization:read"}]}]'
+        content: '[{"id":1,"name":"admin","permissions":[{"name":"org:admin"}]},{"id":2,"name":"member","permissions":[{"name":"org:read"}]}]'
         headers: []
         description: ''
         custom: []
@@ -787,14 +787,14 @@ endpoints:
         name: organization_id
         description: 'The ID of the organization.'
         required: true
-        example: 01k3ahgcgwbgdzwmy8an85afk4
+        example: 01k3weae0psccctzhnj5ef538g
         type: string
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         custom: []
     cleanUrlParameters:
-      organization_id: 01k3ahgcgwbgdzwmy8an85afk4
+      organization_id: 01k3weae0psccctzhnj5ef538g
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []

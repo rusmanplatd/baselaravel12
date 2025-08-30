@@ -278,7 +278,7 @@ Route::middleware('auth:api')->prefix('v1')->group(function () {
         Route::get('channels/search', [\App\Http\Controllers\Api\Chat\ChannelController::class, 'searchChannels'])
             ->name('channels.search')
             ->middleware('throttle:30,1');
-        
+
         Route::apiResource('channels', \App\Http\Controllers\Api\Chat\ChannelController::class)
             ->middleware('throttle:60,1');
         Route::post('channels/{channel}/join', [\App\Http\Controllers\Api\Chat\ChannelController::class, 'join'])
@@ -320,4 +320,41 @@ Route::middleware('auth:api')->prefix('v1')->group(function () {
             ->name('show')
             ->middleware('throttle:60,1');
     });
+
+});
+
+// Geographic API endpoints (public)
+Route::prefix('v1/geo')->name('api.geo.')->group(function () {
+    // Countries
+    Route::get('countries/list', [\App\Http\Controllers\Api\Geo\CountryController::class, 'list'])
+        ->name('countries.list');
+    Route::apiResource('countries', \App\Http\Controllers\Api\Geo\CountryController::class);
+
+    // Provinces
+    Route::get('provinces/list', [\App\Http\Controllers\Api\Geo\ProvinceController::class, 'list'])
+        ->name('provinces.list');
+    Route::apiResource('provinces', \App\Http\Controllers\Api\Geo\ProvinceController::class);
+    Route::get('countries/{countryId}/provinces', [\App\Http\Controllers\Api\Geo\ProvinceController::class, 'byCountry'])
+        ->name('countries.provinces');
+
+    // Cities
+    Route::get('cities/list', [\App\Http\Controllers\Api\Geo\CityController::class, 'list'])
+        ->name('cities.list');
+    Route::apiResource('cities', \App\Http\Controllers\Api\Geo\CityController::class);
+    Route::get('provinces/{provinceId}/cities', [\App\Http\Controllers\Api\Geo\CityController::class, 'byProvince'])
+        ->name('provinces.cities');
+
+    // Districts
+    Route::get('districts/list', [\App\Http\Controllers\Api\Geo\DistrictController::class, 'list'])
+        ->name('districts.list');
+    Route::apiResource('districts', \App\Http\Controllers\Api\Geo\DistrictController::class);
+    Route::get('cities/{cityId}/districts', [\App\Http\Controllers\Api\Geo\DistrictController::class, 'byCity'])
+        ->name('cities.districts');
+
+    // Villages
+    Route::get('villages/list', [\App\Http\Controllers\Api\Geo\VillageController::class, 'list'])
+        ->name('villages.list');
+    Route::apiResource('villages', \App\Http\Controllers\Api\Geo\VillageController::class);
+    Route::get('districts/{districtId}/villages', [\App\Http\Controllers\Api\Geo\VillageController::class, 'byDistrict'])
+        ->name('districts.villages');
 });
