@@ -2,10 +2,10 @@
 
 namespace App\Models\Master\Geo;
 
-use App\Models\Auth\User;
-use App\Models\Globals\Activity;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\Request;
 
@@ -16,12 +16,14 @@ class Province extends Model
     protected $table = 'ref_province';
 
     protected $fillable = [
+        'country_id',
         'code',
         'name',
     ];
 
     protected $casts = [
         'id' => 'string',
+        'country_id' => 'string',
         'code' => 'string',
         'name' => 'string',
 
@@ -39,6 +41,11 @@ class Province extends Model
     /*******************************
      ** RELATION
      *******************************/
+    public function country(): BelongsTo
+    {
+        return $this->belongsTo(Country::class, 'country_id');
+    }
+
     public function cities(): HasMany
     {
         return $this->hasMany(City::class, 'province_id');
@@ -55,7 +62,27 @@ class Province extends Model
 
     public function scopeFilters($query)
     {
-        return $query->filterBy(['code', 'name']);
+        $request = request();
+
+        return $query
+            ->when(
+                $country_id = $request->country_id,
+                function ($q) use (&$country_id) {
+                    $q->where('country_id', $country_id);
+                }
+            )
+            ->when(
+                $code = $request->code,
+                function ($q) use (&$code) {
+                    $q->where('code', 'like', '%' . $code . '%');
+                }
+            )
+            ->when(
+                $name = $request->name,
+                function ($q) use (&$name) {
+                    $q->where('name', 'like', '%' . $name . '%');
+                }
+            );
     }
 
     /*******************************
@@ -65,28 +92,9 @@ class Province extends Model
     {
         $this->beginTransaction();
         try {
-            [$guard, $user] = getAuthenticatedUser();
-            $is_update = false;
-            if ($this->id) {
-                $is_update = true;
-            }
-
             $this->fill($request->all());
-            $this->created_by ??= $user->id;
-            $this->updated_by = $user->id;
             $this->save();
-
-            if ($is_update) {
-                $this->addLog('Mengubah Data '.$this->getLogMessage(), Activity::UPDATE);
-
-                return $this->commitSaved();
-            } else {
-                $this->addLog('Membuat Data '.$this->getLogMessage(), Activity::CREATE);
-
-                return $this->commitStateStill();
-            }
         } catch (\Exception $e) {
-            return $this->rollbackSaved($e);
         }
     }
 
@@ -94,7 +102,6 @@ class Province extends Model
     {
         $this->beginTransaction();
         try {
-            $this->addLog('Menghapus Data '.$this->getLogMessage(), Activity::DELETE);
             $this->delete();
 
             return $this->commitDeleted();

@@ -2,8 +2,7 @@
 
 namespace App\Models\Master\Geo;
 
-use App\Models\Auth\User;
-use App\Models\Globals\Activity;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -71,11 +70,7 @@ class District extends Model
                 function ($q) use (&$city_id) {
                     $q->where('city_id', $city_id);
                 }
-            )
-            ->filterBy([
-                'code',
-                'name',
-            ]);
+            );
     }
 
     /*******************************
@@ -85,26 +80,8 @@ class District extends Model
     {
         $this->beginTransaction();
         try {
-            [$guard, $user] = getAuthenticatedUser();
-            $is_update = false;
-            if ($this->id) {
-                $is_update = true;
-            }
-
             $this->fill($request->all());
-            $this->created_by ??= $user->id;
-            $this->updated_by = $user->id;
             $this->save();
-
-            if ($is_update) {
-                $this->addLog('Mengubah Data '.$this->getLogMessage(), Activity::UPDATE);
-
-                return $this->commitSaved();
-            } else {
-                $this->addLog('Membuat Data '.$this->getLogMessage(), Activity::CREATE);
-
-                return $this->commitStateStill();
-            }
         } catch (\Exception $e) {
             return $this->rollbackSaved($e);
         }
@@ -114,7 +91,6 @@ class District extends Model
     {
         $this->beginTransaction();
         try {
-            $this->addLog('Menghapus Data '.$this->getLogMessage(), Activity::DELETE);
             $this->delete();
 
             return $this->commitDeleted();

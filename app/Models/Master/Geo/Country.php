@@ -5,27 +5,28 @@ namespace App\Models\Master\Geo;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\Request;
 
-class City extends Model
+class Country extends Model
 {
     use HasUlids;
 
-    public $table = 'ref_city';
+    protected $table = 'ref_country';
 
     protected $fillable = [
-        'province_id',
         'code',
         'name',
+        'iso_code',
+        'phone_code',
     ];
 
     protected $casts = [
         'id' => 'string',
-        'province_id' => 'string',
         'code' => 'string',
         'name' => 'string',
+        'iso_code' => 'string',
+        'phone_code' => 'string',
 
         'created_by' => 'string',
         'updated_by' => 'string',
@@ -38,18 +39,12 @@ class City extends Model
     /*******************************
      ** ACCESSOR
      *******************************/
-
     /*******************************
      ** RELATION
      *******************************/
-    public function province(): BelongsTo
+    public function provinces(): HasMany
     {
-        return $this->belongsTo(Province::class, 'province_id');
-    }
-
-    public function district(): HasMany
-    {
-        return $this->hasMany(District::class, 'city_id');
+        return $this->hasMany(Province::class, 'country_id');
     }
 
     /*******************************
@@ -67,9 +62,21 @@ class City extends Model
 
         return $query
             ->when(
-                $province_id = $request->province_id,
-                function ($q) use (&$province_id) {
-                    $q->where('province_id', $province_id);
+                $code = $request->code,
+                function ($q) use (&$code) {
+                    $q->where('code', 'like', '%' . $code . '%');
+                }
+            )
+            ->when(
+                $name = $request->name,
+                function ($q) use (&$name) {
+                    $q->where('name', 'like', '%' . $name . '%');
+                }
+            )
+            ->when(
+                $iso_code = $request->iso_code,
+                function ($q) use (&$iso_code) {
+                    $q->where('iso_code', 'like', '%' . $iso_code . '%');
                 }
             );
     }
@@ -118,7 +125,7 @@ class City extends Model
 
     public function canDeleted(): bool
     {
-        if ($this->district()->exists()) {
+        if ($this->provinces()->exists()) {
             return false;
         }
 

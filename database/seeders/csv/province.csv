@@ -1,0 +1,2548 @@
+country_code,kode,nama
+AF,BAL,Balkh
+AF,BAM,Bamyan
+AF,BDG,Badghis
+AF,BDS,Badakhshan
+AF,BGL,Baghlan
+AF,DYK,Daykundi
+AF,FRA,Farah
+AF,FYB,Faryab
+AF,GHA,Ghazni
+AF,GHO,Ghor
+AF,HEL,Helmand
+AF,HER,Herat
+AF,JOW,Jowzjan
+AF,KAB,Kabul
+AF,KAN,Kandahar
+AF,KAP,Kapisa
+AF,KDZ,Kunduz
+AF,KHO,Khost
+AF,KNR,Kunar
+AF,LAG,Laghman
+AF,LOG,Logar
+AF,NAN,Nangarhar
+AF,NIM,Nimruz
+AF,NUR,Nuristan
+AF,PAK,Paktika
+AF,PAN,Panjshir
+AF,PAR,Parwan
+AF,PIA,Paktia
+AF,SAM,Samangan
+AF,SAR,Sar-e Pol
+AF,TAK,Takhar
+AF,URU,Uruzgan
+AF,WAR,Wardak
+AF,ZAB,Zabul
+AG,03,Saint George
+AG,04,Saint John
+AG,05,Saint Mary
+AG,06,Saint Paul
+AG,07,Saint Peter
+AG,08,Saint Philip
+AG,10,Barbuda
+AG,11,Redonda
+AL,01,Berat
+AL,02,Dibër
+AL,03,Durrës
+AL,04,Elbasan
+AL,05,Fier
+AL,06,Gjirokastër
+AL,07,Korçë
+AL,08,Kukës
+AL,09,Lezhë
+AL,10,Shkodër
+AL,11,Tiranë
+AL,12,Vlorë
+AM,AG,Aragatsotn
+AM,AR,Ararat
+AM,AV,Armavir
+AM,ER,Yerevan
+AM,GR,Gegharkunik
+AM,KT,Kotayk
+AM,LO,Lori
+AM,SH,Shirak
+AM,SU,Syunik
+AM,TV,Tavush
+AM,VD,Vayots Dzor
+AR,BA,Buenos Aires
+AR,CB,Córdoba
+AR,CC,Chaco
+AR,CH,Chubut
+AR,CN,Corrientes
+AR,CT,Catamarca
+AR,ER,Entre Ríos
+AR,FO,Formosa
+AR,JY,Jujuy
+AR,LP,La Pampa
+AR,LR,La Rioja
+AR,MI,Misiones
+AR,MZ,Mendoza
+AR,NQ,Neuquén
+AR,RN,Río Negro
+AR,SA,Salta
+AR,SC,Santa Cruz
+AR,SE,Santiago del Estero
+AR,SF,Santa Fe
+AR,SJ,San Juan
+AR,SL,San Luis
+AR,TF,Tierra del Fuego
+AR,TU,Tucumán
+AT,1,Burgenland
+AT,2,Carinthia
+AT,3,Lower Austria
+AT,4,Upper Austria
+AT,5,Salzburg
+AT,6,Styria
+AT,7,Tyrol
+AT,8,Vorarlberg
+AT,9,Vienna
+AU,ACT,Australian Capital Territory
+AU,NSW,New South Wales
+AU,NT,Northern Territory
+AU,QLD,Queensland
+AU,SA,South Australia
+AU,TAS,Tasmania
+AU,VIC,Victoria
+AU,WA,Western Australia
+AZ,ABS,Abşeron
+AZ,AGA,Ağstafa
+AZ,AGC,Ağcabədi
+AZ,AGM,Ağdam
+AZ,AGS,Ağdaş
+AZ,AGU,Ağsu
+AZ,AST,Astara
+AZ,BAB,Babək
+AZ,BAL,Balakən
+AZ,BAR,Bərdə
+AZ,BEY,Beyləqan
+AZ,BIL,Biləsuvar
+AZ,CAB,Cəbrayıl
+AZ,CAL,Cəlilabad
+AZ,CUL,Culfa
+AZ,DAS,Daşkəsən
+AZ,DAV,Dəvəçi
+AZ,FUZ,Füzuli
+AZ,GAD,Gədəbəy
+AZ,GOR,Goranboy
+AZ,GOY,Göyçay
+AZ,HAC,Hacıqabul
+AZ,IMI,İmişli
+AZ,ISM,İsmayıllı
+AZ,KAL,Kəlbəcər
+AZ,KUR,Kürdəmir
+AZ,LAC,Laçın
+AZ,LAN,Lənkəran
+AZ,LER,Lerik
+AZ,MAS,Masallı
+AZ,MI,Mingəçevir
+AZ,NAF,Naftalan
+AZ,NEV,Nevaxı
+AZ,NX,Naxçıvan
+AZ,OGU,Oğuz
+AZ,ORD,Ordubad
+AZ,QAB,Qəbələ
+AZ,QAX,Qax
+AZ,QAZ,Qazax
+AZ,QBA,Quba
+AZ,QBI,Qubadlı
+AZ,QOB,Qobustan
+AZ,QUS,Qusar
+AZ,SAB,Şabran
+AZ,SAD,Sədərək
+AZ,SAH,Şahbuz
+AZ,SAK,Şəki
+AZ,SAL,Salyan
+AZ,SAR,Şərur
+AZ,SA,Şəki
+AZ,SAT,Saatlı
+AZ,SBN,Sabirabad
+AZ,SIR,Şirvan
+AZ,SUS,Şuşa
+AZ,TAR,Tərtər
+AZ,TOV,Tovuz
+AZ,UCA,Ucar
+AZ,XAC,Xaçmaz
+AZ,XCI,Xocalı
+AZ,XIZ,Xızı
+AZ,XVD,Xocavənd
+AZ,YAR,Yardımlı
+AZ,YEV,Yevlax
+AZ,ZAN,Zəngilan
+AZ,ZAQ,Zaqatala
+AZ,ZAR,Zərdab
+BA,01,Una-Sana Canton
+BA,02,Posavina Canton
+BA,03,Tuzla Canton
+BA,04,Zenica-Doboj Canton
+BA,05,Bosnian Podrinje Canton
+BA,06,Central Bosnia Canton
+BA,07,Herzegovina-Neretva Canton
+BA,08,West Herzegovina Canton
+BA,09,Sarajevo Canton
+BA,10,Canton 10
+BA,BDC,Brčko District
+BA,SRP,Republika Srpska
+BB,01,Christ Church
+BB,02,Saint Andrew
+BB,03,Saint George
+BB,04,Saint James
+BB,05,Saint John
+BB,06,Saint Joseph
+BB,07,Saint Lucy
+BB,08,Saint Michael
+BB,09,Saint Peter
+BB,10,Saint Philip
+BB,11,Saint Thomas
+BD,BA,Barisal
+BD,CH,Chittagong
+BD,DH,Dhaka
+BD,KH,Khulna
+BD,MM,Mymensingh
+BD,RA,Rajshahi
+BD,RG,Rangpur
+BD,SY,Sylhet
+BE,BRU,Brussels-Capital Region
+BE,VAN,Antwerp
+BE,VBR,Flemish Brabant
+BE,VLI,Limburg
+BE,VOV,East Flanders
+BE,VWV,West Flanders
+BE,WBR,Walloon Brabant
+BE,WHT,Hainaut
+BE,WLG,Liège
+BE,WLX,Luxembourg
+BE,WNA,Namur
+BG,01,Blagoevgrad
+BG,02,Burgas
+BG,03,Varna
+BG,04,Veliko Tarnovo
+BG,05,Vidin
+BG,06,Vratsa
+BG,07,Gabrovo
+BG,08,Dobrich
+BG,09,Kardzhali
+BG,10,Kyustendil
+BG,11,Lovech
+BG,12,Montana
+BG,13,Pazardzhik
+BG,14,Pernik
+BG,15,Pleven
+BG,16,Plovdiv
+BG,17,Razgrad
+BG,18,Ruse
+BG,19,Silistra
+BG,20,Sliven
+BG,21,Smolyan
+BG,22,Sofia Province
+BG,23,Sofia City
+BG,24,Stara Zagora
+BG,25,Targovishte
+BG,26,Haskovo
+BG,27,Shumen
+BG,28,Yambol
+BN,BE,Belait
+BN,BM,Brunei-Muara
+BN,TE,Temburong
+BN,TU,Tutong
+BO,B,Cochabamba
+BO,C,Chuquisaca
+BO,H,La Paz
+BO,L,Pando
+BO,N,Beni
+BO,O,Oruro
+BO,P,Potosí
+BO,S,Santa Cruz
+BO,T,Tarija
+BR,AC,Acre
+BR,AL,Alagoas
+BR,AM,Amazonas
+BR,AP,Amapá
+BR,BA,Bahia
+BR,CE,Ceará
+BR,DF,Distrito Federal
+BR,ES,Espírito Santo
+BR,GO,Goiás
+BR,MA,Maranhão
+BR,MG,Minas Gerais
+BR,MS,Mato Grosso do Sul
+BR,MT,Mato Grosso
+BR,PA,Pará
+BR,PB,Paraíba
+BR,PE,Pernambuco
+BR,PI,Piauí
+BR,PR,Paraná
+BR,RJ,Rio de Janeiro
+BR,RN,Rio Grande do Norte
+BR,RO,Rondônia
+BR,RR,Roraima
+BR,RS,Rio Grande do Sul
+BR,SC,Santa Catarina
+BR,SE,Sergipe
+BR,SP,São Paulo
+BR,TO,Tocantins
+BS,AK,Acklins
+BS,BI,Bimini
+BS,BP,Black Point
+BS,BR,Berry Islands
+BS,CE,Central Abaco
+BS,CEL,Central Eleuthera
+BS,CI,Cat Island
+BS,CS,Central Andros
+BS,EG,East Grand Bahama
+BS,EX,Exuma
+BS,FP,Crooked Island and Long Cay
+BS,GC,Grand Cay
+BS,HI,Harbour Island
+BS,HT,Hope Town
+BS,IN,Inagua
+BS,LI,Long Island
+BS,MC,Mangrove Cay
+BS,MI,Mayaguana
+BS,MO,Moore's Island
+BS,NE,North Eleuthera
+BS,NP,North Abaco
+BS,NS,North Andros
+BS,RC,Rum Cay
+BS,RI,Ragged Island
+BS,SA,South Andros
+BS,SE,South Eleuthera
+BS,SO,South Abaco
+BS,SS,San Salvador
+BS,SW,Spanish Wells
+BS,WG,West Grand Bahama
+BT,11,Paro
+BT,12,Chhukha
+BT,13,Ha
+BT,14,Samtse
+BT,15,Thimphu
+BT,21,Tsirang
+BT,22,Dagana
+BT,23,Punakha
+BT,24,Wangdue Phodrang
+BT,31,Sarpang
+BT,32,Trongsa
+BT,33,Bumthang
+BT,34,Zhemgang
+BT,41,Trashigang
+BT,42,Mongar
+BT,43,Pemagatshel
+BT,44,Lhuentse
+BT,45,Samdrup Jongkhar
+BT,GA,Gasa
+BT,TY,Trashi Yangtse
+BY,BR,Brest Region
+BY,HO,Gomel Region
+BY,HR,Grodno Region
+BY,MA,Minsk Region
+BY,MI,Minsk City
+BY,MO,Mogilev Region
+BY,VI,Vitebsk Region
+BZ,BZ,Belize
+BZ,CY,Cayo
+BZ,CZ,Corozal
+BZ,OW,Orange Walk
+BZ,SC,Stann Creek
+BZ,TOL,Toledo
+CA,AB,Alberta
+CA,BC,British Columbia
+CA,MB,Manitoba
+CA,NB,New Brunswick
+CA,NL,Newfoundland and Labrador
+CA,NS,Nova Scotia
+CA,NT,Northwest Territories
+CA,NU,Nunavut
+CA,ON,Ontario
+CA,PE,Prince Edward Island
+CA,QC,Quebec
+CA,SK,Saskatchewan
+CA,YT,Yukon
+CH,AG,Aargau
+CH,AI,Appenzell Innerrhoden
+CH,AR,Appenzell Ausserrhoden
+CH,BE,Bern
+CH,BL,Basel-Landschaft
+CH,BS,Basel-Stadt
+CH,FR,Fribourg
+CH,GE,Geneva
+CH,GL,Glarus
+CH,GR,Graubünden
+CH,JU,Jura
+CH,LU,Lucerne
+CH,NE,Neuchâtel
+CH,NW,Nidwalden
+CH,OW,Obwalden
+CH,SG,St. Gallen
+CH,SH,Schaffhausen
+CH,SO,Solothurn
+CH,SZ,Schwyz
+CH,TG,Thurgau
+CH,TI,Ticino
+CH,UR,Uri
+CH,VD,Vaud
+CH,VS,Valais
+CH,ZG,Zug
+CH,ZH,Zürich
+CL,AI,Aisén del General Carlos Ibáñez del Campo
+CL,AN,Antofagasta
+CL,AP,Arica y Parinacota
+CL,AR,Araucanía
+CL,AT,Atacama
+CL,BI,Bío Bío
+CL,CO,Coquimbo
+CL,LI,Libertador General Bernardo O'Higgins
+CL,LL,Los Lagos
+CL,LR,Los Ríos
+CL,MA,Magallanes
+CL,ML,Maule
+CL,NB,Ñuble
+CL,RM,Región Metropolitana de Santiago
+CL,TA,Tarapacá
+CL,VS,Valparaíso
+CN,11,Beijing
+CN,12,Tianjin
+CN,13,Hebei
+CN,14,Shanxi
+CN,15,Inner Mongolia
+CN,21,Liaoning
+CN,22,Jilin
+CN,23,Heilongjiang
+CN,31,Shanghai
+CN,32,Jiangsu
+CN,33,Zhejiang
+CN,34,Anhui
+CN,35,Fujian
+CN,36,Jiangxi
+CN,37,Shandong
+CN,41,Henan
+CN,42,Hubei
+CN,43,Hunan
+CN,44,Guangdong
+CN,45,Guangxi
+CN,46,Hainan
+CN,50,Chongqing
+CN,51,Sichuan
+CN,52,Guizhou
+CN,53,Yunnan
+CN,54,Tibet
+CN,61,Shaanxi
+CN,62,Gansu
+CN,63,Qinghai
+CN,64,Ningxia
+CN,65,Xinjiang
+CN,71,Taiwan
+CN,81,Hong Kong
+CN,82,Macau
+CO,AMA,Amazonas
+CO,ANT,Antioquia
+CO,ARA,Arauca
+CO,ATL,Atlántico
+CO,BOL,Bolívar
+CO,BOY,Boyacá
+CO,CAL,Caldas
+CO,CAQ,Caquetá
+CO,CAS,Casanare
+CO,CAU,Cauca
+CO,CES,Cesar
+CO,CHO,Chocó
+CO,COR,Córdoba
+CO,CUN,Cundinamarca
+CO,DC,Bogotá
+CO,GUA,Guainía
+CO,GUV,Guaviare
+CO,HUI,Huila
+CO,LAG,La Guajira
+CO,MAG,Magdalena
+CO,MET,Meta
+CO,NAR,Nariño
+CO,NSA,Norte de Santander
+CO,PUT,Putumayo
+CO,QUI,Quindío
+CO,RIS,Risaralda
+CO,SAN,Santander
+CO,SAP,San Andrés y Providencia
+CO,SUC,Sucre
+CO,TOL,Tolima
+country_code,kode,nama
+CO,VAC,Valle del Cauca
+CO,VAU,Vaupés
+CO,VID,Vichada
+CR,A,Alajuela
+CR,C,Cartago
+CR,G,Guanacaste
+CR,H,Heredia
+CR,L,Limón
+CR,P,Puntarenas
+CR,SJ,San José
+CU,01,Pinar del Río
+CU,02,La Habana
+CU,03,Ciudad de La Habana
+CU,04,Matanzas
+CU,05,Villa Clara
+CU,06,Cienfuegos
+CU,07,Sancti Spíritus
+CU,08,Ciego de Ávila
+CU,09,Camagüey
+CU,10,Las Tunas
+CU,11,Holguín
+CU,12,Granma
+CU,13,Santiago de Cuba
+CU,14,Guantánamo
+CU,15,Artemisa
+CU,16,Mayabeque
+CU,99,Isla de la Juventud
+CY,01,Nicosia
+CY,02,Limassol
+CY,03,Larnaca
+CY,04,Famagusta
+CY,05,Paphos
+CY,06,Kyrenia
+CZ,JC,Jihomoravský kraj
+CZ,JH,Jihočeský kraj
+CZ,KA,Karlovarský kraj
+CZ,KR,Královéhradecký kraj
+CZ,LI,Liberecký kraj
+CZ,MO,Moravskoslezský kraj
+CZ,OL,Olomoucký kraj
+CZ,PA,Pardubický kraj
+CZ,PL,Plzeňský kraj
+CZ,PR,Praha
+CZ,ST,Středočeský kraj
+CZ,US,Ústecký kraj
+CZ,VY,Vysočina
+CZ,ZL,Zlínský kraj
+DE,BB,Brandenburg
+DE,BE,Berlin
+DE,BW,Baden-Württemberg
+DE,BY,Bavaria
+DE,HB,Bremen
+DE,HE,Hesse
+DE,HH,Hamburg
+DE,MV,Mecklenburg-Vorpommern
+DE,NI,Lower Saxony
+DE,NW,North Rhine-Westphalia
+DE,RP,Rhineland-Palatinate
+DE,SH,Schleswig-Holstein
+DE,SL,Saarland
+DE,SN,Saxony
+DE,ST,Saxony-Anhalt
+DE,TH,Thuringia
+DK,81,South Denmark
+DK,82,Central Jutland
+DK,83,Region Zealand
+DK,84,Capital Region
+DK,85,North Jutland
+DM,02,Saint Andrew
+DM,03,Saint David
+DM,04,Saint George
+DM,05,Saint John
+DM,06,Saint Joseph
+DM,07,Saint Luke
+DM,08,Saint Mark
+DM,09,Saint Patrick
+DM,10,Saint Paul
+DM,11,Saint Peter
+DO,01,Distrito Nacional
+DO,02,Azua
+DO,03,Baoruco
+DO,04,Barahona
+DO,05,Dajabón
+DO,06,Duarte
+DO,07,Elías Piña
+DO,08,El Seibo
+DO,09,Espaillat
+DO,10,Independencia
+DO,11,La Altagracia
+DO,12,La Romana
+DO,13,La Vega
+DO,14,María Trinidad Sánchez
+DO,15,Monte Cristi
+DO,16,Pedernales
+DO,17,Peravia
+DO,18,Puerto Plata
+DO,19,Hermanas Mirabal
+DO,20,Samaná
+DO,21,San Cristóbal
+DO,22,San Juan
+DO,23,San Pedro de Macorís
+DO,24,Sánchez Ramírez
+DO,25,Santiago
+DO,26,Santiago Rodríguez
+DO,27,Valverde
+DO,28,Monseñor Nouel
+DO,29,Monte Plata
+DO,30,Hato Mayor
+DO,31,San José de Ocoa
+DO,32,Santo Domingo
+EC,A,Azuay
+EC,B,Bolívar
+EC,C,Carchi
+EC,D,Orellana
+EC,E,Esmeraldas
+EC,F,Cañar
+EC,G,Guayas
+EC,H,Chimborazo
+EC,I,Imbabura
+EC,L,Loja
+EC,M,Manabí
+EC,N,Napo
+EC,O,El Oro
+EC,P,Pichincha
+EC,R,Los Ríos
+EC,SD,Santo Domingo de los Tsáchilas
+EC,SE,Santa Elena
+EC,S,Morona-Santiago
+EC,T,Tungurahua
+EC,U,Sucumbíos
+EC,W,Galápagos
+EC,X,Cotopaxi
+EC,Y,Pastaza
+EC,Z,Zamora-Chinchipe
+EE,37,Harju County
+EE,39,Hiiu County
+EE,44,Ida-Viru County
+EE,49,Jõgeva County
+EE,51,Järva County
+EE,57,Lääne County
+EE,59,Lääne-Viru County
+EE,65,Põlva County
+EE,67,Pärnu County
+EE,70,Rapla County
+EE,74,Saare County
+EE,78,Tartu County
+EE,82,Valga County
+EE,84,Viljandi County
+EE,86,Võru County
+EG,ALX,Alexandria
+EG,ASN,Aswan
+EG,AST,Asyut
+EG,BNS,Beni Suef
+EG,CAI,Cairo
+EG,DAM,Damietta
+EG,DKQ,Dakahlia
+EG,FAI,Faiyum
+EG,GHB,Gharbia
+EG,GIZ,Giza
+EG,ISM,Ismailia
+EG,KFS,Kafr El Sheikh
+EG,LUX,Luxor
+EG,MNF,Minya
+EG,MON,Monufia
+EG,MTM,Matruh
+EG,NSN,New Valley
+EG,PTS,Port Said
+EG,QLY,Qalyubia
+EG,QNA,Qena
+EG,SHG,Sharqia
+EG,SOH,Sohag
+EG,SUZ,Suez
+ES,AND,Andalucía
+ES,ARA,Aragón
+ES,AST,Asturias
+ES,CAB,Cantabria
+ES,CAN,Canarias
+ES,CAT,Cataluña
+ES,CLE,Castilla y León
+ES,CLM,Castilla-La Mancha
+ES,EXT,Extremadura
+ES,GAL,Galicia
+ES,IB,Islas Baleares
+ES,MAD,Madrid
+ES,MUR,Murcia
+ES,NAV,Navarra
+ES,PVA,País Vasco
+ES,RIO,La Rioja
+ES,VAL,Valencia
+FI,01,Åland Islands
+FI,02,South Karelia
+FI,03,Southern Ostrobothnia
+FI,04,Southern Savonia
+FI,05,Kainuu
+FI,06,Tavastia Proper
+FI,07,Central Ostrobothnia
+FI,08,Central Finland
+FI,09,Kymenlaakso
+FI,10,Lapland
+FI,11,Pirkanmaa
+FI,12,Ostrobothnia
+FI,13,North Karelia
+FI,14,Northern Ostrobothnia
+FI,15,Northern Savonia
+FI,16,Päijänne Tavastia
+FI,17,Satakunta
+FI,18,Uusimaa
+FI,19,Southwest Finland
+FI,20,Finland Proper
+FJ,C,Central
+FJ,E,Eastern
+FJ,N,Northern
+FJ,R,Rotuma
+FJ,W,Western
+FR,ARA,Auvergne-Rhône-Alpes
+FR,BFC,Bourgogne-Franche-Comté
+FR,BRE,Bretagne
+FR,COR,Corse
+FR,CVL,Centre-Val de Loire
+FR,GES,Grand Est
+FR,HDF,Hauts-de-France
+FR,IDF,Île-de-France
+FR,NAQ,Nouvelle-Aquitaine
+FR,NOR,Normandie
+FR,OCC,Occitanie
+FR,PAC,Provence-Alpes-Côte d'Azur
+FR,PDL,Pays de la Loire
+GB,ENG,England
+GB,NIR,Northern Ireland
+GB,SCT,Scotland
+GB,WLS,Wales
+GD,01,Saint Andrew
+GD,02,Saint David
+GD,03,Saint George
+GD,04,Saint John
+GD,05,Saint Mark
+GD,06,Saint Patrick
+GD,10,Southern Grenadine Islands
+GE,AB,Abkhazia
+GE,AJ,Ajaria
+GE,GU,Guria
+GE,IM,Imereti
+GE,KA,Kakheti
+GE,KK,Kvemo Kartli
+GE,MM,Mtskheta-Mtianeti
+GE,RL,Racha-Lechkhumi and Kvemo Svaneti
+GE,SJ,Samegrelo-Zemo Svaneti
+GE,SK,Shida Kartli
+GE,SZ,Samtskhe-Javakheti
+GE,TB,Tbilisi
+GF,GF,French Guiana
+GR,A,Attica
+GR,C,Mount Athos
+GR,D,Western Macedonia
+GR,F,South Aegean
+GR,G,Western Greece
+GR,H,Eastern Macedonia and Thrace
+GR,I,Central Greece
+GR,J,Crete
+GR,K,Ionian Islands
+GR,L,North Aegean
+GR,M,Central Macedonia
+GR,P,Peloponnese
+GR,T,Thessaly
+GT,AV,Alta Verapaz
+GT,BV,Baja Verapaz
+GT,CM,Chimaltenango
+GT,CQ,Chiquimula
+GT,ES,Escuintla
+GT,GU,Guatemala
+GT,HU,Huehuetenango
+GT,IZ,Izabal
+GT,JA,Jalapa
+GT,JU,Jutiapa
+GT,PE,Petén
+GT,PR,El Progreso
+GT,QC,Quiché
+GT,QZ,Quetzaltenango
+GT,RE,Retalhuleu
+GT,SA,Sacatepéquez
+GT,SM,San Marcos
+GT,SO,Sololá
+GT,SR,Santa Rosa
+GT,SU,Suchitepéquez
+GT,TO,Totonicapán
+GT,ZC,Zacapa
+GY,BA,Barima-Waini
+GY,CU,Cuyuni-Mazaruni
+GY,DE,Demerara-Mahaica
+GY,EB,East Berbice-Corentyne
+GY,ES,Essequibo Islands-West Demerara
+GY,MA,Mahaica-Berbice
+GY,PM,Pomeroon-Supenaam
+GY,PT,Potaro-Siparuni
+GY,UD,Upper Demerara-Berbice
+GY,UT,Upper Takutu-Upper Essequibo
+HN,AT,Atlántida
+HN,CH,Choluteca
+HN,CL,Colón
+HN,CM,Comayagua
+HN,CP,Copán
+HN,CR,Cortés
+HN,EP,El Paraíso
+HN,FM,Francisco Morazán
+HN,GD,Gracias a Dios
+HN,IB,Islas de la Bahía
+HN,IN,Intibucá
+HN,LE,Lempira
+HN,LP,La Paz
+HN,OC,Ocotepeque
+HN,OL,Olancho
+HN,SB,Santa Bárbara
+HN,VA,Valle
+HN,YO,Yoro
+HR,01,Zagreb
+HR,02,Krapina-Zagorje
+HR,03,Sisak-Moslavina
+HR,04,Karlovac
+HR,05,Varaždin
+HR,06,Koprivnica-Križevci
+HR,07,Bjelovar-Bilogora
+HR,08,Primorje-Gorski Kotar
+HR,09,Lika-Senj
+HR,10,Virovitica-Podravina
+HR,11,Požega-Slavonia
+HR,12,Brod-Posavina
+HR,13,Zadar
+HR,14,Osijek-Baranja
+HR,15,Šibenik-Knin
+HR,16,Vukovar-Srijem
+HR,17,Split-Dalmatia
+HR,18,Istria
+HR,19,Dubrovnik-Neretva
+HR,20,Međimurje
+HR,21,Zagreb
+HT,AR,Artibonite
+HT,CE,Centre
+HT,GA,Grande-Anse
+HT,ND,Nord
+HT,NE,Nord-Est
+HT,NI,Nippes
+HT,NO,Nord-Ouest
+HT,OU,Ouest
+HT,SD,Sud
+HT,SE,Sud-Est
+HU,BA,Baranya
+HU,BE,Békés
+HU,BK,Bács-Kiskun
+HU,BO,Borsod-Abaúj-Zemplén
+HU,BU,Budapest
+HU,CS,Csongrád
+HU,FE,Fejér
+HU,GS,Győr-Moson-Sopron
+HU,HB,Hajdú-Bihar
+HU,HE,Heves
+HU,JN,Jász-Nagykun-Szolnok
+HU,KE,Komárom-Esztergom
+HU,NO,Nógrád
+HU,PE,Pest
+HU,SO,Somogy
+HU,SZ,Szabolcs-Szatmár-Bereg
+HU,TO,Tolna
+HU,VA,Vas
+HU,VE,Veszprém
+HU,ZA,Zala
+ID,11,Aceh
+ID,12,Sumatera Utara
+ID,13,Sumatera Barat
+ID,14,Riau
+ID,15,Jambi
+ID,16,Sumatera Selatan
+ID,17,Bengkulu
+ID,18,Lampung
+ID,19,Kepulauan Bangka Belitung
+ID,21,Kepulauan Riau
+ID,31,Daerah Khusus Ibukota Jakarta
+ID,32,Jawa Barat
+ID,33,Jawa Tengah
+ID,34,Daerah Istimewa Yogyakarta
+ID,35,Jawa Timur
+ID,36,Banten
+ID,51,Bali
+ID,52,Nusa Tenggara Barat
+ID,53,Nusa Tenggara Timur
+ID,61,Kalimantan Barat
+ID,62,Kalimantan Tengah
+ID,63,Kalimantan Selatan
+ID,64,Kalimantan Timur
+ID,65,Kalimantan Utara
+ID,71,Sulawesi Utara
+ID,72,Sulawesi Tengah
+ID,73,Sulawesi Selatan
+ID,74,Sulawesi Tenggara
+ID,75,Gorontalo
+ID,76,Sulawesi Barat
+ID,81,Maluku
+ID,82,Maluku Utara
+ID,91,Papua
+ID,92,Papua Barat
+ID,93,Papua Selatan
+ID,94,Papua Tengah
+ID,95,Papua Pegunungan
+ID,96,Papua Barat Daya
+IE,CE,Clare
+IE,CK,Cork
+IE,CN,Cavan
+IE,CW,Carlow
+IE,D,Dublin
+IE,DL,Donegal
+IE,G,Galway
+IE,KE,Kildare
+IE,KK,Kilkenny
+IE,KY,Kerry
+IE,LA,Louth
+IE,LD,Longford
+IE,LK,Limerick
+IE,LM,Leitrim
+IE,LS,Laois
+IE,ME,Meath
+IE,MO,Mayo
+IE,OY,Offaly
+IE,RN,Roscommon
+IE,SO,Sligo
+IE,TA,Tipperary
+IE,WD,Waterford
+IE,WH,Westmeath
+IE,WW,Wicklow
+IE,WX,Wexford
+IN,AN,Andaman and Nicobar Islands
+IN,AP,Andhra Pradesh
+IN,AR,Arunachal Pradesh
+IN,AS,Assam
+IN,BR,Bihar
+IN,CH,Chandigarh
+IN,CT,Chhattisgarh
+IN,DD,Daman and Diu
+IN,DL,Delhi
+IN,DN,Dadra and Nagar Haveli
+IN,GA,Goa
+IN,GJ,Gujarat
+IN,HP,Himachal Pradesh
+IN,HR,Haryana
+IN,JH,Jharkhand
+IN,JK,Jammu and Kashmir
+IN,KA,Karnataka
+IN,KL,Kerala
+IN,MH,Maharashtra
+IN,ML,Meghalaya
+IN,MN,Manipur
+IN,MP,Madhya Pradesh
+IN,MZ,Mizoram
+IN,NL,Nagaland
+IN,OR,Odisha
+IN,PB,Punjab
+IN,PY,Puducherry
+IN,RJ,Rajasthan
+IN,SK,Sikkim
+IN,TG,Telangana
+IN,TN,Tamil Nadu
+IN,TR,Tripura
+IN,UP,Uttar Pradesh
+IN,UT,Uttarakhand
+IN,WB,West Bengal
+IR,01,East Azerbaijan
+IR,02,West Azerbaijan
+IR,03,Ardabil
+IR,04,Isfahan
+IR,05,Kurdistan
+IR,06,Bushehr
+IR,07,Sistan and Baluchestan
+IR,08,Chaharmahal and Bakhtiari
+IR,09,Ilam
+IR,10,Khorasan, North
+IR,11,Khorasan, Razavi
+IR,12,Khorasan, South
+IR,13,Tehran
+IR,14,Fars
+IR,15,Kohgiluyeh and Boyer-Ahmad
+IR,16,Khuzestan
+IR,17,Kerman
+IR,18,Yazd
+IR,19,Gilan
+IR,20,Markazi
+IR,21,Semnan
+IR,22,Qom
+IR,23,Hormozgan
+IR,24,Hamadan
+IR,25,Lorestan
+IR,26,Mazandaran
+IR,27,Golestan
+IR,28,Qazvin
+IR,29,Kermanshah
+IR,31,Zanjan
+IR,32,Alborz
+IS,1,Höfuðborgarsvæðið
+IS,2,Suðurnes
+IS,3,Vesturland
+IS,4,Vestfirðir
+IS,5,Norðurland vestra
+IS,6,Norðurland eystra
+IS,7,Austurland
+IS,8,Suðurland
+IT,ABR,Abruzzo
+IT,BAS,Basilicata
+IT,CAL,Calabria
+IT,CAM,Campania
+IT,EMR,Emilia-Romagna
+IT,FVG,Friuli Venezia Giulia
+IT,LAZ,Lazio
+IT,LIG,Liguria
+IT,LOM,Lombardia
+IT,MAR,Marche
+IT,MOL,Molise
+IT,PAB,Provincia Autonoma di Bolzano
+IT,PAT,Provincia Autonoma di Trento
+IT,PIE,Piemonte
+IT,PMO,Provincia Autonoma di Bolzano
+IT,PUG,Puglia
+IT,SAR,Sardegna
+IT,SIC,Sicilia
+IT,TOS,Toscana
+IT,UMB,Umbria
+IT,VDA,Valle d'Aosta
+IT,VEN,Veneto
+JM,01,Kingston
+JM,02,Saint Andrew
+JM,03,Saint Thomas
+JM,04,Portland
+JM,05,Saint James
+JM,06,Saint Ann
+JM,07,Trelawny
+JM,08,Saint Elizabeth
+JM,09,Hanover
+JM,10,Westmoreland
+JM,11,Saint Catherine
+JM,12,Manchester
+JM,13,Clarendon
+JM,14,Saint Mary
+JP,01,Hokkaido
+JP,02,Aomori
+JP,03,Iwate
+JP,04,Miyagi
+JP,05,Akita
+JP,06,Yamagata
+JP,07,Fukushima
+JP,08,Ibaraki
+JP,09,Tochigi
+JP,10,Gunma
+JP,11,Saitama
+JP,12,Chiba
+JP,13,Tokyo
+JP,14,Kanagawa
+JP,15,Niigata
+JP,16,Toyama
+JP,17,Ishikawa
+JP,18,Fukui
+JP,19,Yamanashi
+JP,20,Nagano
+JP,21,Gifu
+JP,22,Shizuoka
+JP,23,Aichi
+JP,24,Mie
+JP,25,Shiga
+JP,26,Kyoto
+JP,27,Osaka
+JP,28,Hyogo
+JP,29,Nara
+JP,30,Wakayama
+JP,31,Tottori
+JP,32,Shimane
+JP,33,Okayama
+JP,34,Hiroshima
+JP,35,Yamaguchi
+JP,36,Tokushima
+JP,37,Kagawa
+JP,38,Ehime
+JP,39,Kochi
+JP,40,Fukuoka
+JP,41,Saga
+JP,42,Nagasaki
+JP,43,Kumamoto
+JP,44,Oita
+JP,45,Miyazaki
+JP,46,Kagoshima
+JP,47,Okinawa
+KG,B,Batken Region
+KG,C,Chuy Region
+KG,GB,Bishkek
+KG,J,Jalal-Abad Region
+KG,N,Naryn Region
+KG,O,Osh Region
+KG,T,Talas Region
+KG,Y,Ysyk-Kol Region
+KH,10,Kratié
+KH,11,Mondulkiri
+KH,12,Phnom Penh
+KH,13,Preah Vihear
+KH,14,Prey Veng
+KH,15,Pursat
+KH,16,Ratanakiri
+KH,17,Siem Reap
+KH,18,Preah Sihanouk
+KH,19,Stung Treng
+KH,1,Banteay Meanchey
+KH,20,Svay Rieng
+KH,21,Takéo
+KH,22,Otdar Meanchey
+KH,23,Kep
+KH,24,Pailin
+KH,25,Tboung Khmum
+KH,2,Battambang
+KH,3,Kampong Cham
+KH,4,Kampong Chhnang
+KH,5,Kampong Speu
+KH,6,Kampong Thom
+KH,7,Kampot
+KH,8,Kandal
+KH,9,Koh Kong
+KN,01,Christ Church Nichola Town
+KN,02,Saint Anne Sandy Point
+KN,03,Saint George Basseterre
+KN,04,Saint George Gingerland
+KN,05,Saint James Windward
+KN,06,Saint John Capisterre
+KN,07,Saint John Figtree
+KN,08,Saint Mary Cayon
+KN,09,Saint Paul Capisterre
+KN,10,Saint Paul Charlestown
+KN,11,Saint Peter Basseterre
+KN,12,Saint Thomas Lowland
+KN,13,Saint Thomas Middle Island
+KN,15,Trinity Palmetto Point
+KZ,AKM,Akmola Region
+KZ,AKT,Aktobe Region
+KZ,ALA,Almaty
+KZ,ALM,Almaty Region
+KZ,AST,Astana
+KZ,ATY,Atyrau Region
+KZ,BAY,Baykonyr
+KZ,KAR,Karaganda Region
+KZ,KUS,Kostanay Region
+KZ,KZY,Kyzylorda Region
+KZ,MAN,Mangystau Region
+KZ,PAV,Pavlodar Region
+KZ,SEV,North Kazakhstan Region
+KZ,VOS,East Kazakhstan Region
+KZ,YUZ,South Kazakhstan Region
+KZ,ZAP,West Kazakhstan Region
+KZ,ZHAM,Jambyl Region
+KZ,ZHA,Zhambyl Region
+LA,AT,Attapu
+LA,BK,Bokeo
+LA,BL,Bolikhamxai
+LA,CH,Champasak
+LA,HO,Houaphanh
+LA,KH,Khammouan
+LA,LM,Louang Namtha
+LA,LP,Louangphabang
+LA,OU,Oudomxai
+LA,PH,Phongsali
+LA,SL,Salavan
+LA,SV,Savannakhet
+LA,VI,Vientiane
+LA,VT,Vientiane Prefecture
+LA,XA,Xaignabouli
+LA,XE,Xekong
+LA,XI,Xiangkhouang
+LA,XS,Xaisomboun
+LC,01,Anse la Raye
+LC,02,Castries
+LC,03,Choiseul
+LC,04,Dauphin
+LC,05,Dennery
+LC,06,Gros Islet
+LC,07,Laborie
+LC,08,Micoud
+LC,09,Mon Repos
+LC,10,Praslin
+LC,11,Soufrière
+LC,12,Vieux Fort
+LK,1,Western Province
+LK,2,Central Province
+LK,3,Southern Province
+LK,4,Northern Province
+LK,5,Eastern Province
+LK,6,North Western Province
+LK,7,North Central Province
+LK,8,Uva Province
+LK,9,Sabaragamuwa Province
+LT,AL,Alytus County
+LT,KL,Klaipėda County
+LT,KU,Kaunas County
+LT,MR,Marijampolė County
+LT,PN,Panevėžys County
+LT,SA,Šiauliai County
+LT,TA,Tauragė County
+LT,TE,Telšiai County
+LT,UT,Utena County
+LT,VL,Vilnius County
+LU,CA,Capellen
+LU,CL,Clervaux
+LU,DI,Diekirch
+LU,EC,Echternach
+LU,ES,Esch-sur-Alzette
+LU,GR,Grevenmacher
+LU,LU,Luxembourg
+LU,ME,Mersch
+LU,RD,Redange
+LU,RE,Remich
+LU,VI,Vianden
+LU,WI,Wiltz
+LV,001,Aglonas novads
+LV,002,Aizkraukles novads
+LV,003,Aizputes novads
+LV,004,Aknīstes novads
+LV,005,Alojas novads
+LV,006,Alsungas novads
+LV,007,Alūksnes novads
+LV,008,Amatas novads
+LV,009,Apes novads
+LV,010,Auces novads
+LV,011,Ādažu novads
+LV,012,Babītes novads
+LV,013,Baldones novads
+LV,014,Baltinavas novads
+LV,015,Balvu novads
+LV,016,Bauskas novads
+LV,017,Beverīnas novads
+LV,018,Brocēnu novads
+LV,019,Burtnieku novads
+LV,020,Carnikavas novads
+LV,021,Cēsu novads
+LV,022,Cesvaines novads
+LV,023,Ciblas novads
+LV,024,Dagdas novads
+LV,025,Daugavpils
+LV,026,Daugavpils novads
+LV,027,Dobeles novads
+LV,028,Dundagas novads
+LV,029,Durbes novads
+LV,030,Garkalnes novads
+LV,031,Grobiņas novads
+LV,032,Gulbenes novads
+LV,033,Iecavas novads
+LV,034,Ikšķiles novads
+LV,035,Ilūkstes novads
+LV,036,Inčukalna novads
+LV,037,Jaunjelgavas novads
+LV,038,Jaunpiebalgas novads
+LV,039,Jaunpils novads
+LV,040,Jelgava
+LV,041,Jelgavas novads
+LV,042,Jēkabpils
+LV,043,Jēkabpils novads
+LV,044,Jūrmala
+LV,045,Kandavas novads
+LV,046,Kārsavas novads
+LV,047,Kocēnu novads
+LV,048,Kokneses novads
+LV,049,Krāslava
+LV,050,Krāslavas novads
+LV,051,Krimuldas novads
+LV,052,Krustpils novads
+LV,053,Kuldīgas novads
+LV,054,Lielvārdes novads
+LV,055,Liepāja
+LV,056,Limbažu novads
+LV,057,Līgatnes novads
+LV,058,Līvānu novads
+LV,059,Lubānas novads
+LV,060,Ludzas novads
+LV,061,Madonas novads
+LV,062,Mazsalacas novads
+LV,063,Mālpils novads
+LV,064,Mārupes novads
+LV,065,Mērsraga novads
+LV,066,Naukšēnu novads
+LV,067,Neretas novads
+LV,068,Nīcas novads
+LV,069,Ogres novads
+LV,070,Olaines novads
+LV,071,Ozolnieku novads
+LV,072,Pārgaujas novads
+LV,073,Pāvilostas novads
+LV,074,Pļaviņu novads
+LV,075,Preiļu novads
+LV,076,Priekules novads
+LV,077,Priekuļu novads
+LV,078,Raunas novads
+LV,079,Rēzekne
+LV,080,Rēzeknes novads
+LV,081,Riebiņu novads
+LV,082,Rīga
+LV,083,Rīgas novads
+LV,084,Roja novads
+LV,085,Ropažu novads
+LV,086,Rucavas novads
+LV,087,Rugāju novads
+LV,088,Rundāles novads
+LV,089,Rūjienas novads
+LV,090,Salacgrīvas novads
+LV,091,Salas novads
+LV,092,Salaspils novads
+LV,093,Saldus novads
+LV,094,Saulkrastu novads
+LV,095,Sējas novads
+LV,096,Siguldas novads
+LV,097,Skrīveru novads
+LV,098,Skrundas novads
+LV,099,Smiltenes novads
+LV,100,Stopiņu novads
+LV,101,Strenču novads
+LV,102,Talsu novads
+LV,103,Tērvetes novads
+LV,104,Tukuma novads
+LV,105,Vaiņodes novads
+LV,106,Valkas novads
+LV,107,Valmiera
+LV,108,Varakļānu novads
+LV,109,Vārkavas novads
+LV,110,Ventspils
+LV,111,Ventspils novads
+LV,112,Viesītes novads
+LV,113,Vilakas novads
+LV,114,Vilānu novads
+LV,115,Zilupes novads
+MD,AN,Anenii Noi
+MD,BA,Bălți
+MD,BD,Bender
+MD,BR,Briceni
+MD,BS,Basarabeasca
+MD,CA,Cahul
+MD,CH,Chișinău
+MD,CL,Călărași
+MD,CM,Cimișlia
+MD,CR,Criuleni
+MD,CS,Căușeni
+MD,CT,Cantemir
+MD,DB,Dubăsari
+MD,DO,Donduseni
+MD,DR,Drochia
+MD,ED,Edineț
+MD,FA,Fălești
+MD,FL,Florești
+MD,GA,Găgăuzia
+MD,GL,Glodeni
+MD,HI,Hîncești
+MD,IA,Ialoveni
+MD,LE,Leova
+MD,NS,Nisporeni
+MD,OC,Ocnița
+MD,OR,Orhei
+MD,RE,Rezina
+MD,RI,Rîșcani
+MD,SD,Șoldănești
+MD,SI,Sîngerei
+MD,SN,Stînga Nistrului
+MD,SO,Soroca
+MD,ST,Strășeni
+MD,SV,Ștefan Vodă
+MD,TA,Taraclia
+MD,TE,Telenești
+MD,UN,Ungheni
+ME,01,Andrijevica
+ME,02,Bar
+ME,03,Berane
+ME,04,Bijelo Polje
+ME,05,Budva
+ME,06,Cetinje
+ME,07,Danilovgrad
+ME,08,Herceg Novi
+ME,09,Kolašin
+ME,10,Kotor
+ME,11,Mojkovac
+ME,12,Nikšić
+ME,13,Plav
+ME,14,Pljevlja
+ME,15,Plužine
+ME,16,Podgorica
+ME,17,Rožaje
+ME,18,Šavnik
+ME,19,Tivat
+ME,20,Ulcinj
+ME,21,Žabljak
+ME,22,Gusinje
+ME,23,Petnjica
+MK,01,Aerodrom
+MK,02,Aračinovo
+MK,03,Berovo
+MK,04,Bitola
+MK,05,Bogdanci
+MK,06,Bogovinje
+MK,07,Bosilovo
+MK,08,Brvenica
+MK,09,Butel
+MK,10,Valandovo
+MK,11,Vasilevo
+MK,12,Vevčani
+MK,13,Veles
+MK,14,Vinica
+MK,15,Vraneštica
+MK,16,Vrapčište
+MK,17,Gazi Baba
+MK,18,Gevgelija
+MK,19,Gostivar
+MK,20,Gradsko
+MK,21,Debar
+MK,22,Debarca
+MK,23,Delčevo
+MK,24,Demir Hisar
+MK,25,Demir Kapija
+MK,26,Dojran
+MK,27,Dolneni
+MK,28,Želino
+MK,29,Zelenikovo
+MK,30,Zrnovci
+MK,31,Ilinden
+MK,32,Jegunovce
+MK,33,Kavadarci
+MK,34,Karbinci
+MK,35,Karpoš
+MK,36,Kisela Voda
+MK,37,Kičevo
+MK,38,Konče
+MK,39,Kočani
+MK,40,Kratovo
+MK,41,Krivogaštani
+MK,42,Kruševo
+MK,43,Kumanovo
+MK,44,Lipkovo
+MK,45,Lozovo
+MK,46,Mavrovo and Rostuša
+MK,47,Makedonska Kamenica
+MK,48,Makedonski Brod
+MK,49,Mogila
+MK,50,Negotino
+MK,51,Novaci
+MK,52,Novo Selo
+MK,53,Ohrid
+MK,54,Oslomej
+MK,55,Pehčevo
+MK,56,Petrovec
+MK,57,Plasnica
+MK,58,Prilep
+MK,59,Probištip
+MK,60,Radoviš
+MK,61,Rankovce
+MK,62,Resen
+MK,63,Rosoman
+MK,64,Saraj
+MK,65,Sveti Nikole
+MK,66,Sopište
+MK,67,Staro Nagoričane
+MK,68,Struga
+MK,69,Strumica
+MK,70,Studeničani
+MK,71,Tearce
+MK,72,Tetovo
+MK,73,Centar
+MK,74,Centar Župa
+MK,75,Čair
+MK,76,Čaška
+MK,77,Češinovo-Obleševo
+MK,78,Čučer-Sandevo
+MK,79,Štip
+MK,80,Šuto Orizari
+MM,01,Sagaing Region
+MM,02,Tanintharyi Region
+MM,03,Bago Region
+MM,04,Magway Region
+MM,05,Mandalay Region
+MM,06,Yangon Region
+MM,07,Ayeyarwady Region
+MM,08,Kachin State
+MM,09,Kayin State
+MM,10,Kayah State
+MM,11,Chin State
+MM,12,Mon State
+MM,13,Rakhine State
+MM,14,Shan State
+MM,15,Kayin State
+MN,035,Orkhon
+MN,037,Darkhan-Uul
+MN,039,Khentii
+MN,041,Khövsgöl
+MN,043,Khovd
+MN,046,Övörkhangai
+MN,047,Töv
+MN,049,Ömnögovi
+MN,051,Sükhbaatar
+MN,053,Uvs
+MN,055,Zavkhan
+MN,057,Govi-Altai
+MN,059,Dundgovi
+MN,061,Dornod
+MN,063,Dornogovi
+MN,064,Govisümber
+MN,065,Selenge
+MN,067,Bulgan
+MN,069,Bayankhongor
+MN,071,Bayan-Ölgii
+MN,073,Arkhangai
+MN,1,Ulaanbaatar
+MT,01,Attard
+MT,02,Balzan
+MT,03,Birgu
+MT,04,Birkirkara
+MT,05,Birżebbuġa
+MT,06,Bormla
+MT,07,Dingli
+MT,08,Fgura
+MT,09,Floriana
+MT,10,Fontana
+MT,11,Gudja
+MT,12,Gżira
+MT,13,Għajnsielem
+MT,14,Għarb
+MT,15,Għargħur
+MT,16,Għasri
+MT,17,Għaxaq
+MT,18,Ħamrun
+MT,19,Iklin
+MT,20,Isla
+MT,21,Kalkara
+MT,22,Kerċem
+MT,23,Kirkop
+MT,24,Lija
+MT,25,Luqa
+MT,26,Marsa
+MT,27,Marsaskala
+MT,28,Marsaxlokk
+MT,29,Melita
+MT,30,Mellieħa
+MT,31,Mġarr
+MT,32,Mosta
+MT,33,Mqabba
+MT,34,Msida
+MT,35,Mtarfa
+MT,36,Munxar
+MT,37,Nadur
+MT,38,Naxxar
+MT,39,Paola
+MT,40,Pembroke
+MT,41,Pietà
+MT,42,Qala
+MT,43,Qormi
+MT,44,Qrendi
+MT,45,Rabat
+MT,46,Safi
+MT,47,San Ġiljan
+MT,48,San Ġwann
+MT,49,San Lawrenz
+MT,50,San Pawl il-Baħar
+MT,51,Sannat
+MT,52,San Pawl il-Baħar
+MT,53,Santa Luċija
+MT,54,Santa Venera
+MT,55,Senglea
+MT,56,Siġġiewi
+MT,57,Sliema
+MT,58,Swieqi
+MT,59,Tarxien
+MT,60,Valletta
+MT,61,Xagħra
+MT,62,Xewkija
+MT,63,Xgħajra
+MT,64,Żabbar
+MT,65,Żebbuġ
+MT,66,Żebbuġ
+MT,67,Żejtun
+MT,68,Żurrieq
+MV,01,Addu City
+MV,02,Addu Atoll
+MV,03,Alif Alif Atoll
+MV,04,Alif Dhaal Atoll
+MV,05,Baa Atoll
+MV,06,Dhaalu Atoll
+MV,07,Faafu Atoll
+MV,08,Gaafu Alif Atoll
+MV,09,Gaafu Dhaalu Atoll
+MV,10,Gnaviyani Atoll
+MV,11,Haa Alif Atoll
+MV,12,Haa Dhaalu Atoll
+MV,13,Kaafu Atoll
+MV,14,Laamu Atoll
+MV,15,Lhaviyani Atoll
+MV,16,Maale Atoll
+MV,17,Meemu Atoll
+MV,18,Noonu Atoll
+MV,19,Raa Atoll
+MV,20,Seenu Atoll
+MV,21,Shaviyani Atoll
+MV,22,Thaa Atoll
+MV,23,Vaavu Atoll
+MX,AGU,Aguascalientes
+MX,BCN,Baja California
+MX,BCS,Baja California Sur
+MX,CAM,Campeche
+MX,CHH,Chihuahua
+MX,CHP,Chiapas
+MX,CMX,Ciudad de México
+MX,COA,Coahuila
+MX,COL,Colima
+MX,DUR,Durango
+MX,GRO,Guerrero
+MX,GUA,Guanajuato
+MX,HID,Hidalgo
+MX,JAL,Jalisco
+MX,MEX,México
+MX,MIC,Michoacán
+MX,MOR,Morelos
+MX,NAY,Nayarit
+MX,NLE,Nuevo León
+MX,OAX,Oaxaca
+MX,PUE,Puebla
+MX,QUE,Querétaro
+MX,ROO,Quintana Roo
+MX,SIN,Sinaloa
+MX,SLP,San Luis Potosí
+MX,SON,Sonora
+MX,TAB,Tabasco
+MX,TAM,Tamaulipas
+MX,TLA,Tlaxcala
+MX,VER,Veracruz
+MX,YUC,Yucatán
+MX,ZAC,Zacatecas
+MY,01,Johor
+MY,02,Kedah
+MY,03,Kelantan
+MY,04,Melaka
+MY,05,Negeri Sembilan
+MY,06,Pahang
+MY,07,Pulau Pinang
+MY,08,Perak
+MY,09,Perlis
+MY,10,Selangor
+MY,11,Terengganu
+MY,12,Sabah
+MY,13,Sarawak
+MY,14,Kuala Lumpur
+MY,15,Labuan
+MY,16,Putrajaya
+NG,AB,Abia
+NG,AD,Adamawa
+NG,AK,Akwa Ibom
+NG,AN,Anambra
+NG,BA,Bauchi
+NG,BE,Bayelsa
+NG,BO,Borno
+NG,CR,Cross River
+NG,DE,Delta
+NG,EB,Ebonyi
+NG,ED,Edo
+NG,EK,Ekiti
+NG,EN,Enugu
+NG,FC,Federal Capital Territory
+NG,GO,Gombe
+NG,IM,Imo
+NG,JI,Jigawa
+NG,KD,Kaduna
+NG,KE,Kebbi
+NG,KN,Kano
+NG,KO,Kogi
+NG,KT,Katsina
+NG,KW,Kwara
+NG,LA,Lagos
+NG,NA,Nasarawa
+NG,NG,Niger
+NG,OG,Ogun
+NG,ON,Ondo
+NG,OS,Osun
+NG,OY,Oyo
+NG,PL,Plateau
+NG,RI,Rivers
+NG,SO,Sokoto
+NG,TA,Taraba
+NG,YO,Yobe
+NG,ZA,Zamfara
+NI,BO,Boaco
+NI,CA,Carazo
+NI,CI,Chinandega
+NI,CO,Chontales
+NI,ES,Estelí
+NI,GR,Granada
+NI,JI,Jinotega
+NI,LE,León
+NI,MD,Madriz
+NI,MN,Managua
+NI,MS,Masaya
+NI,MT,Matagalpa
+NI,NS,Nueva Segovia
+NI,RV,Rivas
+NI,SJ,Río San Juan
+NL,DR,Drenthe
+NL,FL,Flevoland
+NL,FR,Friesland
+NL,GE,Gelderland
+NL,GR,Groningen
+NL,LI,Limburg
+NL,NB,North Brabant
+NL,NH,North Holland
+NL,OV,Overijssel
+NL,UT,Utrecht
+NL,ZE,Zeeland
+NL,ZH,South Holland
+NO,03,Oslo
+NO,11,Rogaland
+NO,15,Møre og Romsdal
+NO,18,Nordland
+NO,30,Viken
+NO,34,Innlandet
+NO,38,Vestfold og Telemark
+NO,42,Agder
+NO,46,Vestland
+NO,50,Trøndelag
+NO,54,Troms og Finnmark
+NP,1,Province No. 1
+NP,2,Madhesh Province
+NP,3,Bagmati Province
+NP,4,Gandaki Province
+NP,5,Lumbini Province
+NP,6,Karnali Province
+NP,7,Sudurpashchim Province
+NZ,AUK,Auckland
+NZ,BOP,Bay of Plenty
+NZ,CAN,Canterbury
+NZ,CIT,Chatham Islands
+NZ,GIS,Gisborne
+NZ,HKB,Hawke's Bay
+NZ,MBH,Marlborough
+NZ,MWT,Manawatu-Wanganui
+NZ,NSN,Nelson
+NZ,NTL,Northland
+NZ,OTA,Otago
+NZ,STL,Southland
+NZ,TAS,Tasman
+NZ,TKI,Taranaki
+NZ,WGN,Wellington
+NZ,WKO,Waikato
+NZ,WTC,Westland
+PA,10,West Panamá
+PA,1,Bocas del Toro
+PA,2,Coclé
+PA,3,Colón
+PA,4,Chiriquí
+PA,5,Darién
+PA,6,Herrera
+PA,7,Los Santos
+PA,8,Panamá
+PA,9,Veraguas
+PA,EM,Guna Yala
+PA,KY,Ngöbe-Buglé
+PA,NB,Emberá
+PA,NT,Naso Tjër Di
+PE,AMA,Amazonas
+PE,ANC,Ancash
+PE,APU,Apurímac
+PE,ARE,Arequipa
+PE,AYA,Ayacucho
+PE,CAJ,Cajamarca
+PE,CAL,Callao
+PE,CUS,Cusco
+PE,HUC,Huancavelica
+PE,HUV,Huánuco
+PE,ICA,Ica
+PE,JUN,Junín
+PE,LAL,La Libertad
+PE,LAM,Lambayeque
+PE,LIM,Lima
+PE,LOR,Loreto
+PE,MDD,Madre de Dios
+PE,MOQ,Moquegua
+PE,PAS,Pasco
+PE,PIU,Piura
+PE,PUN,Puno
+PE,SAM,San Martín
+PE,TAC,Tacna
+PE,TUM,Tumbes
+PE,UCA,Ucayali
+PG,CPK,Chimbu
+PG,CPM,Central
+PG,EBR,East New Britain
+PG,EHG,Eastern Highlands
+PG,EPW,Enga
+PG,ESW,East Sepik
+PG,GPK,Gulf
+PG,MIL,Milne Bay
+PG,MOR,Morobe
+PG,MPM,Madang
+PG,MRL,Manus
+PG,NCD,National Capital District
+PG,NIK,New Ireland
+PG,NPP,Northern
+PG,NSA,North Solomons
+PG,SAN,Sandaun
+PG,SHM,Southern Highlands
+PG,WBK,West New Britain
+PG,WHM,Western Highlands
+PG,WPD,Western
+PH,00,Metro Manila
+PH,ABR,Abra
+PH,AGN,Agusan del Norte
+PH,AGS,Agusan del Sur
+PH,AKL,Aklan
+PH,ALB,Albay
+PH,ANT,Antique
+PH,APA,Apayao
+PH,AUR,Aurora
+PH,BAN,Bataan
+PH,BAS,Basilan
+PH,BEN,Benguet
+PH,BIL,Biliran
+PH,BOH,Bohol
+PH,BTG,Batangas
+PH,BTN,Batanes
+PH,BUK,Bukidnon
+PH,BUL,Bulacan
+PH,CAG,Cagayan
+PH,CAM,Camiguin
+PH,CAN,Camarines Norte
+PH,CAP,Capiz
+PH,CAS,Camarines Sur
+PH,CAT,Catanduanes
+PH,CAV,Cavite
+PH,CEB,Cebu
+PH,COM,Compostela Valley
+PH,DAO,Davao Oriental
+PH,DAS,Davao del Sur
+PH,DAV,Davao del Norte
+PH,DIN,Dinagat Islands
+PH,EAS,Eastern Samar
+PH,GUI,Guimaras
+PH,IFU,Ifugao
+PH,ILI,Iloilo
+PH,ILN,Ilocos Norte
+PH,ILS,Ilocos Sur
+PH,ISA,Isabela
+PH,KAL,Kalinga
+PH,LAG,Laguna
+PH,LAN,Lanao del Norte
+PH,LAS,Lanao del Sur
+PH,LEY,Leyte
+PH,LUN,La Union
+PH,MAD,Marinduque
+PH,MAG,Maguindanao
+PH,MAS,Masbate
+PH,MOC,Misamis Occidental
+PH,MOUN,Mountain Province
+PH,MSC,Occidental Mindoro
+PH,MSR,Misamis Oriental
+PH,NCO,Cotabato
+PH,NEC,Negros Occidental
+PH,NER,Negros Oriental
+PH,NSA,Northern Samar
+PH,NUE,Nueva Ecija
+PH,NUV,Nueva Vizcaya
+PH,ORI,Oriental Mindoro
+PH,PAM,Pampanga
+PH,PAN,Pangasinan
+PH,PLW,Palawan
+PH,QUE,Quezon
+PH,QUI,Quirino
+PH,RIZ,Rizal
+PH,ROM,Romblon
+PH,SAR,Sarangani
+PH,SCO,South Cotabato
+PH,SIQ,Siquijor
+PH,SLE,Southern Leyte
+PH,SLU,Sulu
+PH,SOR,Sorsogon
+PH,SUK,Sultan Kudarat
+PH,SUN,Surigao del Norte
+PH,SUR,Surigao del Sur
+PH,TAR,Tarlac
+PH,TAW,Tawi-Tawi
+PH,WSA,Samar
+PH,ZAN,Zamboanga del Norte
+PH,ZAS,Zamboanga del Sur
+PH,ZMB,Zambales
+PH,ZSI,Zamboanga Sibugay
+PK,AJ,Azad Jammu and Kashmir
+PK,BA,Balochistan
+PK,GB,Gilgit-Baltistan
+PK,IS,Islamabad Capital Territory
+PK,KP,Khyber Pakhtunkhwa
+PK,PB,Punjab
+PK,SD,Sindh
+PL,DS,Dolnośląskie
+PL,KP,Kujawsko-Pomorskie
+PL,LB,Lubuskie
+PL,LD,Łódzkie
+PL,LU,Lubelskie
+PL,MA,Małopolskie
+PL,MZ,Mazowieckie
+PL,OP,Opolskie
+PL,PD,Podlaskie
+PL,PK,Podkarpackie
+PL,PM,Pomorskie
+PL,SK,Świętokrzyskie
+PL,SL,Śląskie
+PL,WN,Warmińsko-Mazurskie
+PL,WP,Wielkopolskie
+PL,ZP,Zachodniopomorskie
+PR,001,Adjuntas
+PR,003,Aguada
+PR,005,Aguadilla
+PR,007,Aguas Buenas
+PR,009,Aibonito
+PR,011,Añasco
+PR,013,Arecibo
+PR,015,Arroyo
+PR,017,Barceloneta
+PR,019,Barranquitas
+PR,021,Bayamón
+PR,023,Cabo Rojo
+PR,025,Caguas
+PR,027,Camuy
+PR,029,Canóvanas
+PR,031,Carolina
+PR,033,Cataño
+PR,035,Cayey
+PR,037,Ceiba
+PR,039,Ciales
+PR,041,Cidra
+PR,043,Coamo
+PR,045,Comerío
+PR,047,Corozal
+PR,049,Culebra
+PR,051,Dorado
+PR,053,Fajardo
+PR,054,Florida
+PR,055,Guánica
+PR,057,Guayama
+PR,059,Guayanilla
+PR,061,Guaynabo
+PR,063,Gurabo
+PR,065,Hatillo
+PR,067,Hormigueros
+PR,069,Humacao
+PR,071,Isabela
+PR,073,Jayuya
+PR,075,Juana Díaz
+PR,077,Juncos
+PR,079,Lajas
+PR,081,Lares
+PR,083,Las Marías
+PR,085,Las Piedras
+PR,087,Loíza
+PR,089,Luquillo
+PR,091,Manatí
+PR,093,Maricao
+PR,095,Maunabo
+PR,097,Mayagüez
+PR,099,Moca
+PR,101,Morovis
+PR,103,Naguabo
+PR,105,Naranjito
+PR,107,Orocovis
+PR,109,Patillas
+PR,111,Peñuelas
+PR,113,Ponce
+PR,115,Quebradillas
+PR,117,Rincón
+PR,119,Río Grande
+PR,121,Sabana Grande
+PR,123,Salinas
+PR,125,San Germán
+PR,127,San Juan
+PR,129,San Lorenzo
+PR,131,San Sebastián
+PR,133,Santa Isabel
+PR,135,Toa Alta
+PR,137,Toa Baja
+PR,139,Trujillo Alto
+PR,141,Utuado
+PR,143,Vega Alta
+PR,145,Vega Baja
+PR,147,Vieques
+PR,149,Villalba
+PR,151,Yabucoa
+PR,153,Yauco
+PT,01,Aveiro
+PT,02,Beja
+PT,03,Braga
+PT,04,Bragança
+PT,05,Castelo Branco
+PT,06,Coimbra
+PT,07,Évora
+PT,08,Faro
+PT,09,Guarda
+PT,10,Leiria
+PT,11,Lisboa
+PT,12,Portalegre
+PT,13,Porto
+PT,14,Santarém
+PT,15,Setúbal
+PT,16,Viana do Castelo
+PT,17,Vila Real
+PT,18,Viseu
+PT,20,Açores
+PT,30,Madeira
+PY,10,Alto Paraná
+PY,13,Amambay
+PY,16,Boquerón
+PY,19,Caaguazú
+PY,22,Caazapá
+PY,25,Canindeyú
+PY,28,Central
+PY,31,Concepción
+PY,34,Cordillera
+PY,36,Guairá
+PY,38,Itapúa
+PY,40,Misiones
+PY,41,Ñeembucú
+PY,44,Nueva Asunción
+PY,45,Paraguarí
+PY,46,Presidente Hayes
+PY,47,San Pedro
+PY,49,Alto Paraguay
+RO,AB,Alba
+RO,AG,Argeș
+RO,AR,Arad
+RO,B,București
+RO,BC,Bacău
+RO,BH,Bihor
+RO,BN,Bistrița-Năsăud
+RO,BR,Brăila
+RO,BT,Botoșani
+RO,BV,Brașov
+RO,BZ,Buzău
+RO,CJ,Cluj
+RO,CL,Călărași
+RO,CS,Caraș-Severin
+RO,CT,Constanța
+RO,CV,Covasna
+RO,DB,Dâmbovița
+RO,DJ,Dolj
+RO,GJ,Gorj
+RO,GL,Galați
+RO,GR,Giurgiu
+RO,HD,Hunedoara
+RO,HR,Harghita
+RO,IF,Ilfov
+RO,IL,Ialomița
+RO,IS,Iași
+RO,MH,Mehedinți
+RO,MM,Maramureș
+RO,MS,Mureș
+RO,NT,Neamț
+RO,OT,Olt
+RO,PH,Prahova
+RO,SB,Sibiu
+RO,SJ,Sălaj
+RO,SM,Sălaj
+RO,SV,Suceava
+RO,TL,Tulcea
+RO,TM,Timiș
+RO,TR,Teleorman
+RO,VL,Vâlcea
+RO,VN,Vrancea
+RO,VS,Vaslui
+RS,00,Belgrade
+RS,01,North Bačka
+RS,02,Central Banat
+RS,03,North Banat
+RS,04,South Banat
+RS,05,West Bačka
+RS,06,South Bačka
+RS,07,Srem
+RS,08,Mačva
+RS,09,Kolubara
+RS,10,Podunavlje
+RS,11,Branicevo
+RS,12,Šumadija
+RS,13,Pomoravlje
+RS,14,Bor
+RS,15,Zaječar
+RS,16,Zlatibor
+RS,17,Moravica
+RS,18,Raška
+RS,19,Rasina
+RS,20,Nišava
+RS,21,Toplica
+RS,22,Pirot
+RS,23,Jablanica
+RS,24,Pčinja
+RS,25,Kosovo
+RS,26,Peć
+RS,27,Prizren
+RS,28,Kosovska Mitrovica
+RS,29,Kosovo-Pomoravlje
+RS,KM,Kosovo and Metohija
+RS,KMT,Kosovo-Metohija
+RS,VO,Vojvodina
+SE,AB,Stockholm County
+SE,AC,Västerbotten County
+SE,BD,Norrbotten County
+SE,C,Uppsala County
+SE,D,Södermanland County
+SE,E,Östergötland County
+SE,F,Jönköping County
+SE,G,Kronoberg County
+SE,H,Kalmar County
+SE,I,Gotland County
+SE,K,Blekinge County
+SE,M,Skåne County
+SE,N,Halland County
+SE,O,Västra Götaland County
+SE,S,Värmland County
+SE,T,Örebro County
+SE,U,Västmanland County
+SE,W,Dalarna County
+SE,X,Gävleborg County
+SE,Y,Västernorrland County
+SE,Z,Jämtland County
+SG,01,Central Singapore
+SG,02,Northeast Singapore
+SG,03,Northwest Singapore
+SG,04,Southeast Singapore
+SG,05,Southwest Singapore
+SI,001,Pomurska
+SI,002,Podravska
+SI,003,Koroška
+SI,004,Savinjska
+SI,005,Zasavska
+SI,006,Spodnjeposavska
+SI,007,Jugovzhodna Slovenija
+SI,008,Osrednjeslovenska
+SI,009,Gorenjska
+SI,010,Notranjsko-kraška
+SI,011,Goriška
+SI,012,Obalno-kraška
+SK,BC,Banská Bystrica
+SK,BL,Bratislava
+SK,KI,Košice
+SK,NI,Nitra
+SK,PV,Prešov
+SK,TA,Trnava
+SK,TC,Trenčín
+SK,ZI,Žilina
+SR,BR,Brokopondo
+SR,CM,Commewijne
+SR,CR,Coronie
+SR,MA,Marowijne
+SR,NI,Nickerie
+SR,PM,Paramaribo
+SR,SA,Saramacca
+SR,SI,Sipaliwini
+SR,WA,Wanica
+SV,AH,Ahuachapán
+SV,CA,Cabañas
+SV,CH,Chalatenango
+SV,CU,Cuscatlán
+SV,LI,La Libertad
+SV,MO,Morazán
+SV,PA,La Paz
+SV,SA,Santa Ana
+SV,SM,San Miguel
+SV,SO,Sonsonate
+SV,SS,San Salvador
+SV,SV,San Vicente
+SV,UN,La Unión
+SV,US,Usulután
+TH,10,Bangkok
+TH,11,Samut Prakan
+TH,12,Nonthaburi
+TH,13,Pathum Thani
+TH,14,Phra Nakhon Si Ayutthaya
+TH,15,Ang Thong
+TH,16,Lop Buri
+TH,17,Sing Buri
+TH,18,Chai Nat
+TH,19,Saraburi
+TH,20,Chon Buri
+TH,21,Rayong
+TH,22,Chanthaburi
+TH,23,Trat
+TH,24,Chachoengsao
+TH,25,Prachin Buri
+TH,26,Nakhon Nayok
+TH,27,Sa Kaeo
+TH,30,Nakhon Ratchasima
+TH,31,Buri Ram
+TH,32,Surin
+TH,33,Si Sa Ket
+TH,34,Ubon Ratchathani
+TH,35,Yasothon
+TH,36,Chaiyaphum
+TH,37,Amnat Charoen
+TH,39,Nong Bua Lam Phu
+TH,40,Khon Kaen
+TH,41,Udon Thani
+TH,42,Loei
+TH,43,Nong Khai
+TH,44,Maha Sarakham
+TH,45,Roi Et
+TH,46,Kalasin
+TH,47,Sakon Nakhon
+TH,48,Nakhon Phanom
+TH,49,Mukdahan
+TH,50,Chiang Mai
+TH,51,Lamphun
+TH,52,Lampang
+TH,53,Uttaradit
+TH,54,Phrae
+TH,55,Nan
+TH,56,Phayao
+TH,57,Chiang Rai
+TH,58,Mae Hong Son
+TH,60,Nakhon Sawan
+TH,61,Uthai Thani
+TH,62,Kamphaeng Phet
+TH,63,Tak
+TH,64,Sukhothai
+TH,65,Phitsanulok
+TH,66,Phichit
+TH,70,Ratchaburi
+TH,71,Kanchanaburi
+TH,72,Suphan Buri
+TH,73,Nakhon Pathom
+TH,74,Samut Sakhon
+TH,75,Samut Songkhram
+TH,76,Nakhon Nayok
+TH,77,Phetchaburi
+TH,78,Prachuap Khiri Khan
+TH,80,Nakhon Si Thammarat
+TH,81,Krabi
+TH,82,Phang Nga
+TH,83,Phuket
+TH,84,Surat Thani
+TH,85,Ranong
+TH,86,Chumphon
+TH,90,Songkhla
+TH,91,Satun
+TH,92,Trat
+TH,93,Phatthalung
+TH,94,Pattani
+TH,95,Yala
+TH,96,Narathiwat
+TH,97,Phatthalung
+TJ,DU,Dushanbe
+TJ,GB,Gorno-Badakhshan Autonomous Region
+TJ,KT,Khatlon Region
+TJ,RA,Districts of Republican Subordination
+TJ,SU,Sughd Region
+TL,AL,Aileu
+TL,AN,Ainaro
+TL,BA,Baucau
+TL,BO,Bobonaro
+TL,CO,Cova Lima
+TL,DI,Dili
+TL,ER,Ermera
+TL,LA,Lautém
+TL,LI,Liquiçá
+TL,MF,Manufahi
+TL,MT,Manatuto
+TL,OE,Oecusse
+TL,VI,Viqueque
+TM,A,Ahal Region
+TM,B,Balkan Region
+TM,D,Daşoguz Region
+TM,L,Lebap Region
+TM,M,Mary Region
+TM,S,Aşgabat
+TR,01,Adana
+TR,02,Adıyaman
+TR,03,Afyonkarahisar
+TR,04,Ağrı
+TR,05,Amasya
+TR,06,Ankara
+TR,07,Antalya
+TR,08,Artvin
+TR,09,Aydın
+TR,10,Balıkesir
+TR,11,Bilecik
+TR,12,Bingöl
+TR,13,Bitlis
+TR,14,Bolu
+TR,15,Burdur
+TR,16,Bursa
+TR,17,Çanakkale
+TR,18,Çankırı
+TR,19,Çorum
+TR,20,Denizli
+TR,21,Diyarbakır
+TR,22,Edirne
+TR,23,Elazığ
+TR,24,Erzincan
+TR,25,Erzurum
+TR,26,Eskişehir
+TR,27,Gaziantep
+TR,28,Giresun
+TR,29,Gümüşhane
+TR,30,Hakkari
+TR,31,Hatay
+TR,32,Isparta
+TR,33,Mersin
+TR,34,Istanbul
+TR,35,Izmir
+TR,36,Kars
+TR,37,Kastamonu
+TR,38,Kayseri
+TR,39,Kırklareli
+TR,40,Kırşehir
+TR,41,Kocaeli
+TR,42,Konya
+TR,43,Kütahya
+TR,44,Malatya
+TR,45,Manisa
+TR,46,Kahramanmaraş
+TR,47,Mardin
+TR,48,Muğla
+TR,49,Muş
+TR,50,Nevşehir
+TR,51,Niğde
+TR,52,Ordu
+TR,53,Rize
+TR,54,Sakarya
+TR,55,Samsun
+TR,56,Siirt
+TR,57,Sinop
+TR,58,Sivas
+TR,59,Tekirdağ
+TR,60,Tokat
+TR,61,Trabzon
+TR,62,Tunceli
+TR,63,Şanlıurfa
+TR,64,Uşak
+TR,65,Van
+TR,66,Yozgat
+TR,67,Zonguldak
+TR,68,Aksaray
+TR,69,Bayburt
+TR,70,Karaman
+TR,71,Kırıkkale
+TR,72,Batman
+TR,73,Şırnak
+TR,74,Bartın
+TR,75,Ardahan
+TR,76,Iğdır
+TR,77,Yalova
+TR,78,Karabük
+TR,79,Kilis
+TR,80,Osmaniye
+TR,81,Düzce
+TT,ARI,Arima
+TT,CHA,Chaguaramas
+TT,CTT,Couva-Tabaquite-Talparo
+TT,DMN,Diego Martin
+TT,ETO,Eastern Tobago
+TT,PED,Penal-Debe
+TT,POS,Port of Spain
+TT,PRT,Princes Town
+TT,PTF,Point Fortin
+TT,RCM,Rio Claro-Mayaro
+TT,SFO,San Fernando
+TT,SGE,Sangre Grande
+TT,SIP,Siparia
+TT,SJL,San Juan-Laventille
+TT,TUP,Tunapuna-Piarco
+TT,WTO,Western Tobago
+UA,05,Vinnytsia Oblast
+UA,07,Volyn Oblast
+UA,09,Luhansk Oblast
+UA,12,Dnipropetrovsk Oblast
+UA,14,Donetsk Oblast
+UA,18,Zhytomyr Oblast
+UA,21,Zakarpattia Oblast
+UA,23,Zaporizhzhia Oblast
+UA,26,Ivano-Frankivsk Oblast
+UA,30,Kyiv
+UA,32,Kyiv Oblast
+UA,35,Kirovohrad Oblast
+UA,40,Sevastopol
+UA,43,Autonomous Republic of Crimea
+UA,46,Lviv Oblast
+UA,48,Mykolaiv Oblast
+UA,51,Odesa Oblast
+UA,53,Poltava Oblast
+UA,56,Rivne Oblast
+UA,59,Sumy Oblast
+UA,61,Ternopil Oblast
+UA,63,Kharkiv Oblast
+UA,65,Kherson Oblast
+UA,68,Khmelnytskyi Oblast
+UA,71,Cherkasy Oblast
+UA,74,Chernihiv Oblast
+UA,77,Chernivtsi Oblast
+US,AK,Alaska
+US,AL,Alabama
+US,AR,Arkansas
+US,AZ,Arizona
+US,CA,California
+US,CO,Colorado
+US,CT,Connecticut
+US,DC,District of Columbia
+US,DE,Delaware
+US,FL,Florida
+US,GA,Georgia
+US,HI,Hawaii
+US,IA,Iowa
+US,ID,Idaho
+US,IL,Illinois
+US,IN,Indiana
+US,KS,Kansas
+US,KY,Kentucky
+US,LA,Louisiana
+US,MA,Massachusetts
+US,MD,Maryland
+US,ME,Maine
+US,MI,Michigan
+US,MN,Minnesota
+US,MO,Missouri
+US,MS,Mississippi
+US,MT,Montana
+US,NC,North Carolina
+US,ND,North Dakota
+US,NE,Nebraska
+US,NH,New Hampshire
+US,NJ,New Jersey
+US,NM,New Mexico
+US,NV,Nevada
+US,NY,New York
+US,OH,Ohio
+US,OK,Oklahoma
+US,OR,Oregon
+US,PA,Pennsylvania
+US,RI,Rhode Island
+US,SC,South Carolina
+US,SD,South Dakota
+US,TN,Tennessee
+US,TX,Texas
+US,UT,Utah
+US,VA,Virginia
+US,VT,Vermont
+US,WA,Washington
+US,WI,Wisconsin
+US,WV,West Virginia
+US,WY,Wyoming
+UY,AR,Artigas
+UY,CA,Canelones
+UY,CL,Cerro Largo
+UY,CO,Colonia
+UY,DU,Durazno
+UY,FD,Flores
+UY,FS,Florida
+UY,LA,Lavalleja
+UY,MA,Maldonado
+UY,MO,Montevideo
+UY,PA,Paysandú
+UY,RN,Rocha
+UY,RV,Río Negro
+UY,SA,Salto
+UY,SJ,San José
+UY,SO,Soriano
+UY,TA,Tacuarembó
+UY,TRE,Treinta y Tres
+UZ,AN,Andijan Region
+UZ,BU,Bukhara Region
+UZ,FA,Fergana Region
+UZ,JI,Jizzakh Region
+UZ,NG,Namangan Region
+UZ,NW,Navoiy Region
+UZ,QA,Qashqadaryo Region
+UZ,QR,Qoraqalpog'iston
+UZ,SA,Samarqand Region
+UZ,SI,Sirdaryo Region
+UZ,SU,Surxondaryo Region
+UZ,TK,Tashkent
+UZ,TO,Tashkent Region
+UZ,XO,Xorazm Region
+VC,01,Charlotte
+VC,02,Saint Andrew
+VC,03,Saint David
+VC,04,Saint George
+VC,05,Saint Patrick
+VC,06,Grenadines
+VE,B,Anzoátegui
+VE,C,Apure
+VE,D,Aragua
+VE,E,Barinas
+VE,F,Bolívar
+VE,G,Carabobo
+VE,H,Cojedes
+VE,I,Falcón
+VE,J,Guárico
+VE,K,Lara
+VE,L,Mérida
+VE,M,Miranda
+VE,N,Monagas
+VE,O,Nueva Esparta
+VE,P,Portuguesa
+VE,R,Sucre
+VE,S,Táchira
+VE,T,Trujillo
+VE,U,Yaracuy
+VE,V,Zulia
+VE,W,Distrito Capital
+VE,X,Vargas
+VE,Y,Delta Amacuro
+VE,Z,Amazonas
+VN,01,Lai Chau
+VN,02,Lao Cai
+VN,03,Ha Giang
+VN,04,Cao Bang
+VN,05,Son La
+VN,06,Yen Bai
+VN,07,Tuyen Quang
+VN,09,Lang Son
+VN,13,Quang Ninh
+VN,14,Hoa Binh
+VN,15,Hai Duong
+VN,16,Hung Yen
+VN,17,Thai Binh
+VN,18,Ha Nam
+VN,19,Nam Dinh
+VN,20,Ninh Binh
+VN,21,Thanh Hoa
+VN,22,Nghe An
+VN,23,Ha Tinh
+VN,24,Quang Binh
+VN,25,Quang Tri
+VN,26,Thua Thien Hue
+VN,27,Da Nang
+VN,28,Quang Nam
+VN,29,Quang Ngai
+VN,30,Binh Dinh
+VN,31,Phu Yen
+VN,32,Khanh Hoa
+VN,33,Ninh Thuan
+VN,34,Binh Thuan
+VN,35,Kon Tum
+VN,36,Gia Lai
+VN,37,Dak Lak
+VN,39,Lam Dong
+VN,40,Binh Phuoc
+VN,41,Tay Ninh
+VN,42,Binh Duong
+VN,43,Dong Nai
+VN,44,Ba Ria - Vung Tau
+VN,45,Ho Chi Minh City
+VN,46,Long An
+VN,47,Tien Giang
+VN,48,Ben Tre
+VN,49,Tra Vinh
+VN,50,Vinh Long
+VN,51,Dong Thap
+VN,52,An Giang
+VN,53,Kien Giang
+VN,54,Can Tho
+VN,55,Bac Lieu
+VN,56,Soc Trang
+VN,57,Ca Mau
+VN,58,Bac Giang
+VN,59,Bac Ninh
+VN,60,Binh Duong
+VN,61,Binh Phuoc
+VN,62,Phu Tho
+VN,63,Vinh Phuc
+VN,64,Thai Nguyen
+VN,65,Phu Yen
+VN,66,Ha Giang
+VN,67,Bac Kan
+VN,68,Dien Bien
+VN,69,Dak Nong
+VN,70,Hau Giang
+XK,01,Pristina
+XK,02,Mitrovica
+XK,03,Peć
+XK,04,Prizren
+XK,05,Ferizaj
+XK,06,Gjilan
+XK,07,Gjakova
+XK,08,Podujevo
+ZA,EC,Eastern Cape
+ZA,FS,Free State
+ZA,GP,Gauteng
+ZA,KZN,KwaZulu-Natal
+ZA,LP,Limpopo
+ZA,MP,Mpumalanga
+ZA,NC,Northern Cape
+ZA,NW,North West
+ZA,WC,Western Cape

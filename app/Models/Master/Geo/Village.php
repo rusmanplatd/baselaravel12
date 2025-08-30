@@ -5,25 +5,23 @@ namespace App\Models\Master\Geo;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\Request;
 
-class City extends Model
+class Village extends Model
 {
     use HasUlids;
 
-    public $table = 'ref_city';
+    public $table = 'ref_village';
 
     protected $fillable = [
-        'province_id',
+        'district_id',
         'code',
         'name',
     ];
 
     protected $casts = [
         'id' => 'string',
-        'province_id' => 'string',
+        'district_id' => 'string',
         'code' => 'string',
         'name' => 'string',
 
@@ -42,14 +40,9 @@ class City extends Model
     /*******************************
      ** RELATION
      *******************************/
-    public function province(): BelongsTo
+    public function district()
     {
-        return $this->belongsTo(Province::class, 'province_id');
-    }
-
-    public function district(): HasMany
-    {
-        return $this->hasMany(District::class, 'city_id');
+        return $this->belongsTo(District::class, 'district_id');
     }
 
     /*******************************
@@ -69,7 +62,19 @@ class City extends Model
             ->when(
                 $province_id = $request->province_id,
                 function ($q) use (&$province_id) {
-                    $q->where('province_id', $province_id);
+                    $q->whereRelation('district.city', 'province_id', $province_id);
+                }
+            )
+            ->when(
+                $city_id = $request->city_id,
+                function ($q) use (&$city_id) {
+                    $q->whereRelation('district', 'city_id', $city_id);
+                }
+            )
+            ->when(
+                $district_id = $request->district_id,
+                function ($q) use (&$district_id) {
+                    $q->where('district_id', $district_id);
                 }
             );
     }
@@ -84,7 +89,6 @@ class City extends Model
             $this->fill($request->all());
             $this->save();
         } catch (\Exception $e) {
-            return $this->rollbackSaved($e);
         }
     }
 
@@ -118,10 +122,6 @@ class City extends Model
 
     public function canDeleted(): bool
     {
-        if ($this->district()->exists()) {
-            return false;
-        }
-
         return true;
     }
 

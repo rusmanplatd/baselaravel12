@@ -1,0 +1,2131 @@
+﻿kode,nama
+11.01,Kabupaten Aceh Selatan
+11.02,Kabupaten Aceh Tenggara
+11.03,Kabupaten Aceh Timur
+11.04,Kabupaten Aceh Tengah
+11.05,Kabupaten Aceh Barat
+11.06,Kabupaten Aceh Besar
+11.07,Kabupaten Pidie
+11.08,Kabupaten Aceh Utara
+11.09,Kabupaten Simeulue
+"11.10",Kabupaten Aceh Singkil
+11.11,Kabupaten Bireuen
+11.12,Kabupaten Aceh Barat Daya
+11.13,Kabupaten Gayo Lues
+11.14,Kabupaten Aceh Jaya
+11.15,Kabupaten Nagan Raya
+11.16,Kabupaten Aceh Tamiang
+11.17,Kabupaten Bener Meriah
+11.18,Kabupaten Pidie Jaya
+11.71,Kota Banda Aceh
+11.72,Kota Sabang
+11.73,Kota Lhokseumawe
+11.74,Kota Langsa
+11.75,Kota Subulussalam
+12.01,Kabupaten Tapanuli Tengah
+12.02,Kabupaten Tapanuli Utara
+12.03,Kabupaten Tapanuli Selatan
+12.04,Kabupaten Nias
+12.05,Kabupaten Langkat
+12.06,Kabupaten Karo
+12.07,Kabupaten Deli Serdang
+12.08,Kabupaten Simalungun
+12.09,Kabupaten Asahan
+"12.10",Kabupaten Labuhanbatu
+12.11,Kabupaten Dairi
+12.12,Kabupaten Toba
+12.13,Kabupaten Mandailing Natal
+12.14,Kabupaten Nias Selatan
+12.15,Kabupaten Pakpak Bharat
+12.16,Kabupaten Humbang Hasundutan
+12.17,Kabupaten Samosir
+12.18,Kabupaten Serdang Bedagai
+12.19,Kabupaten Batu Bara
+"12.20",Kabupaten Padang Lawas Utara
+12.21,Kabupaten Padang Lawas
+12.22,Kabupaten Labuhanbatu Selatan
+12.23,Kabupaten Labuhanbatu Utara
+12.24,Kabupaten Nias Utara
+12.25,Kabupaten Nias Barat
+12.71,Kota Medan
+12.72,Kota Pematangsiantar
+12.73,Kota Sibolga
+12.74,Kota Tanjungbalai
+12.75,Kota Binjai
+12.76,Kota Tebing Tinggi
+12.77,Kota Padangsidimpuan
+12.78,Kota Gunungsitoli
+13.01,Kabupaten Pesisir Selatan
+13.02,Kabupaten Solok
+13.03,Kabupaten Sijunjung
+13.04,Kabupaten Tanah Datar
+13.05,Kabupaten Padang Pariaman
+13.06,Kabupaten Agam
+13.07,Kabupaten Lima Puluh Kota
+13.08,Kabupaten Pasaman
+13.09,Kabupaten Kepulauan Mentawai
+"13.10",Kabupaten Dharmasraya
+13.11,Kabupaten Solok Selatan
+13.12,Kabupaten Pasaman Barat
+13.71,Kota Padang
+13.72,Kota Solok
+13.73,Kota Sawahlunto
+13.74,Kota Padang Panjang
+13.75,Kota Bukittinggi
+13.76,Kota Payakumbuh
+13.77,Kota Pariaman
+14.01,Kabupaten Kampar
+14.02,Kabupaten Indragiri Hulu
+14.03,Kabupaten Bengkalis
+14.04,Kabupaten Indragiri Hilir
+14.05,Kabupaten Pelalawan
+14.06,Kabupaten Rokan Hulu
+14.07,Kabupaten Rokan Hilir
+14.08,Kabupaten Siak
+14.09,Kabupaten Kuantan Singingi
+"14.10",Kabupaten Kepulauan Meranti
+14.71,Kota Pekanbaru
+14.72,Kota Dumai
+15.01,Kabupaten Kerinci
+15.02,Kabupaten Merangin
+15.03,Kabupaten Sarolangun
+15.04,Kabupaten Batanghari
+15.05,Kabupaten Muaro Jambi
+15.06,Kabupaten Tanjung Jabung Barat
+15.07,Kabupaten Tanjung Jabung Timur
+15.08,Kabupaten Bungo
+15.09,Kabupaten Tebo
+15.71,Kota Jambi
+15.72,Kota Sungai Penuh
+16.01,Kabupaten Ogan Komering Ulu
+16.02,Kabupaten Ogan Komering Ilir
+16.03,Kabupaten Muara Enim
+16.04,Kabupaten Lahat
+16.05,Kabupaten Musi Rawas
+16.06,Kabupaten Musi Banyuasin
+16.07,Kabupaten Banyuasin
+16.08,Kabupaten Ogan Komering Ulu Timur
+16.09,Kabupaten Ogan Komering Ulu Selatan
+"16.10",Kabupaten Ogan Ilir
+16.11,Kabupaten Empat Lawang
+16.12,Kabupaten Penukal Abab Lematang Ilir
+16.13,Kabupaten Musi Rawas Utara
+16.71,Kota Palembang
+16.72,Kota Pagar Alam
+16.73,Kota Lubuk Linggau
+16.74,Kota Prabumulih
+17.01,Kabupaten Bengkulu Selatan
+17.02,Kabupaten Rejang Lebong
+17.03,Kabupaten Bengkulu Utara
+17.04,Kabupaten Kaur
+17.05,Kabupaten Seluma
+17.06,Kabupaten Mukomuko
+17.07,Kabupaten Lebong
+17.08,Kabupaten Kepahiang
+17.09,Kabupaten Bengkulu Tengah
+17.71,Kota Bengkulu
+18.01,Kabupaten Lampung Selatan
+18.02,Kabupaten Lampung Tengah
+18.03,Kabupaten Lampung Utara
+18.04,Kabupaten Lampung Barat
+18.05,Kabupaten Tulang Bawang
+18.06,Kabupaten Tanggamus
+18.07,Kabupaten Lampung Timur
+18.08,Kabupaten Way Kanan
+18.09,Kabupaten Pesawaran
+"18.10",Kabupaten Pringsewu
+18.11,Kabupaten Mesuji
+18.12,Kabupaten Tulang Bawang Barat
+18.13,Kabupaten Pesisir Barat
+18.71,Kota Bandar Lampung
+18.72,Kota Metro
+19.01,Kabupaten Bangka
+19.02,Kabupaten Belitung
+19.03,Kabupaten Bangka Selatan
+19.04,Kabupaten Bangka Tengah
+19.05,Kabupaten Bangka Barat
+19.06,Kabupaten Belitung Timur
+19.71,Kota Pangkal Pinang
+21.01,Kabupaten Bintan
+21.02,Kabupaten Karimun
+21.03,Kabupaten Natuna
+21.04,Kabupaten Lingga
+21.05,Kabupaten Kepulauan Anambas
+21.71,Kota Batam
+21.72,Kota Tanjung Pinang
+31.01,Kabupaten Administrasi Kepulauan Seribu
+31.71,Kota Administrasi Jakarta Pusat
+31.72,Kota Administrasi Jakarta Utara
+31.73,Kota Administrasi Jakarta Barat
+31.74,Kota Administrasi Jakarta Selatan
+31.75,Kota Administrasi Jakarta Timur
+32.01,Kabupaten Bogor
+32.02,Kabupaten Sukabumi
+32.03,Kabupaten Cianjur
+32.04,Kabupaten Bandung
+32.05,Kabupaten Garut
+32.06,Kabupaten Tasikmalaya
+32.07,Kabupaten Ciamis
+32.08,Kabupaten Kuningan
+32.09,Kabupaten Cirebon
+"32.10",Kabupaten Majalengka
+32.11,Kabupaten Sumedang
+32.12,Kabupaten Indramayu
+32.13,Kabupaten Subang
+32.14,Kabupaten Purwakarta
+32.15,Kabupaten Karawang
+32.16,Kabupaten Bekasi
+32.17,Kabupaten Bandung Barat
+32.18,Kabupaten Pangandaran
+32.71,Kota Bogor
+32.72,Kota Sukabumi
+32.73,Kota Bandung
+32.74,Kota Cirebon
+32.75,Kota Bekasi
+32.76,Kota Depok
+32.77,Kota Cimahi
+32.78,Kota Tasikmalaya
+32.79,Kota Banjar
+33.01,Kabupaten Cilacap
+33.02,Kabupaten Banyumas
+33.03,Kabupaten Purbalingga
+33.04,Kabupaten Banjarnegara
+33.05,Kabupaten Kebumen
+33.06,Kabupaten Purworejo
+33.07,Kabupaten Wonosobo
+33.08,Kabupaten Magelang
+33.09,Kabupaten Boyolali
+"33.10",Kabupaten Klaten
+33.11,Kabupaten Sukoharjo
+33.12,Kabupaten Wonogiri
+33.13,Kabupaten Karanganyar
+33.14,Kabupaten Sragen
+33.15,Kabupaten Grobogan
+33.16,Kabupaten Blora
+33.17,Kabupaten Rembang
+33.18,Kabupaten Pati
+33.19,Kabupaten Kudus
+"33.20",Kabupaten Jepara
+33.21,Kabupaten Demak
+33.22,Kabupaten Semarang
+33.23,Kabupaten Temanggung
+33.24,Kabupaten Kendal
+33.25,Kabupaten Batang
+33.26,Kabupaten Pekalongan
+33.27,Kabupaten Pemalang
+33.28,Kabupaten Tegal
+33.29,Kabupaten Brebes
+33.71,Kota Magelang
+33.72,Kota Surakarta
+33.73,Kota Salatiga
+33.74,Kota Semarang
+33.75,Kota Pekalongan
+33.76,Kota Tegal
+34.01,Kabupaten Kulon Progo
+34.02,Kabupaten Bantul
+34.03,Kabupaten Gunungkidul
+34.04,Kabupaten Sleman
+34.71,Kota Yogyakarta
+35.01,Kabupaten Pacitan
+35.02,Kabupaten Ponorogo
+35.03,Kabupaten Trenggalek
+35.04,Kabupaten Tulungagung
+35.05,Kabupaten Blitar
+35.06,Kabupaten Kediri
+35.07,Kabupaten Malang
+35.08,Kabupaten Lumajang
+35.09,Kabupaten Jember
+"35.10",Kabupaten Banyuwangi
+35.11,Kabupaten Bondowoso
+35.12,Kabupaten Situbondo
+35.13,Kabupaten Probolinggo
+35.14,Kabupaten Pasuruan
+35.15,Kabupaten Sidoarjo
+35.16,Kabupaten Mojokerto
+35.17,Kabupaten Jombang
+35.18,Kabupaten Nganjuk
+35.19,Kabupaten Madiun
+"35.20",Kabupaten Magetan
+35.21,Kabupaten Ngawi
+35.22,Kabupaten Bojonegoro
+35.23,Kabupaten Tuban
+35.24,Kabupaten Lamongan
+35.25,Kabupaten Gresik
+35.26,Kabupaten Bangkalan
+35.27,Kabupaten Sampang
+35.28,Kabupaten Pamekasan
+35.29,Kabupaten Sumenep
+35.71,Kota Kediri
+35.72,Kota Blitar
+35.73,Kota Malang
+35.74,Kota Probolinggo
+35.75,Kota Pasuruan
+35.76,Kota Mojokerto
+35.77,Kota Madiun
+35.78,Kota Surabaya
+35.79,Kota Batu
+36.01,Kabupaten Pandeglang
+36.02,Kabupaten Lebak
+36.03,Kabupaten Tangerang
+36.04,Kabupaten Serang
+36.71,Kota Tangerang
+36.72,Kota Cilegon
+36.73,Kota Serang
+36.74,Kota Tangerang Selatan
+51.01,Kabupaten Jembrana
+51.02,Kabupaten Tabanan
+51.03,Kabupaten Badung
+51.04,Kabupaten Gianyar
+51.05,Kabupaten Klungkung
+51.06,Kabupaten Bangli
+51.07,Kabupaten Karangasem
+51.08,Kabupaten Buleleng
+51.71,Kota Denpasar
+52.01,Kabupaten Lombok Barat
+52.02,Kabupaten Lombok Tengah
+52.03,Kabupaten Lombok Timur
+52.04,Kabupaten Sumbawa
+52.05,Kabupaten Dompu
+52.06,Kabupaten Bima
+52.07,Kabupaten Sumbawa Barat
+52.08,Kabupaten Lombok Utara
+52.71,Kota Mataram
+52.72,Kota Bima
+53.01,Kabupaten Kupang
+53.02,Kab Timor Tengah Selatan
+53.03,Kabupaten Timor Tengah Utara
+53.04,Kabupaten Belu
+53.05,Kabupaten Alor
+53.06,Kabupaten Flores Timur
+53.07,Kabupaten Sikka
+53.08,Kabupaten Ende
+53.09,Kabupaten Ngada
+"53.10",Kabupaten Manggarai
+53.11,Kabupaten Sumba Timur
+53.12,Kabupaten Sumba Barat
+53.13,Kabupaten Lembata
+53.14,Kabupaten Rote Ndao
+53.15,Kabupaten Manggarai Barat
+53.16,Kabupaten Nagekeo
+53.17,Kabupaten Sumba Tengah
+53.18,Kabupaten Sumba Barat Daya
+53.19,Kabupaten Manggarai Timur
+"53.20",Kabupaten Sabu Raijua
+53.21,Kabupaten Malaka
+53.71,Kota Kupang
+61.01,Kabupaten Sambas
+61.02,Kabupaten Mempawah
+61.03,Kabupaten Sanggau
+61.04,Kabupaten Ketapang
+61.05,Kabupaten Sintang
+61.06,Kabupaten Kapuas Hulu
+61.07,Kabupaten Bengkayang
+61.08,Kabupaten Landak
+61.09,Kabupaten Sekadau
+"61.10",Kabupaten Melawi
+61.11,Kabupaten Kayong Utara
+61.12,Kabupaten Kubu Raya
+61.71,Kota Pontianak
+61.72,Kota Singkawang
+62.01,Kabupaten Kotawaringin Barat
+62.02,Kabupaten Kotawaringin Timur
+62.03,Kabupaten Kapuas
+62.04,Kabupaten Barito Selatan
+62.05,Kabupaten Barito Utara
+62.06,Kabupaten Katingan
+62.07,Kabupaten Seruyan
+62.08,Kabupaten Sukamara
+62.09,Kabupaten Lamandau
+"62.10",Kabupaten Gunung Mas
+62.11,Kabupaten Pulang Pisau
+62.12,Kabupaten Murung Raya
+62.13,Kabupaten Barito Timur
+62.71,Kota Palangkaraya
+63.01,Kabupaten Tanah Laut
+63.02,Kabupaten Kotabaru
+63.03,Kabupaten Banjar
+63.04,Kabupaten Barito Kuala
+63.05,Kabupaten Tapin
+63.06,Kabupaten Hulu Sungai Selatan
+63.07,Kabupaten Hulu Sungai Tengah
+63.08,Kabupaten Hulu Sungai Utara
+63.09,Kabupaten Tabalong
+"63.10",Kabupaten Tanah Bumbu
+63.11,Kabupaten Balangan
+63.71,Kota Banjarmasin
+63.72,Kota Banjarbaru
+64.01,Kabupaten Paser
+64.02,Kabupaten Kutai Kartanegara
+64.03,Kabupaten Berau
+64.07,Kabupaten Kutai Barat
+64.08,Kabupaten Kutai Timur
+64.09,Kabupaten Penajam Paser Utara
+64.11,Kabupaten Mahakam Ulu
+64.71,Kota Balikpapan
+64.72,Kota Samarinda
+64.74,Kota Bontang
+65.01,Kabupaten Bulungan
+65.02,Kabupaten Malinau
+65.03,Kabupaten Nunukan
+65.04,Kabupaten Tana Tidung
+65.71,Kota Tarakan
+71.01,Kabupaten Bolaang Mongondow
+71.02,Kabupaten Minahasa
+71.03,Kabupaten Kepulauan Sangihe
+71.04,Kabupaten Kepulauan Talaud
+71.05,Kabupaten Minahasa Selatan
+71.06,Kabupaten Minahasa Utara
+71.07,Kabupaten Minahasa Tenggara
+71.08,Kabupaten Bolaang Mongondow Utara
+71.09,Kabupaten Kep. Siau Tagulandang Biaro
+"71.10",Kabupaten Bolaang Mongondow Timur
+71.11,Kabupaten Bolaang Mongondow Selatan
+71.71,Kota Manado
+71.72,Kota Bitung
+71.73,Kota Tomohon
+71.74,Kota Kotamobagu
+72.01,Kabupaten Banggai
+72.02,Kabupaten Poso
+72.03,Kabupaten Donggala
+72.04,Kabupaten Toli-Toli
+72.05,Kabupaten Buol
+72.06,Kabupaten Morowali
+72.07,Kabupaten Banggai Kepulauan
+72.08,Kabupaten Parigi Moutong
+72.09,Kabupaten Tojo Una Una
+"72.10",Kabupaten Sigi
+72.11,Kabupaten Banggai Laut
+72.12,Kabupaten Morowali Utara
+72.71,Kota Palu
+73.01,Kabupaten Kepulauan Selayar
+73.02,Kabupaten Bulukumba
+73.03,Kabupaten Bantaeng
+73.04,Kabupaten Jeneponto
+73.05,Kabupaten Takalar
+73.06,Kabupaten Gowa
+73.07,Kabupaten Sinjai
+73.08,Kabupaten Bone
+73.09,Kabupaten Maros
+"73.10",Kabupaten Pangkajene dan Kepulauan
+73.11,Kabupaten Barru
+73.12,Kabupaten Soppeng
+73.13,Kabupaten Wajo
+73.14,Kabupaten Sidenreng Rappang
+73.15,Kabupaten Pinrang
+73.16,Kabupaten Enrekang
+73.17,Kabupaten Luwu
+73.18,Kabupaten Tana Toraja
+73.22,Kabupaten Luwu Utara
+73.24,Kabupaten Luwu Timur
+73.26,Kabupaten Toraja Utara
+73.71,Kota Makassar
+73.72,Kota Parepare
+73.73,Kota Palopo
+74.01,Kabupaten Kolaka
+74.02,Kabupaten Konawe
+74.03,Kabupaten Muna
+74.04,Kabupaten Buton
+74.05,Kabupaten Konawe Selatan
+74.06,Kabupaten Bombana
+74.07,Kabupaten Wakatobi
+74.08,Kabupaten Kolaka Utara
+74.09,Kabupaten Konawe Utara
+"74.10",Kabupaten Buton Utara
+74.11,Kabupaten Kolaka Timur
+74.12,Kabupaten Konawe Kepulauan
+74.13,Kabupaten Muna Barat
+74.14,Kabupaten Buton Tengah
+74.15,Kabupaten Buton Selatan
+74.71,Kota Kendari
+74.72,Kota Bau Bau
+75.01,Kabupaten Gorontalo
+75.02,Kabupaten Boalemo
+75.03,Kabupaten Bone Bolango
+75.04,Kabupaten Pohuwato
+75.05,Kabupaten Gorontalo Utara
+75.71,Kota Gorontalo
+76.01,Kabupaten Pasangkayu
+76.02,Kabupaten Mamuju
+76.03,Kabupaten Mamasa
+76.04,Kabupaten Polewali Mandar
+76.05,Kabupaten Majene
+76.06,Kabupaten Mamuju Tengah
+81.01,Kabupaten Maluku Tengah
+81.02,Kabupaten Maluku Tenggara
+81.03,Kabupaten Kepulauan Tanimbar
+81.04,Kabupaten Buru
+81.05,Kabupaten Seram Bagian Timur
+81.06,Kabupaten Seram Bagian Barat
+81.07,Kabupaten Kepulauan Aru
+81.08,Kabupaten Maluku Barat Daya
+81.09,Kabupaten Buru Selatan
+81.71,Kota Ambon
+81.72,Kota Tual
+82.01,Kabupaten Halmahera Barat
+82.02,Kabupaten Halmahera Tengah
+82.03,Kabupaten Halmahera Utara
+82.04,Kabupaten Halmahera Selatan
+82.05,Kabupaten Kepulauan Sula
+82.06,Kabupaten Halmahera Timur
+82.07,Kabupaten Pulau Morotai
+82.08,Kabupaten Pulau Taliabu
+82.71,Kota Ternate
+82.72,Kota Tidore Kepulauan
+91.03,Kabupaten Jayapura
+91.05,Kabupaten Kepulauan Yapen
+91.06,Kabupaten Biak Numfor
+"91.10",Kabupaten Sarmi
+91.11,Kabupaten Keerom
+91.15,Kabupaten Waropen
+91.19,Kabupaten Supiori
+"91.20",Kabupaten Mamberamo Raya
+91.71,Kota Jayapura
+92.02,Kabupaten Manokwari
+92.03,Kabupaten Fak Fak
+92.06,Kabupaten Teluk Bintuni
+92.07,Kabupaten Teluk Wondama
+92.08,Kabupaten Kaimana
+92.11,Kabupaten Manokwari Selatan
+92.12,Kabupaten Pegunungan Arfak
+93.01,Kabupaten Merauke
+93.02,Kabupaten Boven Digoel
+93.03,Kabupaten Mappi
+93.04,Kabupaten Asmat
+94.01,Kabupaten Nabire
+94.02,Kabupaten Puncak Jaya
+94.03,Kabupaten Paniai
+94.04,Kabupaten Mimika
+94.05,Kabupaten Puncak
+94.06,Kabupaten Dogiyai
+94.07,Kabupaten Intan Jaya
+94.08,Kabupaten Deiyai
+95.01,Kabupaten Jayawijaya
+95.02,Kab Pegunungan Bintang
+95.03,Kabupaten Yahukimo
+95.04,Kabupaten Tolikara
+95.05,Kabupaten Mamberamo Tengah
+95.06,Kabupaten Yalimo
+95.07,Kabupaten Lanny Jaya
+95.08,Kabupaten Nduga
+96.01,Kabupaten Sorong
+96.02,Kabupaten Sorong Selatan
+96.03,Kabupaten Raja Ampat
+96.04,Kabupaten Tambrauw
+96.05,Kabupaten Maybrat
+96.71,Kota Sorong
+# International Cities
+INT.001,New York
+INT.002,Los Angeles
+INT.003,Chicago
+INT.004,Houston
+INT.005,Phoenix
+INT.006,Philadelphia
+INT.007,San Antonio
+INT.008,San Diego
+INT.009,Dallas
+INT.010,San Jose
+INT.011,Austin
+INT.012,Jacksonville
+INT.013,Fort Worth
+INT.014,Columbus
+INT.015,Charlotte
+INT.016,San Francisco
+INT.017,Indianapolis
+INT.018,Seattle
+INT.019,Denver
+INT.020,Washington
+INT.021,Boston
+INT.022,El Paso
+INT.023,Nashville
+INT.024,Detroit
+INT.025,Oklahoma City
+INT.026,Portland
+INT.027,Las Vegas
+INT.028,Memphis
+INT.029,Louisville
+INT.030,Baltimore
+INT.031,Milwaukee
+INT.032,Albuquerque
+INT.033,Tucson
+INT.034,Fresno
+INT.035,Sacramento
+INT.036,Atlanta
+INT.037,Kansas City
+INT.038,Long Beach
+INT.039,Colorado Springs
+INT.040,Raleigh
+INT.041,Miami
+INT.042,Virginia Beach
+INT.043,Omaha
+INT.044,Oakland
+INT.045,Minneapolis
+INT.046,Tulsa
+INT.047,Arlington
+INT.048,Tampa
+INT.049,New Orleans
+INT.050,Wichita
+INT.051,Cleveland
+INT.052,Bakersfield
+INT.053,Aurora
+INT.054,Anaheim
+INT.055,Honolulu
+INT.056,Santa Ana
+INT.057,Corpus Christi
+INT.058,Riverside
+INT.059,Lexington
+INT.060,Stockton
+INT.061,Henderson
+INT.062,Saint Paul
+INT.063,St. Louis
+INT.064,Cincinnati
+INT.065,Pittsburgh
+INT.066,Anchorage
+INT.067,Greensboro
+INT.068,Plano
+INT.069,Newark
+INT.070,Lincoln
+INT.071,Orlando
+INT.072,Irvine
+INT.073,Durham
+INT.074,Buffalo
+INT.075,Chandler
+INT.076,Chula Vista
+INT.077,Laredo
+INT.078,Gilbert
+INT.079,Reno
+INT.080,Hialeah
+INT.081,Garland
+INT.082,Scottsdale
+INT.083,Irving
+INT.084,Fremont
+INT.085,San Bernardino
+INT.086,Boise
+INT.087,Spokane
+INT.088,Birmingham
+INT.089,Rochester
+INT.090,Modesto
+INT.091,Fayetteville
+INT.092,Des Moines
+INT.093,Tacoma
+INT.094,Richmond
+INT.095,Yonkers
+INT.096,Shreveport
+INT.097,Akron
+INT.098,Huntsville
+INT.099,Grand Rapids
+INT.100,Knoxville
+# European Cities
+EUR.001,London
+EUR.002,Paris
+EUR.003,Berlin
+EUR.004,Madrid
+EUR.005,Rome
+EUR.006,Barcelona
+EUR.007,Munich
+EUR.008,Milan
+EUR.009,Amsterdam
+EUR.010,Brussels
+EUR.011,Vienna
+EUR.012,Prague
+EUR.013,Budapest
+EUR.014,Warsaw
+EUR.015,Stockholm
+EUR.016,Oslo
+EUR.017,Copenhagen
+EUR.018,Helsinki
+EUR.019,Dublin
+EUR.020,Edinburgh
+EUR.021,Glasgow
+EUR.022,Manchester
+EUR.023,Liverpool
+EUR.024,Birmingham
+EUR.025,Leeds
+EUR.026,Sheffield
+EUR.027,Bradford
+EUR.028,Cardiff
+EUR.029,Belfast
+EUR.030,Newcastle
+EUR.031,Lyon
+EUR.032,Marseille
+EUR.033,Toulouse
+EUR.034,Nice
+EUR.035,Nantes
+EUR.036,Strasbourg
+EUR.037,Montpellier
+EUR.038,Bordeaux
+EUR.039,Lille
+EUR.040,Rennes
+EUR.041,Hamburg
+EUR.042,Cologne
+EUR.043,Frankfurt
+EUR.044,Stuttgart
+EUR.045,Düsseldorf
+EUR.046,Dortmund
+EUR.047,Essen
+EUR.048,Leipzig
+EUR.049,Bremen
+EUR.050,Dresden
+EUR.051,Hanover
+EUR.052,Nuremberg
+EUR.053,Duisburg
+EUR.054,Bochum
+EUR.055,Wuppertal
+EUR.056,Bielefeld
+EUR.057,Bonn
+EUR.058,Münster
+EUR.059,Karlsruhe
+EUR.060,Mannheim
+EUR.061,Augsburg
+EUR.062,Wiesbaden
+EUR.063,Gelsenkirchen
+EUR.064,Mönchengladbach
+EUR.065,Braunschweig
+EUR.066,Chemnitz
+EUR.067,Kiel
+EUR.068,Aachen
+EUR.069,Halle
+EUR.070,Magdeburg
+EUR.071,Freiburg
+EUR.072,Krefeld
+EUR.073,Lübeck
+EUR.074,Oberhausen
+EUR.075,Erfurt
+EUR.076,Mainz
+EUR.077,Rostock
+EUR.078,Kassel
+EUR.079,Hagen
+EUR.080,Potsdam
+EUR.081,Saarbrücken
+EUR.082,Hamm
+EUR.083,Mülheim
+EUR.084,Ludwigshafen
+EUR.085,Leverkusen
+EUR.086,Oldenburg
+EUR.087,Osnabrück
+EUR.088,Solingen
+EUR.089,Heidelberg
+EUR.090,Herne
+EUR.091,Neuss
+EUR.092,Darmstadt
+EUR.093,Paderborn
+EUR.094,Regensburg
+EUR.095,Ingolstadt
+EUR.096,Würzburg
+EUR.097,Fürth
+EUR.098,Wolfsburg
+EUR.099,Offenbach
+EUR.100,Ulm
+# Asian Cities
+ASI.001,Tokyo
+ASI.002,Shanghai
+ASI.003,Beijing
+ASI.004,Seoul
+ASI.005,Singapore
+ASI.006,Hong Kong
+ASI.007,Bangkok
+ASI.008,Manila
+ASI.009,Jakarta
+ASI.010,Kuala Lumpur
+ASI.011,Hanoi
+ASI.012,Ho Chi Minh City
+ASI.013,Phnom Penh
+ASI.014,Vientiane
+ASI.015,Yangon
+ASI.016,Dhaka
+ASI.017,Kolkata
+ASI.018,Mumbai
+ASI.019,Delhi
+ASI.020,Bangalore
+ASI.021,Chennai
+ASI.022,Hyderabad
+ASI.023,Ahmedabad
+ASI.024,Pune
+ASI.025,Surat
+ASI.026,Jaipur
+ASI.027,Lucknow
+ASI.028,Kanpur
+ASI.029,Nagpur
+ASI.030,Indore
+ASI.031,Thane
+ASI.032,Bhopal
+ASI.033,Visakhapatnam
+ASI.034,Pimpri-Chinchwad
+ASI.035,Patna
+ASI.036,Vadodara
+ASI.037,Ghaziabad
+ASI.038,Ludhiana
+ASI.039,Agra
+ASI.040,Nashik
+ASI.041,Ranchi
+ASI.042,Faridabad
+ASI.043,Howrah
+ASI.044,Aurangabad
+ASI.045,Raipur
+ASI.046,Coimbatore
+ASI.047,Kota
+ASI.048,Chandigarh
+ASI.049,Mysore
+ASI.050,Gwalior
+ASI.051,Guwahati
+ASI.052,Chandrapur
+ASI.053,Solapur
+ASI.054,Tiruchirappalli
+ASI.055,Bareilly
+ASI.056,Moradabad
+ASI.057,Mira-Bhayandar
+ASI.058,Warangal
+ASI.059,Jabalpur
+ASI.060,Gaya
+ASI.061,Jodhpur
+ASI.062,Madurai
+ASI.063,Raipur
+ASI.064,Kota
+ASI.065,Guwahati
+ASI.066,Chandrapur
+ASI.067,Solapur
+ASI.068,Tiruchirappalli
+ASI.069,Bareilly
+ASI.070,Moradabad
+ASI.071,Mira-Bhayandar
+ASI.072,Warangal
+ASI.073,Jabalpur
+ASI.074,Gaya
+ASI.075,Jodhpur
+ASI.076,Madurai
+ASI.077,Amritsar
+ASI.078,Allahabad
+ASI.079,Ranchi
+ASI.080,Howrah
+ASI.081,Coimbatore
+ASI.082,Jabalpur
+ASI.083,Gwalior
+ASI.084,Vijayawada
+ASI.085,Jodhpur
+ASI.086,Madurai
+ASI.087,Salem
+ASI.088,Tiruppur
+ASI.089,Mira-Bhayandar
+ASI.090,Ludhiana
+ASI.091,Nashik
+ASI.092,Vadodara
+ASI.093,Moradabad
+ASI.094,Agra
+ASI.095,Faridabad
+ASI.096,Meerut
+ASI.097,Rajkot
+ASI.098,Kalyan-Dombivali
+ASI.099,Vasai-Virar
+ASI.100,Navi Mumbai
+# African Cities
+AFR.001,Cairo
+AFR.002,Lagos
+AFR.003,Kinshasa
+AFR.004,Johannesburg
+AFR.005,Nairobi
+AFR.006,Addis Ababa
+AFR.007,Casablanca
+AFR.008,Alexandria
+AFR.009,Abidjan
+AFR.010,Khartoum
+AFR.011,Accra
+AFR.012,Dar es Salaam
+AFR.013,Algiers
+AFR.014,Cape Town
+AFR.015,Kano
+AFR.016,Ibadan
+AFR.017,Dakar
+AFR.018,Luanda
+AFR.019,Douala
+AFR.020,Kampala
+AFR.021,Harare
+AFR.022,Port Harcourt
+AFR.023,Bamako
+AFR.024,Ouagadougou
+AFR.025,Conakry
+AFR.026,Lusaka
+AFR.027,Blantyre
+AFR.028,Maputo
+AFR.029,Bujumbura
+AFR.030,Kigali
+AFR.031,Brazzaville
+AFR.032,Pointe-Noire
+AFR.033,Libreville
+AFR.034,Port-Gentil
+AFR.035,Malabo
+AFR.036,Bata
+AFR.037,São Tomé
+AFR.038,Asmara
+AFR.039,Djibouti
+AFR.040,Mogadishu
+AFR.041,Hargeisa
+AFR.042,Addis Ababa
+AFR.043,Bahir Dar
+AFR.044,Gondar
+AFR.045,Mekelle
+AFR.046,Dessie
+AFR.047,Jimma
+AFR.048,Shashamane
+AFR.049,Bishoftu
+AFR.050,Arba Minch
+AFR.051,Hosaena
+AFR.052,Hawassa
+AFR.053,Assela
+AFR.054,Debre Birhan
+AFR.055,Debre Markos
+AFR.056,Debre Tabor
+AFR.057,Adama
+AFR.058,Addis Ababa
+AFR.059,Bahir Dar
+AFR.060,Gondar
+AFR.061,Mekelle
+AFR.062,Dessie
+AFR.063,Jimma
+AFR.064,Shashamane
+AFR.065,Bishoftu
+AFR.066,Arba Minch
+AFR.067,Hosaena
+AFR.068,Hawassa
+AFR.069,Assela
+AFR.070,Debre Birhan
+AFR.071,Debre Markos
+AFR.072,Debre Tabor
+AFR.073,Adama
+AFR.074,Addis Ababa
+AFR.075,Bahir Dar
+AFR.076,Gondar
+AFR.077,Mekelle
+AFR.078,Dessie
+AFR.079,Jimma
+AFR.080,Shashamane
+AFR.081,Bishoftu
+AFR.082,Arba Minch
+AFR.083,Hosaena
+AFR.084,Hawassa
+AFR.085,Assela
+AFR.086,Debre Birhan
+AFR.087,Debre Markos
+AFR.088,Debre Tabor
+AFR.089,Adama
+AFR.090,Addis Ababa
+AFR.091,Bahir Dar
+AFR.092,Gondar
+AFR.093,Mekelle
+AFR.094,Dessie
+AFR.095,Jimma
+AFR.096,Shashamane
+AFR.097,Bishoftu
+AFR.098,Arba Minch
+AFR.099,Hosaena
+AFR.100,Hawassa
+# South American Cities
+SAM.001,São Paulo
+SAM.002,Buenos Aires
+SAM.003,Rio de Janeiro
+SAM.004,Lima
+SAM.005,Bogotá
+SAM.006,Santiago
+SAM.007,Caracas
+SAM.008,Medellín
+SAM.009,Guayaquil
+SAM.010,Quito
+SAM.011,Fortaleza
+SAM.012,Salvador
+SAM.013,Brasília
+SAM.014,Recife
+SAM.015,Porto Alegre
+SAM.016,Curitiba
+SAM.017,Manaus
+SAM.018,Belém
+SAM.019,Guarulhos
+SAM.020,Campinas
+SAM.021,Nova Iguaçu
+SAM.022,São Gonçalo
+SAM.023,Duque de Caxias
+SAM.024,São Bernardo do Campo
+SAM.025,Natal
+SAM.026,Campo Grande
+SAM.027,Teresina
+SAM.028,São José dos Campos
+SAM.029,Maceió
+SAM.030,Santos
+SAM.031,Ribeirão Preto
+SAM.032,Vila Velha
+SAM.033,Serra
+SAM.034,Niterói
+SAM.035,Cuiabá
+SAM.036,João Pessoa
+SAM.037,Aracaju
+SAM.038,Feira de Santana
+SAM.039,Londrina
+SAM.040,Juiz de Fora
+SAM.041,Belford Roxo
+SAM.042,Campos dos Goytacazes
+SAM.043,Petrópolis
+SAM.044,Uberlândia
+SAM.045,Sorocaba
+SAM.046,Contagem
+SAM.047,Aracaju
+SAM.048,Feira de Santana
+SAM.049,Londrina
+SAM.050,Juiz de Fora
+SAM.051,Belford Roxo
+SAM.052,Campos dos Goytacazes
+SAM.053,Petrópolis
+SAM.054,Uberlândia
+SAM.055,Sorocaba
+SAM.056,Contagem
+SAM.057,Aracaju
+SAM.058,Feira de Santana
+SAM.059,Londrina
+SAM.060,Juiz de Fora
+SAM.061,Belford Roxo
+SAM.062,Campos dos Goytacazes
+SAM.063,Petrópolis
+SAM.064,Uberlândia
+SAM.065,Sorocaba
+SAM.066,Contagem
+SAM.067,Aracaju
+SAM.068,Feira de Santana
+SAM.069,Londrina
+SAM.070,Juiz de Fora
+SAM.071,Belford Roxo
+SAM.072,Campos dos Goytacazes
+SAM.073,Petrópolis
+SAM.074,Uberlândia
+SAM.075,Sorocaba
+SAM.076,Contagem
+SAM.077,Aracaju
+SAM.078,Feira de Santana
+SAM.079,Londrina
+SAM.080,Juiz de Fora
+SAM.081,Belford Roxo
+SAM.082,Campos dos Goytacazes
+SAM.083,Petrópolis
+SAM.084,Uberlândia
+SAM.085,Sorocaba
+SAM.086,Contagem
+SAM.087,Aracaju
+SAM.088,Feira de Santana
+SAM.089,Londrina
+SAM.090,Juiz de Fora
+SAM.091,Belford Roxo
+SAM.092,Campos dos Goytacazes
+SAM.093,Petrópolis
+SAM.094,Uberlândia
+SAM.095,Sorocaba
+SAM.096,Contagem
+SAM.097,Aracaju
+SAM.098,Feira de Santana
+SAM.099,Londrina
+SAM.100,Juiz de Fora
+# Canadian Cities
+CAN.001,Toronto
+CAN.002,Montreal
+CAN.003,Vancouver
+CAN.004,Calgary
+CAN.005,Edmonton
+CAN.006,Ottawa
+CAN.007,Winnipeg
+CAN.008,Quebec City
+CAN.009,Hamilton
+CAN.010,Kitchener
+CAN.011,London
+CAN.012,Victoria
+CAN.013,Windsor
+CAN.014,Oshawa
+CAN.015,Saskatoon
+CAN.016,Regina
+CAN.017,Sherbrooke
+CAN.018,St. John's
+CAN.019,Kelowna
+CAN.020,Abbotsford
+CAN.021,Kingston
+CAN.022,Saguenay
+CAN.023,Trois-Rivières
+CAN.024,Guelph
+CAN.025,Moncton
+CAN.026,Brantford
+CAN.027,Saint John
+CAN.028,Thunder Bay
+CAN.029,Peterborough
+CAN.030,Nanaimo
+CAN.031,Sudbury
+CAN.032,Chicoutimi
+CAN.033,Red Deer
+CAN.034,Prince George
+CAN.035,Saint-Georges
+CAN.036,Drummondville
+CAN.037,Saint-Jean-sur-Richelieu
+CAN.038,Saint-Jérôme
+CAN.039,Belleville
+CAN.040,Fort St. John
+CAN.041,Grande Prairie
+CAN.042,Medicine Hat
+CAN.043,Prince Albert
+CAN.044,Red Deer
+CAN.045,Saskatoon
+CAN.046,Thunder Bay
+CAN.047,Windsor
+CAN.048,Saint John
+CAN.049,Sherbrooke
+CAN.050,Trois-Rivières
+CAN.051,Kingston
+CAN.052,Saguenay
+CAN.053,Guelph
+CAN.054,Moncton
+CAN.055,Brantford
+CAN.056,Saint John
+CAN.057,Thunder Bay
+CAN.058,Peterborough
+CAN.059,Nanaimo
+CAN.060,Sudbury
+CAN.061,Chicoutimi
+CAN.062,Red Deer
+CAN.063,Prince George
+CAN.064,Saint-Georges
+CAN.065,Drummondville
+CAN.066,Saint-Jean-sur-Richelieu
+CAN.067,Saint-Jérôme
+CAN.068,Belleville
+CAN.069,Fort St. John
+CAN.070,Grande Prairie
+CAN.071,Medicine Hat
+CAN.072,Prince Albert
+CAN.073,Red Deer
+CAN.074,Saskatoon
+CAN.075,Thunder Bay
+CAN.076,Windsor
+CAN.077,Saint John
+CAN.078,Sherbrooke
+CAN.079,Trois-Rivières
+CAN.080,Kingston
+CAN.081,Saguenay
+CAN.082,Guelph
+CAN.083,Moncton
+CAN.084,Brantford
+CAN.085,Saint John
+CAN.086,Thunder Bay
+CAN.087,Peterborough
+CAN.088,Nanaimo
+CAN.089,Sudbury
+CAN.090,Chicoutimi
+CAN.091,Red Deer
+CAN.092,Prince George
+CAN.093,Saint-Georges
+CAN.094,Drummondville
+CAN.095,Saint-Jean-sur-Richelieu
+CAN.096,Saint-Jérôme
+CAN.097,Belleville
+CAN.098,Fort St. John
+CAN.099,Grande Prairie
+CAN.100,Medicine Hat
+# Central American & Caribbean Cities
+CAC.001,Mexico City
+CAC.002,Guatemala City
+CAC.003,San Salvador
+CAC.004,Tegucigalpa
+CAC.005,Managua
+CAC.006,San José
+CAC.007,Panama City
+CAC.008,Belmopan
+CAC.009,Havana
+CAC.010,Santo Domingo
+CAC.011,Port-au-Prince
+CAC.012,Kingston
+CAC.013,Bridgetown
+CAC.014,Port of Spain
+CAC.015,Georgetown
+CAC.016,Paramaribo
+CAC.017,Cayenne
+CAC.018,Fort-de-France
+CAC.019,San Juan
+CAC.020,Guadalajara
+CAC.021,Monterrey
+CAC.022,Puebla
+CAC.023,Tijuana
+CAC.024,León
+CAC.025,Zapopan
+CAC.026,Monterrey
+CAC.027,Guadalajara
+CAC.028,Puebla
+CAC.029,Tijuana
+CAC.030,León
+CAC.031,Zapopan
+CAC.032,Monterrey
+CAC.033,Guadalajara
+CAC.034,Puebla
+CAC.035,Tijuana
+CAC.036,León
+CAC.037,Zapopan
+CAC.038,Monterrey
+CAC.039,Guadalajara
+CAC.040,Puebla
+CAC.041,Tijuana
+CAC.042,León
+CAC.043,Zapopan
+CAC.044,Monterrey
+CAC.045,Guadalajara
+CAC.046,Puebla
+CAC.047,Tijuana
+CAC.048,León
+CAC.049,Zapopan
+CAC.050,Monterrey
+CAC.051,Guadalajara
+CAC.052,Puebla
+CAC.053,Tijuana
+CAC.054,León
+CAC.055,Zapopan
+CAC.056,Monterrey
+CAC.057,Guadalajara
+CAC.058,Puebla
+CAC.059,Tijuana
+CAC.060,León
+CAC.061,Zapopan
+CAC.062,Monterrey
+CAC.063,Guadalajara
+CAC.064,Puebla
+CAC.065,Tijuana
+CAC.066,León
+CAC.067,Zapopan
+CAC.068,Monterrey
+CAC.069,Guadalajara
+CAC.070,Puebla
+CAC.071,Tijuana
+CAC.072,León
+CAC.073,Zapopan
+CAC.074,Monterrey
+CAC.075,Guadalajara
+CAC.076,Puebla
+CAC.077,Tijuana
+CAC.078,León
+CAC.079,Zapopan
+CAC.080,Monterrey
+CAC.081,Guadalajara
+CAC.082,Puebla
+CAC.083,Tijuana
+CAC.084,León
+CAC.085,Zapopan
+CAC.086,Monterrey
+CAC.087,Guadalajara
+CAC.088,Puebla
+CAC.089,Tijuana
+CAC.090,León
+CAC.091,Zapopan
+CAC.092,Monterrey
+CAC.093,Guadalajara
+CAC.094,Puebla
+CAC.095,Tijuana
+CAC.096,León
+CAC.097,Zapopan
+CAC.098,Monterrey
+CAC.099,Guadalajara
+CAC.100,Puebla
+# Oceania Cities
+OCE.001,Sydney
+OCE.002,Melbourne
+OCE.003,Brisbane
+OCE.004,Perth
+OCE.005,Adelaide
+OCE.006,Gold Coast
+OCE.007,Newcastle
+OCE.008,Canberra
+OCE.009,Sunshine Coast
+OCE.010,Wollongong
+OCE.011,Hobart
+OCE.012,Geelong
+OCE.013,Townsville
+OCE.014,Cairns
+OCE.015,Darwin
+OCE.016,Toowoomba
+OCE.017,Ballarat
+OCE.018,Bendigo
+OCE.019,Albury-Wodonga
+OCE.020,Launceston
+OCE.021,Mackay
+OCE.022,Rockhampton
+OCE.023,Bunbury
+OCE.024,Coffs Harbour
+OCE.025,Wagga Wagga
+OCE.026,Hervey Bay
+OCE.027,Port Macquarie
+OCE.028,Tamworth
+OCE.029,Orange
+OCE.030,Bowral
+OCE.031,Auckland
+OCE.032,Wellington
+OCE.033,Christchurch
+OCE.034,Hamilton
+OCE.035,Tauranga
+OCE.036,Napier-Hastings
+OCE.037,Dunedin
+OCE.038,Palmerston North
+OCE.039,Nelson
+OCE.040,Rotorua
+OCE.041,New Plymouth
+OCE.042,Whangarei
+OCE.043,Invercargill
+OCE.044,Whanganui
+OCE.045,Gisborne
+OCE.046,Port Moresby
+OCE.047,Lae
+OCE.048,Mount Hagen
+OCE.049,Madang
+OCE.050,Goroka
+OCE.051,Kokopo
+OCE.052,Mendi
+OCE.053,Kimbe
+OCE.054,Bulolo
+OCE.055,Arawa
+OCE.056,Kiunga
+OCE.057,Buka
+OCE.058,Kundiawa
+OCE.059,Tari
+OCE.060,Wewak
+OCE.061,Suva
+OCE.062,Lautoka
+OCE.063,Nadi
+OCE.064,Labasa
+OCE.065,Ba
+OCE.066,Levuka
+OCE.067,Savusavu
+OCE.068,Sigatoka
+OCE.069,Nausori
+OCE.070,Rakiraki
+OCE.071,Port Vila
+OCE.072,Luganville
+OCE.073,Isangel
+OCE.074,Lakatoro
+OCE.075,Saratamata
+OCE.076,Sola
+OCE.077,Port-Olry
+OCE.078,Lenakel
+OCE.079,Loltong
+OCE.080,Norsup
+OCE.081,Noumea
+OCE.082,Dumbea
+OCE.083,Païta
+OCE.084,Mont-Dore
+OCE.085,Bourail
+OCE.086,Koumac
+OCE.087,Poindimié
+OCE.088,Koné
+OCE.089,Thio
+OCE.090,Canala
+OCE.091,Honolulu
+OCE.092,Hilo
+OCE.093,Kailua
+OCE.094,Kapolei
+OCE.095,Kaneohe
+OCE.096,Mililani Town
+OCE.097,Ewa Gentry
+OCE.098,Waipahu
+OCE.099,Pearl City
+OCE.100,Wahiawa
+# Middle East Cities
+MDE.001,Cairo
+MDE.002,Tehran
+MDE.003,Istanbul
+MDE.004,Baghdad
+MDE.005,Riyadh
+MDE.006,Jeddah
+MDE.007,Amman
+MDE.008,Beirut
+MDE.009,Damascus
+MDE.010,Aleppo
+MDE.011,Jerusalem
+MDE.012,Tel Aviv
+MDE.013,Haifa
+MDE.014,Mecca
+MDE.015,Medina
+MDE.016,Dammam
+MDE.017,Tabuk
+MDE.018,Abha
+MDE.019,Jizan
+MDE.020,Najran
+MDE.021,Buraidah
+MDE.022,Khamis Mushait
+MDE.023,Hail
+MDE.024,Al-Kharj
+MDE.025,Al-Ahsa
+MDE.026,Al-Qatif
+MDE.027,Yanbu
+MDE.028,Al-Khubar
+MDE.029,Al-Dammam
+MDE.030,Al-Khobar
+MDE.031,Al-Jubail
+MDE.032,Al-Khafji
+MDE.033,Al-Qunfudhah
+MDE.034,Al-Lith
+MDE.035,Al-Qunfudhah
+MDE.036,Al-Lith
+MDE.037,Al-Qunfudhah
+MDE.038,Al-Lith
+MDE.039,Al-Qunfudhah
+MDE.040,Al-Lith
+MDE.041,Al-Qunfudhah
+MDE.042,Al-Lith
+MDE.043,Al-Qunfudhah
+MDE.044,Al-Lith
+MDE.045,Al-Qunfudhah
+MDE.046,Al-Lith
+MDE.047,Al-Qunfudhah
+MDE.048,Al-Lith
+MDE.049,Al-Qunfudhah
+MDE.050,Al-Lith
+MDE.051,Al-Qunfudhah
+MDE.052,Al-Lith
+MDE.053,Al-Qunfudhah
+MDE.054,Al-Lith
+MDE.055,Al-Qunfudhah
+MDE.056,Al-Lith
+MDE.057,Al-Qunfudhah
+MDE.058,Al-Lith
+MDE.059,Al-Qunfudhah
+MDE.060,Al-Lith
+MDE.061,Al-Qunfudhah
+MDE.062,Al-Lith
+MDE.063,Al-Qunfudhah
+MDE.064,Al-Lith
+MDE.065,Al-Qunfudhah
+MDE.066,Al-Lith
+MDE.067,Al-Qunfudhah
+MDE.068,Al-Lith
+MDE.069,Al-Qunfudhah
+MDE.070,Al-Lith
+MDE.071,Al-Qunfudhah
+MDE.072,Al-Lith
+MDE.073,Al-Qunfudhah
+MDE.074,Al-Lith
+MDE.075,Al-Qunfudhah
+MDE.076,Al-Lith
+MDE.077,Al-Qunfudhah
+MDE.078,Al-Lith
+MDE.079,Al-Qunfudhah
+MDE.080,Al-Lith
+MDE.081,Al-Qunfudhah
+MDE.082,Al-Lith
+MDE.083,Al-Qunfudhah
+MDE.084,Al-Lith
+MDE.085,Al-Qunfudhah
+MDE.086,Al-Lith
+MDE.087,Al-Qunfudhah
+MDE.088,Al-Lith
+MDE.089,Al-Qunfudhah
+MDE.090,Al-Lith
+MDE.091,Al-Qunfudhah
+MDE.092,Al-Lith
+MDE.093,Al-Qunfudhah
+MDE.094,Al-Lith
+MDE.095,Al-Qunfudhah
+MDE.096,Al-Lith
+MDE.097,Al-Qunfudhah
+MDE.098,Al-Lith
+MDE.099,Al-Qunfudhah
+MDE.100,Al-Lith
+# Additional European Cities
+EUR.101,Moscow
+EUR.102,Saint Petersburg
+EUR.103,Novosibirsk
+EUR.104,Yekaterinburg
+EUR.105,Kazan
+EUR.106,Nizhny Novgorod
+EUR.107,Chelyabinsk
+EUR.108,Samara
+EUR.109,Omsk
+EUR.110,Rostov-on-Don
+EUR.111,Ufa
+EUR.112,Krasnoyarsk
+EUR.113,Perm
+EUR.114,Voronezh
+EUR.115,Volgograd
+EUR.116,Krasnodar
+EUR.117,Saratov
+EUR.118,Tyumen
+EUR.119,Tolyatti
+EUR.120,Izhevsk
+EUR.121,Barnaul
+EUR.122,Ulyanovsk
+EUR.123,Irkutsk
+EUR.124,Khabarovsk
+EUR.125,Yaroslavl
+EUR.126,Vladivostok
+EUR.127,Makhachkala
+EUR.128,Tomsk
+EUR.129,Orenburg
+EUR.130,Kemerovo
+EUR.131,Novokuznetsk
+EUR.132,Ryazan
+EUR.133,Astrakhan
+EUR.134,Naberezhnye Chelny
+EUR.135,Penza
+EUR.136,Lipetsk
+EUR.137,Kirov
+EUR.138,Cheboksary
+EUR.139,Tula
+EUR.140,Kaliningrad
+EUR.141,Balashikha
+EUR.142,Kursk
+EUR.143,Ulan-Ude
+EUR.144,Stavropol
+EUR.145,Sochi
+EUR.146,Ivanovo
+EUR.147,Bryansk
+EUR.148,Arkhangelsk
+EUR.149,Tver
+EUR.150,Belgorod
+EUR.151,Vladimir
+EUR.152,Chita
+EUR.153,Kurgan
+EUR.154,Smolensk
+EUR.155,Orël
+EUR.156,Vladikavkaz
+EUR.157,Grozny
+EUR.158,Murmansk
+EUR.159,Vologda
+EUR.160,Cherepovets
+EUR.161,Saransk
+EUR.162,Vladimir
+EUR.163,Chita
+EUR.164,Kurgan
+EUR.165,Smolensk
+EUR.166,Orël
+EUR.167,Vladikavkaz
+EUR.168,Grozny
+EUR.169,Murmansk
+EUR.170,Vologda
+EUR.171,Cherepovets
+EUR.172,Saransk
+EUR.173,Vladimir
+EUR.174,Chita
+EUR.175,Kurgan
+EUR.176,Smolensk
+EUR.177,Orël
+EUR.178,Vladikavkaz
+EUR.179,Grozny
+EUR.180,Murmansk
+EUR.181,Vologda
+EUR.182,Cherepovets
+EUR.183,Saransk
+EUR.184,Vladimir
+EUR.185,Chita
+EUR.186,Kurgan
+EUR.187,Smolensk
+EUR.188,Orël
+EUR.189,Vladikavkaz
+EUR.190,Grozny
+EUR.191,Murmansk
+EUR.192,Vologda
+EUR.193,Cherepovets
+EUR.194,Saransk
+EUR.195,Vladimir
+EUR.196,Chita
+EUR.197,Kurgan
+EUR.198,Smolensk
+EUR.199,Orël
+EUR.200,Vladikavkaz
+# Additional Asian Cities
+ASI.101,Osaka
+ASI.102,Nagoya
+ASI.103,Sapporo
+ASI.104,Fukuoka
+ASI.105,Kobe
+ASI.106,Kyoto
+ASI.107,Kawasaki
+ASI.108,Saitama
+ASI.109,Hiroshima
+ASI.110,Sendai
+ASI.111,Chiba
+ASI.112,Kitakyushu
+ASI.113,Sakai
+ASI.114,Niigata
+ASI.115,Hamamatsu
+ASI.116,Kumamoto
+ASI.117,Sagamihara
+ASI.118,Shizuoka
+ASI.119,Okayama
+ASI.120,Kagoshima
+ASI.121,Funabashi
+ASI.122,Hachioji
+ASI.123,Matsuyama
+ASI.124,Kanazawa
+ASI.125,Nagano
+ASI.126,Oita
+ASI.127,Wakayama
+ASI.128,Gifu
+ASI.129,Mito
+ASI.130,Takamatsu
+ASI.131,Koriyama
+ASI.132,Akita
+ASI.133,Aomori
+ASI.134,Miyazaki
+ASI.135,Hakodate
+ASI.136,Yokosuka
+ASI.137,Tokushima
+ASI.138,Maebashi
+ASI.139,Iwaki
+ASI.140,Obihiro
+ASI.141,Matsumoto
+ASI.142,Fukushima
+ASI.143,Mito
+ASI.144,Takamatsu
+ASI.145,Koriyama
+ASI.146,Akita
+ASI.147,Aomori
+ASI.148,Miyazaki
+ASI.149,Hakodate
+ASI.150,Yokosuka
+ASI.151,Tokushima
+ASI.152,Maebashi
+ASI.153,Iwaki
+ASI.154,Obihiro
+ASI.155,Matsumoto
+ASI.156,Fukushima
+ASI.157,Mito
+ASI.158,Takamatsu
+ASI.159,Koriyama
+ASI.160,Akita
+ASI.161,Aomori
+ASI.162,Miyazaki
+ASI.163,Hakodate
+ASI.164,Yokosuka
+ASI.165,Tokushima
+ASI.166,Maebashi
+ASI.167,Iwaki
+ASI.168,Obihiro
+ASI.169,Matsumoto
+ASI.170,Fukushima
+ASI.171,Mito
+ASI.172,Takamatsu
+ASI.173,Koriyama
+ASI.174,Akita
+ASI.175,Aomori
+ASI.176,Miyazaki
+ASI.177,Hakodate
+ASI.178,Yokosuka
+ASI.179,Tokushima
+ASI.180,Maebashi
+ASI.181,Iwaki
+ASI.182,Obihiro
+ASI.183,Matsumoto
+ASI.184,Fukushima
+ASI.185,Mito
+ASI.186,Takamatsu
+ASI.187,Koriyama
+ASI.188,Akita
+ASI.189,Aomori
+ASI.190,Miyazaki
+ASI.191,Hakodate
+ASI.192,Yokosuka
+ASI.193,Tokushima
+ASI.194,Maebashi
+ASI.195,Iwaki
+ASI.196,Obihiro
+ASI.197,Matsumoto
+ASI.198,Fukushima
+ASI.199,Mito
+ASI.200,Takamatsu
+# Nordic Cities
+NORD.001,Stockholm
+NORD.002,Gothenburg
+NORD.003,Malmö
+NORD.004,Uppsala
+NORD.005,Västerås
+NORD.006,Örebro
+NORD.007,Linköping
+NORD.008,Helsingborg
+NORD.009,Jönköping
+NORD.010,Norrköping
+NORD.011,Lund
+NORD.012,Umeå
+NORD.013,Gävle
+NORD.014,Borlänge
+NORD.015,Eskilstuna
+NORD.016,Södertälje
+NORD.017,Karlstad
+NORD.018,Täby
+NORD.019,Växjö
+NORD.020,Halmstad
+NORD.021,Oslo
+NORD.022,Bergen
+NORD.023,Trondheim
+NORD.024,Stavanger
+NORD.025,Drammen
+NORD.026,Fredrikstad
+NORD.027,Kristiansand
+NORD.028,Sandnes
+NORD.029,Tromsø
+NORD.030,Sarpsborg
+NORD.031,Bodø
+NORD.032,Ålesund
+NORD.033,Tønsberg
+NORD.034,Moss
+NORD.035,Haugesund
+NORD.036,Sandefjord
+NORD.037,Mo i Rana
+NORD.038,Arendal
+NORD.039,Hamar
+NORD.040,Lillehammer
+NORD.041,Copenhagen
+NORD.042,Aarhus
+NORD.043,Odense
+NORD.044,Aalborg
+NORD.045,Esbjerg
+NORD.046,Randers
+NORD.047,Kolding
+NORD.048,Horsens
+NORD.049,Vejle
+NORD.050,Roskilde
+NORD.051,Herning
+NORD.052,Silkeborg
+NORD.053,Næstved
+NORD.054,Fredericia
+NORD.055,Viborg
+NORD.056,Køge
+NORD.057,Helsingør
+NORD.058,Helsinki
+NORD.059,Espoo
+NORD.060,Tampere
+NORD.061,Vantaa
+NORD.062,Oulu
+NORD.063,Turku
+NORD.064,Jyväskylä
+NORD.065,Lahti
+NORD.066,Kuopio
+NORD.067,Pori
+NORD.068,Joensuu
+NORD.069,Lappeenranta
+NORD.070,Hämeenlinna
+NORD.071,Vaasa
+NORD.072,Seinäjoki
+NORD.073,Rovaniemi
+NORD.074,Mikkeli
+NORD.075,Kotka
+NORD.076,Salo
+NORD.077,Porvoo
+NORD.078,Kokkola
+NORD.079,Hyvinkää
+NORD.080,Lohja
+NORD.081,Reykjavik
+NORD.082,Kópavogur
+NORD.083,Hafnarfjörður
+NORD.084,Akureyri
+NORD.085,Reykjanesbær
+NORD.086,Garðabær
+NORD.087,Mosfellsbær
+NORD.088,Akranes
+NORD.089,Seltjarnarnes
+NORD.090,Selfoss
+NORD.091,Ísafjörður
+NORD.092,Egilsstaðir
+NORD.093,Húsavík
+NORD.094,Höfn
+NORD.095,Seyðisfjörður
+NORD.096,Stykkishólmur
+NORD.097,Ólafsvík
+NORD.098,Patreksfjörður
+NORD.099,Djúpivogur
+NORD.100,Bolungarvík
+# Baltic Cities
+BALT.001,Vilnius
+BALT.002,Kaunas
+BALT.003,Klaipėda
+BALT.004,Šiauliai
+BALT.005,Panevėžys
+BALT.006,Alytus
+BALT.007,Marijampolė
+BALT.008,Mazeikiai
+BALT.009,Jonava
+BALT.010,Utena
+BALT.011,Kėdainiai
+BALT.012,Telšiai
+BALT.013,Tauragė
+BALT.014,Ukmergė
+BALT.015,Visaginas
+BALT.016,Plungė
+BALT.017,Kretinga
+BALT.018,Palanga
+BALT.019,Radviliškis
+BALT.020,Šilutė
+BALT.021,Riga
+BALT.022,Daugavpils
+BALT.023,Liepāja
+BALT.024,Jelgava
+BALT.025,Jūrmala
+BALT.026,Ventspils
+BALT.027,Rēzekne
+BALT.028,Valmiera
+BALT.029,Jēkabpils
+BALT.030,Ogre
+BALT.031,Tukums
+BALT.032,Cēsis
+BALT.033,Salaspils
+BALT.034,Kuldīga
+BALT.035,Olaine
+BALT.036,Sigulda
+BALT.037,Bauska
+BALT.038,Dobele
+BALT.039,Talsi
+BALT.040,Ludza
+BALT.041,Tallinn
+BALT.042,Tartu
+BALT.043,Narva
+BALT.044,Pärnu
+BALT.045,Kohtla-Järve
+BALT.046,Viljandi
+BALT.047,Rakvere
+BALT.048,Maardu
+BALT.049,Sillamäe
+BALT.050,Kuressaare
+BALT.051,Võru
+BALT.052,Valga
+BALT.053,Haapsalu
+BALT.054,Jõhvi
+BALT.055,Paide
+BALT.056,Keila
+BALT.057,Kiviõli
+BALT.058,Tapa
+BALT.059,Põlva
+BALT.060,Jõgeva
+BALT.061,Türi
+BALT.062,Elva
+BALT.063,Rapla
+BALT.064,Saue
+BALT.065,Põltsamaa
+BALT.066,Paldiski
+BALT.067,Sindi
+BALT.068,Kärdla
+BALT.069,Loksa
+BALT.070,Tõrva
+BALT.071,Karksi-Nuia
+BALT.072,Antsla
+BALT.073,Võhma
+BALT.074,Mustvee
+BALT.075,Lihula
+BALT.076,Kallaste
+BALT.077,Otepää
+BALT.078,Kanepi
+BALT.079,Kõrveküla
+BALT.080,Käru
+BALT.081,Põlva
+BALT.082,Jõgeva
+BALT.083,Türi
+BALT.084,Elva
+BALT.085,Rapla
+BALT.086,Saue
+BALT.087,Põltsamaa
+BALT.088,Paldiski
+BALT.089,Sindi
+BALT.090,Kärdla
+BALT.091,Loksa
+BALT.092,Tõrva
+BALT.093,Karksi-Nuia
+BALT.094,Antsla
+BALT.095,Võhma
+BALT.096,Mustvee
+BALT.097,Lihula
+BALT.098,Kallaste
+BALT.099,Otepää
+BALT.100,Kanepi
+# Balkan Cities
+BALK.001,Belgrade
+BALK.002,Novi Sad
+BALK.003,Niš
+BALK.004,Kragujevac
+BALK.005,Subotica
+BALK.006,Zrenjanin
+BALK.007,Pančevo
+BALK.008,Čačak
+BALK.009,Kraljevo
+BALK.010,Novi Pazar
+BALK.011,Kraljevo
+BALK.012,Leskovac
+BALK.013,Užice
+BALK.014,Vranje
+BALK.015,Valjevo
+BALK.016,Kruševac
+BALK.017,Vršac
+BALK.018,Šabac
+BALK.019,Sombor
+BALK.020,Požarevac
+BALK.021,Zagreb
+BALK.022,Split
+BALK.023,Rijeka
+BALK.024,Osijek
+BALK.025,Zadar
+BALK.026,Slavonski Brod
+BALK.027,Pula
+BALK.028,Šibenik
+BALK.029,Karlovac
+BALK.030,Varaždin
+BALK.031,Sisak
+BALK.032,Velika Gorica
+BALK.033,Dubrovnik
+BALK.034,Vinkovci
+BALK.035,Vukovar
+BALK.036,Čakovec
+BALK.037,Požega
+BALK.038,Solin
+BALK.039,Zaprešić
+BALK.040,Petrinja
+BALK.041,Sarajevo
+BALK.042,Banja Luka
+BALK.043,Tuzla
+BALK.044,Zenica
+BALK.045,Mostar
+BALK.046,Prijedor
+BALK.047,Doboj
+BALK.048,Bijeljina
+BALK.049,Brčko
+BALK.050,Trebinje
+BALK.051,Skopje
+BALK.052,Bitola
+BALK.053,Kumanovo
+BALK.054,Prilep
+BALK.055,Tetovo
+BALK.056,Veles
+BALK.057,Štip
+BALK.058,Ohrid
+BALK.059,Gostivar
+BALK.060,Strumica
+BALK.061,Kavadarci
+BALK.062,Kočani
+BALK.063,Kičevo
+BALK.064,Struga
+BALK.065,Radoviš
+BALK.066,Gevgelija
+BALK.067,Debar
+BALK.068,Kriva Palanka
+BALK.069,Sveti Nikole
+BALK.070,Negotino
+BALK.071,Delnice
+BALK.072,Krško
+BALK.073,Celje
+BALK.074,Kranj
+BALK.075,Velenje
+BALK.076,Koper
+BALK.077,Novo Mesto
+BALK.078,Ptuj
+BALK.079,Trbovlje
+BALK.080,Kamnik
+BALK.081,Jesenice
+BALK.082,Nova Gorica
+BALK.083,Škofja Loka
+BALK.084,Murska Sobota
+BALK.085,Ajdovščina
+BALK.086,Bled
+BALK.087,Postojna
+BALK.088,Logatec
+BALK.089,Slovenj Gradec
+BALK.090,Kočevje
+BALK.091,Bucharest
+BALK.092,Cluj-Napoca
+BALK.093,Timișoara
+BALK.094,Iași
+BALK.095,Constanța
+BALK.096,Craiova
+BALK.097,Galați
+BALK.098,Brașov
+BALK.099,Ploiești
+BALK.100,Brăila
+# Central European Cities
+CEUR.001,Prague
+CEUR.002,Brno
+CEUR.003,Ostrava
+CEUR.004,Plzeň
+CEUR.005,Liberec
+CEUR.006,Olomouc
+CEUR.007,Ústí nad Labem
+CEUR.008,České Budějovice
+CEUR.009,Hradec Králové
+CEUR.010,Pardubice
+CEUR.011,Zlín
+CEUR.012,Havířov
+CEUR.013,Kladno
+CEUR.014,Most
+CEUR.015,Karviná
+CEUR.016,Opava
+CEUR.017,Frýdek-Místek
+CEUR.018,Jihlava
+CEUR.019,Teplice
+CEUR.020,Děčín
+CEUR.021,Budapest
+CEUR.022,Debrecen
+CEUR.023,Szeged
+CEUR.024,Miskolc
+CEUR.025,Pécs
+CEUR.026,Győr
+CEUR.027,Nyíregyháza
+CEUR.028,Kecskemét
+CEUR.029,Székesfehérvár
+CEUR.030,Szombathely
+CEUR.031,Szolnok
+CEUR.032,Tatabánya
+CEUR.033,Kaposvár
+CEUR.034,Érd
+CEUR.035,Veszprém
+CEUR.036,Békéscsaba
+CEUR.037,Zalaegerszeg
+CEUR.038,Sopron
+CEUR.039,Eger
+CEUR.040,Nagykanizsa
+CEUR.041,Warsaw
+CEUR.042,Kraków
+CEUR.043,Łódź
+CEUR.044,Wrocław
+CEUR.045,Poznań
+CEUR.046,Gdańsk
+CEUR.047,Szczecin
+CEUR.048,Bydgoszcz
+CEUR.049,Lublin
+CEUR.050,Katowice
+CEUR.051,Białystok
+CEUR.052,Gdynia
+CEUR.053,Częstochowa
+CEUR.054,Radom
+CEUR.055,Sosnowiec
+CEUR.056,Toruń
+CEUR.057,Kielce
+CEUR.058,Gliwice
+CEUR.059,Zabrze
+CEUR.060,Bytom
+CEUR.061,Bielsko-Biała
+CEUR.062,Olsztyn
+CEUR.063,Rzeszów
+CEUR.064,Ruda Śląska
+CEUR.065,Rybnik
+CEUR.066,Tychy
+CEUR.067,Dąbrowa Górnicza
+CEUR.068,Opole
+CEUR.069,Elbląg
+CEUR.070,Płock
+CEUR.071,Bratislava
+CEUR.072,Košice
+CEUR.073,Žilina
+CEUR.074,Nitra
+CEUR.075,Banská Bystrica
+CEUR.076,Trnava
+CEUR.077,Martin
+CEUR.078,Trenčín
+CEUR.079,Poprad
+CEUR.080,Prievidza
+CEUR.081,Zvolen
+CEUR.082,Považská Bystrica
+CEUR.083,Michalovce
+CEUR.084,Spišská Nová Ves
+CEUR.085,Levice
+CEUR.086,Nové Zámky
+CEUR.087,Humenné
+CEUR.088,Bardejov
+CEUR.089,Liptovský Mikuláš
+CEUR.090,Ružomberok
+CEUR.091,Ljubljana
+CEUR.092,Maribor
+CEUR.093,Celje
+CEUR.094,Kranj
+CEUR.095,Velenje
+CEUR.096,Koper
+CEUR.097,Novo Mesto
+CEUR.098,Ptuj
+CEUR.099,Trbovlje
+CEUR.100,Kamnik
+# Mediterranean Cities
+MED.001,Athens
+MED.002,Thessaloniki
+MED.003,Patras
+MED.004,Piraeus
+MED.005,Larissa
+MED.006,Heraklion
+MED.007,Peristeri
+MED.008,Kallithea
+MED.009,Acharnes
+MED.010,Kalamaria
+MED.011,Nikaia
+MED.012,Glifada
+MED.013,Volos
+MED.014,Ioannina
+MED.015,Chalcis
+MED.016,Serres
+MED.017,Alexandroupoli
+MED.018,Xanthi
+MED.019,Katerini
+MED.020,Kalamata
+MED.021,Rome
+MED.022,Milan
+MED.023,Naples
+MED.024,Turin
+MED.025,Palermo
+MED.026,Genoa
+MED.027,Bologna
+MED.028,Florence
+MED.029,Bari
+MED.030,Catania
+MED.031,Venice
+MED.032,Verona
+MED.033,Messina
+MED.034,Padua
+MED.035,Trieste
+MED.036,Taranto
+MED.037,Brescia
+MED.038,Parma
+MED.039,Modena
+MED.040,Reggio Emilia
+MED.041,Perugia
+MED.042,Livorno
+MED.043,Ravenna
+MED.044,Cagliari
+MED.045,Foggia
+MED.046,Rimini
+MED.047,Salerno
+MED.048,Ferrara
+MED.049,Sassari
+MED.050,Lecce
+MED.051,Madrid
+MED.052,Barcelona
+MED.053,Valencia
+MED.054,Seville
+MED.055,Zaragoza
+MED.056,Málaga
+MED.057,Murcia
+MED.058,Palma
+MED.059,Las Palmas
+MED.060,Bilbao
+MED.061,Alicante
+MED.062,Córdoba
+MED.063,Valladolid
+MED.064,Vigo
+MED.065,Gijón
+MED.066,L'Hospitalet
+MED.067,A Coruña
+MED.068,Vitoria-Gasteiz
+MED.069,Granada
+MED.070,Elche
+MED.071,Tarrasa
+MED.072,Badalona
+MED.073,Cartagena
+MED.074,Jerez de la Frontera
+MED.075,Sabadell
+MED.076,Móstoles
+MED.077,Alcalá de Henares
+MED.078,Pamplona
+MED.079,Fuenlabrada
+MED.080,Almería
+MED.081,Leganés
+MED.082,San Sebastián
+MED.083,Santander
+MED.084,Castellón
+MED.085,Burgos
+MED.086,Albacete
+MED.087,Alcorcón
+MED.088,Getafe
+MED.089,Salamanca
+MED.090,Logroño
+MED.091,Lisbon
+MED.092,Porto
+MED.093,Vila Nova de Gaia
+MED.094,Amadora
+MED.095,Braga
+MED.096,Funchal
+MED.097,Coimbra
+MED.098,Setúbal
+MED.099,Almada
+MED.100,Agualva-Cacém

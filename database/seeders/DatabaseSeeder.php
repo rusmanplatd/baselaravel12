@@ -75,6 +75,11 @@ class DatabaseSeeder extends Seeder
             IndustrySpecificPermissionsSeeder::class,
         ]);
 
+        // Region data
+        $this->call([
+            RegionSeeder::class,
+        ]);
+
         // Organizational structure seeders
         $this->call([
             OrganizationPositionLevelSeeder::class,

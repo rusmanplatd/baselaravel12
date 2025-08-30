@@ -1,0 +1,195 @@
+kode,nama,iso_code,phone_code
+AF,Afghanistan,AFG,+93
+AL,Albania,ALB,+355
+DZ,Algeria,DZA,+213
+AD,Andorra,AND,+376
+AO,Angola,AGO,+244
+AG,Antigua and Barbuda,ATG,+1268
+AR,Argentina,ARG,+54
+AM,Armenia,ARM,+374
+AU,Australia,AUS,+61
+AT,Austria,AUT,+43
+AZ,Azerbaijan,AZE,+994
+BS,Bahamas,BHS,+1242
+BH,Bahrain,BHR,+973
+BD,Bangladesh,BGD,+880
+BB,Barbados,BRB,+1246
+BY,Belarus,BLR,+375
+BE,Belgium,BEL,+32
+BZ,Belize,BLZ,+501
+BJ,Benin,BEN,+229
+BT,Bhutan,BTN,+975
+BO,Bolivia,BOL,+591
+BA,Bosnia and Herzegovina,BIH,+387
+BW,Botswana,BWA,+267
+BR,Brazil,BRA,+55
+BN,Brunei,BRN,+673
+BG,Bulgaria,BGR,+359
+BF,Burkina Faso,BFA,+226
+BI,Burundi,BDI,+257
+KH,Cambodia,KHM,+855
+CM,Cameroon,CMR,+237
+CA,Canada,CAN,+1
+CV,Cape Verde,CPV,+238
+CF,Central African Republic,CAF,+236
+TD,Chad,TCD,+235
+CL,Chile,CHL,+56
+CN,China,CHN,+86
+CO,Colombia,COL,+57
+KM,Comoros,COM,+269
+CG,Congo,COG,+242
+CD,Democratic Republic of the Congo,COD,+243
+CR,Costa Rica,CRI,+506
+HR,Croatia,HRV,+385
+CU,Cuba,CUB,+53
+CY,Cyprus,CYP,+357
+CZ,Czech Republic,CZE,+420
+DK,Denmark,DNK,+45
+DJ,Djibouti,DJI,+253
+DM,Dominica,DMA,+1767
+DO,Dominican Republic,DOM,+1809
+EC,Ecuador,ECU,+593
+EG,Egypt,EGY,+20
+SV,El Salvador,SLV,+503
+GQ,Equatorial Guinea,GNQ,+240
+ER,Eritrea,ERI,+291
+EE,Estonia,EST,+372
+ET,Ethiopia,ETH,+251
+FJ,Fiji,FJI,+679
+FI,Finland,FIN,+358
+FR,France,FRA,+33
+GA,Gabon,GAB,+241
+GM,Gambia,GMB,+220
+GE,Georgia,GEO,+995
+DE,Germany,DEU,+49
+GH,Ghana,GHA,+233
+GR,Greece,GRC,+30
+GD,Grenada,GRD,+1473
+GT,Guatemala,GTM,+502
+GN,Guinea,GIN,+224
+GW,Guinea-Bissau,GNB,+245
+GY,Guyana,GUY,+592
+HT,Haiti,HTI,+509
+HN,Honduras,HND,+504
+HU,Hungary,HUN,+36
+IS,Iceland,ISL,+354
+IN,India,IND,+91
+ID,Indonesia,IDN,+62
+IR,Iran,IRN,+98
+IQ,Iraq,IRQ,+964
+IE,Ireland,IRL,+353
+IL,Israel,ISR,+972
+IT,Italy,ITA,+39
+JM,Jamaica,JAM,+1876
+JP,Japan,JPN,+81
+JO,Jordan,JOR,+962
+KZ,Kazakhstan,KAZ,+7
+KE,Kenya,KEN,+254
+KI,Kiribati,KIR,+686
+KP,North Korea,PRK,+850
+KR,South Korea,KOR,+82
+KW,Kuwait,KWT,+965
+KG,Kyrgyzstan,KGZ,+996
+LA,Laos,LAO,+856
+LV,Latvia,LVA,+371
+LB,Lebanon,LBN,+961
+LS,Lesotho,LSO,+266
+LR,Liberia,LBR,+231
+LY,Libya,LBY,+218
+LI,Liechtenstein,LIE,+423
+LT,Lithuania,LTU,+370
+LU,Luxembourg,LUX,+352
+MK,North Macedonia,MKD,+389
+MG,Madagascar,MDG,+261
+MW,Malawi,MWI,+265
+MY,Malaysia,MYS,+60
+MV,Maldives,MDV,+960
+ML,Mali,MLI,+223
+MT,Malta,MLT,+356
+MH,Marshall Islands,MHL,+692
+MR,Mauritania,MRT,+222
+MU,Mauritius,MUS,+230
+MX,Mexico,MEX,+52
+FM,Micronesia,FSM,+691
+MD,Moldova,MDA,+373
+MC,Monaco,MCO,+377
+MN,Mongolia,MNG,+976
+ME,Montenegro,MNE,+382
+MA,Morocco,MAR,+212
+MZ,Mozambique,MOZ,+258
+MM,Myanmar,MMR,+95
+NA,Namibia,NAM,+264
+NR,Nauru,NRU,+674
+NP,Nepal,NPL,+977
+NL,Netherlands,NLD,+31
+NZ,New Zealand,NZL,+64
+NI,Nicaragua,NIC,+505
+NE,Niger,NER,+227
+NG,Nigeria,NGA,+234
+NO,Norway,NOR,+47
+OM,Oman,OMN,+968
+PK,Pakistan,PAK,+92
+PW,Palau,PLW,+680
+PA,Panama,PAN,+507
+PG,Papua New Guinea,PNG,+675
+PY,Paraguay,PRY,+595
+PE,Peru,PER,+51
+PH,Philippines,PHL,+63
+PL,Poland,POL,+48
+PT,Portugal,PRT,+351
+QA,Qatar,QAT,+974
+RO,Romania,ROU,+40
+RU,Russia,RUS,+7
+RW,Rwanda,RWA,+250
+KN,Saint Kitts and Nevis,KNA,+1869
+LC,Saint Lucia,LCA,+1758
+VC,Saint Vincent and the Grenadines,VCT,+1784
+WS,Samoa,WSM,+685
+SM,San Marino,SMR,+378
+ST,Sao Tome and Principe,STP,+239
+SA,Saudi Arabia,SAU,+966
+SN,Senegal,SEN,+221
+RS,Serbia,SRB,+381
+SC,Seychelles,SYC,+248
+SL,Sierra Leone,SLE,+232
+SG,Singapore,SGP,+65
+SK,Slovakia,SVK,+421
+SI,Slovenia,SVN,+386
+SB,Solomon Islands,SLB,+677
+SO,Somalia,SOM,+252
+ZA,South Africa,ZAF,+27
+SS,South Sudan,SSD,+211
+ES,Spain,ESP,+34
+LK,Sri Lanka,LKA,+94
+SD,Sudan,SDN,+249
+SR,Suriname,SUR,+597
+SZ,Eswatini,SWZ,+268
+SE,Sweden,SWE,+46
+CH,Switzerland,CHE,+41
+SY,Syria,SYR,+963
+TW,Taiwan,TWN,+886
+TJ,Tajikistan,TJK,+992
+TZ,Tanzania,TZA,+255
+TH,Thailand,THA,+66
+TL,Timor-Leste,TLS,+670
+TG,Togo,TGO,+228
+TO,Tonga,TON,+676
+TT,Trinidad and Tobago,TTO,+1868
+TN,Tunisia,TUN,+216
+TR,Turkey,TUR,+90
+TM,Turkmenistan,TKM,+993
+TV,Tuvalu,TUV,+688
+UG,Uganda,UGA,+256
+UA,Ukraine,UKR,+380
+AE,United Arab Emirates,ARE,+971
+GB,United Kingdom,GBR,+44
+US,United States,USA,+1
+UY,Uruguay,URY,+598
+UZ,Uzbekistan,UZB,+998
+VU,Vanuatu,VUT,+678
+VA,Vatican City,VAT,+379
+VE,Venezuela,VEN,+58
+VN,Vietnam,VNM,+84
+YE,Yemen,YEM,+967
+ZM,Zambia,ZMB,+260
+ZW,Zimbabwe,ZWE,+263
