@@ -18,7 +18,8 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { ShieldCheckIcon, CogIcon, ExclamationTriangleIcon, HashtagIcon, ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
+import { ShieldCheckIcon, CogIcon, ExclamationTriangleIcon, HashtagIcon, ChatBubbleLeftRightIcon, ShieldExclamationIcon } from '@heroicons/react/24/outline';
+import QuantumSecurityDashboard from '@/components/QuantumSecurityDashboard';
 import { cn } from '@/lib/utils';
 
 interface ChatLayoutProps {
@@ -62,6 +63,7 @@ export default function ChatLayout({ user, inviteCode }: ChatLayoutProps) {
   const [showDeviceManagement, setShowDeviceManagement] = useState(false);
   const [showNewDeviceSetup, setShowNewDeviceSetup] = useState(false);
   const [showNewDeviceManagement, setShowNewDeviceManagement] = useState(false);
+  const [showQuantumSecurity, setShowQuantumSecurity] = useState(false);
   const [accessRevoked, setAccessRevoked] = useState(false);
 
   // Handle invite code if provided
@@ -128,41 +130,71 @@ export default function ChatLayout({ user, inviteCode }: ChatLayoutProps) {
               )}
               
               {deviceRegistered && (
-                <Dialog open={showDeviceManagement} onOpenChange={setShowDeviceManagement}>
-                  <DialogTrigger asChild>
-                    <Button size="sm" variant="outline">
-                      <CogIcon className="h-4 w-4 mr-1" />
-                      Devices
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle>Device Management</DialogTitle>
-                      <DialogDescription>
-                        Manage your devices and encryption settings
-                      </DialogDescription>
-                    </DialogHeader>
-                    <DeviceManagement 
-                      onDeviceRegistered={() => {
-                        setShowDeviceManagement(false);
-                        toast.success('Device registered successfully');
-                      }}
-                      onDeviceRemoved={(deviceId) => {
-                        toast.success('Device removed successfully');
-                      }}
-                    />
-                  </DialogContent>
-                </Dialog>
+                <>
+                  <Dialog open={showDeviceManagement} onOpenChange={setShowDeviceManagement}>
+                    <DialogTrigger asChild>
+                      <Button size="sm" variant="outline">
+                        <CogIcon className="h-4 w-4 mr-1" />
+                        Devices
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle>Device Management</DialogTitle>
+                        <DialogDescription>
+                          Manage your devices and encryption settings
+                        </DialogDescription>
+                      </DialogHeader>
+                      <DeviceManagement 
+                        onDeviceRegistered={() => {
+                          setShowDeviceManagement(false);
+                          toast.success('Device registered successfully');
+                        }}
+                        onDeviceRemoved={(deviceId) => {
+                          toast.success('Device removed successfully');
+                        }}
+                      />
+                    </DialogContent>
+                  </Dialog>
+
+                  <Dialog open={showQuantumSecurity} onOpenChange={setShowQuantumSecurity}>
+                    <DialogTrigger asChild>
+                      <Button size="sm" variant="outline" className="bg-gradient-to-r from-purple-50 to-blue-50 hover:from-purple-100 hover:to-blue-100 border-purple-200">
+                        <ShieldExclamationIcon className="h-4 w-4 mr-1 text-purple-600" />
+                        <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent font-medium">
+                          Quantum Security
+                        </span>
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                          Quantum Security Dashboard
+                        </DialogTitle>
+                        <DialogDescription>
+                          Monitor quantum-resistant encryption, threat detection, and security metrics
+                        </DialogDescription>
+                      </DialogHeader>
+                      <QuantumSecurityDashboard />
+                    </DialogContent>
+                  </Dialog>
+                </>
               )}
             </div>
           </div>
 
           {/* E2EE Status */}
-          <div className="flex items-center mb-4">
+          <div className="flex flex-col space-y-2 mb-4">
             <E2EEStatusBadge 
               status={encryptionReady ? 'enabled' : 'disabled'} 
               onClick={() => setShowNewDeviceManagement(true)}
             />
+            {encryptionReady && (
+              <div className="flex items-center space-x-1 text-xs">
+                <div className="w-2 h-2 bg-gradient-to-r from-purple-400 to-blue-500 rounded-full animate-pulse"></div>
+                <span className="text-purple-600 font-medium">Quantum-Safe</span>
+              </div>
+            )}
           </div>
 
           {/* Tab Navigation */}
