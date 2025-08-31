@@ -19,8 +19,13 @@ class ChatEncryptionService
 
     private const MIN_PASSWORD_ENTROPY = 50; // Minimum entropy for derived passwords
 
-    public function generateKeyPair(?int $keySize = null): array
+    public function generateKeyPair(?int $keySize = null, string $algorithm = 'RSA-4096-OAEP'): array
     {
+        // Support quantum algorithms
+        if ($algorithm !== 'RSA-4096-OAEP') {
+            return $this->generateQuantumKeyPair($algorithm, $keySize);
+        }
+
         try {
             // Use smaller keys in testing environment for performance
             $actualKeySize = $keySize ?? (app()->environment('testing') ? 2048 : self::RSA_KEY_SIZE);
@@ -566,6 +571,149 @@ class ChatEncryptionService
             'success_count' => count($results),
             'total_count' => count($encryptedMessages),
         ];
+    }
+
+    /**
+     * Generate quantum-resistant key pair
+     */
+    private function generateQuantumKeyPair(string $algorithm, ?int $keySize): array
+    {
+        $quantumService = app(QuantumCryptoService::class);
+        
+        return match ($algorithm) {
+            'ML-KEM-512' => $quantumService->generateMLKEMKeyPair(512),
+            'ML-KEM-768' => $quantumService->generateMLKEMKeyPair(768),
+            'ML-KEM-1024' => $quantumService->generateMLKEMKeyPair(1024),
+            'HYBRID-RSA4096-MLKEM768' => $quantumService->generateHybridKeyPair(4096, 768),
+            default => throw new EncryptionException("Unsupported quantum algorithm: {$algorithm}")
+        };
+    }
+
+    /**
+     * Encrypt symmetric key with algorithm support
+     */
+    public function encryptSymmetricKeyWithAlgorithm(string $symmetricKey, string $publicKey, string $algorithm): string
+    {
+        return match ($algorithm) {
+            'ML-KEM-512' => app(QuantumCryptoService::class)->encapsulateMLKEM($publicKey, 512)['ciphertext'],
+            'ML-KEM-768' => app(QuantumCryptoService::class)->encapsulateMLKEM($publicKey, 768)['ciphertext'],
+            'ML-KEM-1024' => app(QuantumCryptoService::class)->encapsulateMLKEM($publicKey, 1024)['ciphertext'],
+            'HYBRID-RSA4096-MLKEM768' => app(QuantumCryptoService::class)->encapsulateHybrid($publicKey)['ciphertext'],
+            default => $this->encryptSymmetricKey($symmetricKey, $publicKey)
+        };
+    }
+
+    /**
+     * Decrypt symmetric key with algorithm support
+     */
+    public function decryptSymmetricKeyWithAlgorithm(string $encryptedKey, string $privateKey, string $algorithm): string
+    {
+        return match ($algorithm) {
+            'ML-KEM-512' => app(QuantumCryptoService::class)->decapsulateMLKEM($encryptedKey, $privateKey, 512),
+            'ML-KEM-768' => app(QuantumCryptoService::class)->decapsulateMLKEM($encryptedKey, $privateKey, 768),
+            'ML-KEM-1024' => app(QuantumCryptoService::class)->decapsulateMLKEM($encryptedKey, $privateKey, 1024),
+            'HYBRID-RSA4096-MLKEM768' => app(QuantumCryptoService::class)->decapsulateHybrid($encryptedKey, $privateKey),
+            default => $this->decryptSymmetricKey($encryptedKey, $privateKey)
+        };
+    }
+
+    /**
+     * Algorithm negotiation for multi-device conversations
+     */
+    public function negotiateAlgorithm(array $deviceCapabilities): string
+    {
+        $commonAlgorithms = [];
+        
+        foreach ($deviceCapabilities as $deviceCaps) {
+            if (empty($commonAlgorithms)) {
+                $commonAlgorithms = $deviceCaps;
+            } else {
+                $commonAlgorithms = array_intersect($commonAlgorithms, $deviceCaps);
+            }
+        }
+        
+        if (empty($commonAlgorithms)) {
+            throw new EncryptionException('No compatible algorithms found among devices');
+        }
+        
+        return $this->selectBestAlgorithm($commonAlgorithms);
+    }
+
+    /**
+     * Select the most secure compatible algorithm
+     */
+    private function selectBestAlgorithm(array $algorithms): string
+    {
+        // Priority: strongest quantum-resistant first
+        $priority = [
+            'ML-KEM-1024',              // Highest security
+            'ML-KEM-768',               // Recommended standard
+            'HYBRID-RSA4096-MLKEM768',  // Transition hybrid
+            'ML-KEM-512',               // Basic quantum resistance
+            'RSA-4096-OAEP',            // Legacy fallback
+        ];
+        
+        foreach ($priority as $preferred) {
+            if (in_array($preferred, $algorithms)) {
+                Log::info('Algorithm selected for conversation', [
+                    'selected' => $preferred,
+                    'available' => $algorithms,
+                ]);
+                return $preferred;
+            }
+        }
+        
+        throw new EncryptionException('No suitable algorithm found');
+    }
+
+    /**
+     * Check if algorithm is quantum-resistant
+     */
+    public function isQuantumResistant(string $algorithm): bool
+    {
+        $quantumAlgorithms = ['ML-KEM-512', 'ML-KEM-768', 'ML-KEM-1024', 'HYBRID-RSA4096-MLKEM768'];
+        return in_array($algorithm, $quantumAlgorithms);
+    }
+
+    /**
+     * Get algorithm information
+     */
+    public function getAlgorithmInfo(string $algorithm): array
+    {
+        $algorithmMap = [
+            'RSA-4096-OAEP' => [
+                'type' => 'rsa',
+                'key_size' => 4096,
+                'quantum_resistant' => false,
+                'version' => 2,
+            ],
+            'ML-KEM-512' => [
+                'type' => 'ml-kem',
+                'security_level' => 512,
+                'quantum_resistant' => true,
+                'version' => 3,
+            ],
+            'ML-KEM-768' => [
+                'type' => 'ml-kem',
+                'security_level' => 768,
+                'quantum_resistant' => true,
+                'version' => 3,
+            ],
+            'ML-KEM-1024' => [
+                'type' => 'ml-kem',
+                'security_level' => 1024,
+                'quantum_resistant' => true,
+                'version' => 3,
+            ],
+            'HYBRID-RSA4096-MLKEM768' => [
+                'type' => 'hybrid',
+                'components' => ['RSA-4096-OAEP', 'ML-KEM-768'],
+                'quantum_resistant' => true,
+                'version' => 3,
+            ],
+        ];
+
+        return $algorithmMap[$algorithm] ?? [];
     }
 
     public function validateEncryptionHealth(): array

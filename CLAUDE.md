@@ -31,7 +31,7 @@ This is a Laravel 12 + React fullstack application using:
 - **Authentication**: Laravel Passport for OAuth 2.0/OIDC, Laravel Breeze-style UI flows, WebAuthn/Passkeys support
 - **Extensions**: Multiple Spatie packages (permissions, activity logs, event sourcing)
 - **Organization Management**: Hierarchical organization structure with units, positions, and memberships
-- **Chat System**: End-to-end encrypted chat with multi-device support
+- **Chat System**: End-to-end encrypted chat with multi-device and quantum-resistant cryptography support
 - **File Storage**: MinIO S3-compatible storage with encrypted file handling
 - **Containerization**: Docker Compose setup for local, dev, staging, and production environments
 
@@ -80,6 +80,7 @@ npm run test:e2e:debug  # Debug E2E tests
 ./scripts/test-e2ee.sh     # Comprehensive E2EE chat testing
 ./scripts/test-e2ee.sh unit        # Run only unit tests
 ./scripts/test-e2ee.sh multidevice # Run only multi-device tests
+./scripts/test-e2ee.sh quantum     # Run quantum cryptography tests
 
 php artisan test --filter=Chat      # Run specific chat test group
 ```
@@ -108,6 +109,7 @@ make clean          # Clean up Docker resources
   - `routes/channels.php` - Broadcasting channels
 - **Controllers**: `app/Http/Controllers/` organized by feature:
   - `Api/Chat/` - Chat system controllers (Conversation, Message, Encryption, etc.)
+  - `Api/QuantumController.php` - Quantum cryptography API endpoints
   - `Api/` - Organization, User, Permission, Role controllers
   - `Auth/` - Authentication controllers
   - `OAuth/` - OAuth 2.0 server controllers
@@ -117,7 +119,14 @@ make clean          # Clean up Docker resources
   - Chat system: `Chat/Conversation`, `Chat/Message`, `Chat/EncryptionKey`, `Chat/Participant`
   - Authentication: `User`, `UserDevice`, `UserMfaSetting`
   - OAuth: `Client`, `OAuthAuditLog`, `OAuthScope`
-- **Services**: `app/Services/` - Business logic (ChatEncryptionService, ChatFileService, etc.)
+- **Services**: `app/Services/` - Business logic:
+  - `ChatEncryptionService.php` - Chat encryption with quantum algorithm support
+  - `QuantumCryptoService.php` - NIST-approved post-quantum cryptography (ML-KEM)
+  - `Crypto/MLKEMProviderInterface.php` - ML-KEM provider abstraction
+  - `Crypto/LibOQSMLKEMProvider.php` - Production LibOQS implementation
+  - `Crypto/FallbackMLKEMProvider.php` - Development/testing fallback
+  - `MultiDeviceEncryptionService.php` - Multi-device quantum support
+  - `ChatFileService.php` - File handling and other services
 - **Middleware**: `app/Http/Middleware/` - Rate limiting, permissions, chat security, tenant context
 
 ### Frontend (React)
@@ -132,15 +141,19 @@ make clean          # Clean up Docker resources
 - **Layouts**: `resources/js/layouts/` - app layouts (app-layout, auth-layout)
 - **Hooks**: `resources/js/hooks/` - custom React hooks:
   - `useChat.ts` - Chat functionality
-  - `useE2EE.ts` - End-to-end encryption
+  - `useE2EE.ts` - End-to-end encryption with quantum algorithm support
+  - `useQuantumE2EE.ts` - Quantum-resistant cryptography management
   - `useChatPagination.ts` - Chat message pagination
   - `usePermissions.tsx` - Permission checking
 - **Services**: `resources/js/services/` - Frontend services:
   - `MultiDeviceE2EEService.ts` - Multi-device encryption
-  - `OptimizedE2EEService.ts` - Performance optimized encryption
+  - `OptimizedE2EEService.ts` - Performance optimized encryption with quantum support
+  - `QuantumE2EEService.ts` - Client-side quantum cryptography
   - `SecurityMonitoringService.ts` - Security monitoring
 - **Types**: `resources/js/types/` - TypeScript definitions (chat.ts, index.d.ts)
-- **Utils**: `resources/js/utils/` - Utility functions and encryption helpers
+- **Utils**: `resources/js/utils/` - Utility functions and encryption helpers:
+  - `QuantumMigrationUtils.ts` - Migration utilities for quantum transition
+  - Standard encryption and chat utilities
 
 ### Configuration
 - **TypeScript**: Path aliases configured (`@/*` maps to `resources/js/*`), strict mode enabled
@@ -163,7 +176,12 @@ make clean          # Clean up Docker resources
 - Auth pages in `resources/js/pages/auth/`
 
 ### UI Components
-- shadcn/ui components in `resources/js/components/ui/`
+- shadcn/ui components in `resources/js/components/ui/`:
+  - `quantum-status-badge.tsx` - Algorithm status indicators with tooltips
+  - `quantum-health-indicator.tsx` - System health and device readiness display
+  - `quantum-device-manager.tsx` - Device management interface with migration
+  - `quantum-admin-panel.tsx` - Complete admin dashboard for quantum systems
+  - Standard UI components (button, card, alert, etc.)
 - Appearance/theme system with light/dark mode support
 - Sidebar navigation with user management
 

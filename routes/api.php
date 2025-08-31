@@ -308,6 +308,26 @@ Route::middleware('auth:api')->prefix('v1')->group(function () {
             ->middleware('throttle:5,1'); // Stricter rate limiting for emergency recovery
     });
 
+    // Quantum cryptography API endpoints
+    Route::prefix('quantum')->name('api.quantum.')->group(function () {
+        Route::get('health', [\App\Http\Controllers\Api\QuantumController::class, 'healthCheck'])
+            ->name('health');
+        Route::post('generate-keypair', [\App\Http\Controllers\Api\QuantumController::class, 'generateKeyPair'])
+            ->name('generate-keypair')
+            ->middleware('throttle:10,1'); // Rate limit key generation
+        Route::post('devices/register', [\App\Http\Controllers\Api\QuantumController::class, 'registerQuantumDevice'])
+            ->name('devices.register')
+            ->middleware('throttle:5,1'); // Rate limit device registration
+        Route::get('devices/capabilities', [\App\Http\Controllers\Api\QuantumController::class, 'getDeviceCapabilities'])
+            ->name('devices.capabilities');
+        Route::put('devices/{deviceId}/capabilities', [\App\Http\Controllers\Api\QuantumController::class, 'updateDeviceCapabilities'])
+            ->name('devices.update-capabilities')
+            ->middleware('throttle:10,1');
+        Route::post('conversations/{conversation}/negotiate-algorithm', [\App\Http\Controllers\Api\QuantumController::class, 'negotiateAlgorithm'])
+            ->name('conversations.negotiate-algorithm')
+            ->middleware('throttle:20,1');
+    });
+
     // User API endpoints
     Route::prefix('users')->name('api.users.')->group(function () {
         Route::get('search', [UserApiController::class, 'search'])

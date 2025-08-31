@@ -432,6 +432,171 @@ class MultiDeviceEncryptionService
         });
     }
 
+    /**
+     * Setup quantum-resistant conversation encryption
+     */
+    public function setupQuantumConversationEncryption(
+        Conversation $conversation,
+        array $participantDevices,
+        UserDevice $initiatingDevice
+    ): array {
+        // Get device capabilities
+        $deviceCapabilities = [];
+        foreach ($participantDevices as $device) {
+            $caps = $device->device_capabilities ?? ['rsa-4096'];
+            $deviceCapabilities[] = $this->mapCapabilitiesToAlgorithms($caps);
+        }
+        
+        // Negotiate best algorithm
+        $algorithm = $this->encryptionService->negotiateAlgorithm($deviceCapabilities);
+        
+        Log::info('Quantum conversation setup initiated', [
+            'conversation_id' => $conversation->id,
+            'algorithm' => $algorithm,
+            'device_count' => count($participantDevices)
+        ]);
+        
+        // Generate new symmetric key
+        $symmetricKey = $this->encryptionService->generateSymmetricKey();
+        $keyVersion = $this->getNextKeyVersion($conversation);
+        
+        $results = [
+            'algorithm' => $algorithm,
+            'key_version' => $keyVersion,
+            'created_keys' => [],
+            'failed_keys' => []
+        ];
+        
+        // Create encryption keys for each device
+        foreach ($participantDevices as $device) {
+            try {
+                // Encrypt symmetric key using negotiated algorithm
+                $encryptedSymKey = $this->encryptionService->encryptSymmetricKeyWithAlgorithm(
+                    $symmetricKey,
+                    $device->public_key,
+                    $algorithm
+                );
+                
+                $encryptionKey = EncryptionKey::create([
+                    'conversation_id' => $conversation->id,
+                    'user_id' => $device->user_id,
+                    'device_id' => $device->id,
+                    'encrypted_key' => $encryptedSymKey,
+                    'public_key' => $device->public_key,
+                    'algorithm' => $algorithm,
+                    'key_strength' => $this->getAlgorithmStrength($algorithm),
+                    'key_version' => $keyVersion,
+                    'device_fingerprint' => $device->device_fingerprint,
+                    'created_by_device_id' => $initiatingDevice->id,
+                ]);
+                
+                $results['created_keys'][] = [
+                    'device_id' => $device->id,
+                    'encryption_key_id' => $encryptionKey->id,
+                    'algorithm' => $algorithm
+                ];
+                
+            } catch (\Exception $e) {
+                $results['failed_keys'][] = [
+                    'device_id' => $device->id,
+                    'error' => $e->getMessage()
+                ];
+                
+                Log::error('Failed to create quantum encryption key', [
+                    'device_id' => $device->id,
+                    'algorithm' => $algorithm,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+        
+        Log::info('Quantum conversation encryption setup completed', [
+            'conversation_id' => $conversation->id,
+            'algorithm' => $algorithm,
+            'created_count' => count($results['created_keys']),
+            'failed_count' => count($results['failed_keys'])
+        ]);
+        
+        return $results;
+    }
+
+    /**
+     * Register quantum-capable device
+     */
+    public function registerQuantumDevice(
+        User $user,
+        string $deviceName,
+        string $deviceType,
+        string $publicKey,
+        string $deviceFingerprint,
+        array $quantumCapabilities = ['ml-kem-768']
+    ): UserDevice {
+        $allCapabilities = array_merge(
+            ['messaging', 'encryption'], 
+            $quantumCapabilities
+        );
+        
+        $encryptionVersion = $this->determineEncryptionVersion($quantumCapabilities);
+        
+        Log::info('Registering quantum-capable device', [
+            'user_id' => $user->id,
+            'device_type' => $deviceType,
+            'quantum_capabilities' => $quantumCapabilities,
+            'encryption_version' => $encryptionVersion
+        ]);
+        
+        return $this->registerDevice(
+            $user,
+            $deviceName,
+            $deviceType,
+            $publicKey,
+            $deviceFingerprint,
+            platform: null,
+            userAgent: null,
+            deviceCapabilities: $allCapabilities,
+            securityLevel: 'high', // Quantum devices get high security by default
+            deviceInfo: ['quantum_ready' => true, 'supported_algorithms' => $quantumCapabilities]
+        );
+    }
+
+    private function mapCapabilitiesToAlgorithms(array $capabilities): array
+    {
+        $algorithmMap = [
+            'rsa-4096' => 'RSA-4096-OAEP',
+            'ml-kem-512' => 'ML-KEM-512',
+            'ml-kem-768' => 'ML-KEM-768',
+            'ml-kem-1024' => 'ML-KEM-1024',
+            'hybrid' => 'HYBRID-RSA4096-MLKEM768'
+        ];
+        
+        $algorithms = [];
+        foreach ($capabilities as $cap) {
+            if (isset($algorithmMap[$cap])) {
+                $algorithms[] = $algorithmMap[$cap];
+            }
+        }
+        
+        return $algorithms ?: ['RSA-4096-OAEP']; // Fallback to RSA
+    }
+
+    private function getAlgorithmStrength(string $algorithm): int
+    {
+        return match ($algorithm) {
+            'ML-KEM-512' => 512,
+            'ML-KEM-768' => 768,
+            'ML-KEM-1024' => 1024,
+            'HYBRID-RSA4096-MLKEM768' => 768,
+            default => 4096
+        };
+    }
+
+    private function determineEncryptionVersion(array $capabilities): int
+    {
+        $quantumCapabilities = ['ml-kem-512', 'ml-kem-768', 'ml-kem-1024', 'hybrid'];
+        
+        return !empty(array_intersect($capabilities, $quantumCapabilities)) ? 3 : 2;
+    }
+
     private function getParticipantDevices(Conversation $conversation): Collection
     {
         // Get all trusted active devices for conversation participants

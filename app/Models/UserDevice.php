@@ -215,4 +215,111 @@ class UserDevice extends Model
 
         return min(100, max(0, $score));
     }
+
+    /**
+     * Check if device supports quantum-resistant algorithms
+     */
+    public function supportsQuantumResistant(): bool
+    {
+        $capabilities = $this->device_capabilities ?? [];
+        $quantumAlgorithms = ['ml-kem-512', 'ml-kem-768', 'ml-kem-1024', 'hybrid'];
+        
+        return !empty(array_intersect($capabilities, $quantumAlgorithms));
+    }
+
+    /**
+     * Get supported quantum algorithms
+     */
+    public function getQuantumCapabilities(): array
+    {
+        $capabilities = $this->device_capabilities ?? [];
+        $quantumAlgorithms = ['ml-kem-512', 'ml-kem-768', 'ml-kem-1024', 'hybrid'];
+        
+        return array_intersect($capabilities, $quantumAlgorithms);
+    }
+
+    /**
+     * Check if device supports specific algorithm
+     */
+    public function supportsAlgorithm(string $algorithm): bool
+    {
+        $algorithmMap = [
+            'RSA-4096-OAEP' => 'rsa-4096',
+            'ML-KEM-512' => 'ml-kem-512',
+            'ML-KEM-768' => 'ml-kem-768',
+            'ML-KEM-1024' => 'ml-kem-1024',
+            'HYBRID-RSA4096-MLKEM768' => 'hybrid',
+        ];
+        
+        $capability = $algorithmMap[$algorithm] ?? strtolower($algorithm);
+        $capabilities = $this->device_capabilities ?? [];
+        
+        return in_array($capability, $capabilities);
+    }
+
+    /**
+     * Update device quantum capabilities
+     */
+    public function updateQuantumCapabilities(array $newCapabilities): void
+    {
+        $existingCapabilities = $this->device_capabilities ?? [];
+        $quantumAlgorithms = ['ml-kem-512', 'ml-kem-768', 'ml-kem-1024', 'hybrid'];
+        
+        // Remove old quantum capabilities
+        $nonQuantumCapabilities = array_diff($existingCapabilities, $quantumAlgorithms);
+        
+        // Add new quantum capabilities
+        $updatedCapabilities = array_merge($nonQuantumCapabilities, $newCapabilities);
+        
+        $this->update([
+            'device_capabilities' => array_unique($updatedCapabilities),
+            'encryption_version' => $this->determineEncryptionVersion($newCapabilities),
+        ]);
+    }
+
+    /**
+     * Get all supported algorithms for this device
+     */
+    public function getSupportedAlgorithms(): array
+    {
+        $capabilities = $this->device_capabilities ?? [];
+        $algorithmMap = [
+            'rsa-4096' => 'RSA-4096-OAEP',
+            'ml-kem-512' => 'ML-KEM-512',
+            'ml-kem-768' => 'ML-KEM-768',
+            'ml-kem-1024' => 'ML-KEM-1024',
+            'hybrid' => 'HYBRID-RSA4096-MLKEM768',
+        ];
+        
+        $algorithms = [];
+        foreach ($capabilities as $cap) {
+            if (isset($algorithmMap[$cap])) {
+                $algorithms[] = $algorithmMap[$cap];
+            }
+        }
+        
+        return $algorithms ?: ['RSA-4096-OAEP']; // Fallback to RSA
+    }
+
+    /**
+     * Check if device is quantum-ready
+     */
+    public function isQuantumReady(): bool
+    {
+        return $this->encryption_version >= 3 && $this->supportsQuantumResistant();
+    }
+
+    /**
+     * Determine encryption version based on capabilities
+     */
+    private function determineEncryptionVersion(array $capabilities): int
+    {
+        $quantumCapabilities = ['ml-kem-512', 'ml-kem-768', 'ml-kem-1024', 'hybrid'];
+        
+        if (array_intersect($capabilities, $quantumCapabilities)) {
+            return 3; // Quantum-resistant version
+        }
+        
+        return 2; // RSA version
+    }
 }

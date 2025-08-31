@@ -4,6 +4,7 @@ import { secureKeyManager } from '@/lib/SecureKeyManager';
 import { e2eeErrorRecovery } from '@/services/E2EEErrorRecovery';
 import { multiDeviceE2EEService } from '@/services/MultiDeviceE2EEService';
 import { doubleRatchetE2EE } from '@/services/DoubleRatchetE2EE';
+import { optimizedE2EEService } from '@/services/OptimizedE2EEService';
 import { apiService } from '@/services/ApiService';
 import { toast } from 'sonner';
 import type { EncryptionKey, KeyPair, E2EEStatus, EncryptedMessageData, Message, Conversation, User } from '@/types/chat';
@@ -285,17 +286,24 @@ export function useE2EE(userId?: string, currentConversationId?: string): UseE2E
     }
   }, [userId]);
 
-  // Encrypt a message for a conversation
+  // Encrypt a message for a conversation with quantum support
   const encryptMessage = useCallback(async (
     message: string,
-    conversationId: string
+    conversationId: string,
+    algorithm?: string
   ): Promise<EncryptedMessageData | null> => {
     try {
       if (!userId) {
         throw new Error('User ID required for encryption');
       }
 
-      // Get conversation symmetric key
+      // Use optimized service for potential quantum encryption
+      const optimizedResult = await optimizedE2EEService.encryptMessage(message, conversationId, algorithm);
+      if (optimizedResult) {
+        return optimizedResult;
+      }
+
+      // Fallback to traditional encryption
       let conversationKey = await SecureStorage.getConversationKey(conversationId);
       
       if (!conversationKey) {
@@ -351,6 +359,13 @@ export function useE2EE(userId?: string, currentConversationId?: string): UseE2E
         throw new Error('User ID required for decryption');
       }
 
+      // Try optimized service first for quantum support
+      const optimizedResult = await optimizedE2EEService.decryptMessage(encryptedData, conversationId);
+      if (optimizedResult) {
+        return optimizedResult;
+      }
+
+      // Fallback to traditional decryption
       const conversationKey = await SecureStorage.getConversationKey(conversationId);
       if (!conversationKey) {
         throw new Error('No conversation key available');

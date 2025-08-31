@@ -6,6 +6,7 @@
 import { ChatEncryption } from '@/utils/encryption';
 import { secureKeyManager } from '@/lib/SecureKeyManager';
 import { e2eePerformanceMonitor } from '@/utils/E2EEPerformanceMonitor';
+import { QuantumE2EEService } from './QuantumE2EEService';
 import type { EncryptedMessageData } from '@/types/chat';
 
 interface CachedKey {
@@ -48,9 +49,12 @@ export class OptimizedE2EEService {
   private compressionThreshold = 1000; // Compress messages over 1KB
   private chunkThreshold = 10000; // Chunk messages over 10KB
 
+  private quantumService: QuantumE2EEService;
+
   constructor() {
     this.initializeWorkers();
     this.startCacheCleanup();
+    this.quantumService = QuantumE2EEService.getInstance();
   }
 
   /**
@@ -439,7 +443,9 @@ export class OptimizedE2EEService {
         let result;
         
         if (op.operation === 'encrypt') {
-          result = await this.performEncryption(op.data, symmetricKey);
+          // Handle new data structure with algorithm
+          const { message, algorithm } = typeof op.data === 'string' ? { message: op.data, algorithm: undefined } : op.data;
+          result = await this.performEncryption(message, symmetricKey, algorithm);
         } else {
           result = await this.performDecryption(op.data, symmetricKey);
         }
@@ -454,9 +460,9 @@ export class OptimizedE2EEService {
   }
 
   /**
-   * Perform optimized encryption
+   * Perform optimized encryption with quantum support
    */
-  private async performEncryption(message: string, key: CryptoKey): Promise<EncryptedMessageData> {
+  private async performEncryption(message: string, key: CryptoKey, algorithm?: string): Promise<EncryptedMessageData> {
     // Compress if needed
     const { compressed, data } = await this.compressIfNeeded(message);
     
@@ -464,7 +470,7 @@ export class OptimizedE2EEService {
     if (data.length > this.chunkThreshold) {
       const chunks = this.chunkMessage(data);
       const encryptedChunks = await Promise.all(
-        chunks.map(chunk => this.encryptChunk(chunk.data, key))
+        chunks.map(chunk => this.encryptChunk(chunk.data, key, algorithm))
       );
       
       return {
@@ -475,8 +481,14 @@ export class OptimizedE2EEService {
           total: chunks.length
         }),
         iv: encryptedChunks[0].iv, // Use first chunk's IV as reference
-        version: '2.0'
+        version: this.getEncryptionVersion(algorithm),
+        algorithm: algorithm || 'AES-GCM'
       };
+    }
+
+    // Quantum-resistant encryption if algorithm specified
+    if (algorithm && this.quantumService.isQuantumResistant(algorithm)) {
+      return await this.performQuantumEncryption(data, algorithm, compressed);
     }
 
     // Standard encryption
@@ -493,7 +505,8 @@ export class OptimizedE2EEService {
     return {
       content: btoa(String.fromCharCode(...new Uint8Array(encryptedBuffer))),
       iv: btoa(String.fromCharCode(...iv)),
-      version: '2.0',
+      version: this.getEncryptionVersion(algorithm),
+      algorithm: algorithm || 'AES-GCM',
       compressed
     };
   }
@@ -501,7 +514,7 @@ export class OptimizedE2EEService {
   /**
    * Encrypt a single chunk
    */
-  private async encryptChunk(chunk: string, key: CryptoKey): Promise<{ content: string; iv: string }> {
+  private async encryptChunk(chunk: string, key: CryptoKey, algorithm?: string): Promise<{ content: string; iv: string }> {
     const encoder = new TextEncoder();
     const chunkBuffer = encoder.encode(chunk);
     const iv = crypto.getRandomValues(new Uint8Array(12));
@@ -519,9 +532,86 @@ export class OptimizedE2EEService {
   }
 
   /**
-   * Perform optimized decryption
+   * Perform quantum-resistant encryption
+   */
+  private async performQuantumEncryption(data: string, algorithm: string, compressed: boolean): Promise<EncryptedMessageData> {
+    try {
+      // Use quantum service for encryption
+      const keyPair = await this.quantumService.generateQuantumKeyPair(algorithm);
+      const encapsulationResult = await fetch('/api/v1/quantum/encapsulate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        },
+        body: JSON.stringify({
+          public_key: keyPair.public_key,
+          algorithm: algorithm
+        })
+      });
+
+      if (!encapsulationResult.ok) {
+        throw new Error('Quantum encapsulation failed');
+      }
+
+      const { shared_secret, ciphertext } = await encapsulationResult.json();
+
+      // Use shared secret to encrypt the actual data
+      const encoder = new TextEncoder();
+      const messageBuffer = encoder.encode(data);
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+
+      // Import shared secret as AES key
+      const aesKey = await crypto.subtle.importKey(
+        'raw',
+        new Uint8Array(atob(shared_secret).split('').map(c => c.charCodeAt(0))),
+        { name: 'AES-GCM' },
+        false,
+        ['encrypt']
+      );
+
+      const encryptedBuffer = await crypto.subtle.encrypt(
+        { name: 'AES-GCM', iv },
+        aesKey,
+        messageBuffer
+      );
+
+      return {
+        content: btoa(String.fromCharCode(...new Uint8Array(encryptedBuffer))),
+        iv: btoa(String.fromCharCode(...iv)),
+        version: this.getEncryptionVersion(algorithm),
+        algorithm: algorithm,
+        quantum_ciphertext: ciphertext,
+        compressed
+      };
+    } catch (error) {
+      console.error('Quantum encryption failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get encryption version based on algorithm
+   */
+  private getEncryptionVersion(algorithm?: string): string {
+    if (!algorithm) return '2.0';
+    
+    if (algorithm.startsWith('ML-KEM') || algorithm.includes('HYBRID')) {
+      return '3.0'; // Quantum-resistant
+    }
+    
+    return '2.0'; // Classical
+  }
+
+  /**
+   * Perform optimized decryption with quantum support
    */
   private async performDecryption(encryptedData: EncryptedMessageData, key: CryptoKey): Promise<string> {
+    // Check if this is quantum-resistant encryption
+    if ((encryptedData as any).quantum_ciphertext && (encryptedData as any).algorithm) {
+      return await this.performQuantumDecryption(encryptedData);
+    }
+
     try {
       // Check if it's chunked data
       const parsedContent = JSON.parse(encryptedData.content);
@@ -558,6 +648,72 @@ export class OptimizedE2EEService {
   }
 
   /**
+   * Perform quantum-resistant decryption
+   */
+  private async performQuantumDecryption(encryptedData: EncryptedMessageData): Promise<string> {
+    try {
+      const quantumData = encryptedData as any;
+      
+      // Get private key from IndexedDB for decapsulation
+      const privateKey = await this.quantumService.getPrivateKey(quantumData.device_id || 'current');
+      if (!privateKey) {
+        throw new Error('Private key not found for quantum decryption');
+      }
+
+      // Perform decapsulation to get shared secret
+      const decapsulationResult = await fetch('/api/v1/quantum/decapsulate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        },
+        body: JSON.stringify({
+          ciphertext: quantumData.quantum_ciphertext,
+          private_key: privateKey,
+          algorithm: quantumData.algorithm
+        })
+      });
+
+      if (!decapsulationResult.ok) {
+        throw new Error('Quantum decapsulation failed');
+      }
+
+      const { shared_secret } = await decapsulationResult.json();
+
+      // Use shared secret to decrypt the actual data
+      const encryptedBuffer = new Uint8Array(
+        atob(encryptedData.content).split('').map(c => c.charCodeAt(0))
+      );
+      const iv = new Uint8Array(
+        atob(encryptedData.iv).split('').map(c => c.charCodeAt(0))
+      );
+
+      // Import shared secret as AES key
+      const aesKey = await crypto.subtle.importKey(
+        'raw',
+        new Uint8Array(atob(shared_secret).split('').map(c => c.charCodeAt(0))),
+        { name: 'AES-GCM' },
+        false,
+        ['decrypt']
+      );
+
+      const decryptedBuffer = await crypto.subtle.decrypt(
+        { name: 'AES-GCM', iv },
+        aesKey,
+        encryptedBuffer
+      );
+
+      const decoder = new TextDecoder();
+      const decrypted = decoder.decode(decryptedBuffer);
+      
+      return await this.decompressIfNeeded(decrypted, quantumData.compressed || false);
+    } catch (error) {
+      console.error('Quantum decryption failed:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Decrypt a single chunk
    */
   private async decryptChunk(chunk: { content: string; iv: string }, key: CryptoKey): Promise<string> {
@@ -581,15 +737,15 @@ export class OptimizedE2EEService {
   // Public API methods
 
   /**
-   * Optimized message encryption
+   * Optimized message encryption with quantum support
    */
-  async encryptMessage(message: string, conversationId: string): Promise<EncryptedMessageData | null> {
+  async encryptMessage(message: string, conversationId: string, algorithm?: string): Promise<EncryptedMessageData | null> {
     const stopTimer = e2eePerformanceMonitor.startOperation('encrypt_optimized');
 
     try {
       const result = await this.addToBatch({
         operation: 'encrypt',
-        data: message,
+        data: { message, algorithm },
         conversationId,
         resolve: () => {},
         reject: () => {}
@@ -597,7 +753,7 @@ export class OptimizedE2EEService {
 
       stopTimer(true, {
         dataSize: message.length,
-        keyType: 'symmetric'
+        keyType: algorithm && this.quantumService.isQuantumResistant(algorithm) ? 'quantum' : 'symmetric'
       });
 
       return result;
@@ -699,6 +855,54 @@ export class OptimizedE2EEService {
     if (settings.batchTimeout !== undefined) this.batchTimeout = settings.batchTimeout;
     if (settings.compressionThreshold !== undefined) this.compressionThreshold = settings.compressionThreshold;
     if (settings.chunkThreshold !== undefined) this.chunkThreshold = settings.chunkThreshold;
+  }
+
+  /**
+   * Check if quantum encryption is available
+   */
+  async isQuantumAvailable(): Promise<boolean> {
+    try {
+      return this.quantumService.isQuantumAvailable();
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Get recommended algorithm for conversation
+   */
+  async getRecommendedAlgorithm(conversationId: string): Promise<string> {
+    try {
+      const algorithm = await this.quantumService.negotiateConversationAlgorithm(conversationId);
+      return algorithm;
+    } catch {
+      return 'RSA-4096-OAEP'; // Fallback to classical
+    }
+  }
+
+  /**
+   * Upgrade conversation to quantum-resistant encryption
+   */
+  async upgradeConversationEncryption(conversationId: string, targetAlgorithm?: string): Promise<boolean> {
+    try {
+      await this.quantumService.upgradeConversationEncryption(conversationId, targetAlgorithm);
+      // Clear cached keys to force re-negotiation
+      this.clearConversationKeys(conversationId);
+      return true;
+    } catch (error) {
+      console.error('Failed to upgrade conversation encryption:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Clear cached keys for a specific conversation
+   */
+  private clearConversationKeys(conversationId: string): void {
+    const keysToRemove = Array.from(this.keyCache.keys())
+      .filter(key => key.includes(conversationId));
+    
+    keysToRemove.forEach(key => this.keyCache.delete(key));
   }
 }
 
