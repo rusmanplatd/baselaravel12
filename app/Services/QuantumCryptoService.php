@@ -2,13 +2,13 @@
 
 namespace App\Services;
 
-use App\Exceptions\EncryptionException;
 use App\Exceptions\DecryptionException;
-use App\Services\Crypto\MLKEMProviderInterface;
-use App\Services\Crypto\LibOQSMLKEMProvider;
+use App\Exceptions\EncryptionException;
 use App\Services\Crypto\FallbackMLKEMProvider;
-use Illuminate\Support\Facades\Log;
+use App\Services\Crypto\LibOQSMLKEMProvider;
+use App\Services\Crypto\MLKEMProviderInterface;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Log;
 
 class QuantumCryptoService
 {
@@ -40,6 +40,7 @@ class QuantumCryptoService
     ];
 
     private ChatEncryptionService $encryptionService;
+
     private ?MLKEMProviderInterface $mlkemProvider = null;
 
     public function __construct(ChatEncryptionService $encryptionService)
@@ -52,14 +53,14 @@ class QuantumCryptoService
      */
     public function generateMLKEMKeyPair(int $securityLevel = 768): array
     {
-        if (!$this->isMLKEMSupported($securityLevel)) {
+        if (! $this->isMLKEMSupported($securityLevel)) {
             throw new \InvalidArgumentException("ML-KEM-{$securityLevel} is not supported");
         }
 
         try {
             $provider = $this->getMLKEMProvider();
             $keyPair = $provider->generateKeyPair($securityLevel);
-            
+
             Log::info('ML-KEM key pair generated successfully', [
                 'security_level' => $securityLevel,
                 'provider' => $provider->getProviderName(),
@@ -79,7 +80,7 @@ class QuantumCryptoService
                 'security_level' => $securityLevel,
                 'error' => $e->getMessage(),
             ]);
-            throw new EncryptionException('ML-KEM key generation failed: ' . $e->getMessage(), $e);
+            throw new EncryptionException('ML-KEM key generation failed: '.$e->getMessage(), $e);
         }
     }
 
@@ -118,7 +119,7 @@ class QuantumCryptoService
             ];
         } catch (\Exception $e) {
             Log::error('Failed to generate hybrid key pair', ['error' => $e->getMessage()]);
-            throw new EncryptionException('Hybrid key generation failed: ' . $e->getMessage(), $e);
+            throw new EncryptionException('Hybrid key generation failed: '.$e->getMessage(), $e);
         }
     }
 
@@ -128,8 +129,8 @@ class QuantumCryptoService
     public function encapsulateMLKEM(string $publicKey, int $securityLevel): array
     {
         try {
-            $publicKeyBytes = base64_decode($publicKey);
-            if ($publicKeyBytes === false) {
+            $publicKeyBytes = base64_decode($publicKey, true);
+            if ($publicKeyBytes === false || empty($publicKeyBytes)) {
                 throw new EncryptionException('Invalid base64 public key');
             }
 
@@ -153,7 +154,7 @@ class QuantumCryptoService
                 'security_level' => $securityLevel,
                 'error' => $e->getMessage(),
             ]);
-            throw new EncryptionException('ML-KEM encapsulation failed: ' . $e->getMessage(), $e);
+            throw new EncryptionException('ML-KEM encapsulation failed: '.$e->getMessage(), $e);
         }
     }
 
@@ -163,8 +164,8 @@ class QuantumCryptoService
     public function decapsulateMLKEM(string $ciphertext, string $encryptedPrivateKey, int $securityLevel): string
     {
         try {
-            $ciphertextBytes = base64_decode($ciphertext);
-            if ($ciphertextBytes === false) {
+            $ciphertextBytes = base64_decode($ciphertext, true);
+            if ($ciphertextBytes === false || empty($ciphertextBytes)) {
                 throw new DecryptionException('Invalid base64 ciphertext');
             }
 
@@ -185,7 +186,7 @@ class QuantumCryptoService
                 'security_level' => $securityLevel,
                 'error' => $e->getMessage(),
             ]);
-            throw new DecryptionException('ML-KEM decapsulation failed: ' . $e->getMessage(), $e);
+            throw new DecryptionException('ML-KEM decapsulation failed: '.$e->getMessage(), $e);
         }
     }
 
@@ -196,35 +197,35 @@ class QuantumCryptoService
     {
         try {
             $keyComponents = $this->parseHybridPublicKey($hybridPublicKey);
-            
+
             // Generate symmetric key for RSA encryption
             $symmetricKey = $this->encryptionService->generateSymmetricKey();
-            
+
             // Perform RSA encryption
             $rsaCiphertext = $this->encryptionService->encryptSymmetricKey(
-                $symmetricKey, 
+                $symmetricKey,
                 $keyComponents['rsa_public_key']
             );
-            
+
             // Perform ML-KEM encapsulation
             $mlkemResult = $this->encapsulateMLKEM(
-                $keyComponents['mlkem_public_key'], 
+                $keyComponents['mlkem_public_key'],
                 768
             );
-            
+
             // Combine shared secrets using NIST SP 800-56C approach
             $combinedSecret = $this->combineSharedSecrets(
-                $symmetricKey, 
+                $symmetricKey,
                 $mlkemResult['shared_secret']
             );
-            
+
             $hybridCiphertext = $this->combineHybridCiphertexts($rsaCiphertext, $mlkemResult['ciphertext']);
-            
+
             Log::info('Hybrid encapsulation successful', [
                 'combined_secret_size' => strlen($combinedSecret),
                 'hybrid_ciphertext_size' => strlen($hybridCiphertext),
             ]);
-            
+
             return [
                 'ciphertext' => $hybridCiphertext,
                 'shared_secret' => $combinedSecret,
@@ -236,7 +237,7 @@ class QuantumCryptoService
             ];
         } catch (\Exception $e) {
             Log::error('Hybrid encapsulation failed', ['error' => $e->getMessage()]);
-            throw new EncryptionException('Hybrid encapsulation failed: ' . $e->getMessage(), $e);
+            throw new EncryptionException('Hybrid encapsulation failed: '.$e->getMessage(), $e);
         }
     }
 
@@ -248,31 +249,31 @@ class QuantumCryptoService
         try {
             $ciphertextComponents = $this->parseHybridCiphertext($hybridCiphertext);
             $keyComponents = $this->parseHybridPrivateKey($hybridPrivateKey);
-            
+
             // Perform RSA decryption
             $rsaSecret = $this->encryptionService->decryptSymmetricKey(
                 $ciphertextComponents['rsa_ciphertext'],
                 $keyComponents['rsa_private_key']
             );
-            
+
             // Perform ML-KEM decapsulation
             $mlkemSecret = $this->decapsulateMLKEM(
                 $ciphertextComponents['mlkem_ciphertext'],
                 $keyComponents['mlkem_private_key'],
                 768
             );
-            
+
             // Combine shared secrets
             $combinedSecret = $this->combineSharedSecrets($rsaSecret, $mlkemSecret);
-            
+
             Log::debug('Hybrid decapsulation successful', [
                 'combined_secret_size' => strlen($combinedSecret),
             ]);
-            
+
             return $combinedSecret;
         } catch (\Exception $e) {
             Log::error('Hybrid decapsulation failed', ['error' => $e->getMessage()]);
-            throw new DecryptionException('Hybrid decapsulation failed: ' . $e->getMessage(), $e);
+            throw new DecryptionException('Hybrid decapsulation failed: '.$e->getMessage(), $e);
         }
     }
 
@@ -283,6 +284,7 @@ class QuantumCryptoService
     {
         try {
             $provider = $this->getMLKEMProvider();
+
             return $provider->isAvailable();
         } catch (\Exception $e) {
             return false;
@@ -330,38 +332,39 @@ class QuantumCryptoService
             if (str_starts_with($algorithm, 'ML-KEM-')) {
                 $securityLevel = (int) str_replace('ML-KEM-', '', $algorithm);
                 $provider = $this->getMLKEMProvider();
-                
+
                 $publicKeyBytes = base64_decode($publicKey);
                 $privateKeyBytes = $this->decryptPrivateKey($privateKey);
-                
+
                 return $provider->validateKeyPair($publicKeyBytes, $privateKeyBytes, $securityLevel);
             }
-            
+
             if ($algorithm === 'HYBRID-RSA4096-MLKEM768') {
                 // Validate both RSA and ML-KEM components
                 $publicComponents = $this->parseHybridPublicKey($publicKey);
                 $privateComponents = $this->parseHybridPrivateKey($privateKey);
-                
+
                 $rsaValid = $this->encryptionService->verifyKeyIntegrity(
                     $publicComponents['rsa_public_key'],
                     $privateComponents['rsa_private_key']
                 );
-                
+
                 $mlkemValid = $this->validateQuantumKeyPair(
                     $publicComponents['mlkem_public_key'],
                     $privateComponents['mlkem_private_key'],
                     'ML-KEM-768'
                 );
-                
+
                 return $rsaValid && $mlkemValid;
             }
-            
+
             return false;
         } catch (\Exception $e) {
             Log::warning('Quantum key pair validation failed', [
                 'algorithm' => $algorithm,
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -376,17 +379,19 @@ class QuantumCryptoService
         }
 
         // Try LibOQS first
-        $liboqsProvider = new LibOQSMLKEMProvider();
+        $liboqsProvider = new LibOQSMLKEMProvider;
         if ($liboqsProvider->isAvailable()) {
             $this->mlkemProvider = $liboqsProvider;
             Log::info('Using LibOQS ML-KEM provider');
+
             return $this->mlkemProvider;
         }
 
         // Fall back to test provider (NOT for production)
         if (app()->environment('testing', 'local')) {
-            $this->mlkemProvider = new FallbackMLKEMProvider();
+            $this->mlkemProvider = new FallbackMLKEMProvider;
             Log::warning('Using fallback ML-KEM provider - NOT CRYPTOGRAPHICALLY SECURE');
+
             return $this->mlkemProvider;
         }
 
@@ -396,7 +401,8 @@ class QuantumCryptoService
     private function combineSharedSecrets(string $rsaSecret, string $mlkemSecret): string
     {
         // NIST SP 800-56C compliant key combination
-        $combined = $rsaSecret . $mlkemSecret;
+        $combined = $rsaSecret.$mlkemSecret;
+
         return hash('sha256', $combined, true);
     }
 
@@ -410,7 +416,7 @@ class QuantumCryptoService
                 'ml-kem' => $mlkemKeyPair['public_key'],
             ],
         ];
-        
+
         return base64_encode(json_encode($hybridKey));
     }
 
@@ -424,18 +430,18 @@ class QuantumCryptoService
                 'ml-kem' => $mlkemKeyPair['private_key'],
             ],
         ];
-        
+
         return $this->encryptPrivateKey(json_encode($hybridKey));
     }
 
     private function parseHybridPublicKey(string $hybridPublicKey): array
     {
         $keyData = json_decode(base64_decode($hybridPublicKey), true);
-        
-        if (!$keyData || !isset($keyData['components'])) {
+
+        if (! $keyData || ! isset($keyData['components'])) {
             throw new EncryptionException('Invalid hybrid public key format');
         }
-        
+
         return [
             'rsa_public_key' => $keyData['components']['rsa'],
             'mlkem_public_key' => $keyData['components']['ml-kem'],
@@ -445,11 +451,11 @@ class QuantumCryptoService
     private function parseHybridPrivateKey(string $hybridPrivateKey): array
     {
         $keyData = json_decode($this->decryptPrivateKey($hybridPrivateKey), true);
-        
-        if (!$keyData || !isset($keyData['components'])) {
+
+        if (! $keyData || ! isset($keyData['components'])) {
             throw new DecryptionException('Invalid hybrid private key format');
         }
-        
+
         return [
             'rsa_private_key' => $keyData['components']['rsa'],
             'mlkem_private_key' => $keyData['components']['ml-kem'],
@@ -465,18 +471,18 @@ class QuantumCryptoService
                 'ml-kem' => $mlkemCiphertext,
             ],
         ];
-        
+
         return base64_encode(json_encode($combined));
     }
 
     private function parseHybridCiphertext(string $hybridCiphertext): array
     {
         $ciphertextData = json_decode(base64_decode($hybridCiphertext), true);
-        
-        if (!$ciphertextData || !isset($ciphertextData['components'])) {
+
+        if (! $ciphertextData || ! isset($ciphertextData['components'])) {
             throw new DecryptionException('Invalid hybrid ciphertext format');
         }
-        
+
         return [
             'rsa_ciphertext' => $ciphertextData['components']['rsa'],
             'mlkem_ciphertext' => $ciphertextData['components']['ml-kem'],

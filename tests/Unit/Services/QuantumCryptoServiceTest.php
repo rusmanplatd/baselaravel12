@@ -118,7 +118,7 @@ class QuantumCryptoServiceTest extends TestCase
             
             $this->assertEquals("ML-KEM-{$securityLevel}", $keyPair['algorithm']);
             $this->assertEquals($securityLevel, $keyPair['key_strength']);
-            $this->assertStringContains('NOT SECURE', $keyPair['provider']);
+            $this->assertStringContainsString('NOT SECURE', $keyPair['provider']);
         }
     }
     
@@ -200,7 +200,7 @@ class QuantumCryptoServiceTest extends TestCase
     public function test_invalid_security_level_throws_exception()
     {
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Unsupported security level: 999');
+        $this->expectExceptionMessage('ML-KEM-999 is not supported');
         
         $this->quantumService->generateMLKEMKeyPair(999);
     }

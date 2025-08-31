@@ -579,7 +579,7 @@ class ChatEncryptionService
     private function generateQuantumKeyPair(string $algorithm, ?int $keySize): array
     {
         $quantumService = app(QuantumCryptoService::class);
-        
+
         return match ($algorithm) {
             'ML-KEM-512' => $quantumService->generateMLKEMKeyPair(512),
             'ML-KEM-768' => $quantumService->generateMLKEMKeyPair(768),
@@ -620,30 +620,59 @@ class ChatEncryptionService
     /**
      * Algorithm negotiation for multi-device conversations
      */
-    public function negotiateAlgorithm(array $deviceCapabilities): string
+    public function negotiateAlgorithm(array $deviceCapabilities, array $options = []): string
     {
+        // Filter out malformed entries and ensure arrays
+        $validDeviceCapabilities = [];
+        foreach ($deviceCapabilities as $caps) {
+            if (is_array($caps)) {
+                $validCaps = array_filter($caps, function ($alg) {
+                    return is_string($alg) && ! empty($alg) && $this->isValidAlgorithm($alg);
+                });
+                $validDeviceCapabilities[] = $validCaps;
+            }
+        }
+
+        // If no valid capabilities, return fallback
+        if (empty($validDeviceCapabilities)) {
+            return 'RSA-4096-OAEP';
+        }
+
         $commonAlgorithms = [];
-        
-        foreach ($deviceCapabilities as $deviceCaps) {
+
+        foreach ($validDeviceCapabilities as $deviceCaps) {
+            // Skip empty capabilities arrays
+            if (empty($deviceCaps)) {
+                // If any device has no capabilities, no common algorithms possible
+                return $this->selectFallbackAlgorithm($validDeviceCapabilities);
+            }
+
             if (empty($commonAlgorithms)) {
                 $commonAlgorithms = $deviceCaps;
             } else {
                 $commonAlgorithms = array_intersect($commonAlgorithms, $deviceCaps);
             }
         }
-        
+
+        // If no common algorithms, try fallback approach
         if (empty($commonAlgorithms)) {
-            throw new EncryptionException('No compatible algorithms found among devices');
+            return $this->selectFallbackAlgorithm($validDeviceCapabilities);
         }
-        
-        return $this->selectBestAlgorithm($commonAlgorithms);
+
+        return $this->selectBestAlgorithm($commonAlgorithms, $options);
     }
 
     /**
      * Select the most secure compatible algorithm
      */
-    private function selectBestAlgorithm(array $algorithms): string
+    private function selectBestAlgorithm(array $algorithms, array $options = []): string
     {
+        // Check for preferred algorithm first
+        if (isset($options['preferred_algorithm']) &&
+            in_array($options['preferred_algorithm'], $algorithms)) {
+            return $options['preferred_algorithm'];
+        }
+
         // Priority: strongest quantum-resistant first
         $priority = [
             'ML-KEM-1024',              // Highest security
@@ -652,17 +681,18 @@ class ChatEncryptionService
             'ML-KEM-512',               // Basic quantum resistance
             'RSA-4096-OAEP',            // Legacy fallback
         ];
-        
+
         foreach ($priority as $preferred) {
             if (in_array($preferred, $algorithms)) {
                 Log::info('Algorithm selected for conversation', [
                     'selected' => $preferred,
                     'available' => $algorithms,
                 ]);
+
                 return $preferred;
             }
         }
-        
+
         throw new EncryptionException('No suitable algorithm found');
     }
 
@@ -672,6 +702,7 @@ class ChatEncryptionService
     public function isQuantumResistant(string $algorithm): bool
     {
         $quantumAlgorithms = ['ML-KEM-512', 'ML-KEM-768', 'ML-KEM-1024', 'HYBRID-RSA4096-MLKEM768'];
+
         return in_array($algorithm, $quantumAlgorithms);
     }
 
@@ -714,6 +745,54 @@ class ChatEncryptionService
         ];
 
         return $algorithmMap[$algorithm] ?? [];
+    }
+
+    /**
+     * Check if an algorithm is valid/supported
+     */
+    private function isValidAlgorithm(string $algorithm): bool
+    {
+        $validAlgorithms = [
+            'ML-KEM-512', 'ML-KEM-768', 'ML-KEM-1024',
+            'HYBRID-RSA4096-MLKEM768', 'RSA-4096-OAEP',
+        ];
+
+        return in_array($algorithm, $validAlgorithms);
+    }
+
+    /**
+     * Select fallback algorithm when no common algorithms found
+     */
+    private function selectFallbackAlgorithm(array $deviceCapabilities): string
+    {
+        // Flatten all capabilities and find most compatible
+        $allCapabilities = [];
+        foreach ($deviceCapabilities as $caps) {
+            if (is_array($caps)) {
+                $allCapabilities = array_merge($allCapabilities, $caps);
+            }
+        }
+
+        $uniqueCapabilities = array_unique(array_filter($allCapabilities, 'is_string'));
+        $validCapabilities = array_filter($uniqueCapabilities, [$this, 'isValidAlgorithm']);
+
+        if (empty($validCapabilities)) {
+            return 'RSA-4096-OAEP';
+        }
+
+        // Try to find best fallback
+        $fallbackPriority = [
+            'HYBRID-RSA4096-MLKEM768',
+            'RSA-4096-OAEP',
+        ];
+
+        foreach ($fallbackPriority as $fallback) {
+            if (in_array($fallback, $validCapabilities)) {
+                return $fallback;
+            }
+        }
+
+        return 'RSA-4096-OAEP';
     }
 
     public function validateEncryptionHealth(): array

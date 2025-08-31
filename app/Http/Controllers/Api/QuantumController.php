@@ -161,7 +161,7 @@ class QuantumController extends Controller
                 'algorithm' => $algorithm,
                 'algorithm_info' => $encryptionService->getAlgorithmInfo($algorithm),
                 'quantum_resistant' => $encryptionService->isQuantumResistant($algorithm),
-                'participants' => count($devices),
+                'participants' => $conversation->participants->map(fn($p) => $p->user_id)->unique()->count(),
                 'compatible_devices' => $devices->count(),
                 'device_capabilities' => $deviceCapabilities
             ]);
