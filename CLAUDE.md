@@ -258,11 +258,27 @@ E2E test categories:
 
 ### End-to-End Encrypted Chat System
 - **Multi-Device Support**: Seamless encryption across multiple user devices
+- **Quantum-Resistant Cryptography**: NIST-approved post-quantum algorithms (ML-KEM-512/768/1024)
+- **Hybrid Encryption**: Smooth transition from RSA to quantum-resistant algorithms
 - **Key Management**: Sophisticated encryption key generation, rotation, and recovery
 - **File Encryption**: Encrypted file uploads and downloads with thumbnail support
 - **Performance Optimized**: Bulk encryption/decryption operations for better performance
 - **Security Monitoring**: Real-time security anomaly detection and forensic audit trails
 - **Cross-Platform Compatibility**: Support for different device types and encryption implementations
+- **Algorithm Negotiation**: Automatic selection of best compatible encryption algorithms
+- **Migration Tools**: Comprehensive utilities for upgrading to quantum-resistant encryption
+
+### Quantum Cryptography Features
+- **NIST-Approved Algorithms**: ML-KEM (CRYSTALS-KYBER) key encapsulation mechanism
+- **Security Levels**: Support for ML-KEM-512, ML-KEM-768, and ML-KEM-1024
+- **Hybrid Cryptography**: RSA+ML-KEM combinations for transition periods
+- **Provider Architecture**: Pluggable ML-KEM implementations (LibOQS production, fallback testing)
+- **Device Readiness Assessment**: Automatic evaluation of quantum migration readiness
+- **Migration Strategies**: Immediate, gradual, and hybrid migration approaches
+- **Real-time Health Monitoring**: Quantum system status and device capability tracking
+- **Admin Dashboard**: Comprehensive quantum security management interface
+- **Backward Compatibility**: Seamless interoperability with existing RSA-encrypted conversations
+- **Performance Optimization**: Caching, batching, and background processing for quantum operations
 
 ### Security Features
 - **WebAuthn/Passkeys**: Modern passwordless authentication
@@ -301,3 +317,161 @@ E2E test categories:
 - `vite.config.ts` - Frontend build configuration with SSR support
 - `components.json` - shadcn/ui configuration
 - `tsconfig.json` - TypeScript configuration with path aliases
+
+## Quantum Cryptography API
+
+### Backend API Endpoints
+All quantum endpoints are available under `/api/v1/quantum/` with authentication required:
+
+```php
+// Key generation
+POST /api/v1/quantum/generate-keypair
+{
+  "algorithm": "ML-KEM-768",  // ML-KEM-512, ML-KEM-768, ML-KEM-1024
+  "security_level": 768
+}
+
+// Key encapsulation  
+POST /api/v1/quantum/encapsulate
+{
+  "public_key": "base64_encoded_key",
+  "algorithm": "ML-KEM-768"
+}
+
+// Key decapsulation
+POST /api/v1/quantum/decapsulate  
+{
+  "ciphertext": "base64_encoded_ciphertext", 
+  "private_key": "base64_encoded_key",
+  "algorithm": "ML-KEM-768"
+}
+
+// Device registration
+POST /api/v1/quantum/register-device
+{
+  "device_name": "My Phone",
+  "device_type": "mobile",
+  "capabilities": ["ml-kem-768", "ml-kem-1024"]
+}
+
+// Algorithm negotiation
+GET /api/v1/quantum/conversations/{id}/negotiate-algorithm
+
+// Health check
+GET /api/v1/quantum/health
+```
+
+### Frontend Usage Examples
+
+#### Basic Quantum Encryption
+```typescript
+import { useQuantumE2EE } from '@/hooks/useQuantumE2EE';
+
+const { encryptMessage, quantumStatus } = useQuantumE2EE();
+
+// Encrypt with quantum algorithm
+const encrypted = await encryptMessage(
+  "Hello, quantum world!", 
+  conversationId,
+  "ML-KEM-768"
+);
+```
+
+#### Device Management
+```tsx
+import { QuantumDeviceManager } from '@/components/ui/quantum-device-manager';
+
+<QuantumDeviceManager 
+  showAddDevice={true}
+  className="max-w-4xl"
+/>
+```
+
+#### Health Monitoring
+```tsx
+import { QuantumHealthIndicator } from '@/components/ui/quantum-health-indicator';
+
+<QuantumHealthIndicator 
+  showDetails={true}
+  autoRefresh={true}
+  refreshInterval={30000}
+/>
+```
+
+#### Migration Management
+```typescript
+import { quantumMigrationUtils } from '@/utils/QuantumMigrationUtils';
+
+// Assess migration readiness
+const assessment = await quantumMigrationUtils.assessMigrationReadiness();
+
+// Start migration
+const migrationId = await quantumMigrationUtils.startMigration('gradual');
+
+// Monitor progress
+const status = quantumMigrationUtils.getMigrationStatus();
+```
+
+#### Admin Dashboard
+```tsx
+import { QuantumAdminPanel } from '@/components/ui/quantum-admin-panel';
+
+<QuantumAdminPanel className="container mx-auto" />
+```
+
+### Quantum Algorithm Support
+
+#### Supported Algorithms
+- **ML-KEM-512**: 128-bit security level, smaller keys (fastest)
+- **ML-KEM-768**: 192-bit security level, balanced performance (recommended)
+- **ML-KEM-1024**: 256-bit security level, largest keys (highest security)
+- **HYBRID-RSA4096-MLKEM768**: Transition mode combining RSA and ML-KEM
+
+#### Algorithm Selection Priority
+1. **ML-KEM-768**: Default for new conversations
+2. **HYBRID-RSA4096-MLKEM768**: For mixed classical/quantum device compatibility
+3. **RSA-4096-OAEP**: Fallback for legacy devices
+
+#### Encryption Version History
+- **v1**: Legacy (deprecated)
+- **v2**: RSA-based encryption (current classical)
+- **v3**: Quantum-resistant encryption (ML-KEM based)
+
+### Testing Quantum Features
+
+#### Backend Testing
+```bash
+# Run quantum-specific tests
+php artisan test --filter=Quantum
+
+# Test ML-KEM provider implementations
+php artisan test tests/Feature/QuantumCryptoServiceTest.php
+
+# Test API endpoints
+php artisan test tests/Feature/Api/QuantumControllerTest.php
+```
+
+#### Frontend Testing  
+```bash
+# Run quantum E2EE tests
+./scripts/test-e2ee.sh quantum
+
+# Test device migration
+npm run test:e2e -- --grep "quantum.*migration"
+
+# Test algorithm negotiation
+npm run test:e2e -- --grep "quantum.*negotiation"
+```
+
+#### Development Setup
+```bash
+# Install LibOQS (production ML-KEM provider)
+# Ubuntu/Debian:
+sudo apt-get install liboqs-dev
+
+# macOS:
+brew install liboqs
+
+# For development/testing, fallback provider is used automatically
+# when LibOQS is not available
+```
