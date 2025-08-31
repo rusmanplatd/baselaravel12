@@ -317,8 +317,8 @@ class ChannelController extends Controller
         $query = Channel::query()
             ->active()
             ->where(function ($q) use ($validated) {
-                $q->where('name', 'like', '%' . $validated['query'] . '%')
-                  ->orWhere('description', 'like', '%' . $validated['query'] . '%');
+                $q->where('name', 'ilike', '%' . $validated['query'] . '%')
+                  ->orWhere('description', 'ilike', '%' . $validated['query'] . '%');
             });
 
         if (isset($validated['organization_id'])) {
