@@ -71,6 +71,29 @@ Route::prefix('v1')->group(function () {
         Route::get('health', [WebAuthnApiController::class, 'health'])
             ->name('health');
     });
+
+    // Geo API endpoints (public reference data)
+    Route::prefix('geo')->name('api.geo.')->group(function () {
+        // List routes must come before resource routes to avoid conflicts
+        Route::get('countries/list', [\App\Http\Controllers\Api\Geo\CountryController::class, 'list'])->name('countries.list');
+        Route::get('provinces/list', [\App\Http\Controllers\Api\Geo\ProvinceController::class, 'list'])->name('provinces.list');
+        Route::get('cities/list', [\App\Http\Controllers\Api\Geo\CityController::class, 'list'])->name('cities.list');
+        Route::get('districts/list', [\App\Http\Controllers\Api\Geo\DistrictController::class, 'list'])->name('districts.list');
+        Route::get('villages/list', [\App\Http\Controllers\Api\Geo\VillageController::class, 'list'])->name('villages.list');
+        
+        // Nested routes must also come before resource routes
+        Route::get('countries/{country}/provinces', [\App\Http\Controllers\Api\Geo\ProvinceController::class, 'byCountry'])->name('provinces.by-country');
+        Route::get('provinces/{province}/cities', [\App\Http\Controllers\Api\Geo\CityController::class, 'byProvince'])->name('cities.by-province');
+        Route::get('cities/{city}/districts', [\App\Http\Controllers\Api\Geo\DistrictController::class, 'byCity'])->name('districts.by-city');
+        Route::get('districts/{district}/villages', [\App\Http\Controllers\Api\Geo\VillageController::class, 'byDistrict'])->name('villages.by-district');
+        
+        // Resource routes
+        Route::apiResource('countries', \App\Http\Controllers\Api\Geo\CountryController::class);
+        Route::apiResource('provinces', \App\Http\Controllers\Api\Geo\ProvinceController::class);
+        Route::apiResource('cities', \App\Http\Controllers\Api\Geo\CityController::class);
+        Route::apiResource('districts', \App\Http\Controllers\Api\Geo\DistrictController::class);
+        Route::apiResource('villages', \App\Http\Controllers\Api\Geo\VillageController::class);
+    });
 });
 
 // Authenticated API routes
