@@ -28,18 +28,29 @@ class MessageFactory extends Factory
      */
     public function definition(): array
     {
+        // Create dummy encrypted content for testing
+        $content = $this->faker->sentence();
+        $encryptedContent = json_encode([
+            'data' => base64_encode($content),
+            'iv' => base64_encode(random_bytes(16)),
+            'hmac' => base64_encode(random_bytes(32)),
+            'auth_data' => base64_encode(random_bytes(16)),
+            'timestamp' => now()->timestamp,
+            'nonce' => base64_encode(random_bytes(12))
+        ]);
+
         return [
             'conversation_id' => Conversation::factory(),
             'sender_id' => User::factory(),
-            'content' => $this->faker->sentence(),
+            'encrypted_content' => $encryptedContent,
+            'content_hash' => hash('sha256', $content),
+            'content_hmac' => base64_encode(random_bytes(32)),
             'type' => 'text',
             'reply_to_id' => null,
             'file_name' => null,
             'file_path' => null,
             'file_size' => null,
-            'mime_type' => null,
-            'encryption_iv' => null,
-            'encryption_tag' => null,
+            'file_mime_type' => null,
             'edited_at' => null,
         ];
     }
@@ -51,11 +62,10 @@ class MessageFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'type' => 'text',
-            'content' => $this->faker->sentence(),
             'file_name' => null,
             'file_path' => null,
             'file_size' => null,
-            'mime_type' => null,
+            'file_mime_type' => null,
         ]);
     }
 
@@ -66,13 +76,12 @@ class MessageFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'type' => 'file',
-            'content' => null,
             'file_name' => $this->faker->word().'.pdf',
             'file_path' => 'chat-files/'.$this->faker->ulid().'.encrypted',
             'file_size' => $this->faker->numberBetween(1024, 1024 * 1024), // 1KB to 1MB
-            'mime_type' => 'application/pdf',
-            'encryption_iv' => base64_encode($this->faker->randomBytes(16)),
-            'encryption_tag' => base64_encode($this->faker->randomBytes(16)),
+            'file_mime_type' => 'application/pdf',
+            'file_iv' => base64_encode(random_bytes(16)),
+            'file_tag' => base64_encode(random_bytes(16)),
         ]);
     }
 
@@ -83,13 +92,12 @@ class MessageFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'type' => 'file',
-            'content' => null,
             'file_name' => $this->faker->word().'.jpg',
             'file_path' => 'chat-files/'.$this->faker->ulid().'.encrypted',
             'file_size' => $this->faker->numberBetween(1024 * 10, 1024 * 1024 * 5), // 10KB to 5MB
-            'mime_type' => 'image/jpeg',
-            'encryption_iv' => base64_encode($this->faker->randomBytes(16)),
-            'encryption_tag' => base64_encode($this->faker->randomBytes(16)),
+            'file_mime_type' => 'image/jpeg',
+            'file_iv' => base64_encode(random_bytes(16)),
+            'file_tag' => base64_encode(random_bytes(16)),
         ]);
     }
 

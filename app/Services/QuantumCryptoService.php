@@ -53,7 +53,7 @@ class QuantumCryptoService
     public function generateMLKEMKeyPair(int $securityLevel = 768): array
     {
         if (!$this->isMLKEMSupported($securityLevel)) {
-            throw new EncryptionException("ML-KEM-{$securityLevel} is not supported");
+            throw new \InvalidArgumentException("ML-KEM-{$securityLevel} is not supported");
         }
 
         try {

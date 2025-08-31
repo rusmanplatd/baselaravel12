@@ -148,15 +148,15 @@ class QuantumCryptographyTest extends TestCase
         $algorithm = $encryptionService->negotiateAlgorithm($deviceCapabilities);
         $this->assertEquals('ML-KEM-768', $algorithm);
         
-        // Test mixed environment
+        // Test mixed environment (ensure all devices support at least RSA)
         $mixedCapabilities = [
             ['ML-KEM-768', 'RSA-4096-OAEP'],
             ['RSA-4096-OAEP', 'HYBRID-RSA4096-MLKEM768'],
-            ['ML-KEM-768', 'HYBRID-RSA4096-MLKEM768']
+            ['RSA-4096-OAEP', 'HYBRID-RSA4096-MLKEM768']
         ];
         
         $algorithm = $encryptionService->negotiateAlgorithm($mixedCapabilities);
-        $this->assertContains($algorithm, ['HYBRID-RSA4096-MLKEM768', 'RSA-4096-OAEP']);
+        $this->assertEquals('RSA-4096-OAEP', $algorithm);
         
         // Test legacy only
         $legacyCapabilities = [

@@ -41,9 +41,10 @@ class MultiDeviceEncryptionService
         ?string $userAgent = null,
         array $deviceCapabilities = ['messaging', 'encryption'],
         string $securityLevel = 'medium',
-        array $deviceInfo = []
+        array $deviceInfo = [],
+        int $encryptionVersion = 2
     ): UserDevice {
-        return DB::transaction(function () use ($user, $deviceName, $deviceType, $publicKey, $deviceFingerprint, $platform, $userAgent, $deviceCapabilities, $securityLevel, $deviceInfo) {
+        return DB::transaction(function () use ($user, $deviceName, $deviceType, $publicKey, $deviceFingerprint, $platform, $userAgent, $deviceCapabilities, $securityLevel, $deviceInfo, $encryptionVersion) {
             // Check if device already exists
             $existingDevice = $user->getDeviceByFingerprint($deviceFingerprint);
 
@@ -58,7 +59,7 @@ class MultiDeviceEncryptionService
                     'device_capabilities' => $deviceCapabilities,
                     'security_level' => $securityLevel,
                     'device_info' => $deviceInfo,
-                    'encryption_version' => 2,
+                    'encryption_version' => $encryptionVersion,
                     'last_used_at' => now(),
                     'is_active' => true,
                 ]);
@@ -78,7 +79,7 @@ class MultiDeviceEncryptionService
                 'device_capabilities' => $deviceCapabilities,
                 'security_level' => $securityLevel,
                 'device_info' => $deviceInfo,
-                'encryption_version' => 2,
+                'encryption_version' => $encryptionVersion,
                 'last_used_at' => now(),
                 'is_trusted' => false,
                 'is_active' => true,
@@ -555,7 +556,8 @@ class MultiDeviceEncryptionService
             userAgent: null,
             deviceCapabilities: $allCapabilities,
             securityLevel: 'high', // Quantum devices get high security by default
-            deviceInfo: ['quantum_ready' => true, 'supported_algorithms' => $quantumCapabilities]
+            deviceInfo: ['quantum_ready' => true, 'supported_algorithms' => $quantumCapabilities],
+            encryptionVersion: $encryptionVersion
         );
     }
 

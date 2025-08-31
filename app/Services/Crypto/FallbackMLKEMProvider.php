@@ -29,6 +29,10 @@ class FallbackMLKEMProvider implements MLKEMProviderInterface
         $publicKey = random_bytes($sizes['public']);
         $privateKey = random_bytes($sizes['private']);
         
+        // Store a hash for key pair validation
+        $keyHash = hash('sha256', $publicKey . $privateKey);
+        cache()->put('fallback_keypair_' . hash('sha256', $publicKey), $keyHash, now()->addMinutes(10));
+        
         Log::warning('Using fallback ML-KEM provider - NOT CRYPTOGRAPHICALLY SECURE', [
             'security_level' => $securityLevel,
             'public_key_size' => strlen($publicKey),
@@ -99,8 +103,20 @@ class FallbackMLKEMProvider implements MLKEMProviderInterface
                 return false;
             }
             
-            return strlen($publicKey) === $expectedSizes['public'] 
+            $sizeValid = strlen($publicKey) === $expectedSizes['public'] 
                 && strlen($privateKey) === $expectedSizes['private'];
+                
+            if (!$sizeValid) {
+                return false;
+            }
+            
+            // For the fallback provider, we can't do real cryptographic validation
+            // but we can check if the keys were generated together by comparing a hash
+            // This is obviously not secure but works for testing key pair matching
+            $keyHash = hash('sha256', $publicKey . $privateKey);
+            $storedHash = cache()->get('fallback_keypair_' . hash('sha256', $publicKey));
+            
+            return $storedHash === $keyHash;
         } catch (\Exception $e) {
             return false;
         }

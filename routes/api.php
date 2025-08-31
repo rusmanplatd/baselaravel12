@@ -349,6 +349,25 @@ Route::middleware('auth:api')->prefix('v1')->group(function () {
         Route::post('conversations/{conversation}/negotiate-algorithm', [\App\Http\Controllers\Api\QuantumController::class, 'negotiateAlgorithm'])
             ->name('conversations.negotiate-algorithm')
             ->middleware('throttle:20,1');
+
+        // Quantum migration endpoints
+        Route::prefix('migration')->name('migration.')->group(function () {
+            Route::post('assess', [\App\Http\Controllers\Api\QuantumController::class, 'assessMigration'])
+                ->name('assess')
+                ->middleware('throttle:10,1');
+            Route::post('start', [\App\Http\Controllers\Api\QuantumController::class, 'startMigration'])
+                ->name('start')
+                ->middleware('throttle:5,1');
+            Route::get('{migrationId}/status', [\App\Http\Controllers\Api\QuantumController::class, 'getMigrationStatus'])
+                ->name('status')
+                ->middleware('throttle:30,1');
+            Route::post('{migrationId}/cancel', [\App\Http\Controllers\Api\QuantumController::class, 'cancelMigration'])
+                ->name('cancel')
+                ->middleware('throttle:10,1');
+            Route::post('check-compatibility', [\App\Http\Controllers\Api\QuantumController::class, 'checkCompatibility'])
+                ->name('check-compatibility')
+                ->middleware('throttle:15,1');
+        });
     });
 
     // User API endpoints
