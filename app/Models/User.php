@@ -109,8 +109,9 @@ class User extends Authenticatable implements HasPasskeys
 
     public function getFormattedAddressAttribute(): ?string
     {
-        if ($this->formatted_address) {
-            return $this->formatted_address;
+        // Check the raw attribute to avoid circular reference
+        if ($this->getRawOriginal('formatted_address')) {
+            return $this->getRawOriginal('formatted_address');
         }
 
         $addressParts = array_filter([
