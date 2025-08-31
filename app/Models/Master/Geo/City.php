@@ -4,6 +4,7 @@ namespace App\Models\Master\Geo;
 
 use App\Models\User;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -11,14 +12,16 @@ use Illuminate\Http\Request;
 
 class City extends Model
 {
-    use HasUlids;
+    use HasUlids, HasFactory;
 
-    public $table = 'ref_city';
+    public $table = 'ref_geo_city';
 
     protected $fillable = [
         'province_id',
         'code',
         'name',
+        'created_by',
+        'updated_by',
     ];
 
     protected $casts = [

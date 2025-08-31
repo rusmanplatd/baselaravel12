@@ -4,19 +4,22 @@ namespace App\Models\Master\Geo;
 
 use App\Models\User;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 
 class Village extends Model
 {
-    use HasUlids;
+    use HasUlids, HasFactory;
 
-    public $table = 'ref_village';
+    public $table = 'ref_geo_village';
 
     protected $fillable = [
         'district_id',
         'code',
         'name',
+        'created_by',
+        'updated_by',
     ];
 
     protected $casts = [

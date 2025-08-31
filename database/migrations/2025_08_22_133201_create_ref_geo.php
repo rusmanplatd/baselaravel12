@@ -14,7 +14,7 @@ return new class extends Migration
     public function up()
     {
         Schema::create(
-            'ref_country',
+            'ref_geo_country',
             function (Blueprint $table) {
                 $table->ulid('id')->primary();
                 $table->string('name');
@@ -33,7 +33,7 @@ return new class extends Migration
         );
 
         Schema::create(
-            'ref_province',
+            'ref_geo_province',
             function (Blueprint $table) {
                 $table->ulid('id')->primary();
                 $table->ulid('country_id')->index();
@@ -45,7 +45,7 @@ return new class extends Migration
                 $table->ulid('created_by')->index();
                 $table->ulid('updated_by')->index();
 
-                $table->foreign('country_id')->references('id')->on('ref_country');
+                $table->foreign('country_id')->references('id')->on('ref_geo_country');
                 $table->foreign('created_by')->references('id')->on('sys_users');
                 $table->foreign('updated_by')->references('id')->on('sys_users');
 
@@ -54,7 +54,7 @@ return new class extends Migration
         );
 
         Schema::create(
-            'ref_city',
+            'ref_geo_city',
             function (Blueprint $table) {
                 $table->ulid('id')->primary();
                 $table->ulid('province_id')->index();
@@ -66,7 +66,7 @@ return new class extends Migration
                 $table->ulid('created_by')->index();
                 $table->ulid('updated_by')->index();
 
-                $table->foreign('province_id')->references('id')->on('ref_province');
+                $table->foreign('province_id')->references('id')->on('ref_geo_province');
                 $table->foreign('created_by')->references('id')->on('sys_users');
                 $table->foreign('updated_by')->references('id')->on('sys_users');
 
@@ -75,7 +75,7 @@ return new class extends Migration
         );
 
         Schema::create(
-            'ref_district',
+            'ref_geo_district',
             function (Blueprint $table) {
                 $table->ulid('id')->primary();
                 $table->ulid('city_id')->index();
@@ -87,7 +87,7 @@ return new class extends Migration
                 $table->ulid('created_by')->index();
                 $table->ulid('updated_by')->index();
 
-                $table->foreign('city_id')->references('id')->on('ref_city');
+                $table->foreign('city_id')->references('id')->on('ref_geo_city');
                 $table->foreign('created_by')->references('id')->on('sys_users');
                 $table->foreign('updated_by')->references('id')->on('sys_users');
 
@@ -96,21 +96,23 @@ return new class extends Migration
         );
 
         Schema::create(
-            'ref_village',
+            'ref_geo_village',
             function (Blueprint $table) {
                 $table->ulid('id')->primary();
                 $table->ulid('district_id')->index();
                 $table->string('name');
-                $table->string('code')->unique();
+                $table->string('code');
 
                 $table->timestampTz('created_at')->useCurrent();
                 $table->timestampTz('updated_at')->useCurrent()->useCurrentOnUpdate();
                 $table->ulid('created_by')->index();
                 $table->ulid('updated_by')->index();
 
-                $table->foreign('district_id')->references('id')->on('ref_district');
+                $table->foreign('district_id')->references('id')->on('ref_geo_district');
                 $table->foreign('created_by')->references('id')->on('sys_users');
                 $table->foreign('updated_by')->references('id')->on('sys_users');
+
+                $table->unique(['district_id', 'code']);
             }
         );
     }
@@ -122,10 +124,10 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::drop('ref_village');
-        Schema::drop('ref_district');
-        Schema::drop('ref_city');
-        Schema::drop('ref_province');
-        Schema::drop('ref_country');
+        Schema::drop('ref_geo_village');
+        Schema::drop('ref_geo_district');
+        Schema::drop('ref_geo_city');
+        Schema::drop('ref_geo_province');
+        Schema::drop('ref_geo_country');
     }
 };
