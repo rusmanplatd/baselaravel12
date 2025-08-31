@@ -37,6 +37,8 @@ class UserDevice extends Model
         'failed_auth_attempts',
         'locked_until',
         'last_key_rotation_at',
+        'capabilities_verified_at',
+        'last_quantum_health_check',
     ];
 
     protected $casts = [
@@ -45,6 +47,8 @@ class UserDevice extends Model
         'auto_trust_expires_at' => 'datetime',
         'locked_until' => 'datetime',
         'last_key_rotation_at' => 'datetime',
+        'capabilities_verified_at' => 'datetime',
+        'last_quantum_health_check' => 'datetime',
         'is_trusted' => 'boolean',
         'is_active' => 'boolean',
         'device_capabilities' => 'array',
@@ -306,7 +310,16 @@ class UserDevice extends Model
      */
     public function isQuantumReady(): bool
     {
-        return $this->encryption_version >= 3 && $this->supportsQuantumResistant();
+        if ($this->encryption_version < 3) {
+            return false;
+        }
+        
+        $capabilities = $this->device_capabilities ?? [];
+        $pureQuantumAlgorithms = ['ml-kem-512', 'ml-kem-768', 'ml-kem-1024'];
+        
+        // Device is quantum ready only if it has pure ML-KEM capabilities
+        // Hybrid capabilities alone don't make it quantum ready
+        return !empty(array_intersect($capabilities, $pureQuantumAlgorithms));
     }
 
     /**

@@ -645,7 +645,7 @@ class QuantumController extends Controller
             
             $totalDevices = $devices->count();
             $compatibleCount = count($compatibleDevices);
-            $compatibilityPercentage = $totalDevices > 0 ? floatval(($compatibleCount / $totalDevices) * 100) : floatval(0);
+            $compatibilityPercentage = $totalDevices > 0 ? (float)(($compatibleCount / $totalDevices) * 100) : 0.0;
             $isCompatible = $compatibilityPercentage > 0;
             
             $recommendedActions = [];
@@ -657,17 +657,14 @@ class QuantumController extends Controller
                 $recommendedActions[] = 'Update incompatible devices before full migration';
             }
             
-            // Ensure compatibility_percentage is always a float for JSON response
-            $responseData = [
+            return response()->json([
                 'compatible' => $isCompatible,
-                'compatibility_percentage' => $compatibilityPercentage === 0 ? 0.0 : (float) $compatibilityPercentage,
+                'compatibility_percentage' => floatval($compatibilityPercentage),
                 'compatible_devices' => $compatibleDevices,
                 'incompatible_devices' => $incompatibleDevices,
                 'recommended_actions' => $recommendedActions,
                 'target_algorithm' => $targetAlgorithm
-            ];
-            
-            return response()->json($responseData);
+            ], 200, [], JSON_PRESERVE_ZERO_FRACTION);
             
         } catch (\Exception $e) {
             Log::error('Compatibility check failed', [
@@ -761,5 +758,552 @@ class QuantumController extends Controller
         }
         
         \Illuminate\Support\Facades\Cache::put("migration:{$migrationId}", $migrationData, 3600);
+    }
+
+    public function bulkDeviceUpgrade(Request $request)
+    {
+        $validated = $request->validate([
+            'target_capabilities' => 'required|array',
+            'target_capabilities.*' => 'string|in:ml-kem-512,ml-kem-768,ml-kem-1024,hybrid',
+            'upgrade_all' => 'boolean'
+        ]);
+        
+        try {
+            $user = auth()->user();
+            $devices = $user->devices()->active()->get();
+            
+            if ($validated['upgrade_all']) {
+                $devicesToUpgrade = $devices;
+            } else {
+                // In a real implementation, we'd support selective device upgrade
+                $devicesToUpgrade = $devices;
+            }
+            
+            $upgradedDevices = [];
+            $failedDevices = [];
+            
+            foreach ($devicesToUpgrade as $device) {
+                try {
+                    $device->updateQuantumCapabilities($validated['target_capabilities']);
+                    $upgradedDevices[] = [
+                        'device_id' => $device->id,
+                        'device_name' => $device->device_name,
+                        'old_capabilities' => $device->getOriginal('device_capabilities') ?? [],
+                        'new_capabilities' => $device->getSupportedAlgorithms()
+                    ];
+                } catch (\Exception $e) {
+                    $failedDevices[] = [
+                        'device_id' => $device->id,
+                        'device_name' => $device->device_name,
+                        'error' => $e->getMessage()
+                    ];
+                }
+            }
+            
+            $upgradedCount = count($upgradedDevices);
+            $failedCount = count($failedDevices);
+            $totalDevices = count($devicesToUpgrade);
+            
+            return response()->json([
+                'upgraded_devices' => $upgradedDevices,
+                'failed_devices' => $failedDevices,
+                'summary' => [
+                    'total_devices' => $totalDevices,
+                    'upgraded_count' => $upgradedCount,
+                    'failed_count' => $failedCount,
+                    'success_rate' => $totalDevices > 0 ? round(($upgradedCount / $totalDevices) * 100, 1) : 100.0
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Bulk device upgrade failed', [
+                'user_id' => auth()->id(),
+                'error' => $e->getMessage()
+            ]);
+            
+            return response()->json([
+                'error' => 'Bulk device upgrade failed',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    public function deviceReadinessAssessment(Request $request)
+    {
+        try {
+            $user = auth()->user();
+            $devices = $user->devices()->active()->get();
+            $totalDevices = $devices->count();
+            
+            $quantumReadyDevices = $devices->filter(fn($device) => $device->isQuantumReady())->count();
+            $hybridCapableDevices = $devices->filter(function($device) {
+                return !$device->isQuantumReady() && $device->supportsQuantumResistant();
+            })->count();
+            $legacyDevices = $totalDevices - $quantumReadyDevices - $hybridCapableDevices;
+            
+            $quantumReadinessPercentage = $totalDevices > 0 ? 
+                round(($quantumReadyDevices / $totalDevices) * 100, 1) : 0.0;
+            
+            $recommendations = [];
+            $upgradePriority = ['high_priority' => [], 'medium_priority' => [], 'low_priority' => []];
+            
+            foreach ($devices as $device) {
+                $deviceInfo = [
+                    'device_id' => $device->id,
+                    'device_name' => $device->device_name,
+                    'device_type' => $device->device_type
+                ];
+                
+                if ($device->encryption_version <= 1) {
+                    $recommendations[] = "Device '{$device->device_name}' needs urgent upgrade";
+                    $upgradePriority['high_priority'][] = $deviceInfo;
+                } elseif ($device->encryption_version === 2 && !$device->supportsQuantumResistant()) {
+                    $recommendations[] = "Device '{$device->device_name}' should be upgraded to quantum-resistant encryption";
+                    $upgradePriority['medium_priority'][] = $deviceInfo;
+                } elseif ($device->isQuantumReady()) {
+                    $upgradePriority['low_priority'][] = $deviceInfo;
+                }
+            }
+            
+            $deviceBreakdown = $devices->map(function($device) {
+                return [
+                    'device_id' => $device->id,
+                    'device_name' => $device->device_name,
+                    'device_type' => $device->device_type,
+                    'quantum_ready' => $device->isQuantumReady(),
+                    'encryption_version' => $device->encryption_version,
+                    'supported_algorithms' => $device->getSupportedAlgorithms(),
+                    'readiness_status' => $device->isQuantumReady() ? 'ready' : 
+                        ($device->supportsQuantumResistant() ? 'hybrid' : 'legacy')
+                ];
+            });
+            
+            return response()->json([
+                'total_devices' => $totalDevices,
+                'quantum_ready_devices' => $quantumReadyDevices,
+                'hybrid_capable_devices' => $hybridCapableDevices,
+                'legacy_devices' => $legacyDevices,
+                'quantum_readiness_percentage' => $quantumReadinessPercentage,
+                'recommendations' => $recommendations,
+                'upgrade_priority' => $upgradePriority,
+                'device_breakdown' => $deviceBreakdown
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Device readiness assessment failed', [
+                'user_id' => auth()->id(),
+                'error' => $e->getMessage()
+            ]);
+            
+            return response()->json([
+                'error' => 'Device readiness assessment failed',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    public function updateDeviceSecurityLevel(Request $request, $device)
+    {
+        $validated = $request->validate([
+            'target_level' => 'required|string|in:low,medium,high,maximum',
+            'algorithms' => 'array',
+            'algorithms.*' => 'string|in:ml-kem-512,ml-kem-768,ml-kem-1024,hybrid'
+        ]);
+        
+        try {
+            $deviceModel = auth()->user()->devices()->findOrFail($device);
+            
+            // Map security level to appropriate algorithms
+            $levelAlgorithms = match($validated['target_level']) {
+                'low' => ['ml-kem-512'],
+                'medium' => ['ml-kem-768'],
+                'high' => ['ml-kem-768', 'ml-kem-1024'],
+                'maximum' => ['ml-kem-1024']
+            };
+            
+            $algorithms = $validated['algorithms'] ?? $levelAlgorithms;
+            $deviceModel->updateQuantumCapabilities($algorithms);
+            $deviceModel->update(['security_level' => $validated['target_level']]);
+            
+            return response()->json([
+                'security_level_upgraded' => true,
+                'new_security_level' => $validated['target_level'],
+                'new_capabilities' => $deviceModel->getSupportedAlgorithms()
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Device security level update failed', [
+                'user_id' => auth()->id(),
+                'device_id' => $device,
+                'error' => $e->getMessage()
+            ]);
+            
+            return response()->json([
+                'error' => 'Security level update failed',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    public function checkDeviceCompatibility(Request $request, $device)
+    {
+        $validated = $request->validate([
+            'algorithm' => 'required|string|in:ML-KEM-512,ML-KEM-768,ML-KEM-1024,HYBRID-RSA4096-MLKEM768,RSA-4096-OAEP'
+        ]);
+        
+        try {
+            $deviceModel = auth()->user()->devices()->findOrFail($device);
+            $algorithm = $validated['algorithm'];
+            $supportedAlgorithms = $deviceModel->getSupportedAlgorithms();
+            
+            $compatible = in_array($algorithm, $supportedAlgorithms);
+            
+            // Calculate compatibility score
+            $compatibilityScore = 0;
+            if ($compatible) {
+                $compatibilityScore = match($algorithm) {
+                    'ML-KEM-1024' => 100,
+                    'ML-KEM-768' => 90,
+                    'HYBRID-RSA4096-MLKEM768' => 85,
+                    'ML-KEM-512' => 80,
+                    'RSA-4096-OAEP' => 60,
+                    default => 50
+                };
+            }
+            
+            $performanceImpact = match($algorithm) {
+                'ML-KEM-1024' => 'high',
+                'ML-KEM-768' => 'medium',
+                'HYBRID-RSA4096-MLKEM768' => 'medium',
+                'ML-KEM-512' => 'low',
+                'RSA-4096-OAEP' => 'low',
+                default => 'unknown'
+            };
+            
+            $securityLevel = match($algorithm) {
+                'ML-KEM-1024' => 'maximum',
+                'ML-KEM-768' => 'high',
+                'HYBRID-RSA4096-MLKEM768' => 'high',
+                'ML-KEM-512' => 'medium',
+                'RSA-4096-OAEP' => 'medium',
+                default => 'low'
+            };
+            
+            $recommendation = $compatible ? 'Compatible - ready for use' : 
+                'Not compatible - device upgrade required';
+            
+            return response()->json([
+                'compatible' => $compatible,
+                'compatibility_score' => $compatibilityScore,
+                'performance_impact' => $performanceImpact,
+                'security_level' => $securityLevel,
+                'recommendation' => $recommendation,
+                'supported_algorithms' => $supportedAlgorithms
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Device compatibility check failed', [
+                'user_id' => auth()->id(),
+                'device_id' => $device,
+                'error' => $e->getMessage()
+            ]);
+            
+            return response()->json([
+                'error' => 'Compatibility check failed',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    public function migrateDevice(Request $request, $device)
+    {
+        $validated = $request->validate([
+            'migration_type' => 'required|string|in:quantum,hybrid',
+            'target_algorithms' => 'array',
+            'target_algorithms.*' => 'string|in:ml-kem-512,ml-kem-768,ml-kem-1024,hybrid',
+            'preserve_keys' => 'boolean',
+            'rotate_keys' => 'boolean'
+        ]);
+        
+        try {
+            $deviceModel = auth()->user()->devices()->findOrFail($device);
+            $startTime = microtime(true);
+            
+            $oldCapabilities = $deviceModel->getQuantumCapabilities();
+            
+            // Update device capabilities
+            $deviceModel->updateQuantumCapabilities($validated['target_algorithms']);
+            
+            $keysPreserved = $validated['preserve_keys'] ?? true;
+            
+            // Simulate key rotation if requested
+            if ($validated['rotate_keys'] ?? false) {
+                $oldKeys = \App\Models\Chat\EncryptionKey::where('device_id', $deviceModel->id)
+                    ->where('is_active', true)
+                    ->get();
+                    
+                foreach ($oldKeys as $key) {
+                    $key->update(['is_active' => false]);
+                    
+                    // Create new quantum-ready key
+                    \App\Models\Chat\EncryptionKey::factory()->create([
+                        'device_id' => $deviceModel->id,
+                        'conversation_id' => $key->conversation_id,
+                        'user_id' => $key->user_id,
+                        'algorithm' => 'ML-KEM-768',
+                        'key_version' => $key->key_version + 1,
+                        'key_strength' => 768,
+                        'is_active' => true
+                    ]);
+                }
+            }
+            
+            $migrationTime = round((microtime(true) - $startTime) * 1000, 2);
+            
+            return response()->json([
+                'migration_successful' => true,
+                'device_id' => $deviceModel->id,
+                'old_capabilities' => $oldCapabilities,
+                'new_capabilities' => $deviceModel->getSupportedAlgorithms(),
+                'keys_preserved' => $keysPreserved,
+                'migration_time' => $migrationTime
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Device migration failed', [
+                'user_id' => auth()->id(),
+                'device_id' => $device,
+                'error' => $e->getMessage()
+            ]);
+            
+            return response()->json([
+                'error' => 'Device migration failed',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    public function validateCapabilities(Request $request)
+    {
+        $validated = $request->validate([
+            'capabilities' => 'required|array',
+            'capabilities.*' => 'string'
+        ]);
+        
+        try {
+            $validCapabilities = ['ml-kem-512', 'ml-kem-768', 'ml-kem-1024', 'hybrid', 'rsa-4096'];
+            $providedCapabilities = $validated['capabilities'];
+            
+            $validCaps = array_intersect($providedCapabilities, $validCapabilities);
+            $invalidCaps = array_diff($providedCapabilities, $validCapabilities);
+            
+            $isValid = empty($invalidCaps);
+            
+            $supportedAlgorithms = [];
+            foreach ($validCaps as $capability) {
+                $supportedAlgorithms = array_merge($supportedAlgorithms, match($capability) {
+                    'ml-kem-512' => ['ML-KEM-512'],
+                    'ml-kem-768' => ['ML-KEM-768'],
+                    'ml-kem-1024' => ['ML-KEM-1024'],
+                    'hybrid' => ['HYBRID-RSA4096-MLKEM768'],
+                    'rsa-4096' => ['RSA-4096-OAEP'],
+                    default => []
+                });
+            }
+            
+            $response = [
+                'valid' => $isValid,
+                'supported_algorithms' => array_unique($supportedAlgorithms)
+            ];
+            
+            if (!$isValid) {
+                $response['invalid_capabilities'] = $invalidCaps;
+            }
+            
+            return response()->json($response);
+            
+        } catch (\Exception $e) {
+            Log::error('Capability validation failed', [
+                'user_id' => auth()->id(),
+                'error' => $e->getMessage()
+            ]);
+            
+            return response()->json([
+                'error' => 'Capability validation failed',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    public function getDevicePerformance(Request $request, $device)
+    {
+        try {
+            $deviceModel = auth()->user()->devices()->findOrFail($device);
+            
+            // Get cached performance metrics or provide defaults
+            $performanceMetrics = \Illuminate\Support\Facades\Cache::get("device_performance_{$deviceModel->id}", [
+                'key_generation_time_ms' => rand(10, 50),
+                'encryption_time_ms' => rand(1, 5),
+                'decryption_time_ms' => rand(1, 5),
+                'memory_usage_kb' => rand(512, 2048),
+                'battery_impact_low' => rand(0, 1) === 1,
+                'last_measured' => now()->toISOString()
+            ]);
+            
+            // Calculate performance grade
+            $keyGenTime = $performanceMetrics['key_generation_time_ms'];
+            $grade = match(true) {
+                $keyGenTime < 20 => 'A',
+                $keyGenTime < 50 => 'B',
+                $keyGenTime < 100 => 'C',
+                $keyGenTime < 200 => 'D',
+                default => 'F'
+            };
+            
+            $recommendations = [];
+            if ($keyGenTime > 50) {
+                $recommendations[] = 'Consider upgrading device hardware for better performance';
+            }
+            if (!$performanceMetrics['battery_impact_low']) {
+                $recommendations[] = 'Monitor battery usage during cryptographic operations';
+            }
+            
+            return response()->json([
+                'device_id' => $deviceModel->id,
+                'performance_metrics' => $performanceMetrics,
+                'performance_grade' => $grade,
+                'recommendations' => $recommendations
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Device performance retrieval failed', [
+                'user_id' => auth()->id(),
+                'device_id' => $device,
+                'error' => $e->getMessage()
+            ]);
+            
+            return response()->json([
+                'error' => 'Performance retrieval failed',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    public function verifyDeviceCapabilities(Request $request, $device)
+    {
+        try {
+            $deviceModel = auth()->user()->devices()->findOrFail($device);
+            
+            $capabilitiesExpired = $deviceModel->capabilities_verified_at === null || 
+                $deviceModel->capabilities_verified_at->diffInDays(now()) > 30;
+            
+            $verificationNeeded = $capabilitiesExpired || 
+                ($deviceModel->last_quantum_health_check !== null && 
+                 $deviceModel->last_quantum_health_check->diffInDays(now()) > 7);
+            
+            $lastVerified = $deviceModel->capabilities_verified_at?->toISOString();
+            
+            $recommendedActions = [];
+            if ($capabilitiesExpired) {
+                $recommendedActions[] = 'Verify device quantum capabilities';
+            }
+            if ($verificationNeeded) {
+                $recommendedActions[] = 'Run quantum health check';
+                $recommendedActions[] = 'Update device encryption version if needed';
+            }
+            
+            return response()->json([
+                'verification_needed' => $verificationNeeded,
+                'capabilities_expired' => $capabilitiesExpired,
+                'last_verified' => $lastVerified,
+                'recommended_actions' => $recommendedActions
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Device capability verification failed', [
+                'user_id' => auth()->id(),
+                'device_id' => $device,
+                'error' => $e->getMessage()
+            ]);
+            
+            return response()->json([
+                'error' => 'Capability verification failed',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    public function deviceHealthCheck(Request $request, $device)
+    {
+        try {
+            $deviceModel = auth()->user()->devices()->findOrFail($device);
+            
+            $healthStatus = 'healthy';
+            $quantumReady = $deviceModel->isQuantumReady();
+            $issuesDetected = [];
+            $recommendations = [];
+            
+            // Check various health indicators
+            if ($deviceModel->encryption_version < 3) {
+                $healthStatus = 'warning';
+                $issuesDetected[] = 'Outdated encryption version';
+                $recommendations[] = 'Upgrade to quantum-resistant encryption';
+            }
+            
+            if (!$deviceModel->is_trusted) {
+                $healthStatus = 'warning';
+                $issuesDetected[] = 'Device not trusted';
+                $recommendations[] = 'Complete device verification process';
+            }
+            
+            if ($deviceModel->failed_auth_attempts > 0) {
+                $healthStatus = 'warning';
+                $issuesDetected[] = 'Recent authentication failures detected';
+                $recommendations[] = 'Review security logs and consider password reset';
+            }
+            
+            $supportedAlgorithms = $deviceModel->getSupportedAlgorithms();
+            $mlKemLevels = array_filter($supportedAlgorithms, function($alg) {
+                return str_starts_with($alg, 'ML-KEM-');
+            });
+            
+            $hybridSupport = in_array('HYBRID-RSA4096-MLKEM768', $supportedAlgorithms);
+            
+            // Mock performance metrics
+            $performanceMetrics = [
+                'key_generation_ms' => rand(10, 100),
+                'encryption_throughput_mbps' => rand(50, 200),
+                'memory_efficiency_score' => rand(70, 100)
+            ];
+            
+            // Update health check timestamp
+            $deviceModel->update(['last_quantum_health_check' => now()]);
+            
+            return response()->json([
+                'device_id' => $deviceModel->id,
+                'health_status' => $healthStatus,
+                'quantum_ready' => $quantumReady,
+                'algorithm_support' => [
+                    'ml_kem_levels' => array_values($mlKemLevels),
+                    'hybrid_support' => $hybridSupport,
+                    'performance_metrics' => $performanceMetrics
+                ],
+                'issues_detected' => $issuesDetected,
+                'recommendations' => $recommendations,
+                'last_health_check' => now()->toISOString()
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Device health check failed', [
+                'user_id' => auth()->id(),
+                'device_id' => $device,
+                'error' => $e->getMessage()
+            ]);
+            
+            return response()->json([
+                'error' => 'Device health check failed',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 }

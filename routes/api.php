@@ -350,6 +350,31 @@ Route::middleware('auth:api')->prefix('v1')->group(function () {
             ->name('conversations.negotiate-algorithm')
             ->middleware('throttle:20,1');
 
+        // Device management endpoints
+        Route::prefix('devices')->name('devices.')->group(function () {
+            Route::post('bulk-upgrade', [\App\Http\Controllers\Api\QuantumController::class, 'bulkDeviceUpgrade'])
+                ->name('bulk-upgrade')
+                ->middleware('throttle:5,1');
+            Route::get('readiness-assessment', [\App\Http\Controllers\Api\QuantumController::class, 'deviceReadinessAssessment'])
+                ->name('readiness-assessment');
+            Route::put('{device}/security-level', [\App\Http\Controllers\Api\QuantumController::class, 'updateDeviceSecurityLevel'])
+                ->name('security-level')
+                ->middleware('throttle:10,1');
+            Route::post('{device}/compatibility-check', [\App\Http\Controllers\Api\QuantumController::class, 'checkDeviceCompatibility'])
+                ->name('compatibility-check');
+            Route::post('{device}/migrate', [\App\Http\Controllers\Api\QuantumController::class, 'migrateDevice'])
+                ->name('migrate')
+                ->middleware('throttle:5,1');
+            Route::post('validate-capabilities', [\App\Http\Controllers\Api\QuantumController::class, 'validateCapabilities'])
+                ->name('validate-capabilities');
+            Route::get('{device}/performance', [\App\Http\Controllers\Api\QuantumController::class, 'getDevicePerformance'])
+                ->name('performance');
+            Route::post('{device}/verify-capabilities', [\App\Http\Controllers\Api\QuantumController::class, 'verifyDeviceCapabilities'])
+                ->name('verify-capabilities');
+            Route::post('{device}/health-check', [\App\Http\Controllers\Api\QuantumController::class, 'deviceHealthCheck'])
+                ->name('health-check');
+        });
+
         // Quantum migration endpoints
         Route::prefix('migration')->name('migration.')->group(function () {
             Route::post('assess', [\App\Http\Controllers\Api\QuantumController::class, 'assessMigration'])
