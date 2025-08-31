@@ -6,6 +6,7 @@ import { ExclamationTriangleIcon, ClockIcon as ClockSolid } from '@heroicons/rea
 import { Shield, ShieldCheck, ShieldAlert } from 'lucide-react';
 import MessageReactions from './MessageReactions';
 import VoiceMessagePlayer from './VoiceMessagePlayer';
+import TiptapMessageViewer from './TiptapMessageViewer';
 import { E2EEStatusIndicator } from './E2EEStatusIndicator';
 import { renderMessageWithMentions, parseMentionsFromDecryptedContent } from '@/utils/mentions';
 
@@ -163,7 +164,19 @@ export default function MessageBubble({
           ) : (
             <div className="break-words">
               {message.content ? (() => {
-                // Parse mentions client-side from decrypted content
+                // Check if content contains HTML tags (Tiptap content)
+                const isHtmlContent = message.content.includes('<') && message.content.includes('>');
+                
+                if (isHtmlContent) {
+                  return (
+                    <TiptapMessageViewer 
+                      content={message.content}
+                      className={isOwnMessage ? 'text-white' : 'text-gray-900'}
+                    />
+                  );
+                }
+                
+                // Fallback to plain text with mentions
                 const clientMentions = parseMentionsFromDecryptedContent(message.content, participants);
                 return renderMessageWithMentions(message.content, clientMentions, currentUserId);
               })() : '[Message could not be decrypted]'}

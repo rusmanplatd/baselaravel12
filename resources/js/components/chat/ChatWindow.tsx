@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { User } from '@/types';
 import { Conversation, Message, ThreadViewMode, ThreadNavigation } from '@/types/chat';
 import MessageBubble from './MessageBubble';
-import MessageInput from './MessageInput';
+import TiptapMessageEditor from './TiptapMessageEditor';
 import TypingIndicator from './TypingIndicator';
 import ThreadView from './ThreadView';
 import { format } from 'date-fns';
@@ -274,7 +274,7 @@ export default function ChatWindow({
       </div>
 
       {/* Message Input */}
-      <MessageInput 
+      <TiptapMessageEditor 
         onSendMessage={onSendMessage}
         replyingTo={replyingTo}
         onCancelReply={() => onReplyClick?.(null)}

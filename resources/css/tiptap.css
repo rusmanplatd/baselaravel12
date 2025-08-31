@@ -1,0 +1,73 @@
+/* Tiptap Editor Styles */
+.ProseMirror {
+  outline: none;
+  padding: 0;
+  margin: 0;
+}
+
+.ProseMirror p {
+  margin: 0;
+  line-height: 1.4;
+}
+
+.ProseMirror p:empty::before {
+  content: '';
+  display: inline-block;
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  color: #adb5bd;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Mention styles */
+.mention {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: rgb(59, 130, 246);
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.mention:hover {
+  background-color: rgba(59, 130, 246, 0.2);
+}
+
+/* Rich text formatting */
+.ProseMirror strong {
+  font-weight: 600;
+}
+
+.ProseMirror em {
+  font-style: italic;
+}
+
+.ProseMirror code {
+  background-color: rgba(156, 163, 175, 0.1);
+  border-radius: 0.25rem;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.875em;
+  padding: 0.125rem 0.25rem;
+}
+
+.ProseMirror ul,
+.ProseMirror ol {
+  padding-left: 1.5rem;
+}
+
+.ProseMirror ul li,
+.ProseMirror ol li {
+  margin-bottom: 0.25rem;
+}
+
+.ProseMirror ul {
+  list-style-type: disc;
+}
+
+.ProseMirror ol {
+  list-style-type: decimal;
+}
