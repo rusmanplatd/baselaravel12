@@ -4,7 +4,7 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, Building, Users, Network, UserCheck, Target, Shield, KeyRound, Award, MessageCircle, Activity } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, Building, Users, Network, UserCheck, Target, Shield, KeyRound, Award, MessageCircle, Activity, Globe } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -100,6 +100,38 @@ const mainNavItems: NavItem[] = [
                 title: 'All Users',
                 href: '/users',
                 permission: 'user:read',
+            },
+        ],
+    },
+    {
+        title: 'Geography',
+        icon: Globe,
+        permissions: ['geo_country:read', 'geo_province:read', 'geo_city:read', 'geo_district:read', 'geo_village:read'],
+        items: [
+            {
+                title: 'Country',
+                href: '/geography/countries',
+                permission: 'geo_country:read',
+            },
+            {
+                title: 'Province',
+                href: '/geography/provinces',
+                permission: 'geo_province:read',
+            },
+            {
+                title: 'City',
+                href: '/geography/cities',
+                permission: 'geo_city:read',
+            },
+            {
+                title: 'District',
+                href: '/geography/districts',
+                permission: 'geo_district:read',
+            },
+            {
+                title: 'Village',
+                href: '/geography/villages',
+                permission: 'geo_village:read',
             },
         ],
     },

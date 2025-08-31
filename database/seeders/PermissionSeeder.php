@@ -99,6 +99,32 @@ class PermissionSeeder extends Seeder
             'security:read' => 'View security settings',
             'security:write' => 'Modify security settings including MFA and sessions',
             'security:admin' => 'Full administrative access to security features',
+
+            // Geography management permissions (GitHub-style)
+            'geo_country:read' => 'View countries',
+            'geo_country:write' => 'Create and update countries',
+            'geo_country:delete' => 'Delete countries',
+            'geo_country:admin' => 'Full administrative access to countries',
+
+            'geo_province:read' => 'View provinces',
+            'geo_province:write' => 'Create and update provinces',
+            'geo_province:delete' => 'Delete provinces',
+            'geo_province:admin' => 'Full administrative access to provinces',
+
+            'geo_city:read' => 'View cities',
+            'geo_city:write' => 'Create and update cities',
+            'geo_city:delete' => 'Delete cities',
+            'geo_city:admin' => 'Full administrative access to cities',
+
+            'geo_district:read' => 'View districts',
+            'geo_district:write' => 'Create and update districts',
+            'geo_district:delete' => 'Delete districts',
+            'geo_district:admin' => 'Full administrative access to districts',
+
+            'geo_village:read' => 'View villages',
+            'geo_village:write' => 'Create and update villages',
+            'geo_village:delete' => 'Delete villages',
+            'geo_village:admin' => 'Full administrative access to villages',
         ];
 
         // Set permissions team context to null for global permissions
@@ -156,6 +182,26 @@ class PermissionSeeder extends Seeder
                     'security:read',
                     'security:write',
                     'admin:org',
+                    'geo_country:read',
+                    'geo_country:write',
+                    'geo_country:delete',
+                    'geo_country:admin',
+                    'geo_province:read',
+                    'geo_province:write',
+                    'geo_province:delete',
+                    'geo_province:admin',
+                    'geo_city:read',
+                    'geo_city:write',
+                    'geo_city:delete',
+                    'geo_city:admin',
+                    'geo_district:read',
+                    'geo_district:write',
+                    'geo_district:delete',
+                    'geo_district:admin',
+                    'geo_village:read',
+                    'geo_village:write',
+                    'geo_village:delete',
+                    'geo_village:admin',
                 ],
             ],
             'manager' => [
@@ -174,6 +220,11 @@ class PermissionSeeder extends Seeder
                     'profile:write',
                     'security:read',
                     'security:write',
+                    'geo_country:read',
+                    'geo_province:read',
+                    'geo_city:read',
+                    'geo_district:read',
+                    'geo_village:read',
                 ],
             ],
             'employee' => [
@@ -188,6 +239,11 @@ class PermissionSeeder extends Seeder
                     'profile:write',
                     'security:read',
                     'security:write',
+                    'geo_country:read',
+                    'geo_province:read',
+                    'geo_city:read',
+                    'geo_district:read',
+                    'geo_village:read',
                 ],
             ],
             'board-member' => [
