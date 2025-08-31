@@ -179,6 +179,9 @@ class ClientAccessControlTest extends TestCase
             'redirect_uri' => 'https://example.com/callback',
             'response_type' => 'code',
             'scope' => 'openid profile',
+            'state' => 'test-state-123',
+            'code_challenge' => 'dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk',
+            'code_challenge_method' => 'S256',
         ]));
 
         $response->assertOk(); // User has access
@@ -191,9 +194,15 @@ class ClientAccessControlTest extends TestCase
             'redirect_uri' => 'https://example.com/callback',
             'response_type' => 'code',
             'scope' => 'openid profile',
+            'state' => 'test-state-123',
+            'code_challenge' => 'dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk',
+            'code_challenge_method' => 'S256',
         ]));
 
-        $response->assertStatus(403); // User doesn't have access
+        // OAuth spec requires redirect to callback with error parameters
+        $response->assertStatus(302);
+        $response->assertRedirectContains('https://example.com/callback');
+        $response->assertRedirectContains('error=access_denied');
     }
 
     public function test_all_users_client_allows_any_authenticated_user()
@@ -211,6 +220,9 @@ class ClientAccessControlTest extends TestCase
             'redirect_uri' => 'https://example.com/callback',
             'response_type' => 'code',
             'scope' => 'openid profile',
+            'state' => 'test-state-123',
+            'code_challenge' => 'dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk',
+            'code_challenge_method' => 'S256',
         ]));
         $response->assertOk();
 
@@ -221,6 +233,9 @@ class ClientAccessControlTest extends TestCase
             'redirect_uri' => 'https://example.com/callback',
             'response_type' => 'code',
             'scope' => 'openid profile',
+            'state' => 'test-state-123',
+            'code_challenge' => 'dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk',
+            'code_challenge_method' => 'S256',
         ]));
         $response->assertOk();
     }
