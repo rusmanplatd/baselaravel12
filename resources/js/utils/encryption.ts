@@ -16,12 +16,56 @@ export class ChatEncryption {
   private static readonly IV_SIZE = 128; // 128 bits
   private static readonly RSA_KEY_SIZE = 4096; // 4096 bits for enhanced security
   private static readonly PBKDF2_ITERATIONS = 100000;
-  private static readonly VERSION = '2.0';
+  private static readonly VERSION = '3.0'; // Updated for quantum support
+  private static readonly QUANTUM_ALGORITHMS = ['ML-KEM-512', 'ML-KEM-768', 'ML-KEM-1024', 'HYBRID-RSA4096-MLKEM768'];
 
   /**
-   * Generate an RSA key pair for asymmetric encryption
+   * Generate a key pair - quantum-resistant if algorithm specified
    */
-  static async generateKeyPair(): Promise<KeyPair> {
+  static async generateKeyPair(algorithm?: string): Promise<KeyPair> {
+    if (algorithm && this.QUANTUM_ALGORITHMS.includes(algorithm)) {
+      return this.generateQuantumKeyPair(algorithm);
+    }
+    
+    return this.generateRSAKeyPair();
+  }
+
+  /**
+   * Generate quantum-resistant key pair
+   */
+  static async generateQuantumKeyPair(algorithm: string): Promise<KeyPair> {
+    try {
+      // Call backend API for quantum key generation
+      const response = await fetch('/api/v1/quantum/generate-keypair', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        },
+        body: JSON.stringify({ algorithm })
+      });
+
+      if (!response.ok) {
+        throw new Error('Quantum key generation failed');
+      }
+
+      const keyPair = await response.json();
+      return {
+        public_key: keyPair.public_key,
+        private_key: keyPair.private_key,
+        algorithm: algorithm
+      };
+    } catch (error) {
+      console.error('Quantum key generation failed:', error);
+      // Fallback to RSA
+      return this.generateRSAKeyPair();
+    }
+  }
+
+  /**
+   * Generate an RSA key pair for asymmetric encryption (fallback)
+   */
+  static async generateRSAKeyPair(): Promise<KeyPair> {
     try {
       const keyPair = await window.crypto.subtle.generateKey(
         {
@@ -62,9 +106,61 @@ export class ChatEncryption {
   }
 
   /**
-   * Encrypt a symmetric key with RSA public key
+   * Encrypt a symmetric key with public key (supports quantum algorithms)
    */
   static async encryptSymmetricKey(
+    symmetricKey: CryptoKey,
+    publicKeyPem: string,
+    algorithm?: string
+  ): Promise<string> {
+    if (algorithm && this.QUANTUM_ALGORITHMS.includes(algorithm)) {
+      return this.encryptSymmetricKeyQuantum(symmetricKey, publicKeyPem, algorithm);
+    }
+    
+    return this.encryptSymmetricKeyRSA(symmetricKey, publicKeyPem);
+  }
+
+  /**
+   * Encrypt symmetric key with quantum-resistant algorithm
+   */
+  static async encryptSymmetricKeyQuantum(
+    symmetricKey: CryptoKey,
+    publicKeyPem: string,
+    algorithm: string
+  ): Promise<string> {
+    try {
+      const keyBytes = await window.crypto.subtle.exportKey('raw', symmetricKey);
+      
+      const response = await fetch('/api/v1/quantum/encapsulate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        },
+        body: JSON.stringify({
+          public_key: publicKeyPem,
+          algorithm: algorithm,
+          data: this.arrayBufferToBase64(keyBytes)
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Quantum encapsulation failed');
+      }
+
+      const { ciphertext } = await response.json();
+      return ciphertext;
+    } catch (error) {
+      console.error('Quantum symmetric key encryption failed:', error);
+      // Fallback to RSA
+      return this.encryptSymmetricKeyRSA(symmetricKey, publicKeyPem);
+    }
+  }
+
+  /**
+   * Encrypt a symmetric key with RSA public key (fallback)
+   */
+  static async encryptSymmetricKeyRSA(
     symmetricKey: CryptoKey,
     publicKeyPem: string
   ): Promise<string> {
@@ -88,9 +184,67 @@ export class ChatEncryption {
   }
 
   /**
-   * Decrypt a symmetric key with RSA private key
+   * Decrypt a symmetric key with private key (supports quantum algorithms)
    */
   static async decryptSymmetricKey(
+    encryptedKey: string,
+    privateKeyPem: string,
+    algorithm?: string
+  ): Promise<CryptoKey> {
+    if (algorithm && this.QUANTUM_ALGORITHMS.includes(algorithm)) {
+      return this.decryptSymmetricKeyQuantum(encryptedKey, privateKeyPem, algorithm);
+    }
+    
+    return this.decryptSymmetricKeyRSA(encryptedKey, privateKeyPem);
+  }
+
+  /**
+   * Decrypt symmetric key with quantum-resistant algorithm
+   */
+  static async decryptSymmetricKeyQuantum(
+    encryptedKey: string,
+    privateKeyPem: string,
+    algorithm: string
+  ): Promise<CryptoKey> {
+    try {
+      const response = await fetch('/api/v1/quantum/decapsulate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        },
+        body: JSON.stringify({
+          ciphertext: encryptedKey,
+          private_key: privateKeyPem,
+          algorithm: algorithm
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Quantum decapsulation failed');
+      }
+
+      const { shared_secret } = await response.json();
+      const keyBytes = this.base64ToArrayBuffer(shared_secret);
+
+      return await window.crypto.subtle.importKey(
+        'raw',
+        keyBytes,
+        { name: 'AES-GCM' }, // Use GCM for quantum-resistant encryption
+        true,
+        ['encrypt', 'decrypt']
+      );
+    } catch (error) {
+      console.error('Quantum symmetric key decryption failed:', error);
+      // Fallback to RSA
+      return this.decryptSymmetricKeyRSA(encryptedKey, privateKeyPem);
+    }
+  }
+
+  /**
+   * Decrypt a symmetric key with RSA private key (fallback)
+   */
+  static async decryptSymmetricKeyRSA(
     encryptedKey: string,
     privateKeyPem: string
   ): Promise<CryptoKey> {
@@ -216,7 +370,7 @@ export class ChatEncryption {
       return {
         content,
         verified,
-        version: version as '1.0' | '2.0',
+        version: version as '1.0' | '2.0' | '3.0',
         timestamp: encryptedData.timestamp,
       };
     } catch (error: unknown) {
@@ -585,6 +739,99 @@ export class ChatEncryption {
       console.warn('Key integrity verification failed:', error);
       return false;
     }
+  }
+
+  /**
+   * Check if an algorithm is quantum-resistant
+   */
+  static isQuantumResistant(algorithm: string): boolean {
+    return this.QUANTUM_ALGORITHMS.includes(algorithm);
+  }
+
+  /**
+   * Get recommended quantum algorithm based on device capabilities
+   */
+  static getRecommendedQuantumAlgorithm(deviceCapabilities: string[]): string {
+    const priorityOrder = ['ML-KEM-1024', 'ML-KEM-768', 'HYBRID-RSA4096-MLKEM768', 'ML-KEM-512'];
+    
+    for (const algorithm of priorityOrder) {
+      if (deviceCapabilities.includes(algorithm)) {
+        return algorithm;
+      }
+    }
+    
+    return 'RSA-4096-OAEP'; // Fallback to classical
+  }
+
+  /**
+   * Negotiate algorithm between multiple device capability sets
+   */
+  static negotiateAlgorithm(deviceCapabilitySets: string[][]): string {
+    // Find intersection of all device capabilities
+    let commonAlgorithms = deviceCapabilitySets[0] || [];
+    
+    for (let i = 1; i < deviceCapabilitySets.length; i++) {
+      commonAlgorithms = commonAlgorithms.filter(alg => 
+        deviceCapabilitySets[i].includes(alg)
+      );
+    }
+    
+    if (commonAlgorithms.length === 0) {
+      return 'RSA-4096-OAEP'; // Fallback
+    }
+    
+    return this.getRecommendedQuantumAlgorithm(commonAlgorithms);
+  }
+
+  /**
+   * Get algorithm information
+   */
+  static getAlgorithmInfo(algorithm: string): {
+    name: string;
+    type: 'quantum' | 'hybrid' | 'classical';
+    securityLevel: number;
+    quantumResistant: boolean;
+    version: string;
+  } {
+    const algorithmMap = {
+      'ML-KEM-512': {
+        name: 'ML-KEM-512',
+        type: 'quantum' as const,
+        securityLevel: 512,
+        quantumResistant: true,
+        version: '3.0'
+      },
+      'ML-KEM-768': {
+        name: 'ML-KEM-768',
+        type: 'quantum' as const,
+        securityLevel: 768,
+        quantumResistant: true,
+        version: '3.0'
+      },
+      'ML-KEM-1024': {
+        name: 'ML-KEM-1024',
+        type: 'quantum' as const,
+        securityLevel: 1024,
+        quantumResistant: true,
+        version: '3.0'
+      },
+      'HYBRID-RSA4096-MLKEM768': {
+        name: 'Hybrid RSA-4096 + ML-KEM-768',
+        type: 'hybrid' as const,
+        securityLevel: 768,
+        quantumResistant: true,
+        version: '3.0'
+      },
+      'RSA-4096-OAEP': {
+        name: 'RSA-4096-OAEP',
+        type: 'classical' as const,
+        securityLevel: 4096,
+        quantumResistant: false,
+        version: '2.0'
+      }
+    };
+
+    return algorithmMap[algorithm] || algorithmMap['RSA-4096-OAEP'];
   }
 
   // Private utility methods

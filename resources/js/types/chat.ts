@@ -72,7 +72,8 @@ export interface Message {
   encrypted_content?: string;
   content_hash?: string;
   content_hmac?: string;
-  encryption_version?: '1.0' | '2.0';
+  encryption_version?: '1.0' | '2.0' | '3.0';
+  encryption_algorithm?: string;
   voice_duration_seconds?: number;
   voice_transcript?: string;
   voice_waveform_data?: string;
@@ -155,40 +156,49 @@ export interface EncryptionKey {
 }
 
 export interface EncryptedMessageData {
-  data: string;
+  data?: string;
+  content?: string; // Support both formats
   iv: string;
   hash: string;
   hmac?: string;
   auth_data?: string;
   timestamp?: number;
   nonce?: string;
-  version?: '1.0' | '2.0';
+  version?: '1.0' | '2.0' | '3.0';
+  algorithm?: string;
+  quantum_ciphertext?: string;
+  compressed?: boolean;
 }
 
 export interface KeyPair {
   public_key: string;
   private_key: string;
+  algorithm?: string;
 }
 
 export interface EncryptionOptions {
-  version?: '1.0' | '2.0';
+  version?: '1.0' | '2.0' | '3.0';
   maxAge?: number;
   enableReplayProtection?: boolean;
+  algorithm?: string;
 }
 
 export interface DecryptionResult {
   content: string;
   verified: boolean;
-  version: '1.0' | '2.0';
+  version: '1.0' | '2.0' | '3.0';
   timestamp?: number;
+  algorithm?: string;
 }
 
 export interface E2EEStatus {
   enabled: boolean;
   keyGenerated: boolean;
   conversationKeysReady: boolean;
-  version: '1.0' | '2.0';
+  version: '1.0' | '2.0' | '3.0';
   lastKeyRotation?: string;
+  quantumReady?: boolean;
+  currentAlgorithm?: string;
 }
 
 export interface MessageThread {
