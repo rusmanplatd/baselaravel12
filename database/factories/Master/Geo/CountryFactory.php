@@ -24,7 +24,7 @@ class CountryFactory extends Factory
             'code' => strtoupper($this->faker->unique()->lexify('??')),
             'name' => $this->faker->unique()->country(),
             'iso_code' => strtoupper($this->faker->unique()->lexify('???')),
-            'phone_code' => '+' . $this->faker->numberBetween(1, 999),
+            'phone_code' => '+'.$this->faker->numberBetween(1, 999),
             'created_by' => User::factory(),
             'updated_by' => User::factory(),
         ];

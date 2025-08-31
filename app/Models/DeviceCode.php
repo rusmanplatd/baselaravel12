@@ -9,11 +9,11 @@ use Illuminate\Support\Str;
 class DeviceCode extends Model
 {
     protected $table = 'oauth_device_codes';
-    
+
     protected $primaryKey = 'device_code';
-    
+
     protected $keyType = 'string';
-    
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -54,7 +54,7 @@ class DeviceCode extends Model
 
     public function isPending(): bool
     {
-        return $this->status === 'pending' && !$this->isExpired();
+        return $this->status === 'pending' && ! $this->isExpired();
     }
 
     public function isAuthorized(): bool
@@ -106,6 +106,6 @@ class DeviceCode extends Model
     public function scopeActive($query)
     {
         return $query->where('status', 'pending')
-                    ->where('expires_at', '>', now());
+            ->where('expires_at', '>', now());
     }
 }

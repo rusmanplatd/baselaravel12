@@ -35,7 +35,7 @@ return new class extends Migration
                 'status',
                 'granted_by_ip',
                 'granted_user_agent',
-                'usage_stats'
+                'usage_stats',
             ]);
         });
     }

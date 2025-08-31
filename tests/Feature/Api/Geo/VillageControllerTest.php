@@ -1,9 +1,9 @@
 <?php
 
-use App\Models\Master\Geo\Country;
-use App\Models\Master\Geo\Province;
 use App\Models\Master\Geo\City;
+use App\Models\Master\Geo\Country;
 use App\Models\Master\Geo\District;
+use App\Models\Master\Geo\Province;
 use App\Models\Master\Geo\Village;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -35,9 +35,9 @@ it('can list villages', function () {
                     'name',
                     'created_at',
                     'updated_at',
-                    'district'
-                ]
-            ]
+                    'district',
+                ],
+            ],
         ]);
 });
 
@@ -132,7 +132,7 @@ it('can create village', function () {
     $villageData = [
         'district_id' => $this->district->id,
         'code' => 'WEST',
-        'name' => 'West Hollywood'
+        'name' => 'West Hollywood',
     ];
 
     $response = $this->postJson('/api/v1/geo/villages', $villageData);
@@ -144,7 +144,7 @@ it('can create village', function () {
             'code',
             'name',
             'created_at',
-            'updated_at'
+            'updated_at',
         ])
         ->assertJson($villageData);
 
@@ -162,7 +162,7 @@ it('validates district exists when creating village', function () {
     $response = $this->postJson('/api/v1/geo/villages', [
         'district_id' => 'nonexistent-id',
         'code' => 'WEST',
-        'name' => 'West Hollywood'
+        'name' => 'West Hollywood',
     ]);
 
     $response->assertStatus(422)
@@ -175,7 +175,7 @@ it('validates unique code when creating village', function () {
     $response = $this->postJson('/api/v1/geo/villages', [
         'district_id' => $this->district->id,
         'code' => 'WEST',
-        'name' => 'West Hollywood'
+        'name' => 'West Hollywood',
     ]);
 
     $response->assertStatus(422)
@@ -195,12 +195,12 @@ it('can show village', function () {
             'name',
             'created_at',
             'updated_at',
-            'district'
+            'district',
         ])
         ->assertJson([
             'id' => $village->id,
             'code' => $village->code,
-            'name' => $village->name
+            'name' => $village->name,
         ]);
 });
 
@@ -213,7 +213,7 @@ it('returns 404 for nonexistent village', function () {
 it('can update village', function () {
     $village = Village::factory()->create(['district_id' => $this->district->id]);
     $updateData = [
-        'name' => 'Updated Village Name'
+        'name' => 'Updated Village Name',
     ];
 
     $response = $this->putJson("/api/v1/geo/villages/{$village->id}", $updateData);
@@ -223,7 +223,7 @@ it('can update village', function () {
 
     $this->assertDatabaseHas('ref_geo_village', [
         'id' => $village->id,
-        'name' => 'Updated Village Name'
+        'name' => 'Updated Village Name',
     ]);
 });
 
@@ -232,7 +232,7 @@ it('validates unique code when updating village', function () {
     $village2 = Village::factory()->create(['code' => 'EAST', 'district_id' => $this->district->id]);
 
     $response = $this->putJson("/api/v1/geo/villages/{$village2->id}", [
-        'code' => 'WEST'
+        'code' => 'WEST',
     ]);
 
     $response->assertStatus(422)
@@ -262,8 +262,8 @@ it('can get villages list for dropdown', function () {
                 'district_id',
                 'code',
                 'name',
-                'district'
-            ]
+                'district',
+            ],
         ]);
 });
 
@@ -289,8 +289,8 @@ it('can get villages by district', function () {
             '*' => [
                 'id',
                 'code',
-                'name'
-            ]
+                'name',
+            ],
         ])
         ->assertJsonCount(3);
 });
@@ -303,4 +303,3 @@ it('returns empty array for district without villages', function () {
     $response->assertStatus(200)
         ->assertJson([]);
 });
-

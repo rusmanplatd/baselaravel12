@@ -23,9 +23,9 @@ class CityRequest extends FormRequest
         $isUpdate = $this->isMethod('PUT') || $this->isMethod('PATCH');
 
         return [
-            'province_id' => ($isUpdate ? 'sometimes|' : '') . 'required|string|exists:ref_geo_province,id',
-            'code' => ($isUpdate ? 'sometimes|' : '') . 'required|string|max:10|unique:ref_geo_city,code' . ($cityId ? ",{$cityId}" : ''),
-            'name' => ($isUpdate ? 'sometimes|' : '') . 'required|string|max:255',
+            'province_id' => ($isUpdate ? 'sometimes|' : '').'required|string|exists:ref_geo_province,id',
+            'code' => ($isUpdate ? 'sometimes|' : '').'required|string|max:10|unique:ref_geo_city,code'.($cityId ? ",{$cityId}" : ''),
+            'name' => ($isUpdate ? 'sometimes|' : '').'required|string|max:255',
         ];
     }
 

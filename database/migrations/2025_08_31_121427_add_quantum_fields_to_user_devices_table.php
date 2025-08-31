@@ -13,7 +13,9 @@ return new class extends Migration
     {
         Schema::table('user_devices', function (Blueprint $table) {
             // Quantum-specific fields for capability management and health monitoring
-            $table->timestamp('capabilities_verified_at')->nullable()->after('device_info');
+            $table->string('preferred_algorithm')->nullable()->after('device_capabilities');
+            $table->integer('quantum_health_score')->default(100)->after('preferred_algorithm');
+            $table->timestamp('capabilities_verified_at')->nullable()->after('quantum_health_score');
             $table->timestamp('last_quantum_health_check')->nullable()->after('capabilities_verified_at');
         });
     }
@@ -25,6 +27,8 @@ return new class extends Migration
     {
         Schema::table('user_devices', function (Blueprint $table) {
             $table->dropColumn([
+                'preferred_algorithm',
+                'quantum_health_score',
                 'capabilities_verified_at',
                 'last_quantum_health_check',
             ]);

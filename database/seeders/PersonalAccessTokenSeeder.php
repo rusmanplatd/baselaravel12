@@ -81,7 +81,7 @@ class PersonalAccessTokenSeeder extends Seeder
                 'redirect_uris' => [], // No redirect URIs needed for personal access tokens
                 'allowed_scopes' => [
                     'openid',
-                    'profile', 
+                    'profile',
                     'email',
                     'https://api.yourcompany.com/auth/organization.readonly',
                     'https://api.yourcompany.com/auth/organization.members',
@@ -140,7 +140,7 @@ class PersonalAccessTokenSeeder extends Seeder
                 'grant_types' => ['personal_access'],
             ],
 
-            // API Development Token Client  
+            // API Development Token Client
             [
                 'name' => 'API Development Token Client',
                 'client_type' => 'personal_access',
@@ -155,7 +155,7 @@ class PersonalAccessTokenSeeder extends Seeder
                 'allowed_scopes' => [
                     'openid',
                     'profile',
-                    'email', 
+                    'email',
                     'https://api.yourcompany.com/auth/platform.full',
                     'https://api.yourcompany.com/auth/organization',
                     'https://api.yourcompany.com/auth/organization.admin',
@@ -169,7 +169,7 @@ class PersonalAccessTokenSeeder extends Seeder
 
             // Organization Admin Token Client
             [
-                'name' => 'Organization Admin Token Client', 
+                'name' => 'Organization Admin Token Client',
                 'client_type' => 'personal_access',
                 'user_access_scope' => 'custom',
                 'user_access_rules' => [
@@ -182,7 +182,7 @@ class PersonalAccessTokenSeeder extends Seeder
                     'profile',
                     'email',
                     'https://api.yourcompany.com/auth/organization',
-                    'https://api.yourcompany.com/auth/organization.admin', 
+                    'https://api.yourcompany.com/auth/organization.admin',
                     'https://api.yourcompany.com/auth/organization.members',
                     'https://api.yourcompany.com/auth/userinfo.profile',
                     'https://api.yourcompany.com/auth/analytics.readonly',
@@ -213,7 +213,7 @@ class PersonalAccessTokenSeeder extends Seeder
         foreach ($clients as $clientData) {
             // Use ULID for consistent ID length (26 characters)
             $clientId = (string) Str::ulid();
-            
+
             // Personal access token clients don't need secrets
             $secret = null;
 
@@ -243,7 +243,7 @@ class PersonalAccessTokenSeeder extends Seeder
         }
 
         $this->command->info('✓ Personal access token OAuth clients seeded successfully.');
-        
+
         // Display information about the api/generate-token endpoint
         $this->command->info('');
         $this->command->info('🔗 API Generate Token Endpoint Information:');
@@ -251,10 +251,10 @@ class PersonalAccessTokenSeeder extends Seeder
         $this->command->info('   Purpose: Generate personal access tokens for authenticated users');
         $this->command->info('   Usage: Used by the "Chat Application Token" client in the route');
         $this->command->info('   Token Name: "Chat Application Token"');
-        $this->command->info('   Expiration: ' . now()->addMonths(6)->format('Y-m-d H:i:s') . ' (6 months)');
+        $this->command->info('   Expiration: '.now()->addMonths(6)->format('Y-m-d H:i:s').' (6 months)');
         $this->command->info('');
         $this->command->info('📋 Available Personal Access Token Clients:');
-        
+
         $this->command->table(
             ['Client Name', 'Access Scope', 'Primary Use Case'],
             [

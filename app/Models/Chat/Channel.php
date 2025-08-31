@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
@@ -43,12 +42,12 @@ class Channel extends Model
         static::creating(function (Channel $channel) {
             if (empty($channel->slug)) {
                 $channel->slug = Str::slug($channel->name);
-                
+
                 $originalSlug = $channel->slug;
                 $counter = 1;
-                
+
                 while (static::where('slug', $channel->slug)->exists()) {
-                    $channel->slug = $originalSlug . '-' . $counter;
+                    $channel->slug = $originalSlug.'-'.$counter;
                     $counter++;
                 }
             }

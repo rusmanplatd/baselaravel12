@@ -46,7 +46,7 @@ class TokenController extends Controller
         $user = auth()->user();
         $token = $user->tokens()->where('id', $validated['token_id'])->first();
 
-        if (!$token) {
+        if (! $token) {
             return response()->json([
                 'error' => 'Token not found',
             ], 404);

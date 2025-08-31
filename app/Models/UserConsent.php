@@ -43,10 +43,10 @@ class UserConsent extends Model
     public function scopeActive($query)
     {
         return $query->where('status', 'active')
-                    ->where(function ($query) {
-                        $query->whereNull('expires_at')
-                              ->orWhere('expires_at', '>', now());
-                    });
+            ->where(function ($query) {
+                $query->whereNull('expires_at')
+                    ->orWhere('expires_at', '>', now());
+            });
     }
 
     public function scopeExpired($query)
@@ -56,7 +56,7 @@ class UserConsent extends Model
 
     public function isActive(): bool
     {
-        return $this->status === 'active' && 
+        return $this->status === 'active' &&
                ($this->expires_at === null || $this->expires_at->isFuture());
     }
 
@@ -70,16 +70,16 @@ class UserConsent extends Model
         $this->update(['status' => 'revoked']);
     }
 
-    public function recordUsage(string $ip = null, string $userAgent = null): void
+    public function recordUsage(?string $ip = null, ?string $userAgent = null): void
     {
         $stats = $this->usage_stats ?? [];
         $stats['last_access'] = now()->toISOString();
         $stats['access_count'] = ($stats['access_count'] ?? 0) + 1;
-        
+
         if ($ip) {
             $stats['last_ip'] = $ip;
         }
-        
+
         if ($userAgent) {
             $stats['last_user_agent'] = $userAgent;
         }
@@ -98,7 +98,7 @@ class UserConsent extends Model
     public function addScope(string $scope): void
     {
         $scopes = $this->scopes ?? [];
-        if (!in_array($scope, $scopes)) {
+        if (! in_array($scope, $scopes)) {
             $scopes[] = $scope;
             $this->update(['scopes' => $scopes]);
         }

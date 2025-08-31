@@ -23,9 +23,9 @@ class DistrictRequest extends FormRequest
         $isUpdate = $this->isMethod('PUT') || $this->isMethod('PATCH');
 
         return [
-            'city_id' => ($isUpdate ? 'sometimes|' : '') . 'required|string|exists:ref_geo_city,id',
-            'code' => ($isUpdate ? 'sometimes|' : '') . 'required|string|max:10|unique:ref_geo_district,code' . ($districtId ? ",{$districtId}" : ''),
-            'name' => ($isUpdate ? 'sometimes|' : '') . 'required|string|max:255',
+            'city_id' => ($isUpdate ? 'sometimes|' : '').'required|string|exists:ref_geo_city,id',
+            'code' => ($isUpdate ? 'sometimes|' : '').'required|string|max:10|unique:ref_geo_district,code'.($districtId ? ",{$districtId}" : ''),
+            'name' => ($isUpdate ? 'sometimes|' : '').'required|string|max:255',
         ];
     }
 

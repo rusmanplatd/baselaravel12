@@ -122,11 +122,10 @@ class ChatFileService
         }
     }
 
-
     public function generateDownloadUrl(string $filePath, string $fileName, string $symmetricKey, ?string $iv = null, ?string $tag = null, int $expiresInSeconds = 3600): string
     {
         $expires = time() + $expiresInSeconds;
-        
+
         // Create payload with encryption information
         $payload = [
             'file_path' => $filePath,
@@ -139,10 +138,10 @@ class ChatFileService
 
         // Encrypt the payload using application key
         $encryptedPayload = $this->encryptTokenPayload(json_encode($payload));
-        
+
         // Create HMAC signature
-        $signature = hash_hmac('sha256', $encryptedPayload . $expires, config('app.key'));
-        
+        $signature = hash_hmac('sha256', $encryptedPayload.$expires, config('app.key'));
+
         $secureToken = base64_encode(json_encode([
             'data' => $encryptedPayload,
             'signature' => $signature,
@@ -151,6 +150,7 @@ class ChatFileService
 
         // Use base64 encoded placeholder for token-based downloads
         $encodedPath = base64_encode('token-based-download');
+
         return "/api/chat/files/download/?token={$secureToken}";
     }
 
@@ -158,8 +158,8 @@ class ChatFileService
     {
         try {
             $decoded = json_decode(base64_decode($token), true);
-            
-            if (!$decoded || !isset($decoded['data'], $decoded['signature'], $decoded['expires'])) {
+
+            if (! $decoded || ! isset($decoded['data'], $decoded['signature'], $decoded['expires'])) {
                 return ['success' => false, 'error' => 'invalid'];
             }
 
@@ -169,8 +169,8 @@ class ChatFileService
             }
 
             // Verify signature
-            $expectedSignature = hash_hmac('sha256', $decoded['data'] . $decoded['expires'], config('app.key'));
-            if (!hash_equals($expectedSignature, $decoded['signature'])) {
+            $expectedSignature = hash_hmac('sha256', $decoded['data'].$decoded['expires'], config('app.key'));
+            if (! hash_equals($expectedSignature, $decoded['signature'])) {
                 return ['success' => false, 'error' => 'invalid'];
             }
 
@@ -178,7 +178,7 @@ class ChatFileService
             $payload = $this->decryptTokenPayload($decoded['data']);
             $data = json_decode($payload, true);
 
-            if (!$data) {
+            if (! $data) {
                 return ['success' => false, 'error' => 'invalid'];
             }
 
@@ -194,6 +194,7 @@ class ChatFileService
 
         } catch (\Exception $e) {
             Log::warning('Secure token verification failed', ['error' => $e->getMessage()]);
+
             return ['success' => false, 'error' => 'invalid'];
         }
     }
@@ -249,7 +250,7 @@ class ChatFileService
             $thumbnailPath = $this->getThumbnailPath($filePath);
             if (Storage::disk('chat-files')->exists($thumbnailPath)) {
                 Storage::disk('chat-files')->delete($thumbnailPath);
-                
+
                 // Delete thumbnail metadata
                 $metadataPath = $this->getThumbnailMetadataPath($thumbnailPath);
                 if (Storage::disk('chat-files')->exists($metadataPath)) {
@@ -354,6 +355,7 @@ class ChatFileService
                 $this->generateThumbnailWithGD($file, $tempThumbnailPath);
             } else {
                 Log::warning('No image processing library available for thumbnail generation');
+
                 return null;
             }
 
@@ -361,18 +363,19 @@ class ChatFileService
             $thumbnailContents = file_get_contents($tempThumbnailPath);
             if ($thumbnailContents === false) {
                 unlink($tempThumbnailPath);
+
                 return null;
             }
 
             // Encrypt the thumbnail content
             $thumbnailEncryption = $this->encryptFileContents($thumbnailContents, $symmetricKey);
-            
+
             $stored = Storage::disk('chat-files')->put($thumbnailPath, $thumbnailEncryption['encrypted_content']);
 
             // Clean up temporary file
             unlink($tempThumbnailPath);
 
-            if (!$stored) {
+            if (! $stored) {
                 return null;
             }
 
@@ -528,17 +531,18 @@ class ChatFileService
     public function getThumbnailContent(string $thumbnailPath, string $symmetricKey): ?string
     {
         try {
-            if (!Storage::disk('chat-files')->exists($thumbnailPath)) {
+            if (! Storage::disk('chat-files')->exists($thumbnailPath)) {
                 return null;
             }
 
             // Get encrypted thumbnail content
             $encryptedContent = Storage::disk('chat-files')->get($thumbnailPath);
-            
+
             // Get encryption metadata
             $encryptionData = $this->getThumbnailEncryptionData($thumbnailPath);
-            if (!$encryptionData) {
+            if (! $encryptionData) {
                 Log::warning('Thumbnail encryption metadata not found', ['path' => $thumbnailPath]);
+
                 return null;
             }
 
@@ -550,6 +554,7 @@ class ChatFileService
                 'thumbnail_path' => $thumbnailPath,
                 'error' => $e->getMessage(),
             ]);
+
             return null;
         }
     }
@@ -569,8 +574,8 @@ class ChatFileService
     private function getThumbnailEncryptionData(string $thumbnailPath): ?array
     {
         $metadataPath = $this->getThumbnailMetadataPath($thumbnailPath);
-        
-        if (!Storage::disk('chat-files')->exists($metadataPath)) {
+
+        if (! Storage::disk('chat-files')->exists($metadataPath)) {
             return null;
         }
 
@@ -583,7 +588,8 @@ class ChatFileService
     private function getThumbnailMetadataPath(string $thumbnailPath): string
     {
         $pathInfo = pathinfo($thumbnailPath);
-        return $pathInfo['dirname'] . '/' . $pathInfo['filename'] . '.meta';
+
+        return $pathInfo['dirname'].'/'.$pathInfo['filename'].'.meta';
     }
 
     private function encryptTokenPayload(string $payload): string
@@ -591,12 +597,12 @@ class ChatFileService
         $key = hash('sha256', config('app.key'), true);
         $iv = random_bytes(16);
         $encrypted = openssl_encrypt($payload, 'AES-256-CBC', $key, OPENSSL_RAW_DATA, $iv);
-        
+
         if ($encrypted === false) {
             throw new \RuntimeException('Token encryption failed');
         }
-        
-        return base64_encode($iv . $encrypted);
+
+        return base64_encode($iv.$encrypted);
     }
 
     private function decryptTokenPayload(string $encryptedPayload): string
@@ -605,17 +611,17 @@ class ChatFileService
         if ($data === false || strlen($data) < 16) {
             throw new \RuntimeException('Invalid encrypted payload');
         }
-        
+
         $key = hash('sha256', config('app.key'), true);
         $iv = substr($data, 0, 16);
         $encrypted = substr($data, 16);
-        
+
         $decrypted = openssl_decrypt($encrypted, 'AES-256-CBC', $key, OPENSSL_RAW_DATA, $iv);
-        
+
         if ($decrypted === false) {
             throw new \RuntimeException('Token decryption failed');
         }
-        
+
         return $decrypted;
     }
 }

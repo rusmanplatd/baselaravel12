@@ -1,9 +1,9 @@
 <?php
 
-use App\Models\Master\Geo\Country;
-use App\Models\Master\Geo\Province;
 use App\Models\Master\Geo\City;
+use App\Models\Master\Geo\Country;
 use App\Models\Master\Geo\District;
+use App\Models\Master\Geo\Province;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
@@ -33,9 +33,9 @@ it('can list cities', function () {
                     'created_at',
                     'updated_at',
                     'province',
-                    'district'
-                ]
-            ]
+                    'district',
+                ],
+            ],
         ]);
 });
 
@@ -101,7 +101,7 @@ it('can create city', function () {
     $cityData = [
         'province_id' => $this->province->id,
         'code' => 'LA',
-        'name' => 'Los Angeles'
+        'name' => 'Los Angeles',
     ];
 
     $response = $this->postJson('/api/v1/geo/cities', $cityData);
@@ -113,7 +113,7 @@ it('can create city', function () {
             'code',
             'name',
             'created_at',
-            'updated_at'
+            'updated_at',
         ])
         ->assertJson($cityData);
 
@@ -131,7 +131,7 @@ it('validates province exists when creating city', function () {
     $response = $this->postJson('/api/v1/geo/cities', [
         'province_id' => 'nonexistent-id',
         'code' => 'LA',
-        'name' => 'Los Angeles'
+        'name' => 'Los Angeles',
     ]);
 
     $response->assertStatus(422)
@@ -144,7 +144,7 @@ it('validates unique code when creating city', function () {
     $response = $this->postJson('/api/v1/geo/cities', [
         'province_id' => $this->province->id,
         'code' => 'LA',
-        'name' => 'Los Angeles'
+        'name' => 'Los Angeles',
     ]);
 
     $response->assertStatus(422)
@@ -165,12 +165,12 @@ it('can show city', function () {
             'created_at',
             'updated_at',
             'province',
-            'district'
+            'district',
         ])
         ->assertJson([
             'id' => $city->id,
             'code' => $city->code,
-            'name' => $city->name
+            'name' => $city->name,
         ]);
 });
 
@@ -183,7 +183,7 @@ it('returns 404 for nonexistent city', function () {
 it('can update city', function () {
     $city = City::factory()->create(['province_id' => $this->province->id]);
     $updateData = [
-        'name' => 'Updated City Name'
+        'name' => 'Updated City Name',
     ];
 
     $response = $this->putJson("/api/v1/geo/cities/{$city->id}", $updateData);
@@ -193,7 +193,7 @@ it('can update city', function () {
 
     $this->assertDatabaseHas('ref_geo_city', [
         'id' => $city->id,
-        'name' => 'Updated City Name'
+        'name' => 'Updated City Name',
     ]);
 });
 
@@ -202,7 +202,7 @@ it('validates unique code when updating city', function () {
     $city2 = City::factory()->create(['code' => 'NY', 'province_id' => $this->province->id]);
 
     $response = $this->putJson("/api/v1/geo/cities/{$city2->id}", [
-        'code' => 'LA'
+        'code' => 'LA',
     ]);
 
     $response->assertStatus(422)
@@ -244,8 +244,8 @@ it('can get cities list for dropdown', function () {
                 'province_id',
                 'code',
                 'name',
-                'province'
-            ]
+                'province',
+            ],
         ]);
 });
 
@@ -271,8 +271,8 @@ it('can get cities by province', function () {
             '*' => [
                 'id',
                 'code',
-                'name'
-            ]
+                'name',
+            ],
         ])
         ->assertJsonCount(3);
 });

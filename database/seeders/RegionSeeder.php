@@ -22,8 +22,9 @@ class RegionSeeder extends Seeder
 
         // Get system user for created_by/updated_by fields
         $systemUser = \App\Models\User::first();
-        if (!$systemUser) {
+        if (! $systemUser) {
             $this->command->error('No users found. Please run user seeders first.');
+
             return;
         }
 
@@ -80,8 +81,9 @@ class RegionSeeder extends Seeder
 
         $csvPath = database_path('seeders/csv/country.csv');
 
-        if (!File::exists($csvPath)) {
+        if (! File::exists($csvPath)) {
             $this->command->error('Country CSV file not found!');
+
             return;
         }
 
@@ -109,7 +111,7 @@ class RegionSeeder extends Seeder
             Country::insert($chunk);
         }
 
-        $this->command->info('Imported ' . count($countries) . ' countries');
+        $this->command->info('Imported '.count($countries).' countries');
     }
 
     private function importProvinces($systemUser): void
@@ -118,12 +120,13 @@ class RegionSeeder extends Seeder
 
         $csvPath = database_path('seeders/csv/province.csv');
 
-        if (!File::exists($csvPath)) {
+        if (! File::exists($csvPath)) {
             $this->command->error('Province CSV file not found!');
+
             return;
         }
 
-                $csvData = $this->readCsvFile($csvPath);
+        $csvData = $this->readCsvFile($csvPath);
         $provinces = [];
         $countries = Country::pluck('id', 'code')->toArray();
 
@@ -152,7 +155,7 @@ class RegionSeeder extends Seeder
             Province::insert($chunk);
         }
 
-        $this->command->info('Imported ' . count($provinces) . ' provinces');
+        $this->command->info('Imported '.count($provinces).' provinces');
     }
 
     private function importCities($systemUser): void
@@ -161,15 +164,16 @@ class RegionSeeder extends Seeder
 
         $csvPath = database_path('seeders/csv/city.csv');
 
-        if (!File::exists($csvPath)) {
+        if (! File::exists($csvPath)) {
             $this->command->error('City CSV file not found!');
+
             return;
         }
 
         $csvData = $this->readCsvFile($csvPath);
         $cities = [];
 
-        $provinces = Province::with('country')->get()->groupBy('country.code')->map(function($countryProvinces) {
+        $provinces = Province::with('country')->get()->groupBy('country.code')->map(function ($countryProvinces) {
             return $countryProvinces->pluck('id', 'code');
         })->toArray();
 
@@ -206,7 +210,7 @@ class RegionSeeder extends Seeder
             City::insert($chunk);
         }
 
-        $this->command->info('Imported ' . count($cities) . ' cities');
+        $this->command->info('Imported '.count($cities).' cities');
     }
 
     private function importDistricts($systemUser): void
@@ -215,8 +219,9 @@ class RegionSeeder extends Seeder
 
         $csvPath = database_path('seeders/csv/district.csv');
 
-        if (!File::exists($csvPath)) {
+        if (! File::exists($csvPath)) {
             $this->command->error('District CSV file not found!');
+
             return;
         }
 
@@ -248,7 +253,7 @@ class RegionSeeder extends Seeder
             District::insert($chunk);
         }
 
-        $this->command->info('Imported ' . count($districts) . ' districts');
+        $this->command->info('Imported '.count($districts).' districts');
     }
 
     private function importVillages($systemUser): void
@@ -257,8 +262,9 @@ class RegionSeeder extends Seeder
 
         $csvPath = database_path('seeders/csv/villages.csv');
 
-        if (!File::exists($csvPath)) {
+        if (! File::exists($csvPath)) {
             $this->command->error('Villages CSV file not found!');
+
             return;
         }
 
@@ -270,6 +276,7 @@ class RegionSeeder extends Seeder
         $handle = fopen($csvPath, 'r');
         if ($handle === false) {
             $this->command->error('Cannot open villages CSV file!');
+
             return;
         }
 
@@ -303,16 +310,16 @@ class RegionSeeder extends Seeder
         }
 
         // Insert remaining villages
-        if (!empty($villages)) {
+        if (! empty($villages)) {
             Village::insert($villages);
         }
 
         fclose($handle);
 
-        $this->command->info('Imported ' . $count . ' villages');
+        $this->command->info('Imported '.$count.' villages');
     }
 
-        private function readCsvFile(string $path): array
+    private function readCsvFile(string $path): array
     {
         $data = [];
         $handle = fopen($path, 'r');
@@ -325,11 +332,12 @@ class RegionSeeder extends Seeder
         $headers = fgetcsv($handle);
         if ($headers === false) {
             fclose($handle);
+
             return $data;
         }
 
         // Clean headers from BOM and whitespace
-        $headers = array_map(function($header) {
+        $headers = array_map(function ($header) {
             return trim($header, "\xEF\xBB\xBF \t\n\r\0\x0B");
         }, $headers);
 
@@ -341,6 +349,7 @@ class RegionSeeder extends Seeder
         }
 
         fclose($handle);
+
         return $data;
     }
 }

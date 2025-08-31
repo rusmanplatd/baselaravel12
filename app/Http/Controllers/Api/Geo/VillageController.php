@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Api\Geo;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Geo\VillageRequest;
-use App\Models\User;
 use App\Models\Master\Geo\Village;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Spatie\QueryBuilder\AllowedFilter;
@@ -78,7 +78,6 @@ class VillageController extends Controller
      *   "created_at": "2024-01-01T00:00:00.000000Z",
      *   "updated_at": "2024-01-01T00:00:00.000000Z"
      * }
-     *
      * @response 422 {
      *   "message": "The given data was invalid.",
      *   "errors": {
@@ -91,7 +90,7 @@ class VillageController extends Controller
     public function store(VillageRequest $request): JsonResponse
     {
         $validated = $request->validated();
-        
+
         $systemUserId = User::where('email', 'system@geo.local')->first()?->id ?? '01HXYZ123456789ABCDEF';
         $validated['created_by'] = $systemUserId;
         $validated['updated_by'] = $systemUserId;
@@ -115,6 +114,7 @@ class VillageController extends Controller
      * Update the specified village
      *
      * @urlParam village string required The ID of the village. Example: 01HXYZ123456789ABCDEF
+     *
      * @bodyParam district_id string The ID of the district. Example: 01HXYZ123456789ABCDEF
      * @bodyParam code string Village code (max 10 characters). Example: WEST
      * @bodyParam name string Village name (max 255 characters). Example: West Hollywood
@@ -127,11 +127,9 @@ class VillageController extends Controller
      *   "created_at": "2024-01-01T00:00:00.000000Z",
      *   "updated_at": "2024-01-01T00:00:00.000000Z"
      * }
-     *
      * @response 404 {
      *   "message": "No query results for model [App\\Models\\Master\\Geo\\Village]."
      * }
-     *
      * @response 422 {
      *   "message": "The given data was invalid.",
      *   "errors": {
@@ -151,9 +149,9 @@ class VillageController extends Controller
      */
     public function destroy(Village $village): JsonResponse
     {
-        if (!$village->canDeleted()) {
+        if (! $village->canDeleted()) {
             return response()->json([
-                'message' => 'Cannot delete village.'
+                'message' => 'Cannot delete village.',
             ], 422);
         }
 

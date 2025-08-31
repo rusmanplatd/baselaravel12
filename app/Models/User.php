@@ -96,7 +96,7 @@ class User extends Authenticatable implements HasPasskeys
 
     public function getAvatarUrlAttribute(): ?string
     {
-        if (!$this->avatar) {
+        if (! $this->avatar) {
             return null;
         }
 
@@ -104,7 +104,7 @@ class User extends Authenticatable implements HasPasskeys
             return $this->avatar;
         }
 
-        return asset('storage/' . $this->avatar);
+        return asset('storage/'.$this->avatar);
     }
 
     public function getFormattedAddressAttribute(): ?string
@@ -119,20 +119,20 @@ class User extends Authenticatable implements HasPasskeys
             $this->locality,
             $this->region,
             $this->postal_code,
-            $this->country
+            $this->country,
         ]);
 
-        return !empty($addressParts) ? implode(', ', $addressParts) : null;
+        return ! empty($addressParts) ? implode(', ', $addressParts) : null;
     }
 
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
             ->logOnly([
-                'name', 'first_name', 'middle_name', 'last_name', 'username', 'nickname', 'email', 
+                'name', 'first_name', 'middle_name', 'last_name', 'username', 'nickname', 'email',
                 'avatar', 'profile_url', 'website', 'gender', 'birthdate', 'zoneinfo', 'locale',
                 'street_address', 'locality', 'region', 'postal_code', 'country', 'phone_number',
-                'external_id'
+                'external_id',
             ])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()

@@ -359,7 +359,7 @@ class ClientAccessControlTest extends TestCase
         // Since organization_id is required at the database level,
         // we test the userHasAccess method with a different organization
         $otherOrganization = Organization::factory()->create();
-        
+
         $client = Client::factory()->create([
             'organization_id' => $otherOrganization->id,
             'user_access_scope' => 'organization_members',

@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Api\Geo;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Geo\ProvinceRequest;
-use App\Models\User;
 use App\Models\Master\Geo\Province;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Spatie\QueryBuilder\AllowedFilter;
@@ -88,7 +88,6 @@ class ProvinceController extends Controller
      *   "created_at": "2024-01-01T00:00:00.000000Z",
      *   "updated_at": "2024-01-01T00:00:00.000000Z"
      * }
-     *
      * @response 422 {
      *   "message": "The given data was invalid.",
      *   "errors": {
@@ -101,7 +100,7 @@ class ProvinceController extends Controller
     public function store(ProvinceRequest $request): JsonResponse
     {
         $validated = $request->validated();
-        
+
         $systemUserId = User::where('email', 'system@geo.local')->first()?->id ?? '01HXYZ123456789ABCDEF';
         $validated['created_by'] = $systemUserId;
         $validated['updated_by'] = $systemUserId;
@@ -130,7 +129,6 @@ class ProvinceController extends Controller
      *   },
      *   "cities": []
      * }
-     *
      * @response 404 {
      *   "message": "No query results for model [App\\Models\\Master\\Geo\\Province]."
      * }
@@ -146,6 +144,7 @@ class ProvinceController extends Controller
      * Update the specified province
      *
      * @urlParam province string required The ID of the province. Example: 01HXYZ123456789ABCDEF
+     *
      * @bodyParam country_id string The ID of the country. Example: 01HXYZ123456789ABCDEF
      * @bodyParam code string Province code (max 10 characters). Example: CA
      * @bodyParam name string Province name (max 255 characters). Example: California
@@ -158,11 +157,9 @@ class ProvinceController extends Controller
      *   "created_at": "2024-01-01T00:00:00.000000Z",
      *   "updated_at": "2024-01-01T00:00:00.000000Z"
      * }
-     *
      * @response 404 {
      *   "message": "No query results for model [App\\Models\\Master\\Geo\\Province]."
      * }
-     *
      * @response 422 {
      *   "message": "The given data was invalid.",
      *   "errors": {
@@ -185,20 +182,18 @@ class ProvinceController extends Controller
      * @response 200 {
      *   "message": "Province deleted successfully"
      * }
-     *
      * @response 404 {
      *   "message": "No query results for model [App\\Models\\Master\\Geo\\Province]."
      * }
-     *
      * @response 422 {
      *   "message": "Cannot delete province. It has associated cities."
      * }
      */
     public function destroy(Province $province): JsonResponse
     {
-        if (!$province->canDeleted()) {
+        if (! $province->canDeleted()) {
             return response()->json([
-                'message' => 'Cannot delete province. It has associated cities.'
+                'message' => 'Cannot delete province. It has associated cities.',
             ], 422);
         }
 
@@ -259,7 +254,6 @@ class ProvinceController extends Controller
      *     "name": "California"
      *   }
      * ]
-     *
      * @response 404 {
      *   "message": "Country not found."
      * }

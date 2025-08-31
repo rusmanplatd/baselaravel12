@@ -550,12 +550,12 @@ class OrganizationMembershipSeeder extends Seeder
         foreach ($organizationIds as $organizationId) {
             // Set team context for organization-specific permissions
             setPermissionsTeamId($organizationId);
-            
+
             // Assign organization-specific permissions based on user role context
             $userMemberships = OrganizationMembership::where('user_id', $user->id)
                 ->where('organization_id', $organizationId)
                 ->get();
-                
+
             foreach ($userMemberships as $membership) {
                 // Assign permissions based on membership type
                 switch ($membership->membership_type) {
@@ -569,7 +569,7 @@ class OrganizationMembershipSeeder extends Seeder
                             'audit_log:admin',
                         ]);
                         break;
-                        
+
                     case 'admin':
                         $user->givePermissionTo([
                             'org:write',
@@ -580,7 +580,7 @@ class OrganizationMembershipSeeder extends Seeder
                             'audit_log:read',
                         ]);
                         break;
-                        
+
                     case 'manager':
                         $user->givePermissionTo([
                             'org:read',
@@ -591,7 +591,7 @@ class OrganizationMembershipSeeder extends Seeder
                             'oauth_app:read',
                         ]);
                         break;
-                        
+
                     case 'member':
                         $user->givePermissionTo([
                             'org:read',
@@ -599,7 +599,7 @@ class OrganizationMembershipSeeder extends Seeder
                             'profile:write',
                         ]);
                         break;
-                        
+
                     case 'contractor':
                     case 'guest':
                         $user->givePermissionTo([
@@ -610,7 +610,7 @@ class OrganizationMembershipSeeder extends Seeder
                 }
             }
         }
-        
+
         // Reset team context
         setPermissionsTeamId(null);
     }

@@ -1,8 +1,8 @@
 <?php
 
+use App\Models\Master\Geo\City;
 use App\Models\Master\Geo\Country;
 use App\Models\Master\Geo\Province;
-use App\Models\Master\Geo\City;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
@@ -31,9 +31,9 @@ it('can list provinces', function () {
                     'created_at',
                     'updated_at',
                     'country',
-                    'cities'
-                ]
-            ]
+                    'cities',
+                ],
+            ],
         ]);
 });
 
@@ -86,7 +86,7 @@ it('can create province', function () {
     $provinceData = [
         'country_id' => $this->country->id,
         'code' => 'CA',
-        'name' => 'California'
+        'name' => 'California',
     ];
 
     $response = $this->postJson('/api/v1/geo/provinces', $provinceData);
@@ -98,7 +98,7 @@ it('can create province', function () {
             'code',
             'name',
             'created_at',
-            'updated_at'
+            'updated_at',
         ])
         ->assertJson($provinceData);
 
@@ -116,7 +116,7 @@ it('validates country exists when creating province', function () {
     $response = $this->postJson('/api/v1/geo/provinces', [
         'country_id' => 'nonexistent-id',
         'code' => 'CA',
-        'name' => 'California'
+        'name' => 'California',
     ]);
 
     $response->assertStatus(422)
@@ -129,7 +129,7 @@ it('validates unique code when creating province', function () {
     $response = $this->postJson('/api/v1/geo/provinces', [
         'country_id' => $this->country->id,
         'code' => 'CA',
-        'name' => 'California'
+        'name' => 'California',
     ]);
 
     $response->assertStatus(422)
@@ -150,12 +150,12 @@ it('can show province', function () {
             'created_at',
             'updated_at',
             'country',
-            'cities'
+            'cities',
         ])
         ->assertJson([
             'id' => $province->id,
             'code' => $province->code,
-            'name' => $province->name
+            'name' => $province->name,
         ]);
 });
 
@@ -168,7 +168,7 @@ it('returns 404 for nonexistent province', function () {
 it('can update province', function () {
     $province = Province::factory()->create(['country_id' => $this->country->id]);
     $updateData = [
-        'name' => 'Updated Province Name'
+        'name' => 'Updated Province Name',
     ];
 
     $response = $this->putJson("/api/v1/geo/provinces/{$province->id}", $updateData);
@@ -178,7 +178,7 @@ it('can update province', function () {
 
     $this->assertDatabaseHas('ref_geo_province', [
         'id' => $province->id,
-        'name' => 'Updated Province Name'
+        'name' => 'Updated Province Name',
     ]);
 });
 
@@ -187,7 +187,7 @@ it('validates unique code when updating province', function () {
     $province2 = Province::factory()->create(['code' => 'NY', 'country_id' => $this->country->id]);
 
     $response = $this->putJson("/api/v1/geo/provinces/{$province2->id}", [
-        'code' => 'CA'
+        'code' => 'CA',
     ]);
 
     $response->assertStatus(422)
@@ -229,8 +229,8 @@ it('can get provinces list for dropdown', function () {
                 'country_id',
                 'code',
                 'name',
-                'country'
-            ]
+                'country',
+            ],
         ]);
 });
 
@@ -256,8 +256,8 @@ it('can get provinces by country', function () {
             '*' => [
                 'id',
                 'code',
-                'name'
-            ]
+                'name',
+            ],
         ])
         ->assertJsonCount(3);
 });

@@ -85,8 +85,8 @@ test('minio real integration with actual storage', function () {
     }
 
     $disk = Storage::disk('minio');
-    $testContent = 'Real MinIO integration test - ' . now()->toISOString();
-    $testFilename = 'test-integration-' . uniqid() . '.txt';
+    $testContent = 'Real MinIO integration test - '.now()->toISOString();
+    $testFilename = 'test-integration-'.uniqid().'.txt';
 
     try {
         // Store file
@@ -112,4 +112,4 @@ test('minio real integration with actual storage', function () {
             $disk->delete($testFilename);
         }
     }
-})->skip(fn() => app()->environment('testing') && !config('filesystems.disks.minio.endpoint'), 'MinIO not available in testing environment');
+})->skip(fn () => app()->environment('testing') && ! config('filesystems.disks.minio.endpoint'), 'MinIO not available in testing environment');

@@ -12,7 +12,7 @@ use Illuminate\Http\Request;
 
 class City extends Model
 {
-    use HasUlids, HasFactory;
+    use HasFactory, HasUlids;
 
     public $table = 'ref_geo_city';
 

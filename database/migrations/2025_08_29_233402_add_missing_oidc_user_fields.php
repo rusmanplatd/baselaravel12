@@ -21,11 +21,11 @@ return new class extends Migration
             $table->date('birthdate')->nullable()->after('gender');
             $table->string('zoneinfo')->nullable()->after('birthdate');
             $table->string('locale')->nullable()->after('zoneinfo');
-            
+
             // Additional useful fields
             $table->timestamp('phone_verified_at')->nullable()->after('phone_number');
             $table->timestamp('profile_updated_at')->nullable()->after('locale');
-            
+
             // Social/external identifiers
             $table->string('external_id')->nullable()->unique()->after('profile_updated_at');
             $table->json('social_links')->nullable()->after('external_id');
@@ -50,7 +50,7 @@ return new class extends Migration
                 'phone_verified_at',
                 'profile_updated_at',
                 'external_id',
-                'social_links'
+                'social_links',
             ]);
         });
     }

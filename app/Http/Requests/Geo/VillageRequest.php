@@ -23,9 +23,9 @@ class VillageRequest extends FormRequest
         $isUpdate = $this->isMethod('PUT') || $this->isMethod('PATCH');
 
         return [
-            'district_id' => ($isUpdate ? 'sometimes|' : '') . 'required|string|exists:ref_geo_district,id',
-            'code' => ($isUpdate ? 'sometimes|' : '') . 'required|string|max:10|unique:ref_geo_village,code' . ($villageId ? ",{$villageId}" : ''),
-            'name' => ($isUpdate ? 'sometimes|' : '') . 'required|string|max:255',
+            'district_id' => ($isUpdate ? 'sometimes|' : '').'required|string|exists:ref_geo_district,id',
+            'code' => ($isUpdate ? 'sometimes|' : '').'required|string|max:10|unique:ref_geo_village,code'.($villageId ? ",{$villageId}" : ''),
+            'name' => ($isUpdate ? 'sometimes|' : '').'required|string|max:255',
         ];
     }
 

@@ -4,7 +4,6 @@ namespace App\Policies\Chat;
 
 use App\Models\Chat\Channel;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class ChannelPolicy
 {
@@ -57,7 +56,7 @@ class ChannelPolicy
             ->where('user_id', $user->id)
             ->exists();
 
-        return !$existingParticipant;
+        return ! $existingParticipant;
     }
 
     public function leave(User $user, Channel $channel): bool

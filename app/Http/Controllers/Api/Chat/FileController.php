@@ -66,7 +66,7 @@ class FileController extends Controller
 
             $message->load('sender:id,name,email');
             $message->content = $validated['caption'] ?? '';
-            
+
             // Generate secure download URL with embedded encryption information
             $message->file_url = $this->fileService->generateDownloadUrl(
                 $fileData['file_path'],
@@ -119,13 +119,14 @@ class FileController extends Controller
     {
         // Verify and extract token data
         $tokenResult = $this->fileService->verifyDownloadToken($token);
-        
-        if (!$tokenResult['success']) {
-            $errorMessage = match($tokenResult['error']) {
+
+        if (! $tokenResult['success']) {
+            $errorMessage = match ($tokenResult['error']) {
                 'expired' => 'Download token expired',
                 'invalid' => 'Invalid download token',
                 default => 'Invalid or expired download token'
             };
+
             return response()->json(['error' => $errorMessage], 403);
         }
 
@@ -137,7 +138,7 @@ class FileController extends Controller
         try {
             // Use encryption information from the token
             $fileData = $this->fileService->retrieveFile(
-                $tokenData['file_path'], 
+                $tokenData['file_path'],
                 $tokenData['symmetric_key'],
                 $tokenData['iv'],
                 $tokenData['tag']
@@ -145,7 +146,7 @@ class FileController extends Controller
 
             return response($fileData['contents'])
                 ->header('Content-Type', $message->file_mime_type)
-                ->header('Content-Disposition', 'attachment; filename="' . $tokenData['file_name'] . '"')
+                ->header('Content-Disposition', 'attachment; filename="'.$tokenData['file_name'].'"')
                 ->header('Content-Length', $message->file_size);
 
         } catch (\Exception $e) {
@@ -153,28 +154,28 @@ class FileController extends Controller
                 'file_path' => $tokenData['file_path'],
                 'error' => $e->getMessage(),
             ]);
+
             return response()->json(['error' => 'Unable to decrypt file'], 500);
         }
     }
 
-
     public function thumbnail(Request $request, string $encodedPath)
     {
         $filePath = base64_decode($encodedPath);
-        
+
         // Find the message to check permissions
         $message = Message::where('file_path', $filePath)->firstOrFail();
         $this->authorize('view', $message->conversation);
 
         // Only generate thumbnails for image files
-        if (!str_starts_with($message->file_mime_type, 'image/')) {
+        if (! str_starts_with($message->file_mime_type, 'image/')) {
             return response()->json(['error' => 'Thumbnails only available for images'], 400);
         }
 
         $encryptionKey = auth()->user()
             ->getActiveEncryptionKeyForConversation($message->conversation_id);
 
-        if (!$encryptionKey) {
+        if (! $encryptionKey) {
             return response()->json(['error' => 'Unable to decrypt thumbnail'], 403);
         }
 
@@ -184,11 +185,11 @@ class FileController extends Controller
 
         // Get thumbnail path
         $thumbnailPath = $this->getThumbnailPath($filePath);
-        
+
         // Get decrypted thumbnail content
         $thumbnailContent = $this->fileService->getThumbnailContent($thumbnailPath, $symmetricKey);
-        
-        if (!$thumbnailContent) {
+
+        if (! $thumbnailContent) {
             return response()->json(['error' => 'Thumbnail not found'], 404);
         }
 
@@ -223,6 +224,7 @@ class FileController extends Controller
     private function getThumbnailPath(string $filePath): string
     {
         $pathInfo = pathinfo($filePath);
+
         return $pathInfo['dirname'].'/thumbnails/'.$pathInfo['filename'].'_thumb.jpg';
     }
 

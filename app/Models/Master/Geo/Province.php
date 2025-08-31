@@ -12,7 +12,7 @@ use Illuminate\Http\Request;
 
 class Province extends Model
 {
-    use HasUlids, HasFactory;
+    use HasFactory, HasUlids;
 
     protected $table = 'ref_geo_province';
 
@@ -77,13 +77,13 @@ class Province extends Model
             ->when(
                 $code = $request->code,
                 function ($q) use (&$code) {
-                    $q->where('code', 'like', '%' . $code . '%');
+                    $q->where('code', 'like', '%'.$code.'%');
                 }
             )
             ->when(
                 $name = $request->name,
                 function ($q) use (&$name) {
-                    $q->where('name', 'like', '%' . $name . '%');
+                    $q->where('name', 'like', '%'.$name.'%');
                 }
             );
     }

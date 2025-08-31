@@ -36,7 +36,7 @@ class MessageFactory extends Factory
             'hmac' => base64_encode(random_bytes(32)),
             'auth_data' => base64_encode(random_bytes(16)),
             'timestamp' => now()->timestamp,
-            'nonce' => base64_encode(random_bytes(12))
+            'nonce' => base64_encode(random_bytes(12)),
         ]);
 
         return [

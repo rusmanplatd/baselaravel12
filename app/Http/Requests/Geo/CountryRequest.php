@@ -23,9 +23,9 @@ class CountryRequest extends FormRequest
         $isUpdate = $this->isMethod('PUT') || $this->isMethod('PATCH');
 
         return [
-            'code' => ($isUpdate ? 'sometimes|' : '') . 'required|string|max:10|unique:ref_geo_country,code' . ($countryId ? ",{$countryId}" : ''),
-            'name' => ($isUpdate ? 'sometimes|' : '') . 'required|string|max:255',
-            'iso_code' => 'nullable|string|max:3|unique:ref_geo_country,iso_code' . ($countryId ? ",{$countryId}" : ''),
+            'code' => ($isUpdate ? 'sometimes|' : '').'required|string|max:10|unique:ref_geo_country,code'.($countryId ? ",{$countryId}" : ''),
+            'name' => ($isUpdate ? 'sometimes|' : '').'required|string|max:255',
+            'iso_code' => 'nullable|string|max:3|unique:ref_geo_country,iso_code'.($countryId ? ",{$countryId}" : ''),
             'phone_code' => 'nullable|string|max:10',
         ];
     }

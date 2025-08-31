@@ -1,9 +1,9 @@
 <?php
 
-use App\Models\Master\Geo\Country;
-use App\Models\Master\Geo\Province;
 use App\Models\Master\Geo\City;
+use App\Models\Master\Geo\Country;
 use App\Models\Master\Geo\District;
+use App\Models\Master\Geo\Province;
 use App\Models\Master\Geo\Village;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -34,9 +34,9 @@ it('can list districts', function () {
                     'name',
                     'created_at',
                     'updated_at',
-                    'city'
-                ]
-            ]
+                    'city',
+                ],
+            ],
         ]);
 });
 
@@ -116,7 +116,7 @@ it('can create district', function () {
     $districtData = [
         'city_id' => $this->city->id,
         'code' => 'HOLLY',
-        'name' => 'Hollywood'
+        'name' => 'Hollywood',
     ];
 
     $response = $this->postJson('/api/v1/geo/districts', $districtData);
@@ -128,7 +128,7 @@ it('can create district', function () {
             'code',
             'name',
             'created_at',
-            'updated_at'
+            'updated_at',
         ])
         ->assertJson($districtData);
 
@@ -146,7 +146,7 @@ it('validates city exists when creating district', function () {
     $response = $this->postJson('/api/v1/geo/districts', [
         'city_id' => 'nonexistent-id',
         'code' => 'HOLLY',
-        'name' => 'Hollywood'
+        'name' => 'Hollywood',
     ]);
 
     $response->assertStatus(422)
@@ -159,7 +159,7 @@ it('validates unique code when creating district', function () {
     $response = $this->postJson('/api/v1/geo/districts', [
         'city_id' => $this->city->id,
         'code' => 'HOLLY',
-        'name' => 'Hollywood'
+        'name' => 'Hollywood',
     ]);
 
     $response->assertStatus(422)
@@ -179,12 +179,12 @@ it('can show district', function () {
             'name',
             'created_at',
             'updated_at',
-            'city'
+            'city',
         ])
         ->assertJson([
             'id' => $district->id,
             'code' => $district->code,
-            'name' => $district->name
+            'name' => $district->name,
         ]);
 });
 
@@ -197,7 +197,7 @@ it('returns 404 for nonexistent district', function () {
 it('can update district', function () {
     $district = District::factory()->create(['city_id' => $this->city->id]);
     $updateData = [
-        'name' => 'Updated District Name'
+        'name' => 'Updated District Name',
     ];
 
     $response = $this->putJson("/api/v1/geo/districts/{$district->id}", $updateData);
@@ -207,7 +207,7 @@ it('can update district', function () {
 
     $this->assertDatabaseHas('ref_geo_district', [
         'id' => $district->id,
-        'name' => 'Updated District Name'
+        'name' => 'Updated District Name',
     ]);
 });
 
@@ -216,7 +216,7 @@ it('validates unique code when updating district', function () {
     $district2 = District::factory()->create(['code' => 'DOWN', 'city_id' => $this->city->id]);
 
     $response = $this->putJson("/api/v1/geo/districts/{$district2->id}", [
-        'code' => 'HOLLY'
+        'code' => 'HOLLY',
     ]);
 
     $response->assertStatus(422)
@@ -258,8 +258,8 @@ it('can get districts list for dropdown', function () {
                 'city_id',
                 'code',
                 'name',
-                'city'
-            ]
+                'city',
+            ],
         ]);
 });
 
@@ -285,8 +285,8 @@ it('can get districts by city', function () {
             '*' => [
                 'id',
                 'code',
-                'name'
-            ]
+                'name',
+            ],
         ])
         ->assertJsonCount(3);
 });
@@ -299,4 +299,3 @@ it('returns empty array for city without districts', function () {
     $response->assertStatus(200)
         ->assertJson([]);
 });
-

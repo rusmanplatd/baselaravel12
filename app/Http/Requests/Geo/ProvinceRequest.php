@@ -23,9 +23,9 @@ class ProvinceRequest extends FormRequest
         $isUpdate = $this->isMethod('PUT') || $this->isMethod('PATCH');
 
         return [
-            'country_id' => ($isUpdate ? 'sometimes|' : '') . 'required|string|exists:ref_geo_country,id',
-            'code' => ($isUpdate ? 'sometimes|' : '') . 'required|string|max:10|unique:ref_geo_province,code' . ($provinceId ? ",{$provinceId}" : ''),
-            'name' => ($isUpdate ? 'sometimes|' : '') . 'required|string|max:255',
+            'country_id' => ($isUpdate ? 'sometimes|' : '').'required|string|exists:ref_geo_country,id',
+            'code' => ($isUpdate ? 'sometimes|' : '').'required|string|max:10|unique:ref_geo_province,code'.($provinceId ? ",{$provinceId}" : ''),
+            'name' => ($isUpdate ? 'sometimes|' : '').'required|string|max:255',
         ];
     }
 

@@ -46,13 +46,13 @@ Route::prefix('oauth')->group(function () {
         Route::resource('clients', ClientController::class);
         Route::post('clients/{client}/regenerate-secret', [ClientController::class, 'regenerateSecret'])
             ->name('clients.regenerate-secret');
-            
+
         // User consent management (like Google's account permissions)
         Route::get('consents', [OAuthController::class, 'userConsents'])
             ->name('oauth.consents');
         Route::delete('consents/{consent}', [OAuthController::class, 'revokeConsent'])
             ->name('oauth.consents.revoke');
-            
+
         Route::get('analytics', [\App\Http\Controllers\OAuth\AnalyticsController::class, 'dashboard'])
             ->name('oauth.analytics');
         Route::get('analytics/chart-data', [\App\Http\Controllers\OAuth\AnalyticsController::class, 'chartData'])

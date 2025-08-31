@@ -11,7 +11,7 @@ use Illuminate\Http\Request;
 
 class Country extends Model
 {
-    use HasUlids, HasFactory;
+    use HasFactory, HasUlids;
 
     protected $table = 'ref_geo_country';
 
@@ -67,19 +67,19 @@ class Country extends Model
             ->when(
                 $code = $request->code,
                 function ($q) use (&$code) {
-                    $q->where('code', 'like', '%' . $code . '%');
+                    $q->where('code', 'like', '%'.$code.'%');
                 }
             )
             ->when(
                 $name = $request->name,
                 function ($q) use (&$name) {
-                    $q->where('name', 'like', '%' . $name . '%');
+                    $q->where('name', 'like', '%'.$name.'%');
                 }
             )
             ->when(
                 $iso_code = $request->iso_code,
                 function ($q) use (&$iso_code) {
-                    $q->where('iso_code', 'like', '%' . $iso_code . '%');
+                    $q->where('iso_code', 'like', '%'.$iso_code.'%');
                 }
             );
     }

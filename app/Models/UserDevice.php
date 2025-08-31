@@ -227,8 +227,8 @@ class UserDevice extends Model
     {
         $capabilities = $this->device_capabilities ?? [];
         $quantumAlgorithms = ['ml-kem-512', 'ml-kem-768', 'ml-kem-1024', 'hybrid'];
-        
-        return !empty(array_intersect($capabilities, $quantumAlgorithms));
+
+        return ! empty(array_intersect($capabilities, $quantumAlgorithms));
     }
 
     /**
@@ -238,7 +238,7 @@ class UserDevice extends Model
     {
         $capabilities = $this->device_capabilities ?? [];
         $quantumAlgorithms = ['ml-kem-512', 'ml-kem-768', 'ml-kem-1024', 'hybrid'];
-        
+
         return array_intersect($capabilities, $quantumAlgorithms);
     }
 
@@ -254,10 +254,10 @@ class UserDevice extends Model
             'ML-KEM-1024' => 'ml-kem-1024',
             'HYBRID-RSA4096-MLKEM768' => 'hybrid',
         ];
-        
+
         $capability = $algorithmMap[$algorithm] ?? strtolower($algorithm);
         $capabilities = $this->device_capabilities ?? [];
-        
+
         return in_array($capability, $capabilities);
     }
 
@@ -268,13 +268,13 @@ class UserDevice extends Model
     {
         $existingCapabilities = $this->device_capabilities ?? [];
         $quantumAlgorithms = ['ml-kem-512', 'ml-kem-768', 'ml-kem-1024', 'hybrid'];
-        
+
         // Remove old quantum capabilities
         $nonQuantumCapabilities = array_diff($existingCapabilities, $quantumAlgorithms);
-        
+
         // Add new quantum capabilities
         $updatedCapabilities = array_merge($nonQuantumCapabilities, $newCapabilities);
-        
+
         $this->update([
             'device_capabilities' => array_unique($updatedCapabilities),
             'encryption_version' => $this->determineEncryptionVersion($newCapabilities),
@@ -294,14 +294,14 @@ class UserDevice extends Model
             'ml-kem-1024' => 'ML-KEM-1024',
             'hybrid' => 'HYBRID-RSA4096-MLKEM768',
         ];
-        
+
         $algorithms = [];
         foreach ($capabilities as $cap) {
             if (isset($algorithmMap[$cap])) {
                 $algorithms[] = $algorithmMap[$cap];
             }
         }
-        
+
         return $algorithms ?: ['RSA-4096-OAEP']; // Fallback to RSA
     }
 
@@ -313,13 +313,13 @@ class UserDevice extends Model
         if ($this->encryption_version < 3) {
             return false;
         }
-        
+
         $capabilities = $this->device_capabilities ?? [];
         $pureQuantumAlgorithms = ['ml-kem-512', 'ml-kem-768', 'ml-kem-1024'];
-        
+
         // Device is quantum ready only if it has pure ML-KEM capabilities
         // Hybrid capabilities alone don't make it quantum ready
-        return !empty(array_intersect($capabilities, $pureQuantumAlgorithms));
+        return ! empty(array_intersect($capabilities, $pureQuantumAlgorithms));
     }
 
     /**
@@ -328,11 +328,11 @@ class UserDevice extends Model
     private function determineEncryptionVersion(array $capabilities): int
     {
         $quantumCapabilities = ['ml-kem-512', 'ml-kem-768', 'ml-kem-1024', 'hybrid'];
-        
+
         if (array_intersect($capabilities, $quantumCapabilities)) {
             return 3; // Quantum-resistant version
         }
-        
+
         return 2; // RSA version
     }
 }

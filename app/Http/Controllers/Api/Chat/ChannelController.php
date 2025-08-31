@@ -37,7 +37,7 @@ class ChannelController extends Controller
 
         if ($request->has('user_channels') && $request->user_channels) {
             $query->forUser(auth()->id());
-        } elseif (!$request->has('show_private') || !$request->show_private) {
+        } elseif (! $request->has('show_private') || ! $request->show_private) {
             $query->public();
         }
 
@@ -156,7 +156,7 @@ class ChannelController extends Controller
 
         return DB::transaction(function () use ($channel, $validated) {
             $channel->update($validated);
-            
+
             if (isset($validated['name']) || isset($validated['description'])) {
                 $channel->conversation->update([
                     'name' => $validated['name'] ?? $channel->conversation->name,
@@ -261,7 +261,7 @@ class ChannelController extends Controller
             ->where('user_id', auth()->id())
             ->first();
 
-        if (!$participant || !$participant->isActive()) {
+        if (! $participant || ! $participant->isActive()) {
             return response()->json(['error' => 'You are not a member of this channel'], 404);
         }
 
@@ -317,8 +317,8 @@ class ChannelController extends Controller
         $query = Channel::query()
             ->active()
             ->where(function ($q) use ($validated) {
-                $q->where('name', 'ilike', '%' . $validated['query'] . '%')
-                  ->orWhere('description', 'ilike', '%' . $validated['query'] . '%');
+                $q->where('name', 'ilike', '%'.$validated['query'].'%')
+                    ->orWhere('description', 'ilike', '%'.$validated['query'].'%');
             });
 
         if (isset($validated['organization_id'])) {
@@ -353,6 +353,7 @@ class ChannelController extends Controller
 
                     if ($existingParticipant && $existingParticipant->isActive()) {
                         $errors[] = "User {$userId} is already a member";
+
                         continue;
                     }
 
@@ -412,7 +413,7 @@ class ChannelController extends Controller
 
                     $addedParticipants[] = $participant->load('user');
                 } catch (\Exception $e) {
-                    $errors[] = "Failed to add user {$userId}: " . $e->getMessage();
+                    $errors[] = "Failed to add user {$userId}: ".$e->getMessage();
                 }
             }
 
@@ -422,7 +423,7 @@ class ChannelController extends Controller
                 'added_count' => count($addedParticipants),
             ];
 
-            if (!empty($errors)) {
+            if (! empty($errors)) {
                 $response['errors'] = $errors;
             }
 
@@ -434,7 +435,7 @@ class ChannelController extends Controller
     {
         $user = User::find($userId);
         if ($user && $user->public_key) {
-            $cacheKey = 'user_private_key_' . $userId;
+            $cacheKey = 'user_private_key_'.$userId;
             $encryptedPrivateKey = cache()->get($cacheKey);
 
             if ($encryptedPrivateKey) {
@@ -455,11 +456,11 @@ class ChannelController extends Controller
         }
 
         $keyPair = $this->encryptionService->generateKeyPair();
-        $cacheKey = 'user_private_key_' . $userId;
+        $cacheKey = 'user_private_key_'.$userId;
         $encryptedPrivateKey = $this->encryptionService->encryptForStorage($keyPair['private_key']);
         cache()->put($cacheKey, $encryptedPrivateKey, now()->addHours(24));
 
-        if ($user && !$user->public_key) {
+        if ($user && ! $user->public_key) {
             $user->update(['public_key' => $keyPair['public_key']]);
         }
 
@@ -468,7 +469,7 @@ class ChannelController extends Controller
 
     private function getUserPrivateKey(string $userId): string
     {
-        $cacheKey = 'user_private_key_' . $userId;
+        $cacheKey = 'user_private_key_'.$userId;
         $encryptedPrivateKey = cache()->get($cacheKey);
 
         if ($encryptedPrivateKey) {
@@ -488,7 +489,7 @@ class ChannelController extends Controller
             cache()->put($cacheKey, $encryptedPrivateKey, now()->addHours(24));
 
             $user = User::find($userId);
-            if ($user && !$user->public_key) {
+            if ($user && ! $user->public_key) {
                 $user->update(['public_key' => $keyPair['public_key']]);
             }
 

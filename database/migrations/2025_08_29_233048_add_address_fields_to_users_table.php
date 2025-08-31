@@ -35,7 +35,7 @@ return new class extends Migration
                 'postal_code',
                 'country',
                 'formatted_address',
-                'phone_number'
+                'phone_number',
             ]);
         });
     }

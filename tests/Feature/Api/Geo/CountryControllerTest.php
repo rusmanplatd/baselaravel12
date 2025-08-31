@@ -26,9 +26,9 @@ it('can list countries', function () {
                     'phone_code',
                     'created_at',
                     'updated_at',
-                    'provinces'
-                ]
-            ]
+                    'provinces',
+                ],
+            ],
         ]);
 });
 
@@ -70,7 +70,7 @@ it('can create country', function () {
         'code' => 'US',
         'name' => 'United States',
         'iso_code' => 'USA',
-        'phone_code' => '+1'
+        'phone_code' => '+1',
     ];
 
     $response = $this->postJson('/api/v1/geo/countries', $countryData);
@@ -83,7 +83,7 @@ it('can create country', function () {
             'iso_code',
             'phone_code',
             'created_at',
-            'updated_at'
+            'updated_at',
         ])
         ->assertJson($countryData);
 
@@ -102,7 +102,7 @@ it('validates unique code when creating country', function () {
 
     $response = $this->postJson('/api/v1/geo/countries', [
         'code' => 'US',
-        'name' => 'United States'
+        'name' => 'United States',
     ]);
 
     $response->assertStatus(422)
@@ -115,7 +115,7 @@ it('validates unique iso code when creating country', function () {
     $response = $this->postJson('/api/v1/geo/countries', [
         'code' => 'US',
         'name' => 'United States',
-        'iso_code' => 'USA'
+        'iso_code' => 'USA',
     ]);
 
     $response->assertStatus(422)
@@ -136,12 +136,12 @@ it('can show country', function () {
             'phone_code',
             'created_at',
             'updated_at',
-            'provinces'
+            'provinces',
         ])
         ->assertJson([
             'id' => $country->id,
             'code' => $country->code,
-            'name' => $country->name
+            'name' => $country->name,
         ]);
 });
 
@@ -155,7 +155,7 @@ it('can update country', function () {
     $country = Country::factory()->create();
     $updateData = [
         'name' => 'Updated Country Name',
-        'phone_code' => '+2'
+        'phone_code' => '+2',
     ];
 
     $response = $this->putJson("/api/v1/geo/countries/{$country->id}", $updateData);
@@ -166,7 +166,7 @@ it('can update country', function () {
     $this->assertDatabaseHas('ref_geo_country', [
         'id' => $country->id,
         'name' => 'Updated Country Name',
-        'phone_code' => '+2'
+        'phone_code' => '+2',
     ]);
 });
 
@@ -175,7 +175,7 @@ it('validates unique code when updating country', function () {
     $country2 = Country::factory()->create(['code' => 'CA']);
 
     $response = $this->putJson("/api/v1/geo/countries/{$country2->id}", [
-        'code' => 'US'
+        'code' => 'US',
     ]);
 
     $response->assertStatus(422)
@@ -217,8 +217,8 @@ it('can get countries list for dropdown', function () {
                 'code',
                 'name',
                 'iso_code',
-                'phone_code'
-            ]
+                'phone_code',
+            ],
         ]);
 });
 

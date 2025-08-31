@@ -9,7 +9,6 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Spatie\QueryBuilder\AllowedFilter;
-use Spatie\QueryBuilder\AllowedSort;
 use Spatie\QueryBuilder\QueryBuilder;
 
 class CountryController extends Controller
@@ -18,6 +17,7 @@ class CountryController extends Controller
      * Display a listing of countries
      *
      * @group Geographic Data
+     *
      * @groupName Geographic Data
      *
      * @queryParam filter[code] string Filter countries by code (partial match). Example: US
@@ -86,7 +86,6 @@ class CountryController extends Controller
      *   "created_at": "2024-01-01T00:00:00.000000Z",
      *   "updated_at": "2024-01-01T00:00:00.000000Z"
      * }
-     *
      * @response 422 {
      *   "message": "The given data was invalid.",
      *   "errors": {
@@ -98,7 +97,7 @@ class CountryController extends Controller
     public function store(CountryRequest $request): JsonResponse
     {
         $validated = $request->validated();
-        
+
         // For public API, we'll use a default system user ID
         // In a real application, you might want to create a system user or handle this differently
         $systemUserId = User::where('email', 'system@geo.local')->first()?->id ?? '01HXYZ123456789ABCDEF';
@@ -125,7 +124,6 @@ class CountryController extends Controller
      *   "updated_at": "2024-01-01T00:00:00.000000Z",
      *   "provinces": []
      * }
-     *
      * @response 404 {
      *   "message": "No query results for model [App\\Models\\Master\\Geo\\Country]."
      * }
@@ -141,6 +139,7 @@ class CountryController extends Controller
      * Update the specified country
      *
      * @urlParam country string required The ID of the country. Example: 01HXYZ123456789ABCDEF
+     *
      * @bodyParam code string Country code (max 10 characters). Example: US
      * @bodyParam name string Country name (max 255 characters). Example: United States
      * @bodyParam iso_code string Country ISO code (max 3 characters). Example: USA
@@ -155,11 +154,9 @@ class CountryController extends Controller
      *   "created_at": "2024-01-01T00:00:00.000000Z",
      *   "updated_at": "2024-01-01T00:00:00.000000Z"
      * }
-     *
      * @response 404 {
      *   "message": "No query results for model [App\\Models\\Master\\Geo\\Country]."
      * }
-     *
      * @response 422 {
      *   "message": "The given data was invalid.",
      *   "errors": {
@@ -182,20 +179,18 @@ class CountryController extends Controller
      * @response 200 {
      *   "message": "Country deleted successfully"
      * }
-     *
      * @response 404 {
      *   "message": "No query results for model [App\\Models\\Master\\Geo\\Country]."
      * }
-     *
      * @response 422 {
      *   "message": "Cannot delete country. It has associated provinces."
      * }
      */
     public function destroy(Country $country): JsonResponse
     {
-        if (!$country->canDeleted()) {
+        if (! $country->canDeleted()) {
             return response()->json([
-                'message' => 'Cannot delete country. It has associated provinces.'
+                'message' => 'Cannot delete country. It has associated provinces.',
             ], 422);
         }
 

@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 
 class District extends Model
 {
-    use HasUlids, HasFactory;
+    use HasFactory, HasUlids;
 
     public $table = 'ref_geo_district';
 

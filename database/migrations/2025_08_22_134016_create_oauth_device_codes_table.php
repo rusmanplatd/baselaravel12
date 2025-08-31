@@ -14,13 +14,13 @@ return new class extends Migration
         Schema::create('oauth_device_codes', function (Blueprint $table) {
             // Primary key - use device_code as primary key (Google-like)
             $table->string('device_code')->primary();
-            
+
             // Core device flow fields
             $table->string('user_code')->unique();
             $table->ulid('client_id');
             $table->ulid('user_id')->nullable();
             $table->json('scopes')->nullable();
-            
+
             // Device flow specific fields (Google-like)
             $table->timestamp('expires_at');
             $table->timestamp('last_polled_at')->nullable();
@@ -29,7 +29,7 @@ return new class extends Migration
             $table->string('verification_uri');
             $table->string('verification_uri_complete')->nullable();
             $table->integer('interval')->default(5);
-            
+
             // Standard timestamps
             $table->timestamps();
 

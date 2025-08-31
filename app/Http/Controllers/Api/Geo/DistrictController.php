@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Api\Geo;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Geo\DistrictRequest;
-use App\Models\User;
 use App\Models\Master\Geo\District;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Spatie\QueryBuilder\AllowedFilter;
@@ -72,7 +72,6 @@ class DistrictController extends Controller
      *   "created_at": "2024-01-01T00:00:00.000000Z",
      *   "updated_at": "2024-01-01T00:00:00.000000Z"
      * }
-     *
      * @response 422 {
      *   "message": "The given data was invalid.",
      *   "errors": {
@@ -85,7 +84,7 @@ class DistrictController extends Controller
     public function store(DistrictRequest $request): JsonResponse
     {
         $validated = $request->validated();
-        
+
         $systemUserId = User::where('email', 'system@geo.local')->first()?->id ?? '01HXYZ123456789ABCDEF';
         $validated['created_by'] = $systemUserId;
         $validated['updated_by'] = $systemUserId;
@@ -109,6 +108,7 @@ class DistrictController extends Controller
      * Update the specified district
      *
      * @urlParam district string required The ID of the district. Example: 01HXYZ123456789ABCDEF
+     *
      * @bodyParam city_id string The ID of the city. Example: 01HXYZ123456789ABCDEF
      * @bodyParam code string District code (max 10 characters). Example: HOLLY
      * @bodyParam name string District name (max 255 characters). Example: Hollywood
@@ -121,11 +121,9 @@ class DistrictController extends Controller
      *   "created_at": "2024-01-01T00:00:00.000000Z",
      *   "updated_at": "2024-01-01T00:00:00.000000Z"
      * }
-     *
      * @response 404 {
      *   "message": "No query results for model [App\\Models\\Master\\Geo\\District]."
      * }
-     *
      * @response 422 {
      *   "message": "The given data was invalid.",
      *   "errors": {
@@ -145,9 +143,9 @@ class DistrictController extends Controller
      */
     public function destroy(District $district): JsonResponse
     {
-        if (!$district->canDeleted()) {
+        if (! $district->canDeleted()) {
             return response()->json([
-                'message' => 'Cannot delete district. It has associated villages.'
+                'message' => 'Cannot delete district. It has associated villages.',
             ], 422);
         }
 

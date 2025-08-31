@@ -24,7 +24,7 @@ class VillageFactory extends Factory
         return [
             'district_id' => District::factory(),
             'code' => strtoupper($this->faker->unique()->lexify('????')),
-            'name' => $this->faker->unique()->cityPrefix() . ' ' . $this->faker->city(),
+            'name' => $this->faker->unique()->cityPrefix().' '.$this->faker->city(),
             'created_by' => User::factory(),
             'updated_by' => User::factory(),
         ];

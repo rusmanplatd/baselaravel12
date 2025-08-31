@@ -1028,10 +1028,10 @@ describe('File Download API', function () {
 
         // Decode the token to extract its structure
         $decoded = json_decode(base64_decode($validToken), true);
-        
+
         // Modify the expiration to be in the past
         $decoded['expires'] = time() - 3600; // 1 hour ago
-        
+
         // Re-encode the expired token
         $expiredToken = base64_encode(json_encode($decoded));
 

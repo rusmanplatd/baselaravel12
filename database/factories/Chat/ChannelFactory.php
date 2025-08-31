@@ -19,7 +19,7 @@ class ChannelFactory extends Factory
     public function definition(): array
     {
         $name = $this->faker->words(2, true);
-        
+
         return [
             'name' => ucwords($name),
             'slug' => Str::slug($name),
@@ -62,7 +62,7 @@ class ChannelFactory extends Factory
         ]);
     }
 
-    public function withOrganization(Organization $organization = null): static
+    public function withOrganization(?Organization $organization = null): static
     {
         return $this->state(fn (array $attributes) => [
             'organization_id' => $organization?->id ?? Organization::factory(),

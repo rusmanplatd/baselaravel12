@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Api\Geo;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Geo\CityRequest;
-use App\Models\User;
 use App\Models\Master\Geo\City;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Spatie\QueryBuilder\AllowedFilter;
@@ -66,7 +66,6 @@ class CityController extends Controller
      *   "created_at": "2024-01-01T00:00:00.000000Z",
      *   "updated_at": "2024-01-01T00:00:00.000000Z"
      * }
-     *
      * @response 422 {
      *   "message": "The given data was invalid.",
      *   "errors": {
@@ -79,7 +78,7 @@ class CityController extends Controller
     public function store(CityRequest $request): JsonResponse
     {
         $validated = $request->validated();
-        
+
         $systemUserId = User::where('email', 'system@geo.local')->first()?->id ?? '01HXYZ123456789ABCDEF';
         $validated['created_by'] = $systemUserId;
         $validated['updated_by'] = $systemUserId;
@@ -103,6 +102,7 @@ class CityController extends Controller
      * Update the specified city
      *
      * @urlParam city string required The ID of the city. Example: 01HXYZ123456789ABCDEF
+     *
      * @bodyParam province_id string The ID of the province. Example: 01HXYZ123456789ABCDEF
      * @bodyParam code string City code (max 10 characters). Example: LA
      * @bodyParam name string City name (max 255 characters). Example: Los Angeles
@@ -115,11 +115,9 @@ class CityController extends Controller
      *   "created_at": "2024-01-01T00:00:00.000000Z",
      *   "updated_at": "2024-01-01T00:00:00.000000Z"
      * }
-     *
      * @response 404 {
      *   "message": "No query results for model [App\\Models\\Master\\Geo\\City]."
      * }
-     *
      * @response 422 {
      *   "message": "The given data was invalid.",
      *   "errors": {
@@ -139,9 +137,9 @@ class CityController extends Controller
      */
     public function destroy(City $city): JsonResponse
     {
-        if (!$city->canDeleted()) {
+        if (! $city->canDeleted()) {
             return response()->json([
-                'message' => 'Cannot delete city. It has associated districts.'
+                'message' => 'Cannot delete city. It has associated districts.',
             ], 422);
         }
 

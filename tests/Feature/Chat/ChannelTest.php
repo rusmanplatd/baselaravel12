@@ -15,17 +15,19 @@ class ChannelTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private User $otherUser;
+
     private Organization $organization;
 
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->user = User::factory()->create();
         $this->otherUser = User::factory()->create();
         $this->organization = Organization::factory()->create();
-        
+
         Passport::actingAs($this->user);
     }
 
@@ -74,7 +76,7 @@ class ChannelTest extends TestCase
         $response = $this->postJson('/api/v1/chat/channels', $channelData);
 
         $response->assertStatus(201);
-        
+
         $this->assertDatabaseHas('chat_channels', [
             'name' => 'Test Private Channel',
             'visibility' => 'private',
@@ -326,7 +328,7 @@ class ChannelTest extends TestCase
 
         $response = $this->postJson('/api/v1/chat/channels', $channelData);
         $response->assertStatus(201);
-        
+
         $channelId = $response->json('id');
         $channel = Channel::find($channelId);
 
@@ -347,7 +349,7 @@ class ChannelTest extends TestCase
         $response = $this->postJson('/api/v1/chat/channels', $channelData);
 
         $response->assertStatus(201);
-        
+
         $channel = Channel::where('name', 'My Awesome Channel!')->first();
         $this->assertEquals('my-awesome-channel', $channel->slug);
     }
@@ -369,11 +371,11 @@ class ChannelTest extends TestCase
         $response = $this->postJson('/api/v1/chat/channels', $channelData);
 
         $response->assertStatus(201);
-        
+
         $channel = Channel::where('name', 'Duplicate Channel')
             ->where('slug', '!=', 'duplicate-channel')
             ->first();
-        
+
         $this->assertEquals('duplicate-channel-1', $channel->slug);
     }
 

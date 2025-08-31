@@ -80,13 +80,13 @@ Route::prefix('v1')->group(function () {
         Route::get('cities/list', [\App\Http\Controllers\Api\Geo\CityController::class, 'list'])->name('cities.list');
         Route::get('districts/list', [\App\Http\Controllers\Api\Geo\DistrictController::class, 'list'])->name('districts.list');
         Route::get('villages/list', [\App\Http\Controllers\Api\Geo\VillageController::class, 'list'])->name('villages.list');
-        
+
         // Nested routes must also come before resource routes
         Route::get('countries/{country}/provinces', [\App\Http\Controllers\Api\Geo\ProvinceController::class, 'byCountry'])->name('provinces.by-country');
         Route::get('provinces/{province}/cities', [\App\Http\Controllers\Api\Geo\CityController::class, 'byProvince'])->name('cities.by-province');
         Route::get('cities/{city}/districts', [\App\Http\Controllers\Api\Geo\DistrictController::class, 'byCity'])->name('districts.by-city');
         Route::get('districts/{district}/villages', [\App\Http\Controllers\Api\Geo\VillageController::class, 'byDistrict'])->name('villages.by-district');
-        
+
         // Resource routes
         Route::apiResource('countries', \App\Http\Controllers\Api\Geo\CountryController::class);
         Route::apiResource('provinces', \App\Http\Controllers\Api\Geo\ProvinceController::class);
@@ -180,6 +180,9 @@ Route::middleware('auth:api')->prefix('v1')->group(function () {
         Route::post('conversations/{conversation}/messages', [\App\Http\Controllers\Api\Chat\MessageController::class, 'store'])
             ->name('conversations.messages.store')
             ->middleware([\App\Http\Middleware\ChatRateLimit::class.':message', \App\Http\Middleware\ChatSpamProtection::class]);
+        Route::post('messages', [\App\Http\Controllers\Api\Chat\MessageController::class, 'createMessage'])
+            ->name('messages.create')
+            ->middleware([\App\Http\Middleware\ChatRateLimit::class.':message', \App\Http\Middleware\ChatSpamProtection::class]);
         Route::get('messages/{message}', [\App\Http\Controllers\Api\Chat\MessageController::class, 'show'])
             ->name('messages.show')
             ->middleware('throttle:100,1');
@@ -247,6 +250,8 @@ Route::middleware('auth:api')->prefix('v1')->group(function () {
         Route::post('encryption/keys', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'generateUserKeys'])->name('encryption.keys.generate');
         Route::get('encryption/keys', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'getUserKeys'])->name('encryption.keys.list');
         Route::put('encryption/keys/{encryptionKey}', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'updateUserKey'])->name('encryption.keys.update');
+        Route::post('encryption-keys/{encryptionKey}/validate', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'validateKey'])->name('encryption.keys.validate');
+        Route::post('encryption-keys/{encryptionKey}/recover', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'recoverKey'])->name('encryption.keys.recover');
 
         // Enhanced E2EE endpoints
         Route::post('encryption/backup/create', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'createBackup'])->name('encryption.backup.create');
@@ -259,6 +264,7 @@ Route::middleware('auth:api')->prefix('v1')->group(function () {
 
         // Multi-Device E2EE endpoints
         Route::post('conversations/{conversation}/setup-encryption-multidevice', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'setupConversationEncryptionMultiDevice'])->name('conversations.setup-encryption-multidevice');
+        Route::post('conversations/setup-encryption', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'setupConversationEncryptionGeneral'])->name('conversations.setup-encryption');
         Route::post('conversations/{conversation}/rotate-key-multidevice', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'rotateConversationKeyMultiDevice'])->name('conversations.rotate-key-multidevice');
         Route::post('conversations/{conversation}/device-key', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'getDeviceConversationKey'])->name('conversations.device-key');
         Route::post('key-shares/{keyShare}/accept', [\App\Http\Controllers\Api\Chat\EncryptionController::class, 'acceptKeyShare'])->name('key-shares.accept');
@@ -301,7 +307,7 @@ Route::middleware('auth:api')->prefix('v1')->group(function () {
         Route::get('channels/search', [\App\Http\Controllers\Api\Chat\ChannelController::class, 'searchChannels'])
             ->name('channels.search')
             ->middleware('throttle:30,1');
-        
+
         Route::apiResource('channels', \App\Http\Controllers\Api\Chat\ChannelController::class)
             ->middleware('throttle:60,1');
         Route::post('channels/{channel}/join', [\App\Http\Controllers\Api\Chat\ChannelController::class, 'join'])
@@ -349,6 +355,12 @@ Route::middleware('auth:api')->prefix('v1')->group(function () {
         Route::post('conversations/{conversation}/negotiate-algorithm', [\App\Http\Controllers\Api\QuantumController::class, 'negotiateAlgorithm'])
             ->name('conversations.negotiate-algorithm')
             ->middleware('throttle:20,1');
+        Route::post('performance-test', [\App\Http\Controllers\Api\QuantumController::class, 'performanceTest'])
+            ->name('performance-test')
+            ->middleware('throttle:10,1');
+        Route::post('cross-platform-compatibility', [\App\Http\Controllers\Api\QuantumController::class, 'crossPlatformCompatibility'])
+            ->name('cross-platform-compatibility')
+            ->middleware('throttle:10,1');
 
         // Device management endpoints
         Route::prefix('devices')->name('devices.')->group(function () {
