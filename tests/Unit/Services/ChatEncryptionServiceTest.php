@@ -594,6 +594,89 @@ describe('Health Validation', function () {
     });
 });
 
+describe('Algorithm Negotiation', function () {
+    it('negotiates strongest common algorithm among devices', function () {
+        // All devices support ML-KEM-1024 - should select strongest
+        $deviceCapabilities = [
+            ['ML-KEM-1024', 'ML-KEM-768', 'RSA-4096-OAEP'],
+            ['ML-KEM-1024', 'ML-KEM-512', 'RSA-4096-OAEP'],
+            ['ML-KEM-1024', 'HYBRID-RSA4096-MLKEM768', 'RSA-4096-OAEP']
+        ];
+
+        $algorithm = $this->encryptionService->negotiateAlgorithm($deviceCapabilities);
+        expect($algorithm)->toBe('ML-KEM-1024');
+    });
+
+    it('falls back to next strongest when strongest not universally supported', function () {
+        // Not all devices support ML-KEM-1024, should fall back to ML-KEM-768
+        $deviceCapabilities = [
+            ['ML-KEM-768', 'ML-KEM-512', 'RSA-4096-OAEP'],
+            ['ML-KEM-1024', 'ML-KEM-768', 'RSA-4096-OAEP'],
+            ['ML-KEM-768', 'HYBRID-RSA4096-MLKEM768', 'RSA-4096-OAEP']
+        ];
+
+        $algorithm = $this->encryptionService->negotiateAlgorithm($deviceCapabilities);
+        expect($algorithm)->toBe('ML-KEM-768');
+    });
+
+    it('selects hybrid when no common quantum algorithms', function () {
+        // Mixed capabilities - should select hybrid or RSA
+        $deviceCapabilities = [
+            ['ML-KEM-768', 'HYBRID-RSA4096-MLKEM768', 'RSA-4096-OAEP'],
+            ['ML-KEM-512', 'RSA-4096-OAEP'],
+            ['HYBRID-RSA4096-MLKEM768', 'RSA-4096-OAEP']
+        ];
+
+        $algorithm = $this->encryptionService->negotiateAlgorithm($deviceCapabilities);
+        expect($algorithm)->toBe('RSA-4096-OAEP'); // Only common algorithm
+    });
+
+    it('uses fallback mechanism when no common algorithms', function () {
+        // No common algorithms - should use strongest available that works across devices
+        $deviceCapabilities = [
+            ['ML-KEM-1024'],
+            ['ML-KEM-768'],
+            ['RSA-4096-OAEP']
+        ];
+
+        $algorithm = $this->encryptionService->negotiateAlgorithm($deviceCapabilities);
+        // Should select universal fallback since no common algorithm exists
+        expect($algorithm)->toBe('RSA-4096-OAEP');
+    });
+
+    it('selects strongest when devices have overlapping quantum capabilities', function () {
+        // Some quantum overlap - should prefer quantum algorithms in fallback
+        $deviceCapabilities = [
+            ['ML-KEM-1024', 'ML-KEM-768', 'RSA-4096-OAEP'],
+            ['ML-KEM-768', 'RSA-4096-OAEP'],
+            ['HYBRID-RSA4096-MLKEM768', 'RSA-4096-OAEP']
+        ];
+
+        $algorithm = $this->encryptionService->negotiateAlgorithm($deviceCapabilities);
+        // Should select RSA since it's the only common algorithm
+        expect($algorithm)->toBe('RSA-4096-OAEP');
+    });
+
+    it('handles empty device capabilities gracefully', function () {
+        $deviceCapabilities = [[], [], []];
+
+        $algorithm = $this->encryptionService->negotiateAlgorithm($deviceCapabilities);
+        expect($algorithm)->toBe('RSA-4096-OAEP'); // Ultimate fallback
+    });
+
+    it('respects preferred algorithm option', function () {
+        $deviceCapabilities = [
+            ['ML-KEM-1024', 'ML-KEM-768', 'ML-KEM-512'],
+            ['ML-KEM-1024', 'ML-KEM-768', 'ML-KEM-512'],
+            ['ML-KEM-1024', 'ML-KEM-768', 'ML-KEM-512']
+        ];
+
+        $options = ['preferred_algorithm' => 'ML-KEM-512'];
+        $algorithm = $this->encryptionService->negotiateAlgorithm($deviceCapabilities, $options);
+        expect($algorithm)->toBe('ML-KEM-512');
+    });
+});
+
 describe('Enhanced Features', function () {
     it('verifies key integrity', function () {
         $keyPair = $this->encryptionService->generateKeyPair();

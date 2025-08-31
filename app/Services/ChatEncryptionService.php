@@ -673,24 +673,38 @@ class ChatEncryptionService
             return $options['preferred_algorithm'];
         }
 
-        // Priority: strongest quantum-resistant first
+        // Priority: strongest quantum-resistant first, then fallback to available
         $priority = [
-            'ML-KEM-1024',              // Highest security
-            'ML-KEM-768',               // Recommended standard
-            'HYBRID-RSA4096-MLKEM768',  // Transition hybrid
-            'ML-KEM-512',               // Basic quantum resistance
-            'RSA-4096-OAEP',            // Legacy fallback
+            'ML-KEM-1024',              // Highest security (256-bit equivalent)
+            'ML-KEM-768',               // Recommended standard (192-bit equivalent)
+            'ML-KEM-512',               // Basic quantum resistance (128-bit equivalent)
+            'HYBRID-RSA4096-MLKEM768',  // Transition hybrid for mixed environments
+            'RSA-4096-OAEP',            // Legacy fallback (classical only)
         ];
 
+        // Try to select strongest available algorithm first
         foreach ($priority as $preferred) {
             if (in_array($preferred, $algorithms)) {
                 Log::info('Algorithm selected for conversation', [
                     'selected' => $preferred,
                     'available' => $algorithms,
+                    'quantum_resistant' => $this->isQuantumResistant($preferred),
+                    'selection_reason' => 'best_available_from_priority_list',
                 ]);
 
                 return $preferred;
             }
+        }
+
+        // If no prioritized algorithm found, select the first available as last resort
+        if (!empty($algorithms)) {
+            $fallback = $algorithms[0];
+            Log::warning('No prioritized algorithm found, using first available', [
+                'selected' => $fallback,
+                'available' => $algorithms,
+                'selection_reason' => 'last_resort_fallback',
+            ]);
+            return $fallback;
         }
 
         throw new EncryptionException('No suitable algorithm found');
@@ -765,7 +779,7 @@ class ChatEncryptionService
      */
     private function selectFallbackAlgorithm(array $deviceCapabilities): string
     {
-        // Flatten all capabilities and find most compatible
+        // Flatten all capabilities and find strongest available across all devices
         $allCapabilities = [];
         foreach ($deviceCapabilities as $caps) {
             if (is_array($caps)) {
@@ -777,21 +791,37 @@ class ChatEncryptionService
         $validCapabilities = array_filter($uniqueCapabilities, [$this, 'isValidAlgorithm']);
 
         if (empty($validCapabilities)) {
+            Log::warning('No valid capabilities found, using RSA fallback', [
+                'device_capabilities' => $deviceCapabilities,
+            ]);
             return 'RSA-4096-OAEP';
         }
 
-        // Try to find best fallback
+        // Try strongest algorithms first, even if not universally supported
+        // This allows stronger devices to use better encryption
         $fallbackPriority = [
-            'HYBRID-RSA4096-MLKEM768',
-            'RSA-4096-OAEP',
+            'ML-KEM-1024',              // Strongest available
+            'ML-KEM-768',               // Recommended
+            'ML-KEM-512',               // Basic quantum
+            'HYBRID-RSA4096-MLKEM768',  // Transition
+            'RSA-4096-OAEP',            // Legacy
         ];
 
         foreach ($fallbackPriority as $fallback) {
             if (in_array($fallback, $validCapabilities)) {
+                Log::info('Fallback algorithm selected', [
+                    'selected' => $fallback,
+                    'available_capabilities' => $validCapabilities,
+                    'quantum_resistant' => $this->isQuantumResistant($fallback),
+                ]);
                 return $fallback;
             }
         }
 
+        // Ultimate fallback
+        Log::warning('Using ultimate fallback RSA', [
+            'valid_capabilities' => $validCapabilities,
+        ]);
         return 'RSA-4096-OAEP';
     }
 

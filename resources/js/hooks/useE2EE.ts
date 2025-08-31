@@ -286,7 +286,7 @@ export function useE2EE(userId?: string, currentConversationId?: string): UseE2E
     }
   }, [userId]);
 
-  // Encrypt a message for a conversation with quantum support
+  // Encrypt a message for a conversation with quantum support - uses strongest algorithm first
   const encryptMessage = useCallback(async (
     message: string,
     conversationId: string,
@@ -297,8 +297,21 @@ export function useE2EE(userId?: string, currentConversationId?: string): UseE2E
         throw new Error('User ID required for encryption');
       }
 
-      // Use optimized service for potential quantum encryption
-      const optimizedResult = await optimizedE2EEService.encryptMessage(message, conversationId, algorithm);
+      // If no algorithm specified, try to negotiate the strongest available
+      let targetAlgorithm = algorithm;
+      if (!targetAlgorithm) {
+        try {
+          // Try to get the strongest algorithm for this conversation
+          const negotiated = await optimizedE2EEService.negotiateConversationAlgorithm?.(conversationId);
+          targetAlgorithm = negotiated || 'ML-KEM-768'; // Default to recommended quantum
+        } catch (err) {
+          console.warn('Algorithm negotiation failed, using default:', err);
+          targetAlgorithm = 'ML-KEM-768';
+        }
+      }
+
+      // Use optimized service for potential quantum encryption with target algorithm
+      const optimizedResult = await optimizedE2EEService.encryptMessage(message, conversationId, targetAlgorithm);
       if (optimizedResult) {
         return optimizedResult;
       }

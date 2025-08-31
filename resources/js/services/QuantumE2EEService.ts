@@ -63,20 +63,21 @@ interface QuantumHealthStatus {
 }
 
 export class QuantumE2EEService {
+  // Ordered by strength: strongest quantum-resistant first, then fallback to available
   private supportedAlgorithms: QuantumAlgorithm[] = [
+    { 
+      name: 'ML-KEM-1024', 
+      keySize: 1024, 
+      quantumResistant: true, 
+      performance: 'fast',
+      description: 'NIST-approved post-quantum key encapsulation (highest security)'
+    },
     { 
       name: 'ML-KEM-768', 
       keySize: 768, 
       quantumResistant: true, 
       performance: 'fast',
       description: 'NIST-approved post-quantum key encapsulation (recommended)'
-    },
-    { 
-      name: 'ML-KEM-1024', 
-      keySize: 1024, 
-      quantumResistant: true, 
-      performance: 'fast',
-      description: 'NIST-approved post-quantum key encapsulation (high security)'
     },
     { 
       name: 'ML-KEM-512', 
@@ -97,7 +98,7 @@ export class QuantumE2EEService {
       keySize: 4096, 
       quantumResistant: false, 
       performance: 'slow',
-      description: 'Classical RSA encryption (legacy)'
+      description: 'Classical RSA encryption (legacy fallback)'
     }
   ];
 
@@ -352,18 +353,26 @@ export class QuantumE2EEService {
   }
 
   /**
-   * Get recommended algorithm based on device capabilities
+   * Get recommended algorithm based on device capabilities - uses strongest available first
    */
   getRecommendedAlgorithm(): string {
     if (!this.deviceCapabilities.length) {
-      return 'RSA-4096-OAEP'; // Fallback
+      return 'RSA-4096-OAEP'; // Fallback when no devices
     }
     
     const quantumReadyDevices = this.deviceCapabilities.filter(d => d.quantumReady);
     const allQuantumReady = quantumReadyDevices.length === this.deviceCapabilities.length;
     
     if (allQuantumReady && quantumReadyDevices.length > 0) {
-      return 'ML-KEM-768'; // All devices support quantum
+      // All devices support quantum - try strongest first
+      const allCapabilities = this.deviceCapabilities.flatMap(d => d.quantumCapabilities);
+      
+      // Check for strongest algorithms in order
+      if (allCapabilities.includes('ml-kem-1024')) return 'ML-KEM-1024';
+      if (allCapabilities.includes('ml-kem-768')) return 'ML-KEM-768';
+      if (allCapabilities.includes('ml-kem-512')) return 'ML-KEM-512';
+      
+      return 'ML-KEM-768'; // Default quantum
     }
     
     if (quantumReadyDevices.length > 0) {
