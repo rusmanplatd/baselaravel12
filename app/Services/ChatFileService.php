@@ -151,7 +151,7 @@ class ChatFileService
         // Use base64 encoded placeholder for token-based downloads
         $encodedPath = base64_encode('token-based-download');
 
-        return "/api/chat/files/download/?token={$secureToken}";
+        return "/api/v1/chat/files/{$encodedPath}/download?token={$secureToken}";
     }
 
     public function verifyDownloadToken(string $token): array
@@ -184,12 +184,15 @@ class ChatFileService
 
             // Decode encryption information
             return [
-                'file_path' => $data['file_path'],
-                'file_name' => $data['file_name'],
-                'symmetric_key' => base64_decode($data['symmetric_key']),
-                'iv' => $data['iv'] ? base64_decode($data['iv']) : null,
-                'tag' => $data['tag'] ? base64_decode($data['tag']) : null,
-                'expires' => $data['expires'],
+                'success' => true,
+                'data' => [
+                    'file_path' => $data['file_path'],
+                    'file_name' => $data['file_name'],
+                    'symmetric_key' => base64_decode($data['symmetric_key']),
+                    'iv' => $data['iv'] ? base64_decode($data['iv']) : null,
+                    'tag' => $data['tag'] ? base64_decode($data['tag']) : null,
+                    'expires' => $data['expires'],
+                ],
             ];
 
         } catch (\Exception $e) {

@@ -1058,8 +1058,12 @@ describe('File Download API', function () {
         $fileUrl = $uploadResponse->json('file_url');
 
         // Extract the encoded path from the URL
-        preg_match('/files\/([^\/]+)\/download/', $fileUrl, $matches);
-        $encodedPath = $matches[1];
+        preg_match('/files\/([^\/\?]+)\/download/', $fileUrl, $matches);
+        $encodedPath = $matches[1] ?? null;
+
+        if (! $encodedPath) {
+            $this->fail("Could not extract encoded path from URL: $fileUrl");
+        }
 
         // Test with invalid token
         $response = $this->getJson("/api/v1/chat/files/{$encodedPath}/download?token=invalid&expires=".(time() + 3600));
