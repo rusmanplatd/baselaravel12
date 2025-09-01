@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Shield, Smartphone, Key } from 'lucide-react';
 import { router } from '@inertiajs/react';
+import { apiService } from '@/services/ApiService';
 
 export default function MfaChallenge() {
     const [code, setCode] = useState('');
@@ -23,18 +24,9 @@ export default function MfaChallenge() {
         setError('');
 
         try {
-            const response = await fetch(route('mfa.verify'), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
-                body: JSON.stringify({
-                    code: code,
-                }),
+            const result = await apiService.post(route('mfa.verify'), {
+                code: code,
             });
-
-            const result = await response.json();
 
             if (result.success) {
                 // Redirect to intended page or dashboard

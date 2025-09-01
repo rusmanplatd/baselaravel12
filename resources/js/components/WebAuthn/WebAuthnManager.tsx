@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Trash2, Key, Plus } from 'lucide-react';
 import { startRegistration, startAuthentication } from '@simplewebauthn/browser';
 import { router } from '@inertiajs/react';
+import { apiService } from '@/services/ApiService';
 
 interface Passkey {
     id: string;
@@ -26,8 +27,7 @@ export default function WebAuthnManager() {
 
     const loadPasskeys = async () => {
         try {
-            const response = await fetch(route('webauthn.list'));
-            const data = await response.json();
+            const data = await apiService.get(route('webauthn.list'));
             if (data.passkeys) {
                 setPasskeys(data.passkeys);
             }
@@ -47,26 +47,16 @@ export default function WebAuthnManager() {
 
         try {
             // Get registration options
-            const optionsResponse = await fetch(route('webauthn.register.options'));
-            const options = await optionsResponse.json();
+            const options = await apiService.get(route('webauthn.register.options'));
 
             // Start registration
             const credential = await startRegistration(options);
 
             // Send credential to server
-            const verificationResponse = await fetch(route('webauthn.register'), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
-                body: JSON.stringify({
-                    ...credential,
-                    name: newKeyName,
-                }),
+            const result = await apiService.post(route('webauthn.register'), {
+                ...credential,
+                name: newKeyName,
             });
-
-            const result = await verificationResponse.json();
 
             if (result.success) {
                 setNewKeyName('');
@@ -92,14 +82,7 @@ export default function WebAuthnManager() {
 
         setLoading(true);
         try {
-            const response = await fetch(route('webauthn.delete', passkeyId), {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
-            });
-
-            const result = await response.json();
+            const result = await apiService.delete(route('webauthn.delete', passkeyId));
             if (result.success) {
                 await loadPasskeys();
             } else {

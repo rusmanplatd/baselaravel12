@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Fingerprint, Loader2 } from 'lucide-react';
 import { startAuthentication } from '@simplewebauthn/browser';
 import { router } from '@inertiajs/react';
+import { apiService } from '@/services/ApiService';
 
 interface WebAuthnLoginProps {
     onSuccess?: () => void;
@@ -19,23 +20,13 @@ export default function WebAuthnLogin({ onSuccess }: WebAuthnLoginProps) {
 
         try {
             // Get authentication options
-            const optionsResponse = await fetch(route('webauthn.authenticate.options'));
-            const options = await optionsResponse.json();
+            const options = await apiService.get(route('webauthn.authenticate.options'));
 
             // Start authentication
             const credential = await startAuthentication(options);
 
             // Send credential to server
-            const verificationResponse = await fetch(route('webauthn.authenticate'), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
-                body: JSON.stringify(credential),
-            });
-
-            const result = await verificationResponse.json();
+            const result = await apiService.post(route('webauthn.authenticate'), credential);
 
             if (result.success) {
                 if (onSuccess) {

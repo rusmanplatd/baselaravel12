@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Channel, ChannelSearchResult } from '@/types/chat';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Hash, Lock, Plus, Search, Users } from 'lucide-react';
-import axios from 'axios';
+import { apiService } from '@/services/ApiService';
 
 interface ChannelListProps {
   organizationId?: string;
@@ -41,8 +41,8 @@ export default function ChannelList({ organizationId, onChannelSelect }: Channel
       }
       params.append('user_channels', 'true');
 
-      const response = await axios.get(`/api/v1/chat/channels?${params}`);
-      setChannels(response.data.data || []);
+      const response = await apiService.get<{data: Channel[]}>(`/api/v1/chat/channels?${params}`);
+      setChannels(response.data || []);
     } catch (error) {
       console.error('Failed to fetch channels:', error);
     } finally {
@@ -65,8 +65,8 @@ export default function ChannelList({ organizationId, onChannelSelect }: Channel
         params.append('organization_id', organizationId);
       }
 
-      const response = await axios.get(`/api/v1/chat/channels/search?${params}`);
-      setChannels(response.data || []);
+      const response = await apiService.get<Channel[]>(`/api/v1/chat/channels/search?${params}`);
+      setChannels(response || []);
     } catch (error) {
       console.error('Failed to search channels:', error);
     } finally {
@@ -79,12 +79,10 @@ export default function ChannelList({ organizationId, onChannelSelect }: Channel
 
     try {
       setCreateLoading(true);
-      const response = await axios.post('/api/v1/chat/channels', {
+      const createdChannel = await apiService.post<Channel>('/api/v1/chat/channels', {
         ...newChannel,
         organization_id: organizationId,
       });
-
-      const createdChannel = response.data;
       setChannels(prev => [createdChannel, ...prev]);
       setShowCreateDialog(false);
       setNewChannel({ name: '', description: '', visibility: 'public' });
@@ -103,7 +101,7 @@ export default function ChannelList({ organizationId, onChannelSelect }: Channel
     if (channel.visibility === 'private') return;
 
     try {
-      await axios.post(`/api/v1/chat/channels/${channel.id}/join`);
+      await apiService.post(`/api/v1/chat/channels/${channel.id}/join`);
       fetchChannels();
       if (onChannelSelect) {
         onChannelSelect(channel);
@@ -113,11 +111,6 @@ export default function ChannelList({ organizationId, onChannelSelect }: Channel
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      searchChannels();
-    }
-  };
 
   if (loading) {
     return (
@@ -136,7 +129,7 @@ export default function ChannelList({ organizationId, onChannelSelect }: Channel
             placeholder="Search channels..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onKeyDown={(e) => e.key === 'Enter' && searchChannels()}
             className="pl-10"
           />
         </div>

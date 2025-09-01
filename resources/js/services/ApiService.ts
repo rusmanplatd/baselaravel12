@@ -294,6 +294,46 @@ class ApiService {
   }
 
   /**
+   * Download a file as blob (for file exports/downloads)
+   */
+  public async downloadBlob(url: string, data?: unknown, options: RequestInit = {}): Promise<Response> {
+    const headers = await this.getHeaders();
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { ...headers, ...options.headers },
+      body: data ? JSON.stringify(data) : undefined,
+      credentials: 'same-origin',
+      ...options,
+    });
+
+    if (response.status === 401) {
+      // Token is expired or invalid, clear it and throw auth error
+      this.clearTokenFromStorage();
+      throw new ApiError('Authentication expired. Please refresh the page and log in again.', 401);
+    }
+
+    if (!response.ok) {
+      let errorMessage = `Download failed: ${response.status} ${response.statusText}`;
+      let errorDetails: unknown;
+
+      try {
+        errorDetails = await response.json();
+        if (errorDetails && typeof errorDetails === 'object' && 'message' in errorDetails) {
+          errorMessage = String(errorDetails.message);
+        }
+      } catch {
+        // If JSON parsing fails, use the status text
+        errorDetails = await response.text();
+      }
+
+      throw new ApiError(errorMessage, response.status, errorDetails);
+    }
+
+    return response;
+  }
+
+  /**
    * Clear authentication token (for logout)
    */
   public clearAuth(): void {

@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import AppLayout from '@/layouts/app-layout';
+import { apiService } from '@/services/ApiService';
 
 interface SecurityProps {
     mfaEnabled: boolean;
@@ -73,15 +74,7 @@ export default function Security({ mfaEnabled, hasBackupCodes, passkeys }: Secur
 
     const enableMfa = async () => {
         try {
-            const response = await fetch(route('mfa.enable'), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
-            });
-
-            const data = await response.json();
+            const data = await apiService.post(route('mfa.enable'));
 
             if (data.success) {
                 setMfaSetupData({
@@ -99,19 +92,10 @@ export default function Security({ mfaEnabled, hasBackupCodes, passkeys }: Secur
 
     const confirmMfa = async () => {
         try {
-            const response = await fetch(route('mfa.confirm'), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
-                body: JSON.stringify({
-                    code: mfaSetupForm.data.code,
-                    password: mfaSetupForm.data.password,
-                }),
+            const data = await apiService.post(route('mfa.confirm'), {
+                code: mfaSetupForm.data.code,
+                password: mfaSetupForm.data.password,
             });
-
-            const data = await response.json();
 
             if (data.success) {
                 if (data.backup_codes) {
@@ -153,16 +137,9 @@ export default function Security({ mfaEnabled, hasBackupCodes, passkeys }: Secur
 
     const regenerateBackupCodes = async () => {
         try {
-            const response = await fetch(route('mfa.backup-codes.regenerate'), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
-                body: JSON.stringify({ password: mfaDisableForm.data.password }),
+            const data = await apiService.post(route('mfa.backup-codes.regenerate'), {
+                password: mfaDisableForm.data.password
             });
-
-            const data = await response.json();
 
             if (data.success) {
                 setBackupCodes(data.backup_codes);
@@ -184,15 +161,7 @@ export default function Security({ mfaEnabled, hasBackupCodes, passkeys }: Secur
 
         try {
             // Get registration options
-            const optionsResponse = await fetch(route('webauthn.register.options'), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
-            });
-
-            const options = await optionsResponse.json();
+            const options = await apiService.post(route('webauthn.register.options'));
 
             // Create credential
             const credential = await navigator.credentials.create({
@@ -211,25 +180,16 @@ export default function Security({ mfaEnabled, hasBackupCodes, passkeys }: Secur
             }) as PublicKeyCredential;
 
             // Register the credential
-            const response = await fetch(route('webauthn.register'), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+            const result = await apiService.post(route('webauthn.register'), {
+                name: passkeyForm.data.name || 'Security Key',
+                id: credential.id,
+                rawId: Array.from(new Uint8Array(credential.rawId)),
+                response: {
+                    clientDataJSON: Array.from(new Uint8Array(credential.response.clientDataJSON)),
+                    attestationObject: Array.from(new Uint8Array((credential.response as AuthenticatorAttestationResponse).attestationObject)),
                 },
-                body: JSON.stringify({
-                    name: passkeyForm.data.name || 'Security Key',
-                    id: credential.id,
-                    rawId: Array.from(new Uint8Array(credential.rawId)),
-                    response: {
-                        clientDataJSON: Array.from(new Uint8Array(credential.response.clientDataJSON)),
-                        attestationObject: Array.from(new Uint8Array((credential.response as AuthenticatorAttestationResponse).attestationObject)),
-                    },
-                    type: credential.type,
-                }),
+                type: credential.type,
             });
-
-            const result = await response.json();
 
             if (result.success) {
                 setPasskeysList([...passkeysList, result.passkey]);
@@ -245,14 +205,7 @@ export default function Security({ mfaEnabled, hasBackupCodes, passkeys }: Secur
 
     const deletePasskey = async (passkeyId: string) => {
         try {
-            const response = await fetch(route('webauthn.delete', passkeyId), {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
-            });
-
-            const result = await response.json();
+            const result = await apiService.delete(route('webauthn.delete', passkeyId));
 
             if (result.success) {
                 setPasskeysList(passkeysList.filter(p => p.id !== passkeyId));

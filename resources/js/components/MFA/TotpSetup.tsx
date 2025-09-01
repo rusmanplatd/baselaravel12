@@ -39,15 +39,7 @@ export default function TotpSetup({ mfaEnabled, hasBackupCodes, onMfaStatusChang
         setError('');
 
         try {
-            const response = await fetch(route('mfa.enable'), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
-            });
-
-            const result = await response.json();
+            const result = await apiService.post(route('mfa.enable'));
 
             if (result.success) {
                 setSecret(result.secret);
@@ -78,19 +70,10 @@ export default function TotpSetup({ mfaEnabled, hasBackupCodes, onMfaStatusChang
         setError('');
 
         try {
-            const response = await fetch(route('mfa.confirm'), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
-                body: JSON.stringify({
-                    code: verificationCode,
-                    password: password,
-                }),
+            const result = await apiService.post(route('mfa.confirm'), {
+                code: verificationCode,
+                password: password,
             });
-
-            const result = await response.json();
 
             if (result.success) {
                 setBackupCodes(result.backup_codes);
@@ -120,18 +103,9 @@ export default function TotpSetup({ mfaEnabled, hasBackupCodes, onMfaStatusChang
         setError('');
 
         try {
-            const response = await fetch(route('mfa.disable'), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
-                body: JSON.stringify({
-                    password: password,
-                }),
+            const result = await apiService.post(route('mfa.disable'), {
+                password: password,
             });
-
-            const result = await response.json();
 
             if (result.success) {
                 setPassword('');
@@ -156,18 +130,9 @@ export default function TotpSetup({ mfaEnabled, hasBackupCodes, onMfaStatusChang
         setError('');
 
         try {
-            const response = await fetch(route('mfa.backup-codes.regenerate'), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
-                body: JSON.stringify({
-                    password: password,
-                }),
+            const result = await apiService.post(route('mfa.backup-codes.regenerate'), {
+                password: password,
             });
-
-            const result = await response.json();
 
             if (result.success) {
                 setBackupCodes(result.backup_codes);

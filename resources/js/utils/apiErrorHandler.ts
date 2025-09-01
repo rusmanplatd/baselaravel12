@@ -1,6 +1,7 @@
 import { router } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import { toast } from 'sonner';
+import { apiService } from '@/services/ApiService';
 
 export interface ApiError extends Error {
     status?: number;
@@ -94,27 +95,45 @@ export async function securityApiCall<T = any>(
     url: string,
     options: RequestInit = {}
 ): Promise<T> {
-    const defaultHeaders = {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-    };
-
-    const config: RequestInit = {
-        ...options,
-        headers: {
-            ...defaultHeaders,
-            ...options.headers,
-        },
-    };
-
     try {
-        const response = await fetch(url, config);
-        return await handleApiResponse<T>(response);
-    } catch (error) {
-        if (error instanceof SecurityApiError) {
-            throw error;
+        // Use apiService for the actual API call
+        const method = options.method?.toLowerCase() || 'get';
+        let result: T;
+
+        switch (method) {
+            case 'post':
+                result = await apiService.post<T>(url, options.body ? JSON.parse(options.body as string) : undefined, options);
+                break;
+            case 'put':
+                result = await apiService.put<T>(url, options.body ? JSON.parse(options.body as string) : undefined, options);
+                break;
+            case 'patch':
+                result = await apiService.patch<T>(url, options.body ? JSON.parse(options.body as string) : undefined, options);
+                break;
+            case 'delete':
+                result = await apiService.delete<T>(url, options);
+                break;
+            default:
+                result = await apiService.get<T>(url, options);
+        }
+
+        return result;
+    } catch (error: any) {
+        // Convert apiService errors to SecurityApiError format
+        if (error.status) {
+            const securityError = createApiError({ status: error.status, ok: false } as Response, error.details);
+            
+            // Handle authentication errors with redirect
+            if (error.status === 401 || error.status === 419) {
+                toast.error('Your session has expired. Please log in again.');
+                router.visit(route('login'), { replace: true });
+            } else if (error.status >= 500) {
+                toast.error('Server error. Please try again later.');
+            } else if (error.status !== 404) {
+                toast.error(securityError.message);
+            }
+            
+            throw securityError;
         }
 
         // Network or other errors

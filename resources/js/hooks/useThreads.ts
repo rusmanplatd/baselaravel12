@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import { Message, ThreadViewMode, ThreadNavigation } from '@/types/chat';
-import axios from 'axios';
+import { apiService } from '@/services/ApiService';
 
 interface UseThreadsOptions {
   conversationId: string;
@@ -59,8 +59,8 @@ export function useThreads({ conversationId, messages }: UseThreadsOptions): Use
     setLoadingThreads(prev => new Set(prev).add(messageId));
 
     try {
-      const response = await axios.get(`/api/chat/conversations/${conversationId}/messages/${messageId}/thread`);
-      const threadMessages = response.data.data || [];
+      const response = await apiService.get<{data: Message[]}>(`/api/chat/conversations/${conversationId}/messages/${messageId}/thread`);
+      const threadMessages = response.data || [];
       
       // Cache the result
       setThreadCache(prev => new Map(prev).set(messageId, threadMessages));

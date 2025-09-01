@@ -105,16 +105,7 @@ export function KeyBackupManager({ className }: KeyBackupManagerProps) {
         payload.since_timestamp = sinceTimestamp;
       }
       
-      const response = await fetch(`/api/v1/key-recovery/${endpoint}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-      
-      const data = await response.json();
+      const data = await apiService.post(`/api/v1/key-recovery/${endpoint}`, payload);
       if (data.success) {
         setLastBackup({
           backup_id: data.backup_id,
@@ -151,20 +142,11 @@ export function KeyBackupManager({ className }: KeyBackupManagerProps) {
       setIsLoading(true);
       setError(null);
       
-      const response = await fetch('/api/v1/key-recovery/backup/restore', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          backup_data: JSON.parse(backupData),
-          private_key: privateKey,
-          master_password: masterPassword || undefined,
-        }),
+      const data = await apiService.post('/api/v1/key-recovery/backup/restore', {
+        backup_data: JSON.parse(backupData),
+        private_key: privateKey,
+        master_password: masterPassword || undefined,
       });
-      
-      const data = await response.json();
       if (data.success) {
         setSuccess(`Backup restored successfully! ${data.restored_count}/${data.total_conversations} conversations recovered`);
         if (data.errors_count > 0) {
@@ -194,18 +176,9 @@ export function KeyBackupManager({ className }: KeyBackupManagerProps) {
       setIsLoading(true);
       setError(null);
       
-      const response = await fetch('/api/v1/key-recovery/backup/validate', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          backup_data: JSON.parse(backupData),
-        }),
+      const data = await apiService.post('/api/v1/key-recovery/backup/validate', {
+        backup_data: JSON.parse(backupData),
       });
-      
-      const data = await response.json();
       if (data.success) {
         if (data.valid) {
           setSuccess(`Backup is valid! ID: ${data.backup_id}, Version: ${data.backup_version}`);

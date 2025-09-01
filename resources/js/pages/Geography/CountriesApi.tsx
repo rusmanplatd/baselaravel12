@@ -13,7 +13,7 @@ import { Eye, Edit, Trash2, Search, Globe, Plus, ArrowUpDown, FileText } from 'l
 import { useState, useCallback } from 'react';
 import { useApiData } from '@/hooks/useApiData';
 import { debounce } from 'lodash';
-import axios from 'axios';
+import { apiService } from '@/services/ApiService';
 
 interface Country {
     id: string;
@@ -99,7 +99,7 @@ export default function CountriesApi() {
     const handleDelete = async (country: Country) => {
         if (confirm(`Are you sure you want to delete the country "${country.name}"?`)) {
             try {
-                await axios.delete(`/api/v1/geo/countries/${country.id}`);
+                await apiService.delete(`/api/v1/geo/countries/${country.id}`);
                 refresh();
             } catch (error) {
                 console.error('Error deleting country:', error);

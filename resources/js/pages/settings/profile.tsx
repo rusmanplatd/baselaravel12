@@ -2,6 +2,7 @@ import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Transition } from '@headlessui/react';
 import { Form, Head, Link, usePage, router } from '@inertiajs/react';
 import { useState, useCallback } from 'react';
+import { apiService } from '@/services/ApiService';
 
 import { AvatarUpload } from '@/components/avatar-upload';
 import DeleteUser from '@/components/delete-user';
@@ -31,20 +32,7 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
         formData.append('avatar', file);
 
         try {
-            const response = await fetch(route('profile.avatar.upload'), {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
-                credentials: 'same-origin',
-            });
-
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.message || 'Failed to upload avatar');
-            }
+            await apiService.postFormData(route('profile.avatar.upload'), formData);
 
             // Redirect to profile page to update the avatar
             router.visit(route('profile.edit'));
@@ -58,19 +46,7 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
 
     const handleAvatarDelete = useCallback(async () => {
         try {
-            const response = await fetch(route('profile.avatar.delete'), {
-                method: 'DELETE',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
-                credentials: 'same-origin',
-            });
-
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.message || 'Failed to delete avatar');
-            }
+            await apiService.delete(route('profile.avatar.delete'));
 
             // Redirect to profile page to update the avatar
             router.visit(route('profile.edit'));

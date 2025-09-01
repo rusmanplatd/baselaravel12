@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Channel, ChannelInviteResponse, ChannelMember } from '@/types/chat';
-import axios from 'axios';
+import { apiService } from '@/services/ApiService';
 
 interface UseChannelsOptions {
   organizationId?: string;
@@ -57,8 +57,8 @@ export function useChannels(options: UseChannelsOptions = {}): UseChannelsReturn
       }
       params.append('user_channels', 'true');
 
-      const response = await axios.get(`/api/v1/chat/channels?${params}`);
-      setChannels(response.data.data || []);
+      const response = await apiService.get<{data: Channel[]}>(`/api/v1/chat/channels?${params}`);
+      setChannels(response.data || []);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to fetch channels');
       console.error('Failed to fetch channels:', err);
@@ -85,8 +85,8 @@ export function useChannels(options: UseChannelsOptions = {}): UseChannelsReturn
         params.append('organization_id', orgId || organizationId!);
       }
 
-      const response = await axios.get(`/api/v1/chat/channels/search?${params}`);
-      setSearchResults(response.data || []);
+      const response = await apiService.get<Channel[]>(`/api/v1/chat/channels/search?${params}`);
+      setSearchResults(response || []);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to search channels');
       console.error('Failed to search channels:', err);
@@ -103,12 +103,10 @@ export function useChannels(options: UseChannelsOptions = {}): UseChannelsReturn
   }): Promise<Channel> => {
     try {
       setError(null);
-      const response = await axios.post('/api/v1/chat/channels', {
+      const newChannel = await apiService.post('/api/v1/chat/channels', {
         ...data,
         organization_id: data.organization_id || organizationId,
       });
-
-      const newChannel = response.data;
       setChannels(prev => [newChannel, ...prev]);
       return newChannel;
     } catch (err: any) {
@@ -125,9 +123,7 @@ export function useChannels(options: UseChannelsOptions = {}): UseChannelsReturn
   }): Promise<Channel> => {
     try {
       setError(null);
-      const response = await axios.put(`/api/v1/chat/channels/${channelId}`, data);
-      
-      const updatedChannel = response.data;
+      const updatedChannel = await apiService.put(`/api/v1/chat/channels/${channelId}`, data);
       setChannels(prev => prev.map(channel => 
         channel.id === channelId ? updatedChannel : channel
       ));
@@ -143,7 +139,7 @@ export function useChannels(options: UseChannelsOptions = {}): UseChannelsReturn
   const deleteChannel = useCallback(async (channelId: string): Promise<void> => {
     try {
       setError(null);
-      await axios.delete(`/api/v1/chat/channels/${channelId}`);
+      await apiService.delete(`/api/v1/chat/channels/${channelId}`);
       setChannels(prev => prev.filter(channel => channel.id !== channelId));
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || 'Failed to delete channel';
@@ -155,7 +151,7 @@ export function useChannels(options: UseChannelsOptions = {}): UseChannelsReturn
   const joinChannel = useCallback(async (channelId: string): Promise<void> => {
     try {
       setError(null);
-      await axios.post(`/api/v1/chat/channels/${channelId}/join`);
+      await apiService.post(`/api/v1/chat/channels/${channelId}/join`);
       // Refresh channels to update membership status
       await fetchChannels();
     } catch (err: any) {
@@ -168,7 +164,7 @@ export function useChannels(options: UseChannelsOptions = {}): UseChannelsReturn
   const leaveChannel = useCallback(async (channelId: string): Promise<void> => {
     try {
       setError(null);
-      await axios.post(`/api/v1/chat/channels/${channelId}/leave`);
+      await apiService.post(`/api/v1/chat/channels/${channelId}/leave`);
       // Remove channel from list after leaving
       setChannels(prev => prev.filter(channel => channel.id !== channelId));
     } catch (err: any) {
@@ -181,10 +177,9 @@ export function useChannels(options: UseChannelsOptions = {}): UseChannelsReturn
   const inviteUsers = useCallback(async (channelId: string, userIds: string[]): Promise<ChannelInviteResponse> => {
     try {
       setError(null);
-      const response = await axios.post(`/api/v1/chat/channels/${channelId}/invite`, {
+      return await apiService.post(`/api/v1/chat/channels/${channelId}/invite`, {
         user_ids: userIds,
       });
-      return response.data;
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || 'Failed to invite users';
       setError(errorMessage);
@@ -195,8 +190,8 @@ export function useChannels(options: UseChannelsOptions = {}): UseChannelsReturn
   const getChannelMembers = useCallback(async (channelId: string): Promise<ChannelMember[]> => {
     try {
       setError(null);
-      const response = await axios.get(`/api/v1/chat/channels/${channelId}/members`);
-      return response.data || [];
+      const response = await apiService.get<ChannelMember[]>(`/api/v1/chat/channels/${channelId}/members`);
+      return response || [];
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || 'Failed to fetch channel members';
       setError(errorMessage);

@@ -223,30 +223,21 @@ export default function ActivityLogIndex({
     const handleExportAll = async () => {
         setIsExporting(true);
         try {
-            const response = await fetch(route('activity-log.export.all'), {
-                method: 'POST',
-                headers: await apiService.getHeaders(),
-                body: JSON.stringify({
-                    format: exportFormat,
-                    columns: selectedColumns,
-                }),
+            const response = await apiService.downloadBlob(route('activity-log.export.all'), {
+                format: exportFormat,
+                columns: selectedColumns,
             });
 
-            if (response.ok) {
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = response.headers.get('Content-Disposition')?.split('filename="')[1]?.split('"')[0] || `activity_log_export_all.${exportFormat}`;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
-                setIsExportDialogOpen(false);
-            } else {
-                const errorData = await response.json();
-                alert(`Export failed: ${errorData.message || 'Unknown error'}`);
-            }
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = response.headers.get('Content-Disposition')?.split('filename="')[1]?.split('"')[0] || `activity_log_export_all.${exportFormat}`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            setIsExportDialogOpen(false);
         } catch (error) {
             console.error('Export failed:', error);
             alert('Export failed. Please try again.');
@@ -267,31 +258,22 @@ export default function ActivityLogIndex({
                 search: searchTerm,
             };
 
-            const response = await fetch(route('activity-log.export.filtered'), {
-                method: 'POST',
-                headers: await apiService.getHeaders(),
-                body: JSON.stringify({
-                    format: exportFormat,
-                    columns: selectedColumns,
-                    filters: currentFilters,
-                }),
+            const response = await apiService.downloadBlob(route('activity-log.export.filtered'), {
+                format: exportFormat,
+                columns: selectedColumns,
+                filters: currentFilters,
             });
 
-            if (response.ok) {
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = response.headers.get('Content-Disposition')?.split('filename="')[1]?.split('"')[0] || `activity_log_export_filtered.${exportFormat}`;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
-                setIsExportDialogOpen(false);
-            } else {
-                const errorData = await response.json();
-                alert(`Export failed: ${errorData.message || 'Unknown error'}`);
-            }
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = response.headers.get('Content-Disposition')?.split('filename="')[1]?.split('"')[0] || `activity_log_export_filtered.${exportFormat}`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            setIsExportDialogOpen(false);
         } catch (error) {
             console.error('Export failed:', error);
             alert('Export failed. Please try again.');

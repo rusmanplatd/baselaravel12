@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Shield, ExternalLink } from 'lucide-react'
+import { apiService } from '@/services/ApiService'
 
 export default function TestClient() {
   const [clientId, setClientId] = useState('')
@@ -74,16 +75,11 @@ export default function TestClient() {
         requestBody.code_verifier = codeVerifier
       }
       
-      const response = await fetch('/oidc/token', {
-        method: 'POST',
+      const data = await apiService.post('/oidc/token', requestBody, {
         headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
+          'Authorization': '', // Override default auth header for OAuth
+        }
       })
-
-      const data = await response.json()
       if (data.access_token) {
         setAccessToken(data.access_token)
       }
@@ -96,14 +92,11 @@ export default function TestClient() {
     if (!accessToken) return
 
     try {
-      const response = await fetch('/oidc/userinfo', {
+      const data = await apiService.get('/oidc/userinfo', {
         headers: {
           'Authorization': `Bearer ${accessToken}`,
-          'Accept': 'application/json',
-        },
+        }
       })
-
-      const data = await response.json()
       setUserInfo(data)
     } catch (error) {
       console.error('UserInfo request failed:', error)
