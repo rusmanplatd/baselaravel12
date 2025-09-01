@@ -3,6 +3,8 @@
  * Handles ML-KEM and hybrid cryptography for the chat system
  */
 
+import { apiService } from './ApiService';
+
 interface QuantumAlgorithm {
   name: string;
   keySize: number;
@@ -131,19 +133,7 @@ export class QuantumE2EEService {
    */
   async checkSystemHealth(): Promise<QuantumHealthStatus> {
     try {
-      const response = await fetch('/api/v1/quantum/health', {
-        method: 'GET',
-        headers: { 
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${this.getAuthToken()}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Health check failed: ${response.statusText}`);
-      }
-      
-      this.healthStatus = await response.json();
+      this.healthStatus = await apiService.get('/api/v1/quantum/health');
       return this.healthStatus;
     } catch (error) {
       console.error('Quantum health check failed:', error);
@@ -156,21 +146,7 @@ export class QuantumE2EEService {
    */
   async generateQuantumKeyPair(algorithm: string = 'ML-KEM-768') {
     try {
-      const response = await fetch('/api/v1/quantum/generate-keypair', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.getAuthToken()}`
-        },
-        body: JSON.stringify({ algorithm })
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Key generation failed');
-      }
-      
-      const keyPair = await response.json();
+      const keyPair = await apiService.post('/api/v1/quantum/generate-keypair', { algorithm });
       
       console.log('Quantum key pair generated:', {
         algorithm: keyPair.algorithm,
@@ -210,21 +186,7 @@ export class QuantumE2EEService {
         }
       };
       
-      const response = await fetch('/api/v1/quantum/devices/register', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.getAuthToken()}`
-        },
-        body: JSON.stringify(deviceInfo)
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Device registration failed');
-      }
-      
-      const result = await response.json();
+      const result = await apiService.post('/api/v1/quantum/devices/register', deviceInfo);
       
       // Store private key securely
       await this.storePrivateKey(keyPair.private_key, result.device.id);
@@ -250,19 +212,7 @@ export class QuantumE2EEService {
    */
   async loadDeviceCapabilities(): Promise<DeviceCapabilities[]> {
     try {
-      const response = await fetch('/api/v1/quantum/devices/capabilities', {
-        method: 'GET',
-        headers: { 
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${this.getAuthToken()}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Failed to load device capabilities: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
+      const data = await apiService.get('/api/v1/quantum/devices/capabilities');
       this.deviceCapabilities = data.devices;
       
       return this.deviceCapabilities;
@@ -277,20 +227,7 @@ export class QuantumE2EEService {
    */
   async negotiateConversationAlgorithm(conversationId: string): Promise<ConversationAlgorithm> {
     try {
-      const response = await fetch(`/api/v1/quantum/conversations/${conversationId}/negotiate-algorithm`, {
-        method: 'POST',
-        headers: { 
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${this.getAuthToken()}`
-        }
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Algorithm negotiation failed');
-      }
-      
-      const result = await response.json();
+      const result = await apiService.post(`/api/v1/quantum/conversations/${conversationId}/negotiate-algorithm`);
       
       console.log('Algorithm negotiated for conversation:', {
         conversation_id: conversationId,
@@ -311,21 +248,7 @@ export class QuantumE2EEService {
    */
   async updateDeviceCapabilities(deviceId: string, capabilities: string[]): Promise<DeviceCapabilities> {
     try {
-      const response = await fetch(`/api/v1/quantum/devices/${deviceId}/capabilities`, {
-        method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.getAuthToken()}`
-        },
-        body: JSON.stringify({ quantum_capabilities: capabilities })
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update device capabilities');
-      }
-      
-      const result = await response.json();
+      const result = await apiService.put(`/api/v1/quantum/devices/${deviceId}/capabilities`, { quantum_capabilities: capabilities });
       
       // Refresh device capabilities
       await this.loadDeviceCapabilities();

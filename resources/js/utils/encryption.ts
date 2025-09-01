@@ -4,6 +4,7 @@ import {
   EncryptionOptions,
   DecryptionResult
 } from '@/types/chat';
+import { apiService } from '@/services/ApiService';
 
 /**
  * Enhanced client-side encryption utilities for chat E2EE
@@ -36,20 +37,7 @@ export class ChatEncryption {
   static async generateQuantumKeyPair(algorithm: string): Promise<KeyPair> {
     try {
       // Call backend API for quantum key generation
-      const response = await fetch('/api/v1/quantum/generate-keypair', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-        },
-        body: JSON.stringify({ algorithm })
-      });
-
-      if (!response.ok) {
-        throw new Error('Quantum key generation failed');
-      }
-
-      const keyPair = await response.json();
+      const keyPair = await apiService.post('/api/v1/quantum/generate-keypair', { algorithm });
       return {
         public_key: keyPair.public_key,
         private_key: keyPair.private_key,
@@ -131,24 +119,11 @@ export class ChatEncryption {
     try {
       const keyBytes = await window.crypto.subtle.exportKey('raw', symmetricKey);
       
-      const response = await fetch('/api/v1/quantum/encapsulate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-        },
-        body: JSON.stringify({
-          public_key: publicKeyPem,
-          algorithm: algorithm,
-          data: this.arrayBufferToBase64(keyBytes)
-        })
+      const { ciphertext } = await apiService.post('/api/v1/quantum/encapsulate', {
+        public_key: publicKeyPem,
+        algorithm: algorithm,
+        data: this.arrayBufferToBase64(keyBytes)
       });
-
-      if (!response.ok) {
-        throw new Error('Quantum encapsulation failed');
-      }
-
-      const { ciphertext } = await response.json();
       return ciphertext;
     } catch (error) {
       console.error('Quantum symmetric key encryption failed:', error);
@@ -207,24 +182,11 @@ export class ChatEncryption {
     algorithm: string
   ): Promise<CryptoKey> {
     try {
-      const response = await fetch('/api/v1/quantum/decapsulate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-        },
-        body: JSON.stringify({
-          ciphertext: encryptedKey,
-          private_key: privateKeyPem,
-          algorithm: algorithm
-        })
+      const { shared_secret } = await apiService.post('/api/v1/quantum/decapsulate', {
+        ciphertext: encryptedKey,
+        private_key: privateKeyPem,
+        algorithm: algorithm
       });
-
-      if (!response.ok) {
-        throw new Error('Quantum decapsulation failed');
-      }
-
-      const { shared_secret } = await response.json();
       const keyBytes = this.base64ToArrayBuffer(shared_secret);
 
       return await window.crypto.subtle.importKey(

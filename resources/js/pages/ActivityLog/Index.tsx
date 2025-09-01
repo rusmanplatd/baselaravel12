@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Activity, User, Organization, PageProps } from '@/types';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
+import { apiService } from '@/services/ApiService';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -206,16 +207,7 @@ export default function ActivityLogIndex({
         };
 
         try {
-            const response = await fetch(route('activity-log.export.validate'), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
-                body: JSON.stringify({ filters: currentFilters }),
-            });
-
-            const data = await response.json();
+            const data = await apiService.post(route('activity-log.export.validate'), { filters: currentFilters });
             setExportValidation(data);
         } catch (error) {
             console.error('Export validation failed:', error);
@@ -233,10 +225,7 @@ export default function ActivityLogIndex({
         try {
             const response = await fetch(route('activity-log.export.all'), {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
+                headers: await apiService.getHeaders(),
                 body: JSON.stringify({
                     format: exportFormat,
                     columns: selectedColumns,
@@ -280,10 +269,7 @@ export default function ActivityLogIndex({
 
             const response = await fetch(route('activity-log.export.filtered'), {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
+                headers: await apiService.getHeaders(),
                 body: JSON.stringify({
                     format: exportFormat,
                     columns: selectedColumns,

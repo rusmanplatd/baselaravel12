@@ -7,6 +7,7 @@ import { ChatEncryption } from '@/utils/encryption';
 import { secureKeyManager } from '@/lib/SecureKeyManager';
 import { e2eePerformanceMonitor } from '@/utils/E2EEPerformanceMonitor';
 import { QuantumE2EEService } from './QuantumE2EEService';
+import { apiService } from './ApiService';
 import type { EncryptedMessageData } from '@/types/chat';
 
 interface CachedKey {
@@ -538,23 +539,10 @@ export class OptimizedE2EEService {
     try {
       // Use quantum service for encryption
       const keyPair = await this.quantumService.generateQuantumKeyPair(algorithm);
-      const encapsulationResult = await fetch('/api/v1/quantum/encapsulate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-        },
-        body: JSON.stringify({
-          public_key: keyPair.public_key,
-          algorithm: algorithm
-        })
+      const { shared_secret, ciphertext } = await apiService.post('/api/v1/quantum/encapsulate', {
+        public_key: keyPair.public_key,
+        algorithm: algorithm
       });
-
-      if (!encapsulationResult.ok) {
-        throw new Error('Quantum encapsulation failed');
-      }
-
-      const { shared_secret, ciphertext } = await encapsulationResult.json();
 
       // Use shared secret to encrypt the actual data
       const encoder = new TextEncoder();
@@ -661,24 +649,11 @@ export class OptimizedE2EEService {
       }
 
       // Perform decapsulation to get shared secret
-      const decapsulationResult = await fetch('/api/v1/quantum/decapsulate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-        },
-        body: JSON.stringify({
-          ciphertext: quantumData.quantum_ciphertext,
-          private_key: privateKey,
-          algorithm: quantumData.algorithm
-        })
+      const { shared_secret } = await apiService.post('/api/v1/quantum/decapsulate', {
+        ciphertext: quantumData.quantum_ciphertext,
+        private_key: privateKey,
+        algorithm: quantumData.algorithm
       });
-
-      if (!decapsulationResult.ok) {
-        throw new Error('Quantum decapsulation failed');
-      }
-
-      const { shared_secret } = await decapsulationResult.json();
 
       // Use shared secret to decrypt the actual data
       const encryptedBuffer = new Uint8Array(

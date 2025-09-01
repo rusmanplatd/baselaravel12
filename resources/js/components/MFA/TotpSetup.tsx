@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Shield, Copy, Check, Download, Eye, EyeOff } from 'lucide-react';
 import QRCode from 'qrcode';
+import { apiService } from '@/services/ApiService';
 
 interface TotpSetupProps {
     mfaEnabled: boolean;
