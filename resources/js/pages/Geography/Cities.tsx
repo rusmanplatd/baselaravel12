@@ -7,8 +7,9 @@ import { PermissionGuard } from '@/components/permission-guard';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
-import { Eye, Edit, Trash2, Search, Building, Plus, ArrowUpDown } from 'lucide-react';
+import { Eye, Edit, Trash2, Search, Building, Plus, ArrowUpDown, FileText } from 'lucide-react';
 import { useState, useCallback } from 'react';
+import ActivityLogModal from '@/components/ActivityLogModal';
 import { debounce } from 'lodash';
 
 interface Country {
@@ -62,6 +63,13 @@ export default function CitiesIndex({ cities, filters, provinces }: Props) {
         code: filters['filter[code]'] || '',
         name: filters['filter[name]'] || '',
         province_id: filters['filter[province_id]'] || '',
+    });
+
+    const [activityLogModal, setActivityLogModal] = useState({
+        isOpen: false,
+        subjectType: '',
+        subjectId: '',
+        title: '',
     });
 
     const debouncedSearch = useCallback(
@@ -122,12 +130,21 @@ export default function CitiesIndex({ cities, filters, provinces }: Props) {
 
     const handleDelete = (city: City) => {
         if (confirm(`Are you sure you want to delete the city "${city.name}"?`)) {
-            router.delete(route('api.geo.cities.destroy', city.id), {
+            router.delete(route('geography.cities.destroy', city.id), {
                 onSuccess: () => {
                     router.reload();
                 }
             });
         }
+    };
+
+    const showActivityLog = (city: City) => {
+        setActivityLogModal({
+            isOpen: true,
+            subjectType: 'App\\Models\\Master\\Geo\\City',
+            subjectId: city.id,
+            title: `${city.name} (${city.code})`,
+        });
     };
 
     return (
@@ -143,7 +160,7 @@ export default function CitiesIndex({ cities, filters, provinces }: Props) {
                         </p>
                     </div>
                     <PermissionGuard permission="geo_city:write">
-                        <Button>
+                        <Button onClick={() => router.get(route('geography.cities.create'))}>
                             <Plus className="mr-2 h-4 w-4" />
                             Add City
                         </Button>
@@ -280,7 +297,7 @@ export default function CitiesIndex({ cities, filters, provinces }: Props) {
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
-                                                            disabled
+                                                            onClick={() => router.get(route('geography.cities.edit', city.id))}
                                                         >
                                                             <Edit className="h-4 w-4" />
                                                         </Button>
@@ -295,6 +312,15 @@ export default function CitiesIndex({ cities, filters, provinces }: Props) {
                                                             <Trash2 className="h-4 w-4" />
                                                         </Button>
                                                     </PermissionGuard>
+                                                    <PermissionGuard permission="audit_log:read">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => showActivityLog(city)}
+                                                        >
+                                                            <FileText className="h-4 w-4" />
+                                                        </Button>
+                                                    </PermissionGuard>
                                                 </div>
                                             </TableCell>
                                         </TableRow>
@@ -305,6 +331,14 @@ export default function CitiesIndex({ cities, filters, provinces }: Props) {
                     </CardContent>
                 </Card>
             </div>
+
+            <ActivityLogModal
+                isOpen={activityLogModal.isOpen}
+                onClose={() => setActivityLogModal(prev => ({ ...prev, isOpen: false }))}
+                subjectType={activityLogModal.subjectType}
+                subjectId={activityLogModal.subjectId}
+                title={activityLogModal.title}
+            />
         </AppLayout>
     );
 }

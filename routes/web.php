@@ -99,6 +99,49 @@ Route::middleware(['auth', 'verified', 'mfa.verified'])->group(function () {
     Route::post('activity-log/export/validate', [\App\Http\Controllers\ActivityLogController::class, 'validateExport'])->name('activity-log.export.validate');
     Route::get('activity-log/export/columns', [\App\Http\Controllers\ActivityLogController::class, 'getExportColumns'])->name('activity-log.export.columns');
 
+    // Geography Management
+    Route::prefix('geography')->name('geography.')->group(function () {
+        Route::get('countries', [\App\Http\Controllers\Geography\CountryController::class, 'index'])->name('countries');
+        Route::get('countries/create', [\App\Http\Controllers\Geography\CountryController::class, 'create'])->name('countries.create');
+        Route::post('countries', [\App\Http\Controllers\Geography\CountryController::class, 'store'])->name('countries.store');
+        Route::get('countries/{country}', [\App\Http\Controllers\Geography\CountryController::class, 'show'])->name('countries.show');
+        Route::get('countries/{country}/edit', [\App\Http\Controllers\Geography\CountryController::class, 'edit'])->name('countries.edit');
+        Route::put('countries/{country}', [\App\Http\Controllers\Geography\CountryController::class, 'update'])->name('countries.update');
+        Route::delete('countries/{country}', [\App\Http\Controllers\Geography\CountryController::class, 'destroy'])->name('countries.destroy');
+
+        Route::get('provinces', [\App\Http\Controllers\Geography\ProvinceController::class, 'index'])->name('provinces');
+        Route::get('provinces/create', [\App\Http\Controllers\Geography\ProvinceController::class, 'create'])->name('provinces.create');
+        Route::post('provinces', [\App\Http\Controllers\Geography\ProvinceController::class, 'store'])->name('provinces.store');
+        Route::get('provinces/{province}', [\App\Http\Controllers\Geography\ProvinceController::class, 'show'])->name('provinces.show');
+        Route::get('provinces/{province}/edit', [\App\Http\Controllers\Geography\ProvinceController::class, 'edit'])->name('provinces.edit');
+        Route::put('provinces/{province}', [\App\Http\Controllers\Geography\ProvinceController::class, 'update'])->name('provinces.update');
+        Route::delete('provinces/{province}', [\App\Http\Controllers\Geography\ProvinceController::class, 'destroy'])->name('provinces.destroy');
+
+        Route::get('cities', [\App\Http\Controllers\Geography\CityController::class, 'index'])->name('cities');
+        Route::get('cities/create', [\App\Http\Controllers\Geography\CityController::class, 'create'])->name('cities.create');
+        Route::post('cities', [\App\Http\Controllers\Geography\CityController::class, 'store'])->name('cities.store');
+        Route::get('cities/{city}', [\App\Http\Controllers\Geography\CityController::class, 'show'])->name('cities.show');
+        Route::get('cities/{city}/edit', [\App\Http\Controllers\Geography\CityController::class, 'edit'])->name('cities.edit');
+        Route::put('cities/{city}', [\App\Http\Controllers\Geography\CityController::class, 'update'])->name('cities.update');
+        Route::delete('cities/{city}', [\App\Http\Controllers\Geography\CityController::class, 'destroy'])->name('cities.destroy');
+
+        Route::get('districts', [\App\Http\Controllers\Geography\DistrictController::class, 'index'])->name('districts');
+        Route::get('districts/create', [\App\Http\Controllers\Geography\DistrictController::class, 'create'])->name('districts.create');
+        Route::post('districts', [\App\Http\Controllers\Geography\DistrictController::class, 'store'])->name('districts.store');
+        Route::get('districts/{district}', [\App\Http\Controllers\Geography\DistrictController::class, 'show'])->name('districts.show');
+        Route::get('districts/{district}/edit', [\App\Http\Controllers\Geography\DistrictController::class, 'edit'])->name('districts.edit');
+        Route::put('districts/{district}', [\App\Http\Controllers\Geography\DistrictController::class, 'update'])->name('districts.update');
+        Route::delete('districts/{district}', [\App\Http\Controllers\Geography\DistrictController::class, 'destroy'])->name('districts.destroy');
+
+        Route::get('villages', [\App\Http\Controllers\Geography\VillageController::class, 'index'])->name('villages');
+        Route::get('villages/create', [\App\Http\Controllers\Geography\VillageController::class, 'create'])->name('villages.create');
+        Route::post('villages', [\App\Http\Controllers\Geography\VillageController::class, 'store'])->name('villages.store');
+        Route::get('villages/{village}', [\App\Http\Controllers\Geography\VillageController::class, 'show'])->name('villages.show');
+        Route::get('villages/{village}/edit', [\App\Http\Controllers\Geography\VillageController::class, 'edit'])->name('villages.edit');
+        Route::put('villages/{village}', [\App\Http\Controllers\Geography\VillageController::class, 'update'])->name('villages.update');
+        Route::delete('villages/{village}', [\App\Http\Controllers\Geography\VillageController::class, 'destroy'])->name('villages.destroy');
+    });
+
 });
 
 require __DIR__.'/webs/settings.php';

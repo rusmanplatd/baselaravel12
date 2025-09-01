@@ -107,10 +107,10 @@ class DatabaseSeeder extends Seeder
 
         if ($defaultOrgId) {
             // When teams are enabled, we need to manually assign roles with team context
-            $superAdminRole = \App\Models\Auth\Role::where('name', 'Super Admin')->where('team_id', $defaultOrgId)->first();
-            $adminRole = \App\Models\Auth\Role::where('name', 'Admin')->where('team_id', $defaultOrgId)->first();
-            $managerRole = \App\Models\Auth\Role::where('name', 'Manager')->where('team_id', $defaultOrgId)->first();
-            $userRole = \App\Models\Auth\Role::where('name', 'User')->where('team_id', $defaultOrgId)->first();
+            $superAdminRole = \App\Models\Auth\Role::where('name', 'super-admin')->where('team_id', $defaultOrgId)->first();
+            $adminRole = \App\Models\Auth\Role::where('name', 'organization-admin')->where('team_id', $defaultOrgId)->first();
+            $managerRole = \App\Models\Auth\Role::where('name', 'manager')->where('team_id', $defaultOrgId)->first();
+            $userRole = \App\Models\Auth\Role::where('name', 'employee')->where('team_id', $defaultOrgId)->first();
 
             if ($superAdminRole) {
                 \Illuminate\Support\Facades\DB::table('sys_model_has_roles')->insert([
@@ -148,10 +148,10 @@ class DatabaseSeeder extends Seeder
                 ]);
             }
         } else {
-            $testUser->assignRole('Super Admin');
-            $adminUser->assignRole('Admin');
-            $managerUser->assignRole('Manager');
-            $regularUser->assignRole('User');
+            $testUser->assignRole('super-admin');
+            $adminUser->assignRole('organization-admin');
+            $managerUser->assignRole('manager');
+            $regularUser->assignRole('employee');
         }
     }
 }

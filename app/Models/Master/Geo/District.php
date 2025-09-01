@@ -7,10 +7,12 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class District extends Model
 {
-    use HasFactory, HasUlids;
+    use HasFactory, HasUlids, LogsActivity;
 
     public $table = 'ref_geo_district';
 
@@ -31,6 +33,19 @@ class District extends Model
         'created_by' => 'string',
         'updated_by' => 'string',
     ];
+
+    /*******************************
+     ** ACTIVITY LOG
+     *******************************/
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['city_id', 'code', 'name'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->setDescriptionForEvent(fn(string $eventName) => "District {$eventName}")
+            ->useLogName('geography');
+    }
 
     /*******************************
      ** MUTATOR

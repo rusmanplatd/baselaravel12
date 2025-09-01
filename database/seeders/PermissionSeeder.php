@@ -336,6 +336,32 @@ class PermissionSeeder extends Seeder
             $this->command->info("Created role: {$roleName} with ".count($permissions).' permissions');
         }
 
+        // If teams are enabled, also create team-specific roles for the DEFAULT organization
+        if (config('permission.teams', false)) {
+            $defaultOrg = \App\Models\Organization::where('organization_code', 'DEFAULT')->first();
+            
+            if ($defaultOrg) {
+                setPermissionsTeamId($defaultOrg->id);
+                
+                foreach ($roles as $roleName => $roleData) {
+                    // Create team-specific role for the DEFAULT organization
+                    $teamRole = Role::firstOrCreate([
+                        'name' => $roleName,
+                        'guard_name' => 'web',
+                        'team_id' => $defaultOrg->id,
+                    ]);
+
+                    // Sync permissions with team context
+                    $permissions = Permission::whereIn('name', $roleData['permissions'])->get();
+                    $teamRole->syncPermissions($permissions);
+
+                    $this->command->info("Created team role: {$roleName} for DEFAULT org with ".count($permissions).' permissions');
+                }
+                
+                setPermissionsTeamId(null);
+            }
+        }
+
         // Display summary
         $this->displaySummary($roles);
 

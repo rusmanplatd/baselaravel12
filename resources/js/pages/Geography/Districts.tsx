@@ -7,8 +7,9 @@ import { PermissionGuard } from '@/components/permission-guard';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
-import { Eye, Edit, Trash2, Search, MapPin, Plus, ArrowUpDown } from 'lucide-react';
+import { Eye, Edit, Trash2, Search, MapPin, Plus, ArrowUpDown, FileText } from 'lucide-react';
 import { useState, useCallback } from 'react';
+import ActivityLogModal from '@/components/ActivityLogModal';
 import { debounce } from 'lodash';
 
 interface Country {
@@ -71,6 +72,13 @@ export default function DistrictsIndex({ districts, filters, cities }: Props) {
         city_id: filters['filter[city_id]'] || '',
     });
 
+    const [activityLogModal, setActivityLogModal] = useState({
+        isOpen: false,
+        subjectType: '',
+        subjectId: '',
+        title: '',
+    });
+
     const debouncedSearch = useCallback(
         debounce((newFilters: typeof searchFilters) => {
             const queryParams: Record<string, string> = { ...filters };
@@ -129,12 +137,21 @@ export default function DistrictsIndex({ districts, filters, cities }: Props) {
 
     const handleDelete = (district: District) => {
         if (confirm(`Are you sure you want to delete the district "${district.name}"?`)) {
-            router.delete(route('api.geo.districts.destroy', district.id), {
+            router.delete(route('geography.districts.destroy', district.id), {
                 onSuccess: () => {
                     router.reload();
                 }
             });
         }
+    };
+
+    const showActivityLog = (district: District) => {
+        setActivityLogModal({
+            isOpen: true,
+            subjectType: 'App\\Models\\Master\\Geo\\District',
+            subjectId: district.id,
+            title: `${district.name} (${district.code})`,
+        });
     };
 
     return (
@@ -150,7 +167,7 @@ export default function DistrictsIndex({ districts, filters, cities }: Props) {
                         </p>
                     </div>
                     <PermissionGuard permission="geo_district:write">
-                        <Button>
+                        <Button onClick={() => router.get(route('geography.districts.create'))}>
                             <Plus className="mr-2 h-4 w-4" />
                             Add District
                         </Button>
@@ -296,7 +313,7 @@ export default function DistrictsIndex({ districts, filters, cities }: Props) {
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
-                                                            disabled
+                                                            onClick={() => router.get(route('geography.districts.edit', district.id))}
                                                         >
                                                             <Edit className="h-4 w-4" />
                                                         </Button>
@@ -311,6 +328,15 @@ export default function DistrictsIndex({ districts, filters, cities }: Props) {
                                                             <Trash2 className="h-4 w-4" />
                                                         </Button>
                                                     </PermissionGuard>
+                                                    <PermissionGuard permission="audit_log:read">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => showActivityLog(district)}
+                                                        >
+                                                            <FileText className="h-4 w-4" />
+                                                        </Button>
+                                                    </PermissionGuard>
                                                 </div>
                                             </TableCell>
                                         </TableRow>
@@ -321,6 +347,14 @@ export default function DistrictsIndex({ districts, filters, cities }: Props) {
                     </CardContent>
                 </Card>
             </div>
+
+            <ActivityLogModal
+                isOpen={activityLogModal.isOpen}
+                onClose={() => setActivityLogModal(prev => ({ ...prev, isOpen: false }))}
+                subjectType={activityLogModal.subjectType}
+                subjectId={activityLogModal.subjectId}
+                title={activityLogModal.title}
+            />
         </AppLayout>
     );
 }

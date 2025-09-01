@@ -7,8 +7,9 @@ import { PermissionGuard } from '@/components/permission-guard';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
-import { Eye, Edit, Trash2, Search, TreePine, Plus, ArrowUpDown } from 'lucide-react';
+import { Eye, Edit, Trash2, Search, TreePine, Plus, ArrowUpDown, FileText } from 'lucide-react';
 import { useState, useCallback } from 'react';
+import ActivityLogModal from '@/components/ActivityLogModal';
 import { debounce } from 'lodash';
 
 interface Country {
@@ -77,6 +78,13 @@ export default function VillagesIndex({ villages, filters, districts }: Props) {
         district_id: filters['filter[district_id]'] || '',
     });
 
+    const [activityLogModal, setActivityLogModal] = useState({
+        isOpen: false,
+        subjectType: '',
+        subjectId: '',
+        title: '',
+    });
+
     const debouncedSearch = useCallback(
         debounce((newFilters: typeof searchFilters) => {
             const queryParams: Record<string, string> = { ...filters };
@@ -135,12 +143,21 @@ export default function VillagesIndex({ villages, filters, districts }: Props) {
 
     const handleDelete = (village: Village) => {
         if (confirm(`Are you sure you want to delete the village "${village.name}"?`)) {
-            router.delete(route('api.geo.villages.destroy', village.id), {
+            router.delete(route('geography.villages.destroy', village.id), {
                 onSuccess: () => {
                     router.reload();
                 }
             });
         }
+    };
+
+    const showActivityLog = (village: Village) => {
+        setActivityLogModal({
+            isOpen: true,
+            subjectType: 'App\\Models\\Master\\Geo\\Village',
+            subjectId: village.id,
+            title: `${village.name} (${village.code})`,
+        });
     };
 
     return (
@@ -156,7 +173,7 @@ export default function VillagesIndex({ villages, filters, districts }: Props) {
                         </p>
                     </div>
                     <PermissionGuard permission="geo_village:write">
-                        <Button>
+                        <Button onClick={() => router.get(route('geography.villages.create'))}>
                             <Plus className="mr-2 h-4 w-4" />
                             Add Village
                         </Button>
@@ -305,7 +322,7 @@ export default function VillagesIndex({ villages, filters, districts }: Props) {
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
-                                                            disabled
+                                                            onClick={() => router.get(route('geography.villages.edit', village.id))}
                                                         >
                                                             <Edit className="h-4 w-4" />
                                                         </Button>
@@ -320,6 +337,15 @@ export default function VillagesIndex({ villages, filters, districts }: Props) {
                                                             <Trash2 className="h-4 w-4" />
                                                         </Button>
                                                     </PermissionGuard>
+                                                    <PermissionGuard permission="audit_log:read">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => showActivityLog(village)}
+                                                        >
+                                                            <FileText className="h-4 w-4" />
+                                                        </Button>
+                                                    </PermissionGuard>
                                                 </div>
                                             </TableCell>
                                         </TableRow>
@@ -330,6 +356,14 @@ export default function VillagesIndex({ villages, filters, districts }: Props) {
                     </CardContent>
                 </Card>
             </div>
+
+            <ActivityLogModal
+                isOpen={activityLogModal.isOpen}
+                onClose={() => setActivityLogModal(prev => ({ ...prev, isOpen: false }))}
+                subjectType={activityLogModal.subjectType}
+                subjectId={activityLogModal.subjectId}
+                title={activityLogModal.title}
+            />
         </AppLayout>
     );
 }

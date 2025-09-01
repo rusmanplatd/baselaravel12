@@ -8,10 +8,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\Request;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class Country extends Model
 {
-    use HasFactory, HasUlids;
+    use HasFactory, HasUlids, LogsActivity;
 
     protected $table = 'ref_geo_country';
 
@@ -34,6 +36,19 @@ class Country extends Model
         'created_by' => 'string',
         'updated_by' => 'string',
     ];
+
+    /*******************************
+     ** ACTIVITY LOG
+     *******************************/
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['code', 'name', 'iso_code', 'phone_code'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->setDescriptionForEvent(fn(string $eventName) => "Country {$eventName}")
+            ->useLogName('geography');
+    }
 
     /*******************************
      ** MUTATOR

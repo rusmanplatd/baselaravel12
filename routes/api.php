@@ -11,6 +11,12 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:api');
 
+// Activity logs API (with authentication)
+Route::middleware(['auth:api'])->group(function () {
+    Route::get('activity-logs', [\App\Http\Controllers\Api\ActivityLogController::class, 'index']);
+    Route::get('activity-logs/{activity}', [\App\Http\Controllers\Api\ActivityLogController::class, 'show']);
+});
+
 // Public API routes (no authentication required for demo)
 Route::prefix('v1')->group(function () {
     Route::apiResource('organizations', \App\Http\Controllers\Api\OrganizationController::class)->names([

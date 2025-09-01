@@ -7,8 +7,9 @@ import { PermissionGuard } from '@/components/permission-guard';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
-import { Eye, Edit, Trash2, Search, MapPin, Plus, ArrowUpDown } from 'lucide-react';
+import { Eye, Edit, Trash2, Search, MapPin, Plus, ArrowUpDown, FileText } from 'lucide-react';
 import { useState, useCallback } from 'react';
+import ActivityLogModal from '@/components/ActivityLogModal';
 import { debounce } from 'lodash';
 
 interface Country {
@@ -55,6 +56,13 @@ export default function ProvincesIndex({ provinces, filters, countries }: Props)
         code: filters['filter[code]'] || '',
         name: filters['filter[name]'] || '',
         country_id: filters['filter[country_id]'] || '',
+    });
+
+    const [activityLogModal, setActivityLogModal] = useState({
+        isOpen: false,
+        subjectType: '',
+        subjectId: '',
+        title: '',
     });
 
     const debouncedSearch = useCallback(
@@ -115,12 +123,21 @@ export default function ProvincesIndex({ provinces, filters, countries }: Props)
 
     const handleDelete = (province: Province) => {
         if (confirm(`Are you sure you want to delete the province "${province.name}"?`)) {
-            router.delete(route('api.geo.provinces.destroy', province.id), {
+            router.delete(route('geography.provinces.destroy', province.id), {
                 onSuccess: () => {
                     router.reload();
                 }
             });
         }
+    };
+
+    const showActivityLog = (province: Province) => {
+        setActivityLogModal({
+            isOpen: true,
+            subjectType: 'App\\Models\\Master\\Geo\\Province',
+            subjectId: province.id,
+            title: `${province.name} (${province.code})`,
+        });
     };
 
     return (
@@ -136,7 +153,7 @@ export default function ProvincesIndex({ provinces, filters, countries }: Props)
                         </p>
                     </div>
                     <PermissionGuard permission="geo_province:write">
-                        <Button>
+                        <Button onClick={() => router.get(route('geography.provinces.create'))}>
                             <Plus className="mr-2 h-4 w-4" />
                             Add Province
                         </Button>
@@ -264,7 +281,7 @@ export default function ProvincesIndex({ provinces, filters, countries }: Props)
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
-                                                            disabled
+                                                            onClick={() => router.get(route('geography.provinces.edit', province.id))}
                                                         >
                                                             <Edit className="h-4 w-4" />
                                                         </Button>
@@ -279,6 +296,15 @@ export default function ProvincesIndex({ provinces, filters, countries }: Props)
                                                             <Trash2 className="h-4 w-4" />
                                                         </Button>
                                                     </PermissionGuard>
+                                                    <PermissionGuard permission="audit_log:read">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => showActivityLog(province)}
+                                                        >
+                                                            <FileText className="h-4 w-4" />
+                                                        </Button>
+                                                    </PermissionGuard>
                                                 </div>
                                             </TableCell>
                                         </TableRow>
@@ -289,6 +315,14 @@ export default function ProvincesIndex({ provinces, filters, countries }: Props)
                     </CardContent>
                 </Card>
             </div>
+
+            <ActivityLogModal
+                isOpen={activityLogModal.isOpen}
+                onClose={() => setActivityLogModal(prev => ({ ...prev, isOpen: false }))}
+                subjectType={activityLogModal.subjectType}
+                subjectId={activityLogModal.subjectId}
+                title={activityLogModal.title}
+            />
         </AppLayout>
     );
 }

@@ -4,10 +4,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { PermissionGuard } from '@/components/permission-guard';
+import ActivityLogModal from '@/components/ActivityLogModal';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
-import { Eye, Edit, Trash2, Search, Globe, Plus, ArrowUpDown } from 'lucide-react';
+import { Eye, Edit, Trash2, Search, Globe, Plus, ArrowUpDown, FileText } from 'lucide-react';
 import { useState, useCallback } from 'react';
 import { debounce } from 'lodash';
 
@@ -52,10 +53,17 @@ export default function CountriesIndex({ countries, filters }: Props) {
         phone_code: filters['filter[phone_code]'] || '',
     });
 
+    const [activityLogModal, setActivityLogModal] = useState({
+        isOpen: false,
+        subjectType: '',
+        subjectId: '',
+        title: '',
+    });
+
     const debouncedSearch = useCallback(
         debounce((newFilters: typeof searchFilters) => {
             const queryParams: any = { ...filters };
-            
+
             // Update filter parameters
             Object.entries(newFilters).forEach(([key, value]) => {
                 if (value) {
@@ -82,7 +90,7 @@ export default function CountriesIndex({ countries, filters }: Props) {
     const handleSort = (field: string) => {
         const currentSort = filters.sort;
         let newSort = field;
-        
+
         if (currentSort === field) {
             newSort = `-${field}`;
         } else if (currentSort === `-${field}`) {
@@ -110,12 +118,21 @@ export default function CountriesIndex({ countries, filters }: Props) {
 
     const handleDelete = (country: Country) => {
         if (confirm(`Are you sure you want to delete the country "${country.name}"?`)) {
-            router.delete(route('api.geo.countries.destroy', country.id), {
+            router.delete(route('geography.countries.destroy', country.id), {
                 onSuccess: () => {
                     router.reload();
                 }
             });
         }
+    };
+
+    const showActivityLog = (country: Country) => {
+        setActivityLogModal({
+            isOpen: true,
+            subjectType: 'App\\Models\\Master\\Geo\\Country',
+            subjectId: country.id,
+            title: `${country.name} (${country.code})`,
+        });
     };
 
     return (
@@ -131,7 +148,7 @@ export default function CountriesIndex({ countries, filters }: Props) {
                         </p>
                     </div>
                     <PermissionGuard permission="geo_country:write">
-                        <Button>
+                        <Button onClick={() => router.get(route('geography.countries.create'))}>
                             <Plus className="mr-2 h-4 w-4" />
                             Add Country
                         </Button>
@@ -144,7 +161,7 @@ export default function CountriesIndex({ countries, filters }: Props) {
                         <CardDescription>
                             View and manage all countries in the system
                         </CardDescription>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -283,7 +300,7 @@ export default function CountriesIndex({ countries, filters }: Props) {
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
-                                                            onClick={() => router.get(route('api.geo.countries.show', country.id))}
+                                                            onClick={() => router.get(route('geography.countries.show', country.id))}
                                                         >
                                                             <Eye className="h-4 w-4" />
                                                         </Button>
@@ -292,7 +309,7 @@ export default function CountriesIndex({ countries, filters }: Props) {
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
-                                                            disabled
+                                                            onClick={() => router.get(route('geography.countries.edit', country.id))}
                                                         >
                                                             <Edit className="h-4 w-4" />
                                                         </Button>
@@ -307,6 +324,15 @@ export default function CountriesIndex({ countries, filters }: Props) {
                                                             <Trash2 className="h-4 w-4" />
                                                         </Button>
                                                     </PermissionGuard>
+                                                    <PermissionGuard permission="audit_log:read">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => showActivityLog(country)}
+                                                        >
+                                                            <FileText className="h-4 w-4" />
+                                                        </Button>
+                                                    </PermissionGuard>
                                                 </div>
                                             </TableCell>
                                         </TableRow>
@@ -317,6 +343,14 @@ export default function CountriesIndex({ countries, filters }: Props) {
                     </CardContent>
                 </Card>
             </div>
+
+            <ActivityLogModal
+                isOpen={activityLogModal.isOpen}
+                onClose={() => setActivityLogModal(prev => ({ ...prev, isOpen: false }))}
+                subjectType={activityLogModal.subjectType}
+                subjectId={activityLogModal.subjectId}
+                title={activityLogModal.title}
+            />
         </AppLayout>
     );
 }

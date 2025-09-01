@@ -9,10 +9,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\Request;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class Province extends Model
 {
-    use HasFactory, HasUlids;
+    use HasFactory, HasUlids, LogsActivity;
 
     protected $table = 'ref_geo_province';
 
@@ -33,6 +35,19 @@ class Province extends Model
         'created_by' => 'string',
         'updated_by' => 'string',
     ];
+
+    /*******************************
+     ** ACTIVITY LOG
+     *******************************/
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['country_id', 'code', 'name'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->setDescriptionForEvent(fn(string $eventName) => "Province {$eventName}")
+            ->useLogName('geography');
+    }
 
     /*******************************
      ** MUTATOR
