@@ -3,11 +3,15 @@
 use App\Models\Master\Geo\Country;
 use App\Models\Master\Geo\Province;
 use App\Models\User;
+use Laravel\Passport\Passport;
 
 beforeEach(function () {
     $this->user = User::factory()->create();
     // Create a system user for geographic data operations
     $this->systemUser = User::factory()->create(['email' => 'system@geo.local']);
+    
+    // Authenticate via Passport for API requests
+    Passport::actingAs($this->user);
 });
 
 it('can list countries', function () {

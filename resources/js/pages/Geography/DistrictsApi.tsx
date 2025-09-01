@@ -58,6 +58,7 @@ export default function DistrictsApi() {
         loading,
         error,
         filters,
+        sort,
         updateFilter,
         updateSort,
         updatePerPage,
@@ -122,10 +123,10 @@ export default function DistrictsApi() {
     };
 
     const getSortIcon = (field: string) => {
-        if (filters.sort === field) {
+        if (sort === field) {
             return <ArrowUpDown className="h-4 w-4 text-primary" />;
         }
-        if (filters.sort === `-${field}`) {
+        if (sort === `-${field}`) {
             return <ArrowUpDown className="h-4 w-4 text-primary rotate-180" />;
         }
         return <ArrowUpDown className="h-4 w-4 text-muted-foreground opacity-50" />;

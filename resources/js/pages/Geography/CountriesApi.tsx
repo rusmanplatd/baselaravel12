@@ -9,7 +9,7 @@ import ApiPagination from '@/components/api-pagination';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
-import { Eye, Edit, Trash2, Search, Globe, Plus, ArrowUpDown, FileText } from 'lucide-react';
+import { Eye, Edit, Trash2, Search, Globe, Plus, ArrowUpDown, FileText, X } from 'lucide-react';
 import { useState, useCallback } from 'react';
 import { useApiData } from '@/hooks/useApiData';
 import { debounce } from 'lodash';
@@ -37,6 +37,7 @@ export default function CountriesApi() {
         loading,
         error,
         filters,
+        sort,
         updateFilter,
         updateSort,
         updatePerPage,
@@ -87,10 +88,10 @@ export default function CountriesApi() {
     };
 
     const getSortIcon = (field: string) => {
-        if (filters.sort === field) {
+        if (sort === field) {
             return <ArrowUpDown className="h-4 w-4 text-primary" />;
         }
-        if (filters.sort === `-${field}`) {
+        if (sort === `-${field}`) {
             return <ArrowUpDown className="h-4 w-4 text-primary rotate-180" />;
         }
         return <ArrowUpDown className="h-4 w-4 text-muted-foreground opacity-50" />;
@@ -157,43 +158,158 @@ export default function CountriesApi() {
                             View and manage all countries in the system
                         </CardDescription>
 
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                                <Input
-                                    placeholder="Search by code..."
-                                    value={searchFilters.code}
-                                    onChange={(e) => handleFilterChange('code', e.target.value)}
-                                    className="pl-10"
-                                />
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4 z-10" />
+                                    <Input
+                                        placeholder="Search by code..."
+                                        value={searchFilters.code}
+                                        onChange={(e) => handleFilterChange('code', e.target.value)}
+                                        className="pl-10 pr-10"
+                                    />
+                                    {searchFilters.code && (
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => handleFilterChange('code', '')}
+                                            className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 hover:bg-muted"
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </Button>
+                                    )}
+                                </div>
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4 z-10" />
+                                    <Input
+                                        placeholder="Search by name..."
+                                        value={searchFilters.name}
+                                        onChange={(e) => handleFilterChange('name', e.target.value)}
+                                        className="pl-10 pr-10"
+                                    />
+                                    {searchFilters.name && (
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => handleFilterChange('name', '')}
+                                            className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 hover:bg-muted"
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </Button>
+                                    )}
+                                </div>
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4 z-10" />
+                                    <Input
+                                        placeholder="Search by ISO code..."
+                                        value={searchFilters.iso_code}
+                                        onChange={(e) => handleFilterChange('iso_code', e.target.value)}
+                                        className="pl-10 pr-10"
+                                    />
+                                    {searchFilters.iso_code && (
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => handleFilterChange('iso_code', '')}
+                                            className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 hover:bg-muted"
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </Button>
+                                    )}
+                                </div>
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4 z-10" />
+                                    <Input
+                                        placeholder="Search by phone code..."
+                                        value={searchFilters.phone_code}
+                                        onChange={(e) => handleFilterChange('phone_code', e.target.value)}
+                                        className="pl-10 pr-10"
+                                    />
+                                    {searchFilters.phone_code && (
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => handleFilterChange('phone_code', '')}
+                                            className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 hover:bg-muted"
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </Button>
+                                    )}
+                                </div>
                             </div>
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                                <Input
-                                    placeholder="Search by name..."
-                                    value={searchFilters.name}
-                                    onChange={(e) => handleFilterChange('name', e.target.value)}
-                                    className="pl-10"
-                                />
-                            </div>
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                                <Input
-                                    placeholder="Search by ISO code..."
-                                    value={searchFilters.iso_code}
-                                    onChange={(e) => handleFilterChange('iso_code', e.target.value)}
-                                    className="pl-10"
-                                />
-                            </div>
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                                <Input
-                                    placeholder="Search by phone code..."
-                                    value={searchFilters.phone_code}
-                                    onChange={(e) => handleFilterChange('phone_code', e.target.value)}
-                                    className="pl-10"
-                                />
-                            </div>
+                            
+                            {(searchFilters.code || searchFilters.name || searchFilters.iso_code || searchFilters.phone_code) && (
+                                <div className="flex items-center gap-2 flex-wrap pt-2 border-t">
+                                    <span className="text-sm text-muted-foreground">Active filters:</span>
+                                    {searchFilters.code && (
+                                        <Badge variant="secondary" className="gap-1">
+                                            Code: {searchFilters.code}
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => handleFilterChange('code', '')}
+                                                className="h-4 w-4 p-0 hover:bg-transparent"
+                                            >
+                                                <X className="h-3 w-3" />
+                                            </Button>
+                                        </Badge>
+                                    )}
+                                    {searchFilters.name && (
+                                        <Badge variant="secondary" className="gap-1">
+                                            Name: {searchFilters.name}
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => handleFilterChange('name', '')}
+                                                className="h-4 w-4 p-0 hover:bg-transparent"
+                                            >
+                                                <X className="h-3 w-3" />
+                                            </Button>
+                                        </Badge>
+                                    )}
+                                    {searchFilters.iso_code && (
+                                        <Badge variant="secondary" className="gap-1">
+                                            ISO: {searchFilters.iso_code}
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => handleFilterChange('iso_code', '')}
+                                                className="h-4 w-4 p-0 hover:bg-transparent"
+                                            >
+                                                <X className="h-3 w-3" />
+                                            </Button>
+                                        </Badge>
+                                    )}
+                                    {searchFilters.phone_code && (
+                                        <Badge variant="secondary" className="gap-1">
+                                            Phone: {searchFilters.phone_code}
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => handleFilterChange('phone_code', '')}
+                                                className="h-4 w-4 p-0 hover:bg-transparent"
+                                            >
+                                                <X className="h-3 w-3" />
+                                            </Button>
+                                        </Badge>
+                                    )}
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => {
+                                            const clearedFilters = { code: '', name: '', iso_code: '', phone_code: '' };
+                                            setSearchFilters(clearedFilters);
+                                            Object.entries(clearedFilters).forEach(([key, value]) => {
+                                                updateFilter(key, value);
+                                            });
+                                        }}
+                                        className="gap-1 text-muted-foreground hover:text-foreground"
+                                    >
+                                        <X className="h-3 w-3" />
+                                        Clear all
+                                    </Button>
+                                </div>
+                            )}
                         </div>
                     </CardHeader>
                     <CardContent>

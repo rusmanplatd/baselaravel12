@@ -33,6 +33,7 @@ interface UseApiDataReturn<T> {
   loading: boolean;
   error: string | null;
   filters: Record<string, string>;
+  sort: string;
   updateFilter: (key: string, value: string) => void;
   updateSort: (field: string) => void;
   updatePerPage: (perPage: number) => void;
@@ -190,7 +191,8 @@ export function useApiData<T>({
     data,
     loading,
     error,
-    filters: { ...filters, sort },
+    filters,
+    sort,
     updateFilter,
     updateSort,
     updatePerPage,

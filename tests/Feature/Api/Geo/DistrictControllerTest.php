@@ -6,6 +6,7 @@ use App\Models\Master\Geo\District;
 use App\Models\Master\Geo\Province;
 use App\Models\Master\Geo\Village;
 use App\Models\User;
+use Laravel\Passport\Passport;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 
@@ -14,6 +15,9 @@ uses(RefreshDatabase::class, WithFaker::class);
 beforeEach(function () {
     $this->user = User::factory()->create();
     $this->systemUser = User::factory()->create(['email' => 'system@geo.local']);
+
+    // Authenticate via Passport for API requests
+    Passport::actingAs($this->user);
     $this->country = Country::factory()->create();
     $this->province = Province::factory()->create(['country_id' => $this->country->id]);
     $this->city = City::factory()->create(['province_id' => $this->province->id]);

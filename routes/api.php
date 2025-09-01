@@ -75,7 +75,11 @@ Route::prefix('v1')->group(function () {
             ->name('health');
     });
 
-    // Geo API endpoints (public reference data)
+});
+
+// Authenticated API routes
+Route::middleware('auth:api')->prefix('v1')->group(function () {
+    // Geo API endpoints (authenticated)
     Route::prefix('geo')->name('api.geo.')->group(function () {
         // List routes must come before resource routes to avoid conflicts
         Route::get('countries/list', [\App\Http\Controllers\Api\Geo\CountryController::class, 'list'])->name('countries.list');
@@ -97,10 +101,7 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('districts', \App\Http\Controllers\Api\Geo\DistrictController::class);
         Route::apiResource('villages', \App\Http\Controllers\Api\Geo\VillageController::class);
     });
-});
 
-// Authenticated API routes
-Route::middleware('auth:api')->prefix('v1')->group(function () {
     // OAuth Client Management API
     Route::prefix('oauth')->name('api.oauth.')->group(function () {
         Route::apiResource('clients', \App\Http\Controllers\OAuth\ClientController::class);
