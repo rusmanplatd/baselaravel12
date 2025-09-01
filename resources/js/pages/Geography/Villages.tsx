@@ -4,6 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { PermissionGuard } from '@/components/permission-guard';
+import LaravelPagination from '@/components/laravel-pagination';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
@@ -313,7 +314,7 @@ export default function VillagesIndex({ villages, filters, districts }: Props) {
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
-                                                            onClick={() => router.get(route('api.geo.villages.show', village.id))}
+                                                            onClick={() => router.get(route('geography.villages.show', village.id))}
                                                         >
                                                             <Eye className="h-4 w-4" />
                                                         </Button>
@@ -354,6 +355,8 @@ export default function VillagesIndex({ villages, filters, districts }: Props) {
                             </Table>
                         )}
                     </CardContent>
+                    
+                    <LaravelPagination data={villages} />
                 </Card>
             </div>
 

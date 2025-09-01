@@ -19,18 +19,22 @@ class VillageController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
+        // Validate per_page parameter
+        $perPage = $request->input('per_page', 15);
+        $perPage = in_array($perPage, [5, 10, 15, 25, 50, 100]) ? $perPage : 15;
+
         $villages = QueryBuilder::for(Village::class)
             ->allowedFilters([
                 AllowedFilter::exact('district_id'),
                 AllowedFilter::partial('code'),
                 AllowedFilter::partial('name'),
                 AllowedFilter::callback('district_name', function ($query, $value) {
-                    $query->whereHas('district', function ($q) use ($value) {
+                    $query->whereHas('districts', function ($q) use ($value) {
                         $q->where('name', 'like', "%{$value}%");
                     });
                 }),
                 AllowedFilter::callback('city_id', function ($query, $value) {
-                    $query->whereHas('district', function ($q) use ($value) {
+                    $query->whereHas('districts', function ($q) use ($value) {
                         $q->where('city_id', $value);
                     });
                 }),
@@ -57,7 +61,7 @@ class VillageController extends Controller
             ])
             ->defaultSort('name')
             ->with(['district.city.province.country'])
-            ->paginate($request->input('per_page', 15))
+            ->paginate($perPage)
             ->appends($request->query());
 
         return response()->json($villages);

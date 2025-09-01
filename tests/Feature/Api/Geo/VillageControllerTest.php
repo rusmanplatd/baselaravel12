@@ -35,7 +35,7 @@ it('can list villages', function () {
                     'name',
                     'created_at',
                     'updated_at',
-                    'district',
+                    'districts',
                 ],
             ],
         ]);
@@ -195,7 +195,7 @@ it('can show village', function () {
             'name',
             'created_at',
             'updated_at',
-            'district',
+            'districts',
         ])
         ->assertJson([
             'id' => $village->id,
@@ -262,7 +262,7 @@ it('can get villages list for dropdown', function () {
                 'district_id',
                 'code',
                 'name',
-                'district',
+                'districts',
             ],
         ]);
 });
@@ -279,7 +279,7 @@ it('can filter villages list by district id', function () {
         ->assertJsonPath('0.district_id', $this->district->id);
 });
 
-it('can get villages by district', function () {
+it('can get villages by districts', function () {
     Village::factory()->count(3)->create(['district_id' => $this->district->id]);
 
     $response = $this->getJson("/api/v1/geo/districts/{$this->district->id}/villages");

@@ -21,38 +21,7 @@ class ProvinceController extends Controller
 
     public function index(Request $request)
     {
-        $provinces = QueryBuilder::for(Province::class)
-            ->allowedFilters([
-                AllowedFilter::partial('code'),
-                AllowedFilter::partial('name'),
-                AllowedFilter::exact('country_id'),
-            ])
-            ->allowedSorts([
-                'code',
-                'name',
-                'created_at',
-                'updated_at',
-            ])
-            ->defaultSort('name')
-            ->with(['country'])
-            ->withCount(['cities'])
-            ->paginate($request->input('per_page', 15))
-            ->appends($request->query());
-
-        $countries = Country::select(['id', 'name', 'code'])
-            ->orderBy('name')
-            ->get();
-
-        return Inertia::render('Geography/Provinces', [
-            'provinces' => $provinces,
-            'countries' => $countries,
-            'filters' => $request->only([
-                'filter.code',
-                'filter.name',
-                'filter.country_id',
-                'sort',
-            ]),
-        ]);
+        return Inertia::render('Geography/ProvincesApi');
     }
 
     public function show(Province $province)

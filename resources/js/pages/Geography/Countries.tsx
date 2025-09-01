@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { PermissionGuard } from '@/components/permission-guard';
 import ActivityLogModal from '@/components/ActivityLogModal';
+import LaravelPagination from '@/components/laravel-pagination';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
@@ -341,6 +342,8 @@ export default function CountriesIndex({ countries, filters }: Props) {
                             </Table>
                         )}
                     </CardContent>
+                    
+                    <LaravelPagination data={countries} />
                 </Card>
             </div>
 

@@ -19,6 +19,10 @@ class CityController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
+        // Validate per_page parameter
+        $perPage = $request->input('per_page', 15);
+        $perPage = in_array($perPage, [5, 10, 15, 25, 50, 100]) ? $perPage : 15;
+
         $cities = QueryBuilder::for(City::class)
             ->allowedFilters([
                 AllowedFilter::exact('province_id'),
@@ -44,8 +48,8 @@ class CityController extends Controller
                 AllowedSort::field('country_name', 'province.country.name'),
             ])
             ->defaultSort('name')
-            ->with(['province.country', 'district'])
-            ->paginate($request->input('per_page', 15))
+            ->with(['province.country', 'districts'])
+            ->paginate($perPage)
             ->appends($request->query());
 
         return response()->json($cities);
@@ -93,7 +97,7 @@ class CityController extends Controller
      */
     public function show(City $city): JsonResponse
     {
-        $city->load(['province.country', 'district']);
+        $city->load(['province.country', 'districts']);
 
         return response()->json($city);
     }
@@ -162,7 +166,7 @@ class CityController extends Controller
             ->allowedSorts(['name', 'code'])
             ->defaultSort('name')
             ->select(['id', 'province_id', 'code', 'name'])
-            ->with(['province:id,name'])
+            ->with(['province.country:id,name,code'])
             ->limit($request->input('limit', 100))
             ->get();
 

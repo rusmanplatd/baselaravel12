@@ -49,7 +49,7 @@ class VillageRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'district_id' => 'district',
+            'district_id' => 'districts',
             'code' => 'village code',
             'name' => 'village name',
         ];

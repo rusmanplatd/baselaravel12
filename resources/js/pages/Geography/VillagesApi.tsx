@@ -3,15 +3,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { SearchableSelect, type SearchableSelectItem } from '@/components/ui/searchable-select';
 import { PermissionGuard } from '@/components/permission-guard';
-import LaravelPagination from '@/components/laravel-pagination';
+import ActivityLogModal from '@/components/ActivityLogModal';
+import ApiPagination from '@/components/api-pagination';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
-import { Eye, Edit, Trash2, Search, MapPin, Plus, ArrowUpDown, FileText } from 'lucide-react';
-import { useState, useCallback } from 'react';
-import ActivityLogModal from '@/components/ActivityLogModal';
+import { Eye, Edit, Trash2, Search, TreePine, Plus, ArrowUpDown, FileText } from 'lucide-react';
+import React, { useState, useCallback, useEffect } from 'react';
+import { useApiData } from '@/hooks/useApiData';
 import { debounce } from 'lodash';
+import { apiService } from '@/services/ApiService';
 
 interface Country {
     id: string;
@@ -35,43 +38,54 @@ interface City {
 
 interface District {
     id: string;
-    city_id: string;
+    name: string;
+    code: string;
+    city: City;
+}
+
+interface Village {
+    id: string;
+    district_id: string;
     code: string;
     name: string;
-    city: City;
-    villages_count?: number;
+    district: District;
     created_at: string;
     updated_at: string;
 }
 
-interface Props {
-    districts: {
-        data: District[];
-        current_page: number;
-        last_page: number;
-        per_page: number;
-        total: number;
-    };
-    filters: {
-        'filter[code]'?: string;
-        'filter[name]'?: string;
-        'filter[city_id]'?: string;
-        sort?: string;
-    };
-    cities: City[];
-}
-
 const breadcrumbItems: BreadcrumbItem[] = [
     { href: route('dashboard'), title: 'Dashboard' },
-    { href: '', title: 'Districts' },
+    { href: '', title: 'Villages' },
 ];
 
-export default function DistrictsIndex({ districts, filters, cities }: Props) {
-    const [searchFilters, setSearchFilters] = useState({
-        code: filters['filter[code]'] || '',
-        name: filters['filter[name]'] || '',
-        city_id: filters['filter[city_id]'] || '',
+export default function VillagesApi() {
+    const {
+        data: villages,
+        loading,
+        error,
+        filters,
+        updateFilter,
+        updateSort,
+        updatePerPage,
+        goToPage,
+        refresh,
+    } = useApiData<Village>({
+        endpoint: 'villages',
+        initialFilters: {
+            code: '',
+            name: '',
+            district_id: '',
+        },
+        initialSort: 'name',
     });
+
+    const [searchFilters, setSearchFilters] = useState({
+        code: filters.code || '',
+        name: filters.name || '',
+        district_id: filters.district_id || '',
+    });
+
+    const [districts, setDistricts] = useState<District[]>([]);
 
     const [activityLogModal, setActivityLogModal] = useState({
         isOpen: false,
@@ -80,25 +94,27 @@ export default function DistrictsIndex({ districts, filters, cities }: Props) {
         title: '',
     });
 
+    // Load districts for filter dropdown
+    useEffect(() => {
+        apiService.get<District[]>('/api/v1/geo/districts/list')
+            .then(data => setDistricts(data))
+            .catch(console.error);
+    }, []);
+
+    // Convert districts to SearchableSelectItem format
+    const districtSelectItems: SearchableSelectItem[] = districts.map((district) => ({
+        value: district.id,
+        label: `${district.name} (${district.city.name}, ${district.city.province.name}, ${district.city.province.country.name})`,
+        searchText: `${district.name} ${district.code} ${district.city.name} ${district.city.province.name} ${district.city.province.country.name}`,
+    }));
+
     const debouncedSearch = useCallback(
         debounce((newFilters: typeof searchFilters) => {
-            const queryParams: Record<string, string> = { ...filters };
-
-            // Update filter parameters
             Object.entries(newFilters).forEach(([key, value]) => {
-                if (value) {
-                    queryParams[`filter[${key}]`] = value;
-                } else {
-                    delete queryParams[`filter[${key}]`];
-                }
-            });
-
-            router.get(route('geography.districts'), queryParams, {
-                preserveState: true,
-                preserveScroll: true,
+                updateFilter(key, value);
             });
         }, 500),
-        [filters]
+        [updateFilter]
     );
 
     const handleFilterChange = (key: keyof typeof searchFilters, value: string) => {
@@ -108,22 +124,7 @@ export default function DistrictsIndex({ districts, filters, cities }: Props) {
     };
 
     const handleSort = (field: string) => {
-        const currentSort = filters.sort;
-        let newSort = field;
-
-        if (currentSort === field) {
-            newSort = `-${field}`;
-        } else if (currentSort === `-${field}`) {
-            newSort = '';
-        }
-
-        router.get(route('geography.districts'), {
-            ...filters,
-            sort: newSort || undefined,
-        }, {
-            preserveState: true,
-            preserveScroll: true,
-        });
+        updateSort(field);
     };
 
     const getSortIcon = (field: string) => {
@@ -136,50 +137,65 @@ export default function DistrictsIndex({ districts, filters, cities }: Props) {
         return <ArrowUpDown className="h-4 w-4 text-muted-foreground opacity-50" />;
     };
 
-    const handleDelete = (district: District) => {
-        if (confirm(`Are you sure you want to delete the district "${district.name}"?`)) {
-            router.delete(route('geography.districts.destroy', district.id), {
-                onSuccess: () => {
-                    router.reload();
-                }
-            });
+    const handleDelete = async (village: Village) => {
+        if (confirm(`Are you sure you want to delete the village "${village.name}"?`)) {
+            try {
+                await apiService.delete(`/api/v1/geo/villages/${village.id}`);
+                refresh();
+            } catch (error) {
+                console.error('Error deleting village:', error);
+            }
         }
     };
 
-    const showActivityLog = (district: District) => {
+    const showActivityLog = (village: Village) => {
         setActivityLogModal({
             isOpen: true,
-            subjectType: 'App\\Models\\Master\\Geo\\districts',
-            subjectId: district.id,
-            title: `${district.name} (${district.code})`,
+            subjectType: 'App\\Models\\Master\\Geo\\Village',
+            subjectId: village.id,
+            title: `${village.name} (${village.code})`,
         });
     };
 
+    if (error) {
+        return (
+            <AppLayout breadcrumbs={breadcrumbItems}>
+                <Head title="Villages" />
+                <div className="text-center py-8">
+                    <p className="text-red-500">Error: {error}</p>
+                    <Button onClick={refresh} className="mt-4">
+                        Try Again
+                    </Button>
+                </div>
+            </AppLayout>
+        );
+    }
+
     return (
         <AppLayout breadcrumbs={breadcrumbItems}>
-            <Head title="Districts" />
+            <Head title="Villages" />
 
             <div className="space-y-6">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold">Districts</h1>
+                        <h1 className="text-3xl font-bold">Villages</h1>
                         <p className="text-muted-foreground">
-                            Manage districts and their geographic information
+                            Manage villages and their geographic information
                         </p>
                     </div>
-                    <PermissionGuard permission="geo_district:write">
-                        <Button onClick={() => router.get(route('geography.districts.create'))}>
+                    <PermissionGuard permission="geo_village:write">
+                        <Button onClick={() => window.location.href = route('geography.villages.create')}>
                             <Plus className="mr-2 h-4 w-4" />
-                            Add District
+                            Add Village
                         </Button>
                     </PermissionGuard>
                 </div>
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>All Districts ({districts.total})</CardTitle>
+                        <CardTitle>All Villages ({villages?.total || 0})</CardTitle>
                         <CardDescription>
-                            View and manage all districts in the system
+                            View and manage all villages in the system
                         </CardDescription>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -201,25 +217,25 @@ export default function DistrictsIndex({ districts, filters, cities }: Props) {
                                     className="pl-10"
                                 />
                             </div>
-                            <select
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                                value={searchFilters.city_id}
-                                onChange={(e) => handleFilterChange('city_id', e.target.value)}
-                            >
-                                <option value="">All Cities</option>
-                                {cities.map((city) => (
-                                    <option key={city.id} value={city.id}>
-                                        {city.name} ({city.province.name}, {city.province.country.name})
-                                    </option>
-                                ))}
-                            </select>
+                            <SearchableSelect
+                                placeholder="Select a district..."
+                                items={districtSelectItems}
+                                value={searchFilters.district_id}
+                                onValueChange={(value) => handleFilterChange('district_id', value)}
+                                emptyLabel="All Districts"
+                                searchPlaceholder="Search districts..."
+                            />
                         </div>
                     </CardHeader>
                     <CardContent>
-                        {districts.data.length === 0 ? (
+                        {loading ? (
                             <div className="text-center py-8">
-                                <MapPin className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                                <p className="text-muted-foreground">No districts found</p>
+                                <p className="text-muted-foreground">Loading...</p>
+                            </div>
+                        ) : !villages?.data?.length ? (
+                            <div className="text-center py-8">
+                                <TreePine className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                                <p className="text-muted-foreground">No villages found</p>
                             </div>
                         ) : (
                             <Table>
@@ -245,10 +261,10 @@ export default function DistrictsIndex({ districts, filters, cities }: Props) {
                                                 {getSortIcon('name')}
                                             </Button>
                                         </TableHead>
+                                        <TableHead>District</TableHead>
                                         <TableHead>City</TableHead>
                                         <TableHead>Province</TableHead>
                                         <TableHead>Country</TableHead>
-                                        <TableHead>Villages</TableHead>
                                         <TableHead>
                                             <Button
                                                 variant="ghost"
@@ -263,67 +279,70 @@ export default function DistrictsIndex({ districts, filters, cities }: Props) {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {districts.data.map((district) => (
-                                        <TableRow key={district.id}>
+                                    {villages.data.map((village) => (
+                                        <TableRow key={village.id}>
                                             <TableCell className="font-medium">
-                                                <Badge variant="outline">{district.code}</Badge>
+                                                <Badge variant="outline">{village.code}</Badge>
                                             </TableCell>
-                                            <TableCell>{district.name}</TableCell>
+                                            <TableCell>{village.name}</TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
-                                                    <Badge variant="secondary">{district.city.code}</Badge>
-                                                    <span>{district.city.name}</span>
+                                                    <Badge variant="secondary">{village.district.code}</Badge>
+                                                    <span>{village.district.name}</span>
                                                 </div>
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
-                                                    <Badge variant="secondary">{district.city.province.code}</Badge>
+                                                    <Badge variant="secondary">{village.district.city.code}</Badge>
                                                     <span className="text-sm text-muted-foreground">
-                                                        {district.city.province.name}
+                                                        {village.district.city.name}
                                                     </span>
                                                 </div>
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
-                                                    <Badge variant="secondary">{district.city.province.country.code}</Badge>
+                                                    <Badge variant="secondary">{village.district.city.province.code}</Badge>
                                                     <span className="text-sm text-muted-foreground">
-                                                        {district.city.province.country.name}
+                                                        {village.district.city.province.name}
                                                     </span>
                                                 </div>
                                             </TableCell>
                                             <TableCell>
-                                                <Badge variant="outline">
-                                                    {district.villages_count || 0} villages
-                                                </Badge>
+                                                <div className="flex items-center gap-2">
+                                                    <Badge variant="secondary">{village.district.city.province.country.code}</Badge>
+                                                    <span className="text-sm text-muted-foreground">
+                                                        {village.district.city.province.country.name}
+                                                    </span>
+                                                </div>
                                             </TableCell>
                                             <TableCell>
-                                                {new Date(district.created_at).toLocaleDateString()}
+                                                {new Date(village.created_at).toLocaleDateString()}
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
-                                                    <PermissionGuard permission="geo_district:read">
+                                                    <PermissionGuard permission="geo_village:read">
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
-                                                            onClick={() => router.get(route('geography.districts.show', district.id))}
+                                                            onClick={() => router.get(route('geography.villages.show', village.id))}
                                                         >
                                                             <Eye className="h-4 w-4" />
                                                         </Button>
                                                     </PermissionGuard>
-                                                    <PermissionGuard permission="geo_district:write">
+                                                    <PermissionGuard permission="geo_village:write">
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
-                                                            onClick={() => router.get(route('geography.districts.edit', district.id))}
+                                                            onClick={() => window.location.href = route('geography.villages.edit', village.id)}
                                                         >
                                                             <Edit className="h-4 w-4" />
                                                         </Button>
                                                     </PermissionGuard>
-                                                    <PermissionGuard permission="geo_district:delete">
+                                                    <PermissionGuard permission="geo_village:delete">
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
-                                                            onClick={() => handleDelete(district)}
+                                                            onClick={() => handleDelete(village)}
                                                             className="text-destructive hover:text-destructive"
                                                         >
                                                             <Trash2 className="h-4 w-4" />
@@ -333,7 +352,7 @@ export default function DistrictsIndex({ districts, filters, cities }: Props) {
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
-                                                            onClick={() => showActivityLog(district)}
+                                                            onClick={() => showActivityLog(village)}
                                                         >
                                                             <FileText className="h-4 w-4" />
                                                         </Button>
@@ -347,7 +366,13 @@ export default function DistrictsIndex({ districts, filters, cities }: Props) {
                         )}
                     </CardContent>
 
-                    <LaravelPagination data={districts} />
+                    {villages && (
+                        <ApiPagination
+                            meta={villages}
+                            onPageChange={goToPage}
+                            onPerPageChange={updatePerPage}
+                        />
+                    )}
                 </Card>
             </div>
 

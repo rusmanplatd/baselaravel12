@@ -4,6 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { PermissionGuard } from '@/components/permission-guard';
+import LaravelPagination from '@/components/laravel-pagination';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
@@ -288,7 +289,7 @@ export default function CitiesIndex({ cities, filters, provinces }: Props) {
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
-                                                            onClick={() => router.get(route('api.geo.cities.show', city.id))}
+                                                            onClick={() => router.get(route('geography.cities.show', city.id))}
                                                         >
                                                             <Eye className="h-4 w-4" />
                                                         </Button>
@@ -329,6 +330,8 @@ export default function CitiesIndex({ cities, filters, provinces }: Props) {
                             </Table>
                         )}
                     </CardContent>
+                    
+                    <LaravelPagination data={cities} />
                 </Card>
             </div>
 

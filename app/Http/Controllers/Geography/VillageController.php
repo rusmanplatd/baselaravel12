@@ -21,38 +21,7 @@ class VillageController extends Controller
 
     public function index(Request $request)
     {
-        $villages = QueryBuilder::for(Village::class)
-            ->allowedFilters([
-                AllowedFilter::partial('code'),
-                AllowedFilter::partial('name'),
-                AllowedFilter::exact('district_id'),
-            ])
-            ->allowedSorts([
-                'code',
-                'name',
-                'created_at',
-                'updated_at',
-            ])
-            ->defaultSort('name')
-            ->with(['district.city.province.country'])
-            ->paginate($request->input('per_page', 15))
-            ->appends($request->query());
-
-        $districts = District::with(['city.province.country'])
-            ->select(['id', 'name', 'code', 'city_id'])
-            ->orderBy('name')
-            ->get();
-
-        return Inertia::render('Geography/Villages', [
-            'villages' => $villages,
-            'districts' => $districts,
-            'filters' => $request->only([
-                'filter.code',
-                'filter.name',
-                'filter.district_id',
-                'sort',
-            ]),
-        ]);
+        return Inertia::render('Geography/VillagesApi');
     }
 
     public function show(Village $village)

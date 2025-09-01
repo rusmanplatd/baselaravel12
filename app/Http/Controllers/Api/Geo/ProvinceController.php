@@ -47,6 +47,10 @@ class ProvinceController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
+        // Validate per_page parameter
+        $perPage = $request->input('per_page', 15);
+        $perPage = in_array($perPage, [5, 10, 15, 25, 50, 100]) ? $perPage : 15;
+
         $provinces = QueryBuilder::for(Province::class)
             ->allowedFilters([
                 AllowedFilter::exact('country_id'),
@@ -67,7 +71,7 @@ class ProvinceController extends Controller
             ])
             ->defaultSort('name')
             ->with(['country', 'cities'])
-            ->paginate($request->input('per_page', 15))
+            ->paginate($perPage)
             ->appends($request->query());
 
         return response()->json($provinces);

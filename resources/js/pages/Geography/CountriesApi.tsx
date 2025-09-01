@@ -4,73 +4,60 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { PermissionGuard } from '@/components/permission-guard';
-import LaravelPagination from '@/components/laravel-pagination';
+import ActivityLogModal from '@/components/ActivityLogModal';
+import ApiPagination from '@/components/api-pagination';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
-import { Eye, Edit, Trash2, Search, MapPin, Plus, ArrowUpDown, FileText } from 'lucide-react';
+import { Eye, Edit, Trash2, Search, Globe, Plus, ArrowUpDown, FileText } from 'lucide-react';
 import { useState, useCallback } from 'react';
-import ActivityLogModal from '@/components/ActivityLogModal';
+import { useApiData } from '@/hooks/useApiData';
 import { debounce } from 'lodash';
+import axios from 'axios';
 
 interface Country {
     id: string;
-    name: string;
-    code: string;
-}
-
-interface Province {
-    id: string;
-    name: string;
-    code: string;
-    country: Country;
-}
-
-interface City {
-    id: string;
-    name: string;
-    code: string;
-    province: Province;
-}
-
-interface District {
-    id: string;
-    city_id: string;
     code: string;
     name: string;
-    city: City;
-    villages_count?: number;
+    iso_code: string | null;
+    phone_code: string | null;
+    provinces_count?: number;
     created_at: string;
     updated_at: string;
 }
 
-interface Props {
-    districts: {
-        data: District[];
-        current_page: number;
-        last_page: number;
-        per_page: number;
-        total: number;
-    };
-    filters: {
-        'filter[code]'?: string;
-        'filter[name]'?: string;
-        'filter[city_id]'?: string;
-        sort?: string;
-    };
-    cities: City[];
-}
-
 const breadcrumbItems: BreadcrumbItem[] = [
     { href: route('dashboard'), title: 'Dashboard' },
-    { href: '', title: 'Districts' },
+    { href: '', title: 'Countries' },
 ];
 
-export default function DistrictsIndex({ districts, filters, cities }: Props) {
+export default function CountriesApi() {
+    const {
+        data: countries,
+        loading,
+        error,
+        filters,
+        updateFilter,
+        updateSort,
+        updatePerPage,
+        goToPage,
+        refresh,
+    } = useApiData<Country>({
+        endpoint: 'countries',
+        initialFilters: {
+            code: '',
+            name: '',
+            iso_code: '',
+            phone_code: '',
+        },
+        initialSort: 'name',
+    });
+
     const [searchFilters, setSearchFilters] = useState({
-        code: filters['filter[code]'] || '',
-        name: filters['filter[name]'] || '',
-        city_id: filters['filter[city_id]'] || '',
+        code: filters.code || '',
+        name: filters.name || '',
+        iso_code: filters.iso_code || '',
+        phone_code: filters.phone_code || '',
     });
 
     const [activityLogModal, setActivityLogModal] = useState({
@@ -82,23 +69,11 @@ export default function DistrictsIndex({ districts, filters, cities }: Props) {
 
     const debouncedSearch = useCallback(
         debounce((newFilters: typeof searchFilters) => {
-            const queryParams: Record<string, string> = { ...filters };
-
-            // Update filter parameters
             Object.entries(newFilters).forEach(([key, value]) => {
-                if (value) {
-                    queryParams[`filter[${key}]`] = value;
-                } else {
-                    delete queryParams[`filter[${key}]`];
-                }
-            });
-
-            router.get(route('geography.districts'), queryParams, {
-                preserveState: true,
-                preserveScroll: true,
+                updateFilter(key, value);
             });
         }, 500),
-        [filters]
+        [updateFilter]
     );
 
     const handleFilterChange = (key: keyof typeof searchFilters, value: string) => {
@@ -108,22 +83,7 @@ export default function DistrictsIndex({ districts, filters, cities }: Props) {
     };
 
     const handleSort = (field: string) => {
-        const currentSort = filters.sort;
-        let newSort = field;
-
-        if (currentSort === field) {
-            newSort = `-${field}`;
-        } else if (currentSort === `-${field}`) {
-            newSort = '';
-        }
-
-        router.get(route('geography.districts'), {
-            ...filters,
-            sort: newSort || undefined,
-        }, {
-            preserveState: true,
-            preserveScroll: true,
-        });
+        updateSort(field);
     };
 
     const getSortIcon = (field: string) => {
@@ -136,53 +96,68 @@ export default function DistrictsIndex({ districts, filters, cities }: Props) {
         return <ArrowUpDown className="h-4 w-4 text-muted-foreground opacity-50" />;
     };
 
-    const handleDelete = (district: District) => {
-        if (confirm(`Are you sure you want to delete the district "${district.name}"?`)) {
-            router.delete(route('geography.districts.destroy', district.id), {
-                onSuccess: () => {
-                    router.reload();
-                }
-            });
+    const handleDelete = async (country: Country) => {
+        if (confirm(`Are you sure you want to delete the country "${country.name}"?`)) {
+            try {
+                await axios.delete(`/api/v1/geo/countries/${country.id}`);
+                refresh();
+            } catch (error) {
+                console.error('Error deleting country:', error);
+            }
         }
     };
 
-    const showActivityLog = (district: District) => {
+    const showActivityLog = (country: Country) => {
         setActivityLogModal({
             isOpen: true,
-            subjectType: 'App\\Models\\Master\\Geo\\districts',
-            subjectId: district.id,
-            title: `${district.name} (${district.code})`,
+            subjectType: 'App\\Models\\Master\\Geo\\Country',
+            subjectId: country.id,
+            title: `${country.name} (${country.code})`,
         });
     };
 
+    if (error) {
+        return (
+            <AppLayout breadcrumbs={breadcrumbItems}>
+                <Head title="Countries" />
+                <div className="text-center py-8">
+                    <p className="text-red-500">Error: {error}</p>
+                    <Button onClick={refresh} className="mt-4">
+                        Try Again
+                    </Button>
+                </div>
+            </AppLayout>
+        );
+    }
+
     return (
         <AppLayout breadcrumbs={breadcrumbItems}>
-            <Head title="Districts" />
+            <Head title="Countries" />
 
             <div className="space-y-6">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold">Districts</h1>
+                        <h1 className="text-3xl font-bold">Countries</h1>
                         <p className="text-muted-foreground">
-                            Manage districts and their geographic information
+                            Manage countries and their geographic information
                         </p>
                     </div>
-                    <PermissionGuard permission="geo_district:write">
-                        <Button onClick={() => router.get(route('geography.districts.create'))}>
+                    <PermissionGuard permission="geo_country:write">
+                        <Button onClick={() => window.location.href = route('geography.countries.create')}>
                             <Plus className="mr-2 h-4 w-4" />
-                            Add District
+                            Add Country
                         </Button>
                     </PermissionGuard>
                 </div>
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>All Districts ({districts.total})</CardTitle>
+                        <CardTitle>All Countries ({countries?.total || 0})</CardTitle>
                         <CardDescription>
-                            View and manage all districts in the system
+                            View and manage all countries in the system
                         </CardDescription>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                                 <Input
@@ -201,25 +176,35 @@ export default function DistrictsIndex({ districts, filters, cities }: Props) {
                                     className="pl-10"
                                 />
                             </div>
-                            <select
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                                value={searchFilters.city_id}
-                                onChange={(e) => handleFilterChange('city_id', e.target.value)}
-                            >
-                                <option value="">All Cities</option>
-                                {cities.map((city) => (
-                                    <option key={city.id} value={city.id}>
-                                        {city.name} ({city.province.name}, {city.province.country.name})
-                                    </option>
-                                ))}
-                            </select>
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                                <Input
+                                    placeholder="Search by ISO code..."
+                                    value={searchFilters.iso_code}
+                                    onChange={(e) => handleFilterChange('iso_code', e.target.value)}
+                                    className="pl-10"
+                                />
+                            </div>
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                                <Input
+                                    placeholder="Search by phone code..."
+                                    value={searchFilters.phone_code}
+                                    onChange={(e) => handleFilterChange('phone_code', e.target.value)}
+                                    className="pl-10"
+                                />
+                            </div>
                         </div>
                     </CardHeader>
                     <CardContent>
-                        {districts.data.length === 0 ? (
+                        {loading ? (
                             <div className="text-center py-8">
-                                <MapPin className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                                <p className="text-muted-foreground">No districts found</p>
+                                <p className="text-muted-foreground">Loading...</p>
+                            </div>
+                        ) : !countries?.data?.length ? (
+                            <div className="text-center py-8">
+                                <Globe className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                                <p className="text-muted-foreground">No countries found</p>
                             </div>
                         ) : (
                             <Table>
@@ -245,10 +230,27 @@ export default function DistrictsIndex({ districts, filters, cities }: Props) {
                                                 {getSortIcon('name')}
                                             </Button>
                                         </TableHead>
-                                        <TableHead>City</TableHead>
-                                        <TableHead>Province</TableHead>
-                                        <TableHead>Country</TableHead>
-                                        <TableHead>Villages</TableHead>
+                                        <TableHead>
+                                            <Button
+                                                variant="ghost"
+                                                className="h-auto p-0 font-semibold"
+                                                onClick={() => handleSort('iso_code')}
+                                            >
+                                                ISO Code
+                                                {getSortIcon('iso_code')}
+                                            </Button>
+                                        </TableHead>
+                                        <TableHead>
+                                            <Button
+                                                variant="ghost"
+                                                className="h-auto p-0 font-semibold"
+                                                onClick={() => handleSort('phone_code')}
+                                            >
+                                                Phone Code
+                                                {getSortIcon('phone_code')}
+                                            </Button>
+                                        </TableHead>
+                                        <TableHead>Provinces</TableHead>
                                         <TableHead>
                                             <Button
                                                 variant="ghost"
@@ -263,67 +265,59 @@ export default function DistrictsIndex({ districts, filters, cities }: Props) {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {districts.data.map((district) => (
-                                        <TableRow key={district.id}>
+                                    {countries.data.map((country) => (
+                                        <TableRow key={country.id}>
                                             <TableCell className="font-medium">
-                                                <Badge variant="outline">{district.code}</Badge>
+                                                <Badge variant="outline">{country.code}</Badge>
                                             </TableCell>
-                                            <TableCell>{district.name}</TableCell>
+                                            <TableCell>{country.name}</TableCell>
                                             <TableCell>
-                                                <div className="flex items-center gap-2">
-                                                    <Badge variant="secondary">{district.city.code}</Badge>
-                                                    <span>{district.city.name}</span>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="flex items-center gap-2">
-                                                    <Badge variant="secondary">{district.city.province.code}</Badge>
-                                                    <span className="text-sm text-muted-foreground">
-                                                        {district.city.province.name}
-                                                    </span>
-                                                </div>
+                                                {country.iso_code ? (
+                                                    <Badge variant="secondary">{country.iso_code}</Badge>
+                                                ) : (
+                                                    <span className="text-muted-foreground">-</span>
+                                                )}
                                             </TableCell>
                                             <TableCell>
-                                                <div className="flex items-center gap-2">
-                                                    <Badge variant="secondary">{district.city.province.country.code}</Badge>
-                                                    <span className="text-sm text-muted-foreground">
-                                                        {district.city.province.country.name}
-                                                    </span>
-                                                </div>
+                                                {country.phone_code ? (
+                                                    <Badge variant="secondary">+{country.phone_code}</Badge>
+                                                ) : (
+                                                    <span className="text-muted-foreground">-</span>
+                                                )}
                                             </TableCell>
                                             <TableCell>
                                                 <Badge variant="outline">
-                                                    {district.villages_count || 0} villages
+                                                    {country.provinces_count || 0} provinces
                                                 </Badge>
                                             </TableCell>
                                             <TableCell>
-                                                {new Date(district.created_at).toLocaleDateString()}
+                                                {new Date(country.created_at).toLocaleDateString()}
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
-                                                    <PermissionGuard permission="geo_district:read">
+                                                    <PermissionGuard permission="geo_country:read">
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
-                                                            onClick={() => router.get(route('geography.districts.show', district.id))}
+                                                            onClick={() => router.get(route('geography.countries.show', country.id))}
                                                         >
                                                             <Eye className="h-4 w-4" />
                                                         </Button>
                                                     </PermissionGuard>
-                                                    <PermissionGuard permission="geo_district:write">
+                                                    <PermissionGuard permission="geo_country:write">
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
-                                                            onClick={() => router.get(route('geography.districts.edit', district.id))}
+                                                            onClick={() => window.location.href = route('geography.countries.edit', country.id)}
                                                         >
                                                             <Edit className="h-4 w-4" />
                                                         </Button>
                                                     </PermissionGuard>
-                                                    <PermissionGuard permission="geo_district:delete">
+                                                    <PermissionGuard permission="geo_country:delete">
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
-                                                            onClick={() => handleDelete(district)}
+                                                            onClick={() => handleDelete(country)}
                                                             className="text-destructive hover:text-destructive"
                                                         >
                                                             <Trash2 className="h-4 w-4" />
@@ -333,7 +327,7 @@ export default function DistrictsIndex({ districts, filters, cities }: Props) {
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
-                                                            onClick={() => showActivityLog(district)}
+                                                            onClick={() => showActivityLog(country)}
                                                         >
                                                             <FileText className="h-4 w-4" />
                                                         </Button>
@@ -347,7 +341,13 @@ export default function DistrictsIndex({ districts, filters, cities }: Props) {
                         )}
                     </CardContent>
 
-                    <LaravelPagination data={districts} />
+                    {countries && (
+                        <ApiPagination
+                            meta={countries}
+                            onPageChange={goToPage}
+                            onPerPageChange={updatePerPage}
+                        />
+                    )}
                 </Card>
             </div>
 

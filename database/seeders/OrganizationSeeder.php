@@ -19,7 +19,7 @@ class OrganizationSeeder extends Seeder
             'organization_type' => 'holding_company',
             'parent_organization_id' => null,
             'description' => 'Main holding company for technology businesses',
-            'address' => '123 Tech Street, Innovation District',
+            'address' => '123 Tech Street, Innovation districts',
             'phone' => '+1-555-0100',
             'email' => 'info@techcorp.com',
             'website' => 'https://techcorp.com',

@@ -21,39 +21,7 @@ class DistrictController extends Controller
 
     public function index(Request $request)
     {
-        $districts = QueryBuilder::for(District::class)
-            ->allowedFilters([
-                AllowedFilter::partial('code'),
-                AllowedFilter::partial('name'),
-                AllowedFilter::exact('city_id'),
-            ])
-            ->allowedSorts([
-                'code',
-                'name',
-                'created_at',
-                'updated_at',
-            ])
-            ->defaultSort('name')
-            ->with(['city.province.country'])
-            ->withCount(['villages'])
-            ->paginate($request->input('per_page', 15))
-            ->appends($request->query());
-
-        $cities = City::with(['province.country'])
-            ->select(['id', 'name', 'code', 'province_id'])
-            ->orderBy('name')
-            ->get();
-
-        return Inertia::render('Geography/Districts', [
-            'districts' => $districts,
-            'cities' => $cities,
-            'filters' => $request->only([
-                'filter.code',
-                'filter.name',
-                'filter.city_id',
-                'sort',
-            ]),
-        ]);
+        return Inertia::render('Geography/DistrictsApi');
     }
 
     public function show(District $district)
@@ -61,7 +29,7 @@ class DistrictController extends Controller
         $district->load(['city.province.country', 'villages']);
 
         return Inertia::render('Geography/DistrictShow', [
-            'district' => $district,
+            'districts' => $district,
         ]);
     }
 
@@ -103,7 +71,7 @@ class DistrictController extends Controller
             ->get();
 
         return Inertia::render('Geography/DistrictEdit', [
-            'district' => $district,
+            'districts' => $district,
             'cities' => $cities,
         ]);
     }

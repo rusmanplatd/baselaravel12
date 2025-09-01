@@ -6,6 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import { useEffect, useState } from 'react';
 import { router } from '@inertiajs/react';
 import { Calendar, User, Clock, FileText, Loader2, AlertCircle } from 'lucide-react';
+import { apiService } from '@/services/ApiService';
 
 interface ActivityLog {
     id: string;
@@ -51,17 +52,16 @@ export default function ActivityLogModal({ isOpen, onClose, subjectType, subject
         setError(null);
         
         try {
-            const response = await fetch(`/api/activity-logs?filter[subject_type]=${encodeURIComponent(subjectType)}&filter[subject_id]=${subjectId}&sort=-created_at`);
-            
-            if (!response.ok) {
-                throw new Error('Failed to fetch activity logs');
-            }
-            
-            const data = await response.json();
+            const url = `/api/v1/activity-logs?filter[subject_type]=${encodeURIComponent(subjectType)}&filter[subject_id]=${subjectId}&sort=-created_at`;
+            const data = await apiService.get<{ data: ActivityLog[] }>(url);
             setLogs(data.data || []);
         } catch (err) {
-            setError('Failed to load activity logs');
             console.error('Error fetching activity logs:', err);
+            if (err instanceof Error) {
+                setError(err.message);
+            } else {
+                setError('Failed to load activity logs');
+            }
         } finally {
             setLoading(false);
         }

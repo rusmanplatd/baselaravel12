@@ -19,7 +19,7 @@ class DistrictRequest extends FormRequest
      */
     public function rules(): array
     {
-        $districtId = $this->route('district')?->id;
+        $districtId = $this->route('districts')?->id;
         $isUpdate = $this->isMethod('PUT') || $this->isMethod('PATCH');
 
         return [

@@ -6,6 +6,8 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { ArrowLeft, Edit, Trash2, Eye, Globe, MapPin, Calendar, User } from 'lucide-react';
+import ActivityLogModal from '@/components/ActivityLogModal';
+import { useState } from 'react';
 
 interface Province {
     id: string;
@@ -38,6 +40,8 @@ const breadcrumbItems = (country: Country): BreadcrumbItem[] => [
 ];
 
 export default function CountryShow({ country }: Props) {
+    const [isActivityLogOpen, setIsActivityLogOpen] = useState(false);
+
     const handleEdit = () => {
         router.get(route('geography.countries.edit', country.id));
     };
@@ -53,10 +57,7 @@ export default function CountryShow({ country }: Props) {
     };
 
     const handleViewLogs = () => {
-        router.get(route('activity-log.index'), {
-            'filter[subject_type]': 'App\\Models\\Master\\Geo\\Country',
-            'filter[subject_id]': country.id,
-        });
+        setIsActivityLogOpen(true);
     };
 
     return (
@@ -255,6 +256,14 @@ export default function CountryShow({ country }: Props) {
                     </div>
                 </div>
             </div>
+
+            <ActivityLogModal
+                isOpen={isActivityLogOpen}
+                onClose={() => setIsActivityLogOpen(false)}
+                subjectType="App\\Models\\Master\\Geo\\Country"
+                subjectId={country.id}
+                title={`Activity Log - ${country.name}`}
+            />
         </AppLayout>
     );
 }

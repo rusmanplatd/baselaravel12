@@ -33,7 +33,7 @@ it('can list cities', function () {
                     'created_at',
                     'updated_at',
                     'province',
-                    'district',
+                    'districts',
                 ],
             ],
         ]);
@@ -165,7 +165,7 @@ it('can show city', function () {
             'created_at',
             'updated_at',
             'province',
-            'district',
+            'districts',
         ])
         ->assertJson([
             'id' => $city->id,

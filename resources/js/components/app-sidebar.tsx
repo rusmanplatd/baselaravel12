@@ -124,7 +124,7 @@ const mainNavItems: NavItem[] = [
                 permission: 'geo_city:read',
             },
             {
-                title: 'District',
+                title: 'districts',
                 href: '/geography/districts',
                 permission: 'geo_district:read',
             },

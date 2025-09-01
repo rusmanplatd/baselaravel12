@@ -84,7 +84,7 @@ export default function DistrictCreate({ cities }: Props) {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
                                     <Label htmlFor="city_id">City *</Label>
-                                    <select 
+                                    <select
                                         id="city_id"
                                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                                         value={data.city_id}
@@ -138,7 +138,7 @@ export default function DistrictCreate({ cities }: Props) {
                             <div className="flex items-center gap-4">
                                 <Button type="submit" disabled={processing}>
                                     <Save className="mr-2 h-4 w-4" />
-                                    {processing ? 'Creating...' : 'Create District'}
+                                    {processing ? 'Creating...' : 'Create districts'}
                                 </Button>
                                 <Button
                                     type="button"

@@ -3,15 +3,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { SearchableSelect, type SearchableSelectItem } from '@/components/ui/searchable-select';
 import { PermissionGuard } from '@/components/permission-guard';
-import LaravelPagination from '@/components/laravel-pagination';
+import ActivityLogModal from '@/components/ActivityLogModal';
+import ApiPagination from '@/components/api-pagination';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { Eye, Edit, Trash2, Search, MapPin, Plus, ArrowUpDown, FileText } from 'lucide-react';
-import { useState, useCallback } from 'react';
-import ActivityLogModal from '@/components/ActivityLogModal';
+import React, { useState, useCallback, useEffect } from 'react';
+import { useApiData } from '@/hooks/useApiData';
 import { debounce } from 'lodash';
+import { apiService } from '@/services/ApiService';
 
 interface Country {
     id: string;
@@ -44,34 +47,39 @@ interface District {
     updated_at: string;
 }
 
-interface Props {
-    districts: {
-        data: District[];
-        current_page: number;
-        last_page: number;
-        per_page: number;
-        total: number;
-    };
-    filters: {
-        'filter[code]'?: string;
-        'filter[name]'?: string;
-        'filter[city_id]'?: string;
-        sort?: string;
-    };
-    cities: City[];
-}
-
 const breadcrumbItems: BreadcrumbItem[] = [
     { href: route('dashboard'), title: 'Dashboard' },
     { href: '', title: 'Districts' },
 ];
 
-export default function DistrictsIndex({ districts, filters, cities }: Props) {
-    const [searchFilters, setSearchFilters] = useState({
-        code: filters['filter[code]'] || '',
-        name: filters['filter[name]'] || '',
-        city_id: filters['filter[city_id]'] || '',
+export default function DistrictsApi() {
+    const {
+        data: districts,
+        loading,
+        error,
+        filters,
+        updateFilter,
+        updateSort,
+        updatePerPage,
+        goToPage,
+        refresh,
+    } = useApiData<District>({
+        endpoint: 'districts',
+        initialFilters: {
+            code: '',
+            name: '',
+            city_id: '',
+        },
+        initialSort: 'name',
     });
+
+    const [searchFilters, setSearchFilters] = useState({
+        code: filters.code || '',
+        name: filters.name || '',
+        city_id: filters.city_id || '',
+    });
+
+    const [cities, setCities] = useState<City[]>([]);
 
     const [activityLogModal, setActivityLogModal] = useState({
         isOpen: false,
@@ -80,25 +88,27 @@ export default function DistrictsIndex({ districts, filters, cities }: Props) {
         title: '',
     });
 
+    // Load cities for filter dropdown
+    useEffect(() => {
+        apiService.get<City[]>('/api/v1/geo/cities/list')
+            .then(data => setCities(data))
+            .catch(console.error);
+    }, []);
+
+    // Convert cities to SearchableSelectItem format
+    const citySelectItems: SearchableSelectItem[] = cities.map((city) => ({
+        value: city.id,
+        label: `${city.name} (${city.province.name}, ${city.province.country.name})`,
+        searchText: `${city.name} ${city.code} ${city.province.name} ${city.province.country.name}`,
+    }));
+
     const debouncedSearch = useCallback(
         debounce((newFilters: typeof searchFilters) => {
-            const queryParams: Record<string, string> = { ...filters };
-
-            // Update filter parameters
             Object.entries(newFilters).forEach(([key, value]) => {
-                if (value) {
-                    queryParams[`filter[${key}]`] = value;
-                } else {
-                    delete queryParams[`filter[${key}]`];
-                }
-            });
-
-            router.get(route('geography.districts'), queryParams, {
-                preserveState: true,
-                preserveScroll: true,
+                updateFilter(key, value);
             });
         }, 500),
-        [filters]
+        [updateFilter]
     );
 
     const handleFilterChange = (key: keyof typeof searchFilters, value: string) => {
@@ -108,22 +118,7 @@ export default function DistrictsIndex({ districts, filters, cities }: Props) {
     };
 
     const handleSort = (field: string) => {
-        const currentSort = filters.sort;
-        let newSort = field;
-
-        if (currentSort === field) {
-            newSort = `-${field}`;
-        } else if (currentSort === `-${field}`) {
-            newSort = '';
-        }
-
-        router.get(route('geography.districts'), {
-            ...filters,
-            sort: newSort || undefined,
-        }, {
-            preserveState: true,
-            preserveScroll: true,
-        });
+        updateSort(field);
     };
 
     const getSortIcon = (field: string) => {
@@ -136,13 +131,14 @@ export default function DistrictsIndex({ districts, filters, cities }: Props) {
         return <ArrowUpDown className="h-4 w-4 text-muted-foreground opacity-50" />;
     };
 
-    const handleDelete = (district: District) => {
+    const handleDelete = async (district: District) => {
         if (confirm(`Are you sure you want to delete the district "${district.name}"?`)) {
-            router.delete(route('geography.districts.destroy', district.id), {
-                onSuccess: () => {
-                    router.reload();
-                }
-            });
+            try {
+                await apiService.delete(`/api/v1/geo/districts/${district.id}`);
+                refresh();
+            } catch (error) {
+                console.error('Error deleting district:', error);
+            }
         }
     };
 
@@ -154,6 +150,20 @@ export default function DistrictsIndex({ districts, filters, cities }: Props) {
             title: `${district.name} (${district.code})`,
         });
     };
+
+    if (error) {
+        return (
+            <AppLayout breadcrumbs={breadcrumbItems}>
+                <Head title="Districts" />
+                <div className="text-center py-8">
+                    <p className="text-red-500">Error: {error}</p>
+                    <Button onClick={refresh} className="mt-4">
+                        Try Again
+                    </Button>
+                </div>
+            </AppLayout>
+        );
+    }
 
     return (
         <AppLayout breadcrumbs={breadcrumbItems}>
@@ -168,7 +178,7 @@ export default function DistrictsIndex({ districts, filters, cities }: Props) {
                         </p>
                     </div>
                     <PermissionGuard permission="geo_district:write">
-                        <Button onClick={() => router.get(route('geography.districts.create'))}>
+                        <Button onClick={() => window.location.href = route('geography.districts.create')}>
                             <Plus className="mr-2 h-4 w-4" />
                             Add District
                         </Button>
@@ -177,7 +187,7 @@ export default function DistrictsIndex({ districts, filters, cities }: Props) {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>All Districts ({districts.total})</CardTitle>
+                        <CardTitle>All Districts ({districts?.total || 0})</CardTitle>
                         <CardDescription>
                             View and manage all districts in the system
                         </CardDescription>
@@ -201,22 +211,22 @@ export default function DistrictsIndex({ districts, filters, cities }: Props) {
                                     className="pl-10"
                                 />
                             </div>
-                            <select
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                            <SearchableSelect
+                                placeholder="Select a city..."
+                                items={citySelectItems}
                                 value={searchFilters.city_id}
-                                onChange={(e) => handleFilterChange('city_id', e.target.value)}
-                            >
-                                <option value="">All Cities</option>
-                                {cities.map((city) => (
-                                    <option key={city.id} value={city.id}>
-                                        {city.name} ({city.province.name}, {city.province.country.name})
-                                    </option>
-                                ))}
-                            </select>
+                                onValueChange={(value) => handleFilterChange('city_id', value)}
+                                emptyLabel="All Cities"
+                                searchPlaceholder="Search cities..."
+                            />
                         </div>
                     </CardHeader>
                     <CardContent>
-                        {districts.data.length === 0 ? (
+                        {loading ? (
+                            <div className="text-center py-8">
+                                <p className="text-muted-foreground">Loading...</p>
+                            </div>
+                        ) : !districts?.data?.length ? (
                             <div className="text-center py-8">
                                 <MapPin className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                                 <p className="text-muted-foreground">No districts found</p>
@@ -314,7 +324,7 @@ export default function DistrictsIndex({ districts, filters, cities }: Props) {
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
-                                                            onClick={() => router.get(route('geography.districts.edit', district.id))}
+                                                            onClick={() => window.location.href = route('geography.districts.edit', district.id)}
                                                         >
                                                             <Edit className="h-4 w-4" />
                                                         </Button>
@@ -347,7 +357,13 @@ export default function DistrictsIndex({ districts, filters, cities }: Props) {
                         )}
                     </CardContent>
 
-                    <LaravelPagination data={districts} />
+                    {districts && (
+                        <ApiPagination
+                            meta={districts}
+                            onPageChange={goToPage}
+                            onPerPageChange={updatePerPage}
+                        />
+                    )}
                 </Card>
             </div>
 

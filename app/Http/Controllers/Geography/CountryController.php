@@ -20,36 +20,7 @@ class CountryController extends Controller
 
     public function index(Request $request)
     {
-        $countries = QueryBuilder::for(Country::class)
-            ->allowedFilters([
-                AllowedFilter::partial('code'),
-                AllowedFilter::partial('name'),
-                AllowedFilter::partial('iso_code'),
-                AllowedFilter::partial('phone_code'),
-            ])
-            ->allowedSorts([
-                'code',
-                'name',
-                'iso_code',
-                'phone_code',
-                'created_at',
-                'updated_at',
-            ])
-            ->defaultSort('name')
-            ->withCount(['provinces'])
-            ->paginate($request->input('per_page', 15))
-            ->appends($request->query());
-
-        return Inertia::render('Geography/Countries', [
-            'countries' => $countries,
-            'filters' => $request->only([
-                'filter.code',
-                'filter.name',
-                'filter.iso_code',
-                'filter.phone_code',
-                'sort',
-            ]),
-        ]);
+        return Inertia::render('Geography/CountriesApi');
     }
 
     public function show(Country $country)

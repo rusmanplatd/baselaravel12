@@ -19,6 +19,10 @@ class DistrictController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
+        // Validate per_page parameter
+        $perPage = $request->input('per_page', 15);
+        $perPage = in_array($perPage, [5, 10, 15, 25, 50, 100]) ? $perPage : 15;
+
         $districts = QueryBuilder::for(District::class)
             ->allowedFilters([
                 AllowedFilter::exact('city_id'),
@@ -51,7 +55,7 @@ class DistrictController extends Controller
             ])
             ->defaultSort('name')
             ->with(['city.province.country'])
-            ->paginate($request->input('per_page', 15))
+            ->paginate($perPage)
             ->appends($request->query());
 
         return response()->json($districts);
@@ -168,7 +172,7 @@ class DistrictController extends Controller
             ->allowedSorts(['name', 'code'])
             ->defaultSort('name')
             ->select(['id', 'city_id', 'code', 'name'])
-            ->with(['city:id,name'])
+            ->with(['city.province.country:id,name,code'])
             ->limit($request->input('limit', 100))
             ->get();
 

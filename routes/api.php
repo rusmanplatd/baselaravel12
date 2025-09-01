@@ -11,11 +11,8 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:api');
 
-// Activity logs API (with authentication)
-Route::middleware(['auth:api'])->group(function () {
-    Route::get('activity-logs', [\App\Http\Controllers\Api\ActivityLogController::class, 'index']);
-    Route::get('activity-logs/{activity}', [\App\Http\Controllers\Api\ActivityLogController::class, 'show']);
-});
+// Activity logs API (moved to authenticated API section)
+// Note: Moved to v1 section below for proper API token authentication
 
 // Public API routes (no authentication required for demo)
 Route::prefix('v1')->group(function () {
@@ -91,7 +88,7 @@ Route::prefix('v1')->group(function () {
         Route::get('countries/{country}/provinces', [\App\Http\Controllers\Api\Geo\ProvinceController::class, 'byCountry'])->name('provinces.by-country');
         Route::get('provinces/{province}/cities', [\App\Http\Controllers\Api\Geo\CityController::class, 'byProvince'])->name('cities.by-province');
         Route::get('cities/{city}/districts', [\App\Http\Controllers\Api\Geo\DistrictController::class, 'byCity'])->name('districts.by-city');
-        Route::get('districts/{district}/villages', [\App\Http\Controllers\Api\Geo\VillageController::class, 'byDistrict'])->name('villages.by-district');
+        Route::get('districts/{district}/villages', [\App\Http\Controllers\Api\Geo\VillageController::class, 'bydistricts'])->name('villages.by-districts');
 
         // Resource routes
         Route::apiResource('countries', \App\Http\Controllers\Api\Geo\CountryController::class);
@@ -110,6 +107,11 @@ Route::middleware('auth:api')->prefix('v1')->group(function () {
         Route::post('clients/{client}/regenerate-secret', [\App\Http\Controllers\OAuth\ClientController::class, 'regenerateSecret'])
             ->name('clients.regenerate-secret');
     });
+
+    // Activity logs API
+    Route::get('activity-logs', [\App\Http\Controllers\Api\ActivityLogController::class, 'index'])->name('api.activity-logs.index');
+    Route::get('activity-logs/{activity}', [\App\Http\Controllers\Api\ActivityLogController::class, 'show'])->name('api.activity-logs.show');
+
     // User Security Profile
     Route::prefix('security')->name('api.security.')->group(function () {
         Route::get('/', [UserSecurityController::class, 'index'])->name('profile');

@@ -21,44 +21,12 @@ class CityController extends Controller
 
     public function index(Request $request)
     {
-        $cities = QueryBuilder::for(City::class)
-            ->allowedFilters([
-                AllowedFilter::partial('code'),
-                AllowedFilter::partial('name'),
-                AllowedFilter::exact('province_id'),
-            ])
-            ->allowedSorts([
-                'code',
-                'name',
-                'created_at',
-                'updated_at',
-            ])
-            ->defaultSort('name')
-            ->with(['province.country'])
-            ->withCount(['district'])
-            ->paginate($request->input('per_page', 15))
-            ->appends($request->query());
-
-        $provinces = Province::with(['country'])
-            ->select(['id', 'name', 'code', 'country_id'])
-            ->orderBy('name')
-            ->get();
-
-        return Inertia::render('Geography/Cities', [
-            'cities' => $cities,
-            'provinces' => $provinces,
-            'filters' => $request->only([
-                'filter.code',
-                'filter.name',
-                'filter.province_id',
-                'sort',
-            ]),
-        ]);
+        return Inertia::render('Geography/CitiesApi');
     }
 
     public function show(City $city)
     {
-        $city->load(['province.country', 'district']);
+        $city->load(['province.country', 'districts']);
 
         return Inertia::render('Geography/CityShow', [
             'city' => $city,

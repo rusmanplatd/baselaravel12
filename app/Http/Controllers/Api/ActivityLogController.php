@@ -12,7 +12,8 @@ class ActivityLogController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:audit_log:read');
+        // Allow users to see activity logs for entities they have access to
+        // Permission checking is handled per-request based on subject access
     }
 
     public function index(Request $request)

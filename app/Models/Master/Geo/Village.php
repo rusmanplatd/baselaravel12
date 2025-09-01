@@ -86,7 +86,7 @@ class Village extends Model
             ->when(
                 $city_id = $request->city_id,
                 function ($q) use (&$city_id) {
-                    $q->whereRelation('district', 'city_id', $city_id);
+                    $q->whereRelation('districts', 'city_id', $city_id);
                 }
             )
             ->when(
