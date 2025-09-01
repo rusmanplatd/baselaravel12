@@ -9,8 +9,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\Request;
-use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class City extends Model
 {
@@ -45,7 +45,7 @@ class City extends Model
             ->logOnly(['province_id', 'code', 'name'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
-            ->setDescriptionForEvent(fn(string $eventName) => "City {$eventName}")
+            ->setDescriptionForEvent(fn (string $eventName) => "City {$eventName}")
             ->useLogName('geography');
     }
 

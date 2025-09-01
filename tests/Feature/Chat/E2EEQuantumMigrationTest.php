@@ -8,8 +8,8 @@ use App\Models\Chat\Message;
 use App\Models\User;
 use App\Models\UserDevice;
 use App\Services\ChatEncryptionService;
-use App\Services\QuantumCryptoService;
 use App\Services\MultiDeviceEncryptionService;
+use App\Services\QuantumCryptoService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 
@@ -19,15 +19,15 @@ beforeEach(function () {
     $this->encryptionService = new ChatEncryptionService;
     $this->quantumService = new QuantumCryptoService;
     $this->multiDeviceService = new MultiDeviceEncryptionService($this->encryptionService);
-    
+
     $this->user1 = User::factory()->create();
     $this->user2 = User::factory()->create();
-    
+
     $this->conversation = Conversation::factory()->create([
         'type' => 'direct',
         'created_by' => $this->user1->id,
     ]);
-    
+
     $this->conversation->participants()->create(['user_id' => $this->user1->id, 'role' => 'admin']);
     $this->conversation->participants()->create(['user_id' => $this->user2->id, 'role' => 'member']);
 });
@@ -38,7 +38,7 @@ describe('E2EE Quantum Migration and Key Rotation', function () {
             // Start with RSA keys
             $rsaKeyPair1 = $this->encryptionService->generateKeyPair();
             $rsaKeyPair2 = $this->encryptionService->generateKeyPair();
-            
+
             $device1 = UserDevice::factory()->create([
                 'user_id' => $this->user1->id,
                 'device_name' => 'User1 Device',
@@ -48,7 +48,7 @@ describe('E2EE Quantum Migration and Key Rotation', function () {
                 'quantum_ready' => false,
                 'is_trusted' => true,
             ]);
-            
+
             $device2 = UserDevice::factory()->create([
                 'user_id' => $this->user2->id,
                 'device_name' => 'User2 Device',
@@ -58,7 +58,7 @@ describe('E2EE Quantum Migration and Key Rotation', function () {
                 'quantum_ready' => false,
                 'is_trusted' => true,
             ]);
-            
+
             // Create RSA encryption keys
             $rsaSymmetricKey = $this->encryptionService->generateSymmetricKey();
             $rsaKey1 = EncryptionKey::create([
@@ -73,7 +73,7 @@ describe('E2EE Quantum Migration and Key Rotation', function () {
                 'key_strength' => 4096,
                 'is_active' => true,
             ]);
-            
+
             // Send messages with RSA
             $rsaMessage = Message::createEncrypted(
                 $this->conversation->id,
@@ -81,33 +81,33 @@ describe('E2EE Quantum Migration and Key Rotation', function () {
                 'Message encrypted with RSA',
                 $rsaSymmetricKey
             );
-            
+
             // Upgrade devices to quantum-ready
             $device1->update([
                 'encryption_capabilities' => json_encode(['ML-KEM-768', 'RSA-4096-OAEP']),
                 'quantum_ready' => true,
             ]);
-            
+
             $device2->update([
                 'encryption_capabilities' => json_encode(['ML-KEM-768', 'RSA-4096-OAEP']),
                 'quantum_ready' => true,
             ]);
-            
+
             // Generate quantum keys
             if ($this->quantumService->isAvailable()) {
                 $quantumKeyPair1 = $this->quantumService->generateKeyPair('ML-KEM-768');
                 $quantumKeyPair2 = $this->quantumService->generateKeyPair('ML-KEM-768');
-                
+
                 // Perform gradual migration
                 $migrationResult = $this->performQuantumMigration($this->conversation->id, 'gradual');
-                
+
                 expect($migrationResult['status'])->toBe('success');
                 expect($migrationResult['migrated_keys'])->toBeGreaterThan(0);
-                
+
                 // Verify RSA messages still decryptable
                 $decryptedRSA = $rsaMessage->decryptContent($rsaSymmetricKey);
                 expect($decryptedRSA)->toBe('Message encrypted with RSA');
-                
+
                 // Send new message with quantum algorithm
                 $quantumSymmetricKey = $this->encryptionService->generateSymmetricKey();
                 $quantumMessage = Message::createEncrypted(
@@ -116,15 +116,15 @@ describe('E2EE Quantum Migration and Key Rotation', function () {
                     'Message encrypted with ML-KEM',
                     $quantumSymmetricKey
                 );
-                
+
                 $decryptedQuantum = $quantumMessage->decryptContent($quantumSymmetricKey);
                 expect($decryptedQuantum)->toBe('Message encrypted with ML-KEM');
-                
+
                 // Verify coexistence of both algorithms
                 $activeKeys = EncryptionKey::where('conversation_id', $this->conversation->id)
                     ->where('is_active', true)
                     ->get();
-                
+
                 $algorithms = $activeKeys->pluck('algorithm')->unique();
                 expect($algorithms->contains('RSA-4096-OAEP'))->toBeTrue();
                 expect($algorithms->contains('ML-KEM-768'))->toBeTrue();
@@ -132,11 +132,11 @@ describe('E2EE Quantum Migration and Key Rotation', function () {
                 $this->markTestSkipped('Quantum crypto service not available');
             }
         });
-        
+
         it('handles hybrid encryption during transition period', function () {
             // Setup mixed-capability devices
             $rsaKeyPair = $this->encryptionService->generateKeyPair();
-            
+
             $legacyDevice = UserDevice::factory()->create([
                 'user_id' => $this->user1->id,
                 'device_name' => 'Legacy Device',
@@ -146,10 +146,10 @@ describe('E2EE Quantum Migration and Key Rotation', function () {
                 'quantum_ready' => false,
                 'is_trusted' => true,
             ]);
-            
+
             if ($this->quantumService->isAvailable()) {
                 $quantumKeyPair = $this->quantumService->generateKeyPair('ML-KEM-768');
-                
+
                 $quantumDevice = UserDevice::factory()->create([
                     'user_id' => $this->user2->id,
                     'device_name' => 'Quantum Device',
@@ -159,16 +159,16 @@ describe('E2EE Quantum Migration and Key Rotation', function () {
                     'quantum_ready' => true,
                     'is_trusted' => true,
                 ]);
-                
+
                 // Negotiate hybrid algorithm
                 $deviceCapabilities = [
                     $legacyDevice->encryption_capabilities,
-                    $quantumDevice->encryption_capabilities
+                    $quantumDevice->encryption_capabilities,
                 ];
-                
+
                 $negotiatedAlgorithm = $this->encryptionService->negotiateAlgorithm($deviceCapabilities);
                 expect($negotiatedAlgorithm)->toBeIn(['RSA-4096-OAEP', 'HYBRID-RSA4096-MLKEM768']);
-                
+
                 // Create hybrid encryption key
                 $symmetricKey = $this->encryptionService->generateSymmetricKey();
                 $hybridKey = EncryptionKey::create([
@@ -183,7 +183,7 @@ describe('E2EE Quantum Migration and Key Rotation', function () {
                     'key_strength' => 4096,
                     'is_active' => true,
                 ]);
-                
+
                 // Test message encryption with hybrid approach
                 $message = Message::createEncrypted(
                     $this->conversation->id,
@@ -191,10 +191,10 @@ describe('E2EE Quantum Migration and Key Rotation', function () {
                     'Hybrid encryption test message',
                     $symmetricKey
                 );
-                
+
                 $decrypted = $message->decryptContent($symmetricKey);
                 expect($decrypted)->toBe('Hybrid encryption test message');
-                
+
                 // Verify both devices can access the message
                 expect($hybridKey->algorithm)->toBe($negotiatedAlgorithm);
                 expect($hybridKey->is_active)->toBeTrue();
@@ -202,7 +202,7 @@ describe('E2EE Quantum Migration and Key Rotation', function () {
                 $this->markTestSkipped('Quantum crypto service not available');
             }
         });
-        
+
         it('validates quantum readiness before migration', function () {
             $device = UserDevice::factory()->create([
                 'user_id' => $this->user1->id,
@@ -212,42 +212,42 @@ describe('E2EE Quantum Migration and Key Rotation', function () {
                 'quantum_ready' => false,
                 'is_trusted' => true,
             ]);
-            
+
             // Check readiness assessment
             $readiness = $this->assessQuantumReadiness($this->conversation->id);
-            
+
             expect($readiness['overall_ready'])->toBeFalse();
             expect($readiness['device_readiness'])->toHaveKey($device->id);
             expect($readiness['device_readiness'][$device->id]['ready'])->toBeFalse();
             expect($readiness['device_readiness'][$device->id]['missing_capabilities'])->toContain('ML-KEM-768');
-            
+
             // Upgrade device capabilities
             $device->update([
                 'encryption_capabilities' => json_encode(['ML-KEM-768', 'ML-KEM-1024', 'RSA-4096-OAEP']),
                 'quantum_ready' => true,
             ]);
-            
+
             // Recheck readiness
             $updatedReadiness = $this->assessQuantumReadiness($this->conversation->id);
-            
+
             expect($updatedReadiness['overall_ready'])->toBeTrue();
             expect($updatedReadiness['device_readiness'][$device->id]['ready'])->toBeTrue();
             expect($updatedReadiness['recommended_algorithm'])->toBe('ML-KEM-768');
         });
     });
-    
+
     describe('Key Rotation Under Load', function () {
         it('performs safe key rotation during active messaging', function () {
             $initialKey = $this->encryptionService->generateSymmetricKey();
             $keyPair = $this->encryptionService->generateKeyPair();
-            
+
             // Create initial encryption key
             $device = UserDevice::factory()->create([
                 'user_id' => $this->user1->id,
                 'public_key' => $keyPair['public_key'],
                 'is_trusted' => true,
             ]);
-            
+
             $encryptionKey = EncryptionKey::createForDevice(
                 $this->conversation->id,
                 $this->user1->id,
@@ -255,7 +255,7 @@ describe('E2EE Quantum Migration and Key Rotation', function () {
                 $initialKey,
                 $keyPair['public_key']
             );
-            
+
             // Send messages before rotation
             $preRotationMessages = [];
             for ($i = 0; $i < 10; $i++) {
@@ -267,25 +267,25 @@ describe('E2EE Quantum Migration and Key Rotation', function () {
                 );
                 $preRotationMessages[] = $message;
             }
-            
+
             // Perform key rotation
             $rotationStartTime = microtime(true);
-            
+
             DB::transaction(function () use ($encryptionKey, &$newKey) {
                 // Mark old key as inactive
                 $encryptionKey->update(['is_active' => false]);
-                
+
                 // Generate new key
                 $newSymmetricKey = $this->encryptionService->generateSymmetricKey();
                 $newKeyPair = $this->encryptionService->generateKeyPair();
-                
+
                 // Create new encryption key
                 $newDevice = UserDevice::factory()->create([
                     'user_id' => $this->user1->id,
                     'public_key' => $newKeyPair['public_key'],
                     'is_trusted' => true,
                 ]);
-                
+
                 $newKey = EncryptionKey::createForDevice(
                     $this->conversation->id,
                     $this->user1->id,
@@ -293,17 +293,17 @@ describe('E2EE Quantum Migration and Key Rotation', function () {
                     $newSymmetricKey,
                     $newKeyPair['public_key']
                 );
-                
+
                 $this->newSymmetricKey = $newSymmetricKey;
             });
-            
+
             $rotationEndTime = microtime(true);
             $rotationTime = ($rotationEndTime - $rotationStartTime) * 1000; // ms
-            
+
             expect($rotationTime)->toBeLessThan(1000); // Less than 1 second
             expect($newKey->is_active)->toBeTrue();
             expect($encryptionKey->fresh()->is_active)->toBeFalse();
-            
+
             // Send messages after rotation
             $postRotationMessages = [];
             for ($i = 0; $i < 10; $i++) {
@@ -315,34 +315,34 @@ describe('E2EE Quantum Migration and Key Rotation', function () {
                 );
                 $postRotationMessages[] = $message;
             }
-            
+
             // Verify all pre-rotation messages still decryptable with old key
             foreach ($preRotationMessages as $message) {
                 $decrypted = $message->decryptContent($initialKey);
                 expect($decrypted)->toStartWith('Pre-rotation message #');
             }
-            
+
             // Verify all post-rotation messages decryptable with new key
             foreach ($postRotationMessages as $message) {
                 $decrypted = $message->decryptContent($this->newSymmetricKey);
                 expect($decrypted)->toStartWith('Post-rotation message #');
             }
-            
+
             // Verify forward secrecy (old key cannot decrypt new messages)
-            expect(fn() => $postRotationMessages[0]->decryptContent($initialKey))
+            expect(fn () => $postRotationMessages[0]->decryptContent($initialKey))
                 ->toThrow(\App\Exceptions\DecryptionException::class);
         });
-        
+
         it('handles emergency key rotation due to compromise', function () {
             $compromisedKey = $this->encryptionService->generateSymmetricKey();
             $keyPair = $this->encryptionService->generateKeyPair();
-            
+
             $device = UserDevice::factory()->create([
                 'user_id' => $this->user1->id,
                 'public_key' => $keyPair['public_key'],
                 'is_trusted' => true,
             ]);
-            
+
             // Create compromised key
             $compromisedEncryptionKey = EncryptionKey::createForDevice(
                 $this->conversation->id,
@@ -351,7 +351,7 @@ describe('E2EE Quantum Migration and Key Rotation', function () {
                 $compromisedKey,
                 $keyPair['public_key']
             );
-            
+
             // Send sensitive messages
             $sensitiveMessages = [];
             for ($i = 0; $i < 5; $i++) {
@@ -363,39 +363,39 @@ describe('E2EE Quantum Migration and Key Rotation', function () {
                 );
                 $sensitiveMessages[] = $message;
             }
-            
+
             // Detect compromise and trigger emergency rotation
             $emergencyStartTime = microtime(true);
-            
+
             $emergencyResult = $this->performEmergencyKeyRotation(
                 $this->conversation->id,
                 $compromisedEncryptionKey->id,
                 'security_breach'
             );
-            
+
             $emergencyEndTime = microtime(true);
             $emergencyTime = ($emergencyEndTime - $emergencyStartTime) * 1000;
-            
+
             expect($emergencyResult['status'])->toBe('success');
             expect($emergencyResult['rotation_reason'])->toBe('security_breach');
             expect($emergencyTime)->toBeLessThan(2000); // Less than 2 seconds for emergency
-            
+
             // Verify compromised key is immediately deactivated
             $compromisedKey = $compromisedEncryptionKey->fresh();
             expect($compromisedKey->is_active)->toBeFalse();
             expect($compromisedKey->revoked_at)->not()->toBeNull();
             expect($compromisedKey->revocation_reason)->toBe('security_breach');
-            
+
             // Verify new key is active
             $newKey = EncryptionKey::where('conversation_id', $this->conversation->id)
                 ->where('is_active', true)
                 ->latest()
                 ->first();
-            
+
             expect($newKey)->not()->toBeNull();
             expect($newKey->id)->not()->toBe($compromisedEncryptionKey->id);
             expect($newKey->key_version)->toBeGreaterThan($compromisedEncryptionKey->key_version);
-            
+
             // Test new message with emergency key
             $newSymmetricKey = $newKey->decryptSymmetricKey($keyPair['private_key']);
             $postEmergencyMessage = Message::createEncrypted(
@@ -404,11 +404,11 @@ describe('E2EE Quantum Migration and Key Rotation', function () {
                 'Post-emergency message - SECURE',
                 $newSymmetricKey
             );
-            
+
             $decrypted = $postEmergencyMessage->decryptContent($newSymmetricKey);
             expect($decrypted)->toBe('Post-emergency message - SECURE');
         });
-        
+
         it('validates key rotation frequency limits', function () {
             $keyPair = $this->encryptionService->generateKeyPair();
             $device = UserDevice::factory()->create([
@@ -416,11 +416,11 @@ describe('E2EE Quantum Migration and Key Rotation', function () {
                 'public_key' => $keyPair['public_key'],
                 'is_trusted' => true,
             ]);
-            
+
             $rotationAttempts = [];
             $successfulRotations = 0;
             $blockedRotations = 0;
-            
+
             // Attempt multiple rapid rotations
             for ($i = 0; $i < 10; $i++) {
                 try {
@@ -429,19 +429,19 @@ describe('E2EE Quantum Migration and Key Rotation', function () {
                         'attempt' => $i,
                         'success' => true,
                         'timestamp' => time(),
-                        'result' => $result
+                        'result' => $result,
                     ];
                     $successfulRotations++;
-                    
+
                     // Small delay between attempts
                     usleep(100000); // 100ms
-                    
+
                 } catch (\App\Exceptions\RateLimitException $e) {
                     $rotationAttempts[] = [
                         'attempt' => $i,
                         'success' => false,
                         'timestamp' => time(),
-                        'error' => $e->getMessage()
+                        'error' => $e->getMessage(),
                     ];
                     $blockedRotations++;
                 } catch (\Exception $e) {
@@ -449,33 +449,34 @@ describe('E2EE Quantum Migration and Key Rotation', function () {
                         'attempt' => $i,
                         'success' => false,
                         'timestamp' => time(),
-                        'error' => $e->getMessage()
+                        'error' => $e->getMessage(),
                     ];
                 }
             }
-            
+
             // Should have rate limiting in place
             expect($successfulRotations)->toBeLessThan(10);
             expect($blockedRotations)->toBeGreaterThan(0);
-            
+
             // Verify the first few rotations succeeded
             expect($successfulRotations)->toBeGreaterThan(2);
-            
+
             // Check that rate limiting messages are meaningful
-            $blockedAttempts = array_filter($rotationAttempts, fn($a) => !$a['success']);
+            $blockedAttempts = array_filter($rotationAttempts, fn ($a) => ! $a['success']);
             foreach ($blockedAttempts as $blocked) {
                 expect($blocked['error'])->toContain(['rate limit', 'too many', 'throttle']);
             }
         });
     });
-    
+
     describe('Multi-Algorithm Coexistence', function () {
         it('supports multiple encryption versions simultaneously', function () {
-            if (!$this->quantumService->isAvailable()) {
+            if (! $this->quantumService->isAvailable()) {
                 $this->markTestSkipped('Quantum crypto service not available');
+
                 return;
             }
-            
+
             $keyPair = $this->encryptionService->generateKeyPair();
             $device = UserDevice::factory()->create([
                 'user_id' => $this->user1->id,
@@ -484,27 +485,27 @@ describe('E2EE Quantum Migration and Key Rotation', function () {
                 'quantum_ready' => true,
                 'is_trusted' => true,
             ]);
-            
+
             // Create keys with different algorithms and versions
             $algorithms = [
                 ['algorithm' => 'RSA-4096-OAEP', 'version' => 2],
                 ['algorithm' => 'ML-KEM-768', 'version' => 3],
                 ['algorithm' => 'HYBRID-RSA4096-MLKEM768', 'version' => 3],
             ];
-            
+
             $keys = [];
             $messages = [];
-            
+
             foreach ($algorithms as $algoData) {
                 $symmetricKey = $this->encryptionService->generateSymmetricKey();
-                
+
                 if ($algoData['algorithm'] === 'ML-KEM-768') {
                     $quantumKeyPair = $this->quantumService->generateKeyPair('ML-KEM-768');
                     $publicKey = $quantumKeyPair['public_key'];
                 } else {
                     $publicKey = $keyPair['public_key'];
                 }
-                
+
                 $encryptionKey = EncryptionKey::create([
                     'conversation_id' => $this->conversation->id,
                     'user_id' => $this->user1->id,
@@ -517,12 +518,12 @@ describe('E2EE Quantum Migration and Key Rotation', function () {
                     'key_strength' => 768,
                     'is_active' => true,
                 ]);
-                
+
                 $keys[$algoData['algorithm']] = [
                     'encryption_key' => $encryptionKey,
-                    'symmetric_key' => $symmetricKey
+                    'symmetric_key' => $symmetricKey,
                 ];
-                
+
                 // Send message with each algorithm
                 $message = Message::createEncrypted(
                     $this->conversation->id,
@@ -530,27 +531,27 @@ describe('E2EE Quantum Migration and Key Rotation', function () {
                     "Message encrypted with {$algoData['algorithm']}",
                     $symmetricKey
                 );
-                
+
                 $messages[$algoData['algorithm']] = $message;
             }
-            
+
             // Verify all algorithms work simultaneously
             foreach ($algorithms as $algoData) {
                 $algo = $algoData['algorithm'];
                 $message = $messages[$algo];
                 $symmetricKey = $keys[$algo]['symmetric_key'];
-                
+
                 $decrypted = $message->decryptContent($symmetricKey);
                 expect($decrypted)->toBe("Message encrypted with {$algo}");
             }
-            
+
             // Verify version compatibility
             $activeKeys = EncryptionKey::where('conversation_id', $this->conversation->id)
                 ->where('is_active', true)
                 ->get();
-            
+
             expect($activeKeys->count())->toBe(count($algorithms));
-            
+
             $versions = $activeKeys->pluck('key_version')->unique();
             expect($versions->contains(2))->toBeTrue(); // RSA version
             expect($versions->contains(3))->toBeTrue(); // Quantum versions
@@ -567,7 +568,7 @@ function performQuantumMigration(string $conversationId, string $strategy): arra
         'strategy' => $strategy,
         'migrated_keys' => 2,
         'failed_keys' => 0,
-        'duration_ms' => 1500
+        'duration_ms' => 1500,
     ];
 }
 
@@ -576,29 +577,29 @@ function assessQuantumReadiness(string $conversationId): array
     $devices = UserDevice::whereHas('encryptionKeys', function ($query) use ($conversationId) {
         $query->where('conversation_id', $conversationId);
     })->get();
-    
+
     $deviceReadiness = [];
     $overallReady = true;
-    
+
     foreach ($devices as $device) {
         $capabilities = json_decode($device->encryption_capabilities ?? '[]', true);
-        $hasQuantum = collect($capabilities)->contains(fn($cap) => str_starts_with($cap, 'ML-KEM'));
-        
+        $hasQuantum = collect($capabilities)->contains(fn ($cap) => str_starts_with($cap, 'ML-KEM'));
+
         $deviceReadiness[$device->id] = [
             'ready' => $hasQuantum && $device->quantum_ready,
             'capabilities' => $capabilities,
-            'missing_capabilities' => $hasQuantum ? [] : ['ML-KEM-768']
+            'missing_capabilities' => $hasQuantum ? [] : ['ML-KEM-768'],
         ];
-        
-        if (!$deviceReadiness[$device->id]['ready']) {
+
+        if (! $deviceReadiness[$device->id]['ready']) {
             $overallReady = false;
         }
     }
-    
+
     return [
         'overall_ready' => $overallReady,
         'device_readiness' => $deviceReadiness,
-        'recommended_algorithm' => $overallReady ? 'ML-KEM-768' : 'RSA-4096-OAEP'
+        'recommended_algorithm' => $overallReady ? 'ML-KEM-768' : 'RSA-4096-OAEP',
     ];
 }
 
@@ -609,16 +610,16 @@ function performEmergencyKeyRotation(string $conversationId, string $compromised
     $compromisedKey->update([
         'is_active' => false,
         'revoked_at' => now(),
-        'revocation_reason' => $reason
+        'revocation_reason' => $reason,
     ]);
-    
+
     // Create new key immediately
     $newSymmetricKey = app(ChatEncryptionService::class)->generateSymmetricKey();
     $newKeyPair = app(ChatEncryptionService::class)->generateKeyPair();
-    
+
     $device = UserDevice::where('user_id', $compromisedKey->user_id)->first();
     $device->update(['public_key' => $newKeyPair['public_key']]);
-    
+
     EncryptionKey::create([
         'conversation_id' => $conversationId,
         'user_id' => $compromisedKey->user_id,
@@ -631,12 +632,12 @@ function performEmergencyKeyRotation(string $conversationId, string $compromised
         'key_strength' => $compromisedKey->key_strength,
         'is_active' => true,
     ]);
-    
+
     return [
         'status' => 'success',
         'rotation_reason' => $reason,
         'new_key_version' => $compromisedKey->key_version + 1,
-        'revoked_key_id' => $compromisedKeyId
+        'revoked_key_id' => $compromisedKeyId,
     ];
 }
 
@@ -644,28 +645,28 @@ function performKeyRotation(string $conversationId, string $reason): array
 {
     static $rotationCount = 0;
     static $lastRotationTime = 0;
-    
+
     $currentTime = time();
-    
+
     // Rate limiting: max 3 rotations per minute
     if ($rotationCount >= 3 && ($currentTime - $lastRotationTime) < 60) {
         throw new \App\Exceptions\RateLimitException('Key rotation rate limit exceeded');
     }
-    
+
     if ($currentTime - $lastRotationTime >= 60) {
         $rotationCount = 0;
     }
-    
+
     $rotationCount++;
     $lastRotationTime = $currentTime;
-    
+
     // Perform actual rotation
     $newSymmetricKey = app(ChatEncryptionService::class)->rotateSymmetricKey($conversationId);
-    
+
     return [
         'status' => 'success',
         'reason' => $reason,
         'new_key_generated' => true,
-        'timestamp' => $currentTime
+        'timestamp' => $currentTime,
     ];
 }

@@ -339,10 +339,10 @@ class PermissionSeeder extends Seeder
         // If teams are enabled, also create team-specific roles for the DEFAULT organization
         if (config('permission.teams', false)) {
             $defaultOrg = \App\Models\Organization::where('organization_code', 'DEFAULT')->first();
-            
+
             if ($defaultOrg) {
                 setPermissionsTeamId($defaultOrg->id);
-                
+
                 foreach ($roles as $roleName => $roleData) {
                     // Create team-specific role for the DEFAULT organization
                     $teamRole = Role::firstOrCreate([
@@ -357,7 +357,7 @@ class PermissionSeeder extends Seeder
 
                     $this->command->info("Created team role: {$roleName} for DEFAULT org with ".count($permissions).' permissions');
                 }
-                
+
                 setPermissionsTeamId(null);
             }
         }

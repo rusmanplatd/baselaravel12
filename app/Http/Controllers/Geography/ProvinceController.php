@@ -50,7 +50,7 @@ class ProvinceController extends Controller
                 'filter.code',
                 'filter.name',
                 'filter.country_id',
-                'sort'
+                'sort',
             ]),
         ]);
     }
@@ -124,7 +124,7 @@ class ProvinceController extends Controller
 
     public function destroy(Province $province)
     {
-        if (!$province->canDeleted()) {
+        if (! $province->canDeleted()) {
             return redirect()
                 ->route('geography.provinces')
                 ->with('error', 'Cannot delete province. It has associated cities.');

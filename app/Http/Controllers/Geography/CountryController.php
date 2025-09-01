@@ -29,7 +29,7 @@ class CountryController extends Controller
             ])
             ->allowedSorts([
                 'code',
-                'name', 
+                'name',
                 'iso_code',
                 'phone_code',
                 'created_at',
@@ -44,10 +44,10 @@ class CountryController extends Controller
             'countries' => $countries,
             'filters' => $request->only([
                 'filter.code',
-                'filter.name', 
+                'filter.name',
                 'filter.iso_code',
                 'filter.phone_code',
-                'sort'
+                'sort',
             ]),
         ]);
     }
@@ -79,11 +79,11 @@ class CountryController extends Controller
         $validated['updated_by'] = auth()->id();
 
         $country = Country::create($validated);
-        
+
         activity()
             ->performedOn($country)
             ->causedBy(auth()->user())
-            ->log('Created country ' . $country->name);
+            ->log('Created country '.$country->name);
 
         return redirect()
             ->route('geography.countries')
@@ -109,11 +109,11 @@ class CountryController extends Controller
         $validated['updated_by'] = auth()->id();
 
         $country->update($validated);
-        
+
         activity()
             ->performedOn($country)
             ->causedBy(auth()->user())
-            ->log('Updated country ' . $country->name);
+            ->log('Updated country '.$country->name);
 
         return redirect()
             ->route('geography.countries')
@@ -122,7 +122,7 @@ class CountryController extends Controller
 
     public function destroy(Country $country)
     {
-        if (!$country->canDeleted()) {
+        if (! $country->canDeleted()) {
             return redirect()
                 ->route('geography.countries')
                 ->with('error', 'Cannot delete country. It has associated provinces.');
@@ -131,7 +131,7 @@ class CountryController extends Controller
         activity()
             ->performedOn($country)
             ->causedBy(auth()->user())
-            ->log('Deleted country ' . $country->name);
+            ->log('Deleted country '.$country->name);
 
         $country->delete();
 

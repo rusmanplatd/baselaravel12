@@ -7,8 +7,8 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
-use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Village extends Model
 {
@@ -43,7 +43,7 @@ class Village extends Model
             ->logOnly(['district_id', 'code', 'name'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
-            ->setDescriptionForEvent(fn(string $eventName) => "Village {$eventName}")
+            ->setDescriptionForEvent(fn (string $eventName) => "Village {$eventName}")
             ->useLogName('geography');
     }
 

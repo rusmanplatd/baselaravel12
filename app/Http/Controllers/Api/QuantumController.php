@@ -507,7 +507,7 @@ class QuantumController extends Controller
         if ($allQuantumReady) {
             // All devices support quantum - try strongest first
             $allCapabilities = $devices->flatMap(fn ($device) => $device->getQuantumCapabilities());
-            
+
             if ($allCapabilities->contains('ml-kem-1024')) {
                 return 'ML-KEM-1024'; // Highest security
             }
@@ -517,7 +517,7 @@ class QuantumController extends Controller
             if ($allCapabilities->contains('ml-kem-512')) {
                 return 'ML-KEM-512'; // Basic quantum
             }
-            
+
             return 'ML-KEM-768'; // Default quantum fallback
         }
 

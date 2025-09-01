@@ -17,6 +17,11 @@ class SetPermissionTeamContext
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Skip setting team context for global reference data routes
+        if ($this->shouldSkipTeamContext($request)) {
+            return $next($request);
+        }
+
         // Set default team context if teams are enabled
         if (config('permission.teams', false)) {
             // Get the default organization for team context
@@ -36,5 +41,28 @@ class SetPermissionTeamContext
         }
 
         return $response;
+    }
+
+    /**
+     * Determine if team context should be skipped for this request.
+     * Global reference data like geographical data should not have team context.
+     */
+    private function shouldSkipTeamContext(Request $request): bool
+    {
+        $path = $request->path();
+
+        // Skip team context for geographical routes (global reference data)
+        $globalRoutes = [
+            'geography/',
+            'api/v1/geo/',
+        ];
+
+        foreach ($globalRoutes as $globalRoute) {
+            if (str_starts_with($path, $globalRoute)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

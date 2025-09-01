@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Spatie\Activitylog\Models\Activity;
-use Spatie\QueryBuilder\QueryBuilder;
 use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\QueryBuilder;
 
 class ActivityLogController extends Controller
 {
@@ -42,7 +42,7 @@ class ActivityLogController extends Controller
     public function show(Activity $activity)
     {
         $activity->load(['causer', 'subject']);
-        
+
         return response()->json($activity);
     }
 }

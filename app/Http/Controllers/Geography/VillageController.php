@@ -50,7 +50,7 @@ class VillageController extends Controller
                 'filter.code',
                 'filter.name',
                 'filter.district_id',
-                'sort'
+                'sort',
             ]),
         ]);
     }
@@ -126,7 +126,7 @@ class VillageController extends Controller
 
     public function destroy(Village $village)
     {
-        if (!$village->canDeleted()) {
+        if (! $village->canDeleted()) {
             return redirect()
                 ->route('geography.villages')
                 ->with('error', 'Cannot delete village. There are dependencies.');

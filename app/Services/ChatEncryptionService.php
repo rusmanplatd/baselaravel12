@@ -697,13 +697,14 @@ class ChatEncryptionService
         }
 
         // If no prioritized algorithm found, select the first available as last resort
-        if (!empty($algorithms)) {
+        if (! empty($algorithms)) {
             $fallback = $algorithms[0];
             Log::warning('No prioritized algorithm found, using first available', [
                 'selected' => $fallback,
                 'available' => $algorithms,
                 'selection_reason' => 'last_resort_fallback',
             ]);
+
             return $fallback;
         }
 
@@ -794,6 +795,7 @@ class ChatEncryptionService
             Log::warning('No valid capabilities found, using RSA fallback', [
                 'device_capabilities' => $deviceCapabilities,
             ]);
+
             return 'RSA-4096-OAEP';
         }
 
@@ -814,6 +816,7 @@ class ChatEncryptionService
                     'available_capabilities' => $validCapabilities,
                     'quantum_resistant' => $this->isQuantumResistant($fallback),
                 ]);
+
                 return $fallback;
             }
         }
@@ -822,6 +825,7 @@ class ChatEncryptionService
         Log::warning('Using ultimate fallback RSA', [
             'valid_capabilities' => $validCapabilities,
         ]);
+
         return 'RSA-4096-OAEP';
     }
 

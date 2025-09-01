@@ -600,7 +600,7 @@ describe('Algorithm Negotiation', function () {
         $deviceCapabilities = [
             ['ML-KEM-1024', 'ML-KEM-768', 'RSA-4096-OAEP'],
             ['ML-KEM-1024', 'ML-KEM-512', 'RSA-4096-OAEP'],
-            ['ML-KEM-1024', 'HYBRID-RSA4096-MLKEM768', 'RSA-4096-OAEP']
+            ['ML-KEM-1024', 'HYBRID-RSA4096-MLKEM768', 'RSA-4096-OAEP'],
         ];
 
         $algorithm = $this->encryptionService->negotiateAlgorithm($deviceCapabilities);
@@ -612,7 +612,7 @@ describe('Algorithm Negotiation', function () {
         $deviceCapabilities = [
             ['ML-KEM-768', 'ML-KEM-512', 'RSA-4096-OAEP'],
             ['ML-KEM-1024', 'ML-KEM-768', 'RSA-4096-OAEP'],
-            ['ML-KEM-768', 'HYBRID-RSA4096-MLKEM768', 'RSA-4096-OAEP']
+            ['ML-KEM-768', 'HYBRID-RSA4096-MLKEM768', 'RSA-4096-OAEP'],
         ];
 
         $algorithm = $this->encryptionService->negotiateAlgorithm($deviceCapabilities);
@@ -624,7 +624,7 @@ describe('Algorithm Negotiation', function () {
         $deviceCapabilities = [
             ['ML-KEM-768', 'HYBRID-RSA4096-MLKEM768', 'RSA-4096-OAEP'],
             ['ML-KEM-512', 'RSA-4096-OAEP'],
-            ['HYBRID-RSA4096-MLKEM768', 'RSA-4096-OAEP']
+            ['HYBRID-RSA4096-MLKEM768', 'RSA-4096-OAEP'],
         ];
 
         $algorithm = $this->encryptionService->negotiateAlgorithm($deviceCapabilities);
@@ -636,7 +636,7 @@ describe('Algorithm Negotiation', function () {
         $deviceCapabilities = [
             ['ML-KEM-1024'],
             ['ML-KEM-768'],
-            ['RSA-4096-OAEP']
+            ['RSA-4096-OAEP'],
         ];
 
         $algorithm = $this->encryptionService->negotiateAlgorithm($deviceCapabilities);
@@ -649,7 +649,7 @@ describe('Algorithm Negotiation', function () {
         $deviceCapabilities = [
             ['ML-KEM-1024', 'ML-KEM-768', 'RSA-4096-OAEP'],
             ['ML-KEM-768', 'RSA-4096-OAEP'],
-            ['HYBRID-RSA4096-MLKEM768', 'RSA-4096-OAEP']
+            ['HYBRID-RSA4096-MLKEM768', 'RSA-4096-OAEP'],
         ];
 
         $algorithm = $this->encryptionService->negotiateAlgorithm($deviceCapabilities);
@@ -668,7 +668,7 @@ describe('Algorithm Negotiation', function () {
         $deviceCapabilities = [
             ['ML-KEM-1024', 'ML-KEM-768', 'ML-KEM-512'],
             ['ML-KEM-1024', 'ML-KEM-768', 'ML-KEM-512'],
-            ['ML-KEM-1024', 'ML-KEM-768', 'ML-KEM-512']
+            ['ML-KEM-1024', 'ML-KEM-768', 'ML-KEM-512'],
         ];
 
         $options = ['preferred_algorithm' => 'ML-KEM-512'];
@@ -691,27 +691,27 @@ describe('Enhanced Features', function () {
 
     it('validates message format before encryption', function () {
         $symmetricKey = $this->encryptionService->generateSymmetricKey();
-        
+
         // Test various invalid message formats - these should cause type errors or validation issues
-        expect(fn() => $this->encryptionService->encryptMessage('', $symmetricKey))
+        expect(fn () => $this->encryptionService->encryptMessage('', $symmetricKey))
             ->toThrow(EncryptionException::class, 'Message cannot be empty');
-        
+
         // Test with invalid key format
-        expect(fn() => $this->encryptionService->encryptMessage('test message', 'invalid_key'))
+        expect(fn () => $this->encryptionService->encryptMessage('test message', 'invalid_key'))
             ->toThrow(EncryptionException::class);
     });
 
     it('handles message replay attack detection', function () {
         $symmetricKey = $this->encryptionService->generateSymmetricKey();
         $message = 'Test message for replay detection';
-        
+
         $encrypted1 = $this->encryptionService->encryptMessage($message, $symmetricKey);
         $encrypted2 = $this->encryptionService->encryptMessage($message, $symmetricKey);
-        
+
         // Same message should produce different encrypted outputs due to random IV
         expect($encrypted1['data'])->not()->toBe($encrypted2['data']);
         expect($encrypted1['iv'])->not()->toBe($encrypted2['iv']);
-        
+
         // But both should decrypt to the same message
         $decrypted1 = $this->encryptionService->decryptMessage(
             $encrypted1['data'], $encrypted1['iv'], $symmetricKey
@@ -719,7 +719,7 @@ describe('Enhanced Features', function () {
         $decrypted2 = $this->encryptionService->decryptMessage(
             $encrypted2['data'], $encrypted2['iv'], $symmetricKey
         );
-        
+
         expect($decrypted1)->toBe($message);
         expect($decrypted2)->toBe($message);
     });
@@ -727,18 +727,18 @@ describe('Enhanced Features', function () {
     it('validates encryption key expiration', function () {
         $keyPair = $this->encryptionService->generateKeyPair();
         $symmetricKey = $this->encryptionService->generateSymmetricKey();
-        
+
         // Test key expiration logic by checking timestamps
         $futureExpiry = time() + 3600; // 1 hour from now
         $pastExpiry = time() - 3600; // 1 hour ago
-        
+
         // Simple expiration validation
         $isValid = $futureExpiry > time();
         expect($isValid)->toBeTrue();
-        
+
         $isExpired = $pastExpiry < time();
         expect($isExpired)->toBeTrue();
-        
+
         // Test that we can encrypt with valid timing
         $encrypted = $this->encryptionService->encryptMessage('Test message', $symmetricKey);
         expect($encrypted)->toHaveKeys(['data', 'iv', 'hash']);
@@ -779,34 +779,34 @@ describe('Enhanced Features', function () {
     it('handles timestamp validation for messages', function () {
         $symmetricKey = $this->encryptionService->generateSymmetricKey();
         $message = 'Timestamped message';
-        
+
         $encrypted = $this->encryptionService->encryptMessage($message, $symmetricKey);
-        
+
         // Add timestamp to encrypted data
         $timestampedData = [
             'content' => $encrypted,
             'timestamp' => time(),
-            'nonce' => bin2hex(random_bytes(16))
+            'nonce' => bin2hex(random_bytes(16)),
         ];
-        
+
         expect($timestampedData['timestamp'])->toBeNumeric();
         expect($timestampedData['nonce'])->toHaveLength(32); // 16 bytes = 32 hex chars
     });
 
     it('validates message size limits', function () {
         $symmetricKey = $this->encryptionService->generateSymmetricKey();
-        
+
         // Test maximum allowed message size (e.g., 64MB)
         $maxSize = 64 * 1024 * 1024; // 64MB
         $largeMessage = str_repeat('A', $maxSize);
-        
+
         // Should handle large messages efficiently
         $startTime = microtime(true);
         $encrypted = $this->encryptionService->encryptMessage($largeMessage, $symmetricKey);
         $endTime = microtime(true);
-        
+
         expect($endTime - $startTime)->toBeLessThan(30.0); // Should complete within 30 seconds
-        
+
         $decrypted = $this->encryptionService->decryptMessage(
             $encrypted['data'], $encrypted['iv'], $symmetricKey
         );
@@ -816,22 +816,22 @@ describe('Enhanced Features', function () {
     it('handles concurrent key generation safely', function () {
         $keyPairs = [];
         $startTime = microtime(true);
-        
+
         // Generate multiple key pairs concurrently (simulated)
         for ($i = 0; $i < 10; $i++) {
             $keyPair = $this->encryptionService->generateKeyPair();
             $keyPairs[] = $keyPair;
         }
-        
+
         $endTime = microtime(true);
-        
+
         expect(count($keyPairs))->toBe(10);
         expect($endTime - $startTime)->toBeLessThan(10.0);
-        
+
         // Verify all key pairs are unique
         $publicKeys = array_column($keyPairs, 'public_key');
         $privateKeys = array_column($keyPairs, 'private_key');
-        
+
         expect(count(array_unique($publicKeys)))->toBe(10);
         expect(count(array_unique($privateKeys)))->toBe(10);
     });
@@ -839,23 +839,23 @@ describe('Enhanced Features', function () {
     it('validates HMAC integrity across different key versions', function () {
         $symmetricKey = $this->encryptionService->generateSymmetricKey();
         $message = 'HMAC integrity test message';
-        
+
         $encrypted = $this->encryptionService->encryptMessage($message, $symmetricKey);
-        
+
         // Verify HMAC structure
         expect($encrypted)->toHaveKey('hash');
         expect($encrypted['hash'])->toBeString();
         expect(strlen($encrypted['hash']))->toBeGreaterThan(32); // SHA256 minimum
-        
+
         // Test decryption with correct data (this validates HMAC internally)
         $decrypted = $this->encryptionService->decryptMessage(
             $encrypted['data'], $encrypted['iv'], $symmetricKey
         );
         expect($decrypted)->toBe($message);
-        
+
         // Test decryption with tampered data (should fail)
         $tamperedData = base64_encode('tampered_data');
-        expect(fn() => $this->encryptionService->decryptMessage(
+        expect(fn () => $this->encryptionService->decryptMessage(
             $tamperedData, $encrypted['iv'], $symmetricKey
         ))->toThrow(DecryptionException::class);
     });
@@ -873,15 +873,15 @@ describe('Cross-Platform Compatibility', function () {
             'Unicode: こんにちは世界',
             'Arabic: مرحبا بالعالم',
             'Emoji: 🔒🛡️🔐💬',
-            'Mixed: Hello 世界 🌍 مرحبا'
+            'Mixed: Hello 世界 🌍 مرحبا',
         ];
-        
+
         foreach ($messages as $message) {
             $encrypted = $this->encryptionService->encryptMessage($message, $this->symmetricKey);
             $decrypted = $this->encryptionService->decryptMessage(
                 $encrypted['data'], $encrypted['iv'], $this->symmetricKey
             );
-            
+
             expect($decrypted)->toBe($message);
             expect(mb_strlen($decrypted))->toBe(mb_strlen($message));
         }
@@ -889,17 +889,17 @@ describe('Cross-Platform Compatibility', function () {
 
     it('maintains consistency across PHP versions', function () {
         $message = 'PHP version compatibility test';
-        
+
         // Test with different OpenSSL cipher modes if available
         $ciphers = ['AES-256-CBC', 'AES-256-GCM'];
-        
+
         foreach ($ciphers as $cipher) {
             if (in_array($cipher, openssl_get_cipher_methods())) {
                 $encrypted = $this->encryptionService->encryptMessage($message, $this->symmetricKey);
                 $decrypted = $this->encryptionService->decryptMessage(
                     $encrypted['data'], $encrypted['iv'], $this->symmetricKey
                 );
-                
+
                 expect($decrypted)->toBe($message);
             }
         }
@@ -907,18 +907,18 @@ describe('Cross-Platform Compatibility', function () {
 
     it('handles platform-specific random number generation', function () {
         $randomValues = [];
-        
+
         // Generate multiple random symmetric keys
         for ($i = 0; $i < 50; $i++) {
             $key = $this->encryptionService->generateSymmetricKey();
             expect($randomValues)->not()->toContain($key);
             $randomValues[] = $key;
         }
-        
+
         // Verify entropy quality
         $uniqueCount = count(array_unique($randomValues));
         expect($uniqueCount)->toBe(50);
-        
+
         // Test randomness of IVs
         $ivs = [];
         for ($i = 0; $i < 50; $i++) {
@@ -937,14 +937,14 @@ describe('Advanced Security Tests', function () {
     it('prevents timing attacks on decryption', function () {
         $message = 'Timing attack test message';
         $encrypted = $this->encryptionService->encryptMessage($message, $this->symmetricKey);
-        
+
         // Measure decryption time for valid data
         $startTime = hrtime(true);
         $this->encryptionService->decryptMessage(
             $encrypted['data'], $encrypted['iv'], $this->symmetricKey
         );
         $validTime = hrtime(true) - $startTime;
-        
+
         // Measure decryption time for invalid data (should fail consistently)
         $timings = [];
         for ($i = 0; $i < 5; $i++) {
@@ -958,11 +958,11 @@ describe('Advanced Security Tests', function () {
             }
             $timings[] = hrtime(true) - $startTime;
         }
-        
+
         // Timing variations should be minimal (within reasonable bounds)
         $avgInvalidTime = array_sum($timings) / count($timings);
         $maxVariation = max($timings) - min($timings);
-        
+
         // Timing should be consistent (not leak information)
         expect($maxVariation)->toBeLessThan($avgInvalidTime * 0.5);
     });
@@ -970,21 +970,21 @@ describe('Advanced Security Tests', function () {
     it('validates against padding oracle attacks', function () {
         $message = 'Padding oracle test message';
         $encrypted = $this->encryptionService->encryptMessage($message, $this->symmetricKey);
-        
+
         $encryptedData = base64_decode($encrypted['data']);
-        
+
         // Try to tamper with different parts of the encrypted data
         $tamperAttempts = 0;
         $successfulDecryptions = 0;
-        
+
         for ($i = 0; $i < min(10, strlen($encryptedData)); $i++) {
             $tamperedData = $encryptedData;
             $tamperedData[$i] = chr(ord($tamperedData[$i]) ^ 1); // Flip one bit
-            
+
             try {
                 $this->encryptionService->decryptMessage(
-                    base64_encode($tamperedData), 
-                    $encrypted['iv'], 
+                    base64_encode($tamperedData),
+                    $encrypted['iv'],
                     $this->symmetricKey
                 );
                 $successfulDecryptions++;
@@ -993,7 +993,7 @@ describe('Advanced Security Tests', function () {
             }
             $tamperAttempts++;
         }
-        
+
         // Should reject all tampered data
         expect($successfulDecryptions)->toBe(0);
         expect($tamperAttempts)->toBe(min(10, strlen($encryptedData)));
@@ -1002,19 +1002,19 @@ describe('Advanced Security Tests', function () {
     it('implements secure key stretching for passwords', function () {
         $password = 'test_password_123';
         $salt = random_bytes(32);
-        
+
         // Measure key derivation time (should be slow enough to prevent brute force)
         $startTime = microtime(true);
         $derivedKey = $this->encryptionService->deriveKeyFromPassword($password, $salt);
         $derivationTime = microtime(true) - $startTime;
-        
+
         expect($derivationTime)->toBeGreaterThan(0.01); // At least 10ms
         expect($derivedKey)->toHaveLength(32); // 256 bits
-        
+
         // Test with different iteration counts if supported
         $key1 = $this->encryptionService->deriveKeyFromPassword($password, $salt, 10000);
         $key2 = $this->encryptionService->deriveKeyFromPassword($password, $salt, 20000);
-        
+
         // Different iteration counts should produce different keys
         if ($key1 !== null && $key2 !== null) {
             expect($key1)->not()->toBe($key2);
@@ -1023,31 +1023,31 @@ describe('Advanced Security Tests', function () {
 
     it('validates forward secrecy properties', function () {
         $conversation_id = 'test_conversation_forward_secrecy';
-        
+
         // Generate initial key
         $key1 = $this->encryptionService->generateSymmetricKey();
         $message1 = 'Message with key 1';
         $encrypted1 = $this->encryptionService->encryptMessage($message1, $key1);
-        
+
         // Rotate to new key
         $key2 = $this->encryptionService->rotateSymmetricKey($conversation_id);
         $message2 = 'Message with key 2';
         $encrypted2 = $this->encryptionService->encryptMessage($message2, $key2);
-        
+
         // Verify old messages remain decryptable with old key
         $decrypted1 = $this->encryptionService->decryptMessage(
             $encrypted1['data'], $encrypted1['iv'], $key1
         );
         expect($decrypted1)->toBe($message1);
-        
+
         // Verify new messages work with new key
         $decrypted2 = $this->encryptionService->decryptMessage(
             $encrypted2['data'], $encrypted2['iv'], $key2
         );
         expect($decrypted2)->toBe($message2);
-        
+
         // Verify old key cannot decrypt new messages
-        expect(fn() => $this->encryptionService->decryptMessage(
+        expect(fn () => $this->encryptionService->decryptMessage(
             $encrypted2['data'], $encrypted2['iv'], $key1
         ))->toThrow(DecryptionException::class);
     });

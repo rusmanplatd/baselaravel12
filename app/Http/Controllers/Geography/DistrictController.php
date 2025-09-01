@@ -51,7 +51,7 @@ class DistrictController extends Controller
                 'filter.code',
                 'filter.name',
                 'filter.city_id',
-                'sort'
+                'sort',
             ]),
         ]);
     }
@@ -127,7 +127,7 @@ class DistrictController extends Controller
 
     public function destroy(District $district)
     {
-        if (!$district->canDeleted()) {
+        if (! $district->canDeleted()) {
             return redirect()
                 ->route('geography.districts')
                 ->with('error', 'Cannot delete district. It has associated villages.');
