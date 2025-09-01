@@ -10,7 +10,7 @@ import ApiPagination from '@/components/api-pagination';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
-import { Eye, Edit, Trash2, Search, MapPin, Plus, ArrowUpDown, FileText, X } from 'lucide-react';
+import { Eye, Edit, Trash2, Search, MapPin, Plus, ArrowUpDown, FileText } from 'lucide-react';
 import React, { useState, useCallback, useEffect } from 'react';
 import { useApiData } from '@/hooks/useApiData';
 import { debounce } from 'lodash';
@@ -76,19 +76,24 @@ export default function DistrictsApi() {
 
     // Local input state for immediate UI feedback
     const [inputValues, setInputValues] = useState({
-        code: filters.code || '',
-        name: filters.name || '',
-        city_id: filters.city_id || '',
-    });
 
     // Sync input values with filters when filters change (from URL or other sources)
     useEffect(() => {
         setInputValues({
-            code: filters.code || '',
-            name: filters.name || '',
-            city_id: filters.city_id || '',
+            code: filters.code || "",
+            name: filters.name || "",
+            iso_code: filters.iso_code || "",
+            phone_code: filters.phone_code || "",
         });
-    }, [filters.code, filters.name, filters.city_id]);
+    }, [filters.code, filters.name, filters.iso_code, filters.phone_code]);
+        code: filters.code || "",
+        name: filters.name || "",
+        iso_code: filters.iso_code || "",
+        phone_code: filters.phone_code || "",
+    });
+        code: filters.code || '',
+        name: filters.name || '',
+        city_id: filters.city_id || '',
 
     const [cities, setCities] = useState<City[]>([]);
 
@@ -113,18 +118,19 @@ export default function DistrictsApi() {
         searchText: `${city.name} ${city.code} ${city.province.name} ${city.province.country.name}`,
     }));
 
-    const debouncedUpdateFilter = useCallback(
-        debounce((key: string, value: string) => {
-            updateFilter(key, value);
+    const debouncedSearch = useCallback(
+        debounce((newFilters: typeof searchFilters) => {
+            Object.entries(newFilters).forEach(([key, value]) => {
+                updateFilter(key, value);
+            });
         }, 500),
         [updateFilter]
     );
 
-    const handleFilterChange = (key: string, value: string) => {
-        // Update input immediately for UI responsiveness
-        setInputValues(prev => ({ ...prev, [key]: value }));
-        // Debounce the actual API call
-        debouncedUpdateFilter(key, value);
+    const handleFilterChange = (key: keyof typeof searchFilters, value: string) => {
+        const newFilters = { ...searchFilters, [key]: value };
+        setInputValues(newFilters);
+        debouncedSearch(newFilters);
     };
 
     const handleSort = (field: string) => {
@@ -202,115 +208,33 @@ export default function DistrictsApi() {
                             View and manage all districts in the system
                         </CardDescription>
 
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4 z-10" />
-                                    <Input
-                                        placeholder="Search by code..."
-                                        value={inputValues.code}
-                                        onChange={(e) => handleFilterChange('code', e.target.value)}
-                                        className="pl-10 pr-10"
-                                    />
-                                    {inputValues.code && (
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => handleFilterChange('code', '')}
-                                            className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 hover:bg-muted"
-                                        >
-                                            <X className="h-3 w-3" />
-                                        </Button>
-                                    )}
-                                </div>
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4 z-10" />
-                                    <Input
-                                        placeholder="Search by name..."
-                                        value={inputValues.name}
-                                        onChange={(e) => handleFilterChange('name', e.target.value)}
-                                        className="pl-10 pr-10"
-                                    />
-                                    {inputValues.name && (
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => handleFilterChange('name', '')}
-                                            className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 hover:bg-muted"
-                                        >
-                                            <X className="h-3 w-3" />
-                                        </Button>
-                                    )}
-                                </div>
-                                <SearchableSelect
-                                    placeholder="Select a city..."
-                                    items={citySelectItems}
-                                    value={inputValues.city_id}
-                                    onValueChange={(value) => handleFilterChange('city_id', value)}
-                                    emptyLabel="All Cities"
-                                    searchPlaceholder="Search cities..."
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                                <Input
+                                    placeholder="Search by code..."
+                                    value={inputValues.code}
+                                    onChange={(e) => handleFilterChange('code', e.target.value)}
+                                    className="pl-10"
                                 />
                             </div>
-                            
-                            {(inputValues.code || inputValues.name || inputValues.city_id) && (
-                                <div className="flex items-center gap-2 flex-wrap pt-2 border-t">
-                                    <span className="text-sm text-muted-foreground">Active filters:</span>
-                                    {inputValues.code && (
-                                        <Badge variant="secondary" className="gap-1">
-                                            Code: {inputValues.code}
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => handleFilterChange('code', '')}
-                                                className="h-4 w-4 p-0 hover:bg-transparent"
-                                            >
-                                                <X className="h-3 w-3" />
-                                            </Button>
-                                        </Badge>
-                                    )}
-                                    {inputValues.name && (
-                                        <Badge variant="secondary" className="gap-1">
-                                            Name: {inputValues.name}
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => handleFilterChange('name', '')}
-                                                className="h-4 w-4 p-0 hover:bg-transparent"
-                                            >
-                                                <X className="h-3 w-3" />
-                                            </Button>
-                                        </Badge>
-                                    )}
-                                    {inputValues.city_id && (
-                                        <Badge variant="secondary" className="gap-1">
-                                            City: {cities.find(c => c.id === inputValues.city_id)?.name || inputValues.city_id}
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => handleFilterChange('city_id', '')}
-                                                className="h-4 w-4 p-0 hover:bg-transparent"
-                                            >
-                                                <X className="h-3 w-3" />
-                                            </Button>
-                                        </Badge>
-                                    )}
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => {
-                                            const clearedFilters = { code: '', name: '', city_id: '' };
-                                            setInputValues(clearedFilters);
-                                            Object.entries(clearedFilters).forEach(([key, value]) => {
-                                                updateFilter(key, value);
-                                            });
-                                        }}
-                                        className="gap-1 text-muted-foreground hover:text-foreground"
-                                    >
-                                        <X className="h-3 w-3" />
-                                        Clear all
-                                    </Button>
-                                </div>
-                            )}
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                                <Input
+                                    placeholder="Search by name..."
+                                    value={inputValues.name}
+                                    onChange={(e) => handleFilterChange('name', e.target.value)}
+                                    className="pl-10"
+                                />
+                            </div>
+                            <SearchableSelect
+                                placeholder="Select a city..."
+                                items={citySelectItems}
+                                value={inputValues.city_id}
+                                onValueChange={(value) => handleFilterChange('city_id', value)}
+                                emptyLabel="All Cities"
+                                searchPlaceholder="Search cities..."
+                            />
                         </div>
                     </CardHeader>
                     <CardContent>
