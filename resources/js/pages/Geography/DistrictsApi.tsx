@@ -12,7 +12,7 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { Eye, Edit, Trash2, Search, MapPin, Plus, ArrowUpDown, FileText, X } from 'lucide-react';
 import React, { useState, useCallback, useEffect } from 'react';
-import { useApiData } from '@/hooks/useApiData';
+import { usePublicApiData } from '@/hooks/usePublicApiData';
 import { debounce } from 'lodash';
 import { apiService } from '@/services/ApiService';
 
@@ -71,8 +71,8 @@ export default function DistrictsApi() {
         total,
         from,
         to,
-    } = useApiData<District>({
-        endpoint: 'districts',
+    } = usePublicApiData<District>({
+        endpoint: '/api/v1/geo/districts',
         initialFilters: {
             code: '',
             name: '',
@@ -334,6 +334,7 @@ export default function DistrictsApi() {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
+                                        <TableHead className="w-[60px]">#</TableHead>
                                         <TableHead>
                                             <Button
                                                 variant="ghost"
@@ -383,8 +384,11 @@ export default function DistrictsApi() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {districts.map((district) => (
+                                    {districts.map((district, index) => (
                                         <TableRow key={district.id}>
+                                            <TableCell className="text-center text-muted-foreground">
+                                                {(currentPage - 1) * perPage + index + 1}
+                                            </TableCell>
                                             <TableCell className="font-medium">
                                                 <Badge variant="outline">{district.code}</Badge>
                                             </TableCell>
@@ -420,7 +424,7 @@ export default function DistrictsApi() {
                                                 {new Date(district.created_at).toLocaleDateString()}
                                             </TableCell>
                                             <TableCell>
-                                                {new Date(district.updated_at).toLocaleDateString()}
+                                                {new Date(district.updated_at).toLocaleString()}
                                             </TableCell>
                                             <TableCell>
                                                 {district.updated_by ? district.updated_by.name : '-'}

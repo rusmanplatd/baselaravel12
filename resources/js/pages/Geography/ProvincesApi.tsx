@@ -12,7 +12,7 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { Eye, Edit, Trash2, Search, MapPin, Plus, ArrowUpDown, FileText, X } from 'lucide-react';
 import React, { useState, useCallback, useEffect } from 'react';
-import { useApiData } from '@/hooks/useApiData';
+import { usePublicApiData } from '@/hooks/usePublicApiData';
 import { debounce } from 'lodash';
 import { apiService } from '@/services/ApiService';
 
@@ -57,8 +57,8 @@ export default function ProvincesApi() {
         total,
         from,
         to,
-    } = useApiData<Province>({
-        endpoint: 'provinces',
+    } = usePublicApiData<Province>({
+        endpoint: '/api/v1/geo/provinces',
         initialFilters: {
             code: '',
             name: '',
@@ -320,6 +320,7 @@ export default function ProvincesApi() {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
+                                        <TableHead className="w-[60px]">#</TableHead>
                                         <TableHead>
                                             <Button
                                                 variant="ghost"
@@ -367,8 +368,11 @@ export default function ProvincesApi() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {provinces.map((province) => (
+                                    {provinces.map((province, index) => (
                                         <TableRow key={province.id}>
+                                            <TableCell className="text-center text-muted-foreground">
+                                                {(currentPage - 1) * perPage + index + 1}
+                                            </TableCell>
                                             <TableCell className="font-medium">
                                                 <Badge variant="outline">{province.code}</Badge>
                                             </TableCell>
@@ -388,7 +392,7 @@ export default function ProvincesApi() {
                                                 {new Date(province.created_at).toLocaleDateString()}
                                             </TableCell>
                                             <TableCell>
-                                                {new Date(province.updated_at).toLocaleDateString()}
+                                                {new Date(province.updated_at).toLocaleString()}
                                             </TableCell>
                                             <TableCell>
                                                 {province.updated_by ? province.updated_by.name : '-'}

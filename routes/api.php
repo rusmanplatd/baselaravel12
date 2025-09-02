@@ -16,6 +16,29 @@ Route::get('/user', function (Request $request) {
 
 // Public API routes (no authentication required for demo)
 Route::prefix('v1')->group(function () {
+    // Geo API endpoints (public for reference data)
+    Route::prefix('geo')->name('api.geo.')->group(function () {
+        // List routes must come before resource routes to avoid conflicts
+        Route::get('countries/list', [\App\Http\Controllers\Api\Geo\CountryController::class, 'list'])->name('countries.list');
+        Route::get('provinces/list', [\App\Http\Controllers\Api\Geo\ProvinceController::class, 'list'])->name('provinces.list');
+        Route::get('cities/list', [\App\Http\Controllers\Api\Geo\CityController::class, 'list'])->name('cities.list');
+        Route::get('districts/list', [\App\Http\Controllers\Api\Geo\DistrictController::class, 'list'])->name('districts.list');
+        Route::get('villages/list', [\App\Http\Controllers\Api\Geo\VillageController::class, 'list'])->name('villages.list');
+
+        // Nested routes must also come before resource routes
+        Route::get('countries/{country}/provinces', [\App\Http\Controllers\Api\Geo\ProvinceController::class, 'byCountry'])->name('provinces.by-country');
+        Route::get('provinces/{province}/cities', [\App\Http\Controllers\Api\Geo\CityController::class, 'byProvince'])->name('cities.by-province');
+        Route::get('cities/{city}/districts', [\App\Http\Controllers\Api\Geo\DistrictController::class, 'byCity'])->name('districts.by-city');
+        Route::get('districts/{district}/villages', [\App\Http\Controllers\Api\Geo\VillageController::class, 'bydistricts'])->name('villages.by-districts');
+
+        // Resource routes (read-only operations public)
+        Route::get('countries', [\App\Http\Controllers\Api\Geo\CountryController::class, 'index'])->name('countries.index');
+        Route::get('provinces', [\App\Http\Controllers\Api\Geo\ProvinceController::class, 'index'])->name('provinces.index');
+        Route::get('cities', [\App\Http\Controllers\Api\Geo\CityController::class, 'index'])->name('cities.index');
+        Route::get('districts', [\App\Http\Controllers\Api\Geo\DistrictController::class, 'index'])->name('districts.index');
+        Route::get('villages', [\App\Http\Controllers\Api\Geo\VillageController::class, 'index'])->name('villages.index');
+    });
+
     Route::apiResource('organizations', \App\Http\Controllers\Api\OrganizationController::class)->names([
         'index' => 'api.organizations.index',
         'store' => 'api.organizations.store',
@@ -83,27 +106,33 @@ Route::prefix('v1')->group(function () {
 
 // Authenticated API routes
 Route::middleware('auth:api')->prefix('v1')->group(function () {
-    // Geo API endpoints (authenticated)
+    // Geo API endpoints (write operations require authentication)
     Route::prefix('geo')->name('api.geo.')->group(function () {
-        // List routes must come before resource routes to avoid conflicts
-        Route::get('countries/list', [\App\Http\Controllers\Api\Geo\CountryController::class, 'list'])->name('countries.list');
-        Route::get('provinces/list', [\App\Http\Controllers\Api\Geo\ProvinceController::class, 'list'])->name('provinces.list');
-        Route::get('cities/list', [\App\Http\Controllers\Api\Geo\CityController::class, 'list'])->name('cities.list');
-        Route::get('districts/list', [\App\Http\Controllers\Api\Geo\DistrictController::class, 'list'])->name('districts.list');
-        Route::get('villages/list', [\App\Http\Controllers\Api\Geo\VillageController::class, 'list'])->name('villages.list');
-
-        // Nested routes must also come before resource routes
-        Route::get('countries/{country}/provinces', [\App\Http\Controllers\Api\Geo\ProvinceController::class, 'byCountry'])->name('provinces.by-country');
-        Route::get('provinces/{province}/cities', [\App\Http\Controllers\Api\Geo\CityController::class, 'byProvince'])->name('cities.by-province');
-        Route::get('cities/{city}/districts', [\App\Http\Controllers\Api\Geo\DistrictController::class, 'byCity'])->name('districts.by-city');
-        Route::get('districts/{district}/villages', [\App\Http\Controllers\Api\Geo\VillageController::class, 'bydistricts'])->name('villages.by-districts');
-
-        // Resource routes
-        Route::apiResource('countries', \App\Http\Controllers\Api\Geo\CountryController::class);
-        Route::apiResource('provinces', \App\Http\Controllers\Api\Geo\ProvinceController::class);
-        Route::apiResource('cities', \App\Http\Controllers\Api\Geo\CityController::class);
-        Route::apiResource('districts', \App\Http\Controllers\Api\Geo\DistrictController::class);
-        Route::apiResource('villages', \App\Http\Controllers\Api\Geo\VillageController::class);
+        // Write operations require authentication
+        Route::post('countries', [\App\Http\Controllers\Api\Geo\CountryController::class, 'store'])->name('countries.store');
+        Route::get('countries/{country}', [\App\Http\Controllers\Api\Geo\CountryController::class, 'show'])->name('countries.show');
+        Route::put('countries/{country}', [\App\Http\Controllers\Api\Geo\CountryController::class, 'update'])->name('countries.update');
+        Route::delete('countries/{country}', [\App\Http\Controllers\Api\Geo\CountryController::class, 'destroy'])->name('countries.destroy');
+        
+        Route::post('provinces', [\App\Http\Controllers\Api\Geo\ProvinceController::class, 'store'])->name('provinces.store');
+        Route::get('provinces/{province}', [\App\Http\Controllers\Api\Geo\ProvinceController::class, 'show'])->name('provinces.show');
+        Route::put('provinces/{province}', [\App\Http\Controllers\Api\Geo\ProvinceController::class, 'update'])->name('provinces.update');
+        Route::delete('provinces/{province}', [\App\Http\Controllers\Api\Geo\ProvinceController::class, 'destroy'])->name('provinces.destroy');
+        
+        Route::post('cities', [\App\Http\Controllers\Api\Geo\CityController::class, 'store'])->name('cities.store');
+        Route::get('cities/{city}', [\App\Http\Controllers\Api\Geo\CityController::class, 'show'])->name('cities.show');
+        Route::put('cities/{city}', [\App\Http\Controllers\Api\Geo\CityController::class, 'update'])->name('cities.update');
+        Route::delete('cities/{city}', [\App\Http\Controllers\Api\Geo\CityController::class, 'destroy'])->name('cities.destroy');
+        
+        Route::post('districts', [\App\Http\Controllers\Api\Geo\DistrictController::class, 'store'])->name('districts.store');
+        Route::get('districts/{district}', [\App\Http\Controllers\Api\Geo\DistrictController::class, 'show'])->name('districts.show');
+        Route::put('districts/{district}', [\App\Http\Controllers\Api\Geo\DistrictController::class, 'update'])->name('districts.update');
+        Route::delete('districts/{district}', [\App\Http\Controllers\Api\Geo\DistrictController::class, 'destroy'])->name('districts.destroy');
+        
+        Route::post('villages', [\App\Http\Controllers\Api\Geo\VillageController::class, 'store'])->name('villages.store');
+        Route::get('villages/{village}', [\App\Http\Controllers\Api\Geo\VillageController::class, 'show'])->name('villages.show');
+        Route::put('villages/{village}', [\App\Http\Controllers\Api\Geo\VillageController::class, 'update'])->name('villages.update');
+        Route::delete('villages/{village}', [\App\Http\Controllers\Api\Geo\VillageController::class, 'destroy'])->name('villages.destroy');
     });
 
     // OAuth Client Management API

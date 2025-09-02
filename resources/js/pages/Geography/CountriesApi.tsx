@@ -11,7 +11,7 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { Eye, Edit, Trash2, Search, Globe, Plus, ArrowUpDown, FileText, X } from 'lucide-react';
 import { useState, useCallback, useEffect } from 'react';
-import { useApiData } from '@/hooks/useApiData';
+import { usePublicApiData } from '@/hooks/usePublicApiData';
 import { debounce } from 'lodash';
 import { apiService } from '@/services/ApiService';
 
@@ -50,8 +50,8 @@ export default function CountriesApi() {
         total,
         from,
         to,
-    } = useApiData<Country>({
-        endpoint: 'countries',
+    } = usePublicApiData<Country>({
+        endpoint: '/api/v1/geo/countries',
         initialFilters: {
             code: '',
             name: '',
@@ -353,6 +353,7 @@ export default function CountriesApi() {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
+                                        <TableHead className="w-[60px]">#</TableHead>
                                         <TableHead>
                                             <Button
                                                 variant="ghost"
@@ -419,8 +420,11 @@ export default function CountriesApi() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {countries.map((country) => (
+                                    {countries.map((country, index) => (
                                         <TableRow key={country.id}>
+                                            <TableCell className="text-center text-muted-foreground">
+                                                {(currentPage - 1) * perPage + index + 1}
+                                            </TableCell>
                                             <TableCell className="font-medium">
                                                 <Badge variant="outline">{country.code}</Badge>
                                             </TableCell>
@@ -448,7 +452,7 @@ export default function CountriesApi() {
                                                 {new Date(country.created_at).toLocaleDateString()}
                                             </TableCell>
                                             <TableCell>
-                                                {new Date(country.updated_at).toLocaleDateString()}
+                                                {new Date(country.updated_at).toLocaleString()}
                                             </TableCell>
                                             <TableCell>
                                                 {country.updated_by ? country.updated_by.name : '-'}

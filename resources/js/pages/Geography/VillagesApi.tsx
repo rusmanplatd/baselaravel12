@@ -12,7 +12,7 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { Eye, Edit, Trash2, Search, TreePine, Plus, ArrowUpDown, FileText, X } from 'lucide-react';
 import React, { useState, useCallback, useEffect } from 'react';
-import { useApiData } from '@/hooks/useApiData';
+import { usePublicApiData } from '@/hooks/usePublicApiData';
 import { debounce } from 'lodash';
 import { apiService } from '@/services/ApiService';
 
@@ -77,8 +77,8 @@ export default function VillagesApi() {
         total,
         from,
         to,
-    } = useApiData<Village>({
-        endpoint: 'villages',
+    } = usePublicApiData<Village>({
+        endpoint: '/api/v1/geo/villages',
         initialFilters: {
             code: '',
             name: '',
@@ -340,6 +340,7 @@ export default function VillagesApi() {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
+                                        <TableHead className="w-[60px]">#</TableHead>
                                         <TableHead>
                                             <Button
                                                 variant="ghost"
@@ -389,8 +390,11 @@ export default function VillagesApi() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {villages.map((village) => (
+                                    {villages.map((village, index) => (
                                         <TableRow key={village.id}>
+                                            <TableCell className="text-center text-muted-foreground">
+                                                {(currentPage - 1) * perPage + index + 1}
+                                            </TableCell>
                                             <TableCell className="font-medium">
                                                 <Badge variant="outline">{village.code}</Badge>
                                             </TableCell>
@@ -429,7 +433,7 @@ export default function VillagesApi() {
                                                 {new Date(village.created_at).toLocaleDateString()}
                                             </TableCell>
                                             <TableCell>
-                                                {new Date(village.updated_at).toLocaleDateString()}
+                                                {new Date(village.updated_at).toLocaleString()}
                                             </TableCell>
                                             <TableCell>
                                                 {village.updated_by ? village.updated_by.name : '-'}

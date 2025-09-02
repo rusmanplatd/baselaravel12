@@ -12,7 +12,7 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
 import { Eye, Edit, Trash2, Search, Building, Plus, ArrowUpDown, FileText, X } from 'lucide-react';
 import React, { useState, useCallback, useEffect } from 'react';
-import { useApiData } from '@/hooks/useApiData';
+import { usePublicApiData } from '@/hooks/usePublicApiData';
 import { debounce } from 'lodash';
 import { apiService } from '@/services/ApiService';
 
@@ -64,8 +64,8 @@ export default function CitiesApi() {
         total,
         from,
         to,
-    } = useApiData<City>({
-        endpoint: 'cities',
+    } = usePublicApiData<City>({
+        endpoint: '/api/v1/geo/cities',
         initialFilters: {
             code: '',
             name: '',
@@ -327,6 +327,7 @@ export default function CitiesApi() {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
+                                        <TableHead className="w-[60px]">#</TableHead>
                                         <TableHead>
                                             <Button
                                                 variant="ghost"
@@ -375,8 +376,11 @@ export default function CitiesApi() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {cities.map((city) => (
+                                    {cities.map((city, index) => (
                                         <TableRow key={city.id}>
+                                            <TableCell className="text-center text-muted-foreground">
+                                                {(currentPage - 1) * perPage + index + 1}
+                                            </TableCell>
                                             <TableCell className="font-medium">
                                                 <Badge variant="outline">{city.code}</Badge>
                                             </TableCell>
@@ -404,7 +408,7 @@ export default function CitiesApi() {
                                                 {new Date(city.created_at).toLocaleDateString()}
                                             </TableCell>
                                             <TableCell>
-                                                {new Date(city.updated_at).toLocaleDateString()}
+                                                {new Date(city.updated_at).toLocaleString()}
                                             </TableCell>
                                             <TableCell>
                                                 {city.updated_by ? city.updated_by.name : '-'}
