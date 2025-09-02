@@ -70,7 +70,7 @@ class ProvinceController extends Controller
                 AllowedSort::field('country_name', 'country.name'),
             ])
             ->defaultSort('name')
-            ->with(['country', 'cities'])
+            ->with(['country', 'cities', 'updatedBy:id,name'])
             ->paginate($perPage)
             ->appends($request->query());
 

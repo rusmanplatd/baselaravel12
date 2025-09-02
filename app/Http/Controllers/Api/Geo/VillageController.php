@@ -60,7 +60,7 @@ class VillageController extends Controller
                 AllowedSort::field('country_name', 'district.city.province.country.name'),
             ])
             ->defaultSort('name')
-            ->with(['district.city.province.country'])
+            ->with(['district.city.province.country', 'updatedBy:id,name'])
             ->paginate($perPage)
             ->appends($request->query());
 

@@ -51,6 +51,7 @@ interface Village {
     district: District;
     created_at: string;
     updated_at: string;
+    updated_by?: { name: string } | null;
 }
 
 const breadcrumbItems: BreadcrumbItem[] = [
@@ -70,6 +71,12 @@ export default function VillagesApi() {
         updatePerPage,
         goToPage,
         refresh,
+        perPage,
+        currentPage,
+        totalPages,
+        total,
+        from,
+        to,
     } = useApiData<Village>({
         endpoint: 'villages',
         initialFilters: {
@@ -203,7 +210,7 @@ export default function VillagesApi() {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>All Villages ({villages?.total || 0})</CardTitle>
+                        <CardTitle>All Villages ({total})</CardTitle>
                         <CardDescription>
                             View and manage all villages in the system
                         </CardDescription>
@@ -324,7 +331,7 @@ export default function VillagesApi() {
                             <div className="text-center py-8">
                                 <p className="text-muted-foreground">Loading...</p>
                             </div>
-                        ) : !villages?.data?.length ? (
+                        ) : !villages?.length ? (
                             <div className="text-center py-8">
                                 <TreePine className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                                 <p className="text-muted-foreground">No villages found</p>
@@ -367,11 +374,22 @@ export default function VillagesApi() {
                                                 {getSortIcon('created_at')}
                                             </Button>
                                         </TableHead>
+                                        <TableHead>
+                                            <Button
+                                                variant="ghost"
+                                                className="h-auto p-0 font-semibold"
+                                                onClick={() => handleSort('updated_at')}
+                                            >
+                                                Updated At
+                                                {getSortIcon('updated_at')}
+                                            </Button>
+                                        </TableHead>
+                                        <TableHead>Updated By</TableHead>
                                         <TableHead className="w-[100px]">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {villages.data.map((village) => (
+                                    {villages.map((village) => (
                                         <TableRow key={village.id}>
                                             <TableCell className="font-medium">
                                                 <Badge variant="outline">{village.code}</Badge>
@@ -409,6 +427,12 @@ export default function VillagesApi() {
                                             </TableCell>
                                             <TableCell>
                                                 {new Date(village.created_at).toLocaleDateString()}
+                                            </TableCell>
+                                            <TableCell>
+                                                {new Date(village.updated_at).toLocaleDateString()}
+                                            </TableCell>
+                                            <TableCell>
+                                                {village.updated_by ? village.updated_by.name : '-'}
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
@@ -458,9 +482,17 @@ export default function VillagesApi() {
                         )}
                     </CardContent>
 
-                    {villages && (
+                    {total > 0 && (
                         <ApiPagination
-                            meta={villages}
+                            meta={{
+                                current_page: currentPage,
+                                last_page: totalPages,
+                                per_page: perPage,
+                                total: total,
+                                from: from,
+                                to: to,
+                                links: [] // Not used in current implementation
+                            }}
                             onPageChange={goToPage}
                             onPerPageChange={updatePerPage}
                         />

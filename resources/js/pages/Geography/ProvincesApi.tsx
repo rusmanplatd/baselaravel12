@@ -31,6 +31,7 @@ interface Province {
     cities_count?: number;
     created_at: string;
     updated_at: string;
+    updated_by?: { name: string } | null;
 }
 
 const breadcrumbItems: BreadcrumbItem[] = [
@@ -50,6 +51,12 @@ export default function ProvincesApi() {
         updatePerPage,
         goToPage,
         refresh,
+        perPage,
+        currentPage,
+        totalPages,
+        total,
+        from,
+        to,
     } = useApiData<Province>({
         endpoint: 'provinces',
         initialFilters: {
@@ -183,7 +190,7 @@ export default function ProvincesApi() {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>All Provinces ({provinces?.total || 0})</CardTitle>
+                        <CardTitle>All Provinces ({total})</CardTitle>
                         <CardDescription>
                             View and manage all provinces in the system
                         </CardDescription>
@@ -304,7 +311,7 @@ export default function ProvincesApi() {
                             <div className="text-center py-8">
                                 <p className="text-muted-foreground">Loading...</p>
                             </div>
-                        ) : !provinces?.data?.length ? (
+                        ) : !provinces?.length ? (
                             <div className="text-center py-8">
                                 <MapPin className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                                 <p className="text-muted-foreground">No provinces found</p>
@@ -345,11 +352,22 @@ export default function ProvincesApi() {
                                                 {getSortIcon('created_at')}
                                             </Button>
                                         </TableHead>
+                                        <TableHead>
+                                            <Button
+                                                variant="ghost"
+                                                className="h-auto p-0 font-semibold"
+                                                onClick={() => handleSort('updated_at')}
+                                            >
+                                                Updated At
+                                                {getSortIcon('updated_at')}
+                                            </Button>
+                                        </TableHead>
+                                        <TableHead>Updated By</TableHead>
                                         <TableHead className="w-[100px]">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {provinces.data.map((province) => (
+                                    {provinces.map((province) => (
                                         <TableRow key={province.id}>
                                             <TableCell className="font-medium">
                                                 <Badge variant="outline">{province.code}</Badge>
@@ -368,6 +386,12 @@ export default function ProvincesApi() {
                                             </TableCell>
                                             <TableCell>
                                                 {new Date(province.created_at).toLocaleDateString()}
+                                            </TableCell>
+                                            <TableCell>
+                                                {new Date(province.updated_at).toLocaleDateString()}
+                                            </TableCell>
+                                            <TableCell>
+                                                {province.updated_by ? province.updated_by.name : '-'}
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
@@ -417,9 +441,17 @@ export default function ProvincesApi() {
                         )}
                     </CardContent>
 
-                    {provinces && (
+                    {total > 0 && (
                         <ApiPagination
-                            meta={provinces}
+                            meta={{
+                                current_page: currentPage,
+                                last_page: totalPages,
+                                per_page: perPage,
+                                total: total,
+                                from: from,
+                                to: to,
+                                links: [] // Not used in current implementation
+                            }}
                             onPageChange={goToPage}
                             onPerPageChange={updatePerPage}
                         />

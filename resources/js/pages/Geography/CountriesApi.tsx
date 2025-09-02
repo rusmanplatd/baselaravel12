@@ -24,6 +24,7 @@ interface Country {
     provinces_count?: number;
     created_at: string;
     updated_at: string;
+    updated_by?: { name: string } | null;
 }
 
 const breadcrumbItems: BreadcrumbItem[] = [
@@ -43,6 +44,12 @@ export default function CountriesApi() {
         updatePerPage,
         goToPage,
         refresh,
+        perPage,
+        currentPage,
+        totalPages,
+        total,
+        from,
+        to,
     } = useApiData<Country>({
         endpoint: 'countries',
         initialFilters: {
@@ -173,7 +180,7 @@ export default function CountriesApi() {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>All Countries ({countries?.total || 0})</CardTitle>
+                        <CardTitle>All Countries ({total})</CardTitle>
                         <CardDescription>
                             View and manage all countries in the system
                         </CardDescription>
@@ -337,7 +344,7 @@ export default function CountriesApi() {
                             <div className="text-center py-8">
                                 <p className="text-muted-foreground">Loading...</p>
                             </div>
-                        ) : !countries?.data?.length ? (
+                        ) : !countries?.length ? (
                             <div className="text-center py-8">
                                 <Globe className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                                 <p className="text-muted-foreground">No countries found</p>
@@ -397,11 +404,22 @@ export default function CountriesApi() {
                                                 {getSortIcon('created_at')}
                                             </Button>
                                         </TableHead>
+                                        <TableHead>
+                                            <Button
+                                                variant="ghost"
+                                                className="h-auto p-0 font-semibold"
+                                                onClick={() => handleSort('updated_at')}
+                                            >
+                                                Updated At
+                                                {getSortIcon('updated_at')}
+                                            </Button>
+                                        </TableHead>
+                                        <TableHead>Updated By</TableHead>
                                         <TableHead className="w-[100px]">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {countries.data.map((country) => (
+                                    {countries.map((country) => (
                                         <TableRow key={country.id}>
                                             <TableCell className="font-medium">
                                                 <Badge variant="outline">{country.code}</Badge>
@@ -428,6 +446,12 @@ export default function CountriesApi() {
                                             </TableCell>
                                             <TableCell>
                                                 {new Date(country.created_at).toLocaleDateString()}
+                                            </TableCell>
+                                            <TableCell>
+                                                {new Date(country.updated_at).toLocaleDateString()}
+                                            </TableCell>
+                                            <TableCell>
+                                                {country.updated_by ? country.updated_by.name : '-'}
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
@@ -477,9 +501,17 @@ export default function CountriesApi() {
                         )}
                     </CardContent>
 
-                    {countries && (
+                    {total > 0 && (
                         <ApiPagination
-                            meta={countries}
+                            meta={{
+                                current_page: currentPage,
+                                last_page: totalPages,
+                                per_page: perPage,
+                                total: total,
+                                from: from,
+                                to: to,
+                                links: [] // Not used in current implementation
+                            }}
                             onPageChange={goToPage}
                             onPerPageChange={updatePerPage}
                         />

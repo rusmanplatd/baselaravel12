@@ -66,7 +66,7 @@ class CountryController extends Controller
                 'updated_at',
             ])
             ->defaultSort('name')
-            ->with(['provinces'])
+            ->with(['provinces', 'updatedBy:id,name'])
             ->paginate($perPage)
             ->appends($request->query());
 

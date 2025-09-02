@@ -38,6 +38,7 @@ interface City {
     district_count?: number;
     created_at: string;
     updated_at: string;
+    updated_by?: { name: string } | null;
 }
 
 const breadcrumbItems: BreadcrumbItem[] = [
@@ -57,6 +58,12 @@ export default function CitiesApi() {
         updatePerPage,
         goToPage,
         refresh,
+        perPage,
+        currentPage,
+        totalPages,
+        total,
+        from,
+        to,
     } = useApiData<City>({
         endpoint: 'cities',
         initialFilters: {
@@ -190,7 +197,7 @@ export default function CitiesApi() {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>All Cities ({cities?.total || 0})</CardTitle>
+                        <CardTitle>All Cities ({total})</CardTitle>
                         <CardDescription>
                             View and manage all cities in the system
                         </CardDescription>
@@ -311,7 +318,7 @@ export default function CitiesApi() {
                             <div className="text-center py-8">
                                 <p className="text-muted-foreground">Loading...</p>
                             </div>
-                        ) : !cities?.data?.length ? (
+                        ) : !cities?.length ? (
                             <div className="text-center py-8">
                                 <Building className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                                 <p className="text-muted-foreground">No cities found</p>
@@ -353,11 +360,22 @@ export default function CitiesApi() {
                                                 {getSortIcon('created_at')}
                                             </Button>
                                         </TableHead>
+                                        <TableHead>
+                                            <Button
+                                                variant="ghost"
+                                                className="h-auto p-0 font-semibold"
+                                                onClick={() => handleSort('updated_at')}
+                                            >
+                                                Updated At
+                                                {getSortIcon('updated_at')}
+                                            </Button>
+                                        </TableHead>
+                                        <TableHead>Updated By</TableHead>
                                         <TableHead className="w-[100px]">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {cities.data.map((city) => (
+                                    {cities.map((city) => (
                                         <TableRow key={city.id}>
                                             <TableCell className="font-medium">
                                                 <Badge variant="outline">{city.code}</Badge>
@@ -384,6 +402,12 @@ export default function CitiesApi() {
                                             </TableCell>
                                             <TableCell>
                                                 {new Date(city.created_at).toLocaleDateString()}
+                                            </TableCell>
+                                            <TableCell>
+                                                {new Date(city.updated_at).toLocaleDateString()}
+                                            </TableCell>
+                                            <TableCell>
+                                                {city.updated_by ? city.updated_by.name : '-'}
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
@@ -433,9 +457,17 @@ export default function CitiesApi() {
                         )}
                     </CardContent>
 
-                    {cities && (
+                    {total > 0 && (
                         <ApiPagination
-                            meta={cities}
+                            meta={{
+                                current_page: currentPage,
+                                last_page: totalPages,
+                                per_page: perPage,
+                                total: total,
+                                from: from,
+                                to: to,
+                                links: [] // Not used in current implementation
+                            }}
                             onPageChange={goToPage}
                             onPerPageChange={updatePerPage}
                         />

@@ -48,7 +48,7 @@ class CityController extends Controller
                 AllowedSort::field('country_name', 'province.country.name'),
             ])
             ->defaultSort('name')
-            ->with(['province.country', 'districts'])
+            ->with(['province.country', 'districts', 'updatedBy:id,name'])
             ->paginate($perPage)
             ->appends($request->query());
 

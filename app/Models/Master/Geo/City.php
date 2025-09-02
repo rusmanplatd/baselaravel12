@@ -70,6 +70,15 @@ class City extends Model
         return $this->hasMany(District::class, 'city_id');
     }
 
+    public function createdBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+    public function updatedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
     /*******************************
      ** SCOPE
      *******************************/

@@ -54,7 +54,7 @@ class DistrictController extends Controller
                 AllowedSort::field('country_name', 'city.province.country.name'),
             ])
             ->defaultSort('name')
-            ->with(['city.province.country'])
+            ->with(['city.province.country', 'updatedBy:id,name'])
             ->paginate($perPage)
             ->appends($request->query());
 

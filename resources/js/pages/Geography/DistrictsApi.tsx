@@ -45,6 +45,7 @@ interface District {
     villages_count?: number;
     created_at: string;
     updated_at: string;
+    updated_by?: { name: string } | null;
 }
 
 const breadcrumbItems: BreadcrumbItem[] = [
@@ -64,6 +65,12 @@ export default function DistrictsApi() {
         updatePerPage,
         goToPage,
         refresh,
+        perPage,
+        currentPage,
+        totalPages,
+        total,
+        from,
+        to,
     } = useApiData<District>({
         endpoint: 'districts',
         initialFilters: {
@@ -197,7 +204,7 @@ export default function DistrictsApi() {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>All Districts ({districts?.total || 0})</CardTitle>
+                        <CardTitle>All Districts ({total})</CardTitle>
                         <CardDescription>
                             View and manage all districts in the system
                         </CardDescription>
@@ -318,7 +325,7 @@ export default function DistrictsApi() {
                             <div className="text-center py-8">
                                 <p className="text-muted-foreground">Loading...</p>
                             </div>
-                        ) : !districts?.data?.length ? (
+                        ) : !districts?.length ? (
                             <div className="text-center py-8">
                                 <MapPin className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                                 <p className="text-muted-foreground">No districts found</p>
@@ -361,11 +368,22 @@ export default function DistrictsApi() {
                                                 {getSortIcon('created_at')}
                                             </Button>
                                         </TableHead>
+                                        <TableHead>
+                                            <Button
+                                                variant="ghost"
+                                                className="h-auto p-0 font-semibold"
+                                                onClick={() => handleSort('updated_at')}
+                                            >
+                                                Updated At
+                                                {getSortIcon('updated_at')}
+                                            </Button>
+                                        </TableHead>
+                                        <TableHead>Updated By</TableHead>
                                         <TableHead className="w-[100px]">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {districts.data.map((district) => (
+                                    {districts.map((district) => (
                                         <TableRow key={district.id}>
                                             <TableCell className="font-medium">
                                                 <Badge variant="outline">{district.code}</Badge>
@@ -400,6 +418,12 @@ export default function DistrictsApi() {
                                             </TableCell>
                                             <TableCell>
                                                 {new Date(district.created_at).toLocaleDateString()}
+                                            </TableCell>
+                                            <TableCell>
+                                                {new Date(district.updated_at).toLocaleDateString()}
+                                            </TableCell>
+                                            <TableCell>
+                                                {district.updated_by ? district.updated_by.name : '-'}
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
@@ -449,9 +473,17 @@ export default function DistrictsApi() {
                         )}
                     </CardContent>
 
-                    {districts && (
+                    {total > 0 && (
                         <ApiPagination
-                            meta={districts}
+                            meta={{
+                                current_page: currentPage,
+                                last_page: totalPages,
+                                per_page: perPage,
+                                total: total,
+                                from: from,
+                                to: to,
+                                links: [] // Not used in current implementation
+                            }}
                             onPageChange={goToPage}
                             onPerPageChange={updatePerPage}
                         />
