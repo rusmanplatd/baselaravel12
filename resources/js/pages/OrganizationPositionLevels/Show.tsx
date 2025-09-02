@@ -16,10 +16,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { ArrowLeft, Edit } from 'lucide-react'
+import { ArrowLeft, Edit, FileText } from 'lucide-react'
 import AppLayout from '@/layouts/app-layout'
 import { Link } from '@inertiajs/react'
 import { type BreadcrumbItem } from '@/types'
+import { useState } from 'react'
+import ActivityLogModal from '@/components/ActivityLogModal'
 
 interface OrganizationPosition {
   id: string
@@ -53,6 +55,21 @@ const breadcrumbs = (level: OrganizationPositionLevel): BreadcrumbItem[] => [
 ];
 
 export default function Show({ organizationPositionLevel }: Props) {
+  const [activityLogModal, setActivityLogModal] = useState({
+    isOpen: false,
+    subjectType: '',
+    subjectId: '',
+    title: '',
+  });
+
+  const showActivityLog = () => {
+    setActivityLogModal({
+      isOpen: true,
+      subjectType: 'OrganizationPositionLevel',
+      subjectId: organizationPositionLevel.id,
+      title: `Activity Log - ${organizationPositionLevel.name}`,
+    });
+  };
   return (
     <AppLayout breadcrumbs={breadcrumbs(organizationPositionLevel)}>
       <Head title={organizationPositionLevel.name} />
@@ -73,12 +90,21 @@ export default function Show({ organizationPositionLevel }: Props) {
               </p>
             </div>
           </div>
-          <Link href={route('organization-position-levels.edit', organizationPositionLevel.id)}>
-            <Button>
-              <Edit className="mr-2 h-4 w-4" />
-              Edit
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              onClick={showActivityLog}
+            >
+              <FileText className="mr-2 h-4 w-4" />
+              Activity Log
             </Button>
-          </Link>
+            <Link href={route('organization-position-levels.edit', organizationPositionLevel.id)}>
+              <Button>
+                <Edit className="mr-2 h-4 w-4" />
+                Edit
+              </Button>
+            </Link>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -190,6 +216,14 @@ export default function Show({ organizationPositionLevel }: Props) {
           </Card>
         )}
       </div>
+
+      <ActivityLogModal
+        isOpen={activityLogModal.isOpen}
+        onClose={() => setActivityLogModal(prev => ({ ...prev, isOpen: false }))}
+        subjectType={activityLogModal.subjectType}
+        subjectId={activityLogModal.subjectId}
+        title={activityLogModal.title}
+      />
     </AppLayout>
   )
 }

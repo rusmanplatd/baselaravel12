@@ -168,4 +168,14 @@ class OrganizationUnit extends Model
             ->useLogName('organization')
             ->dontLogIfAttributesChangedOnly(['updated_at']);
     }
+
+    public function createdBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function updatedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
 }

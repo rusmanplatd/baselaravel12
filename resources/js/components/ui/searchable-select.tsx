@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Select,
@@ -25,6 +25,7 @@ interface SearchableSelectProps {
   className?: string;
   emptyLabel?: string;
   searchPlaceholder?: string;
+  showClearButton?: boolean;
 }
 
 export function SearchableSelect({
@@ -36,6 +37,7 @@ export function SearchableSelect({
   className,
   emptyLabel = "All",
   searchPlaceholder = "Search...",
+  showClearButton = true,
 }: SearchableSelectProps) {
   const [open, setOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
@@ -66,19 +68,25 @@ export function SearchableSelect({
     onValueChange?.(actualValue);
   };
 
+  const handleClear = () => {
+    onValueChange?.("");
+    setOpen(false);
+  };
+
   return (
-    <Select 
-      open={open} 
-      onOpenChange={handleOpenChange}
-      value={value === "" ? "__empty__" : value} 
-      onValueChange={handleValueChange}
-      disabled={disabled}
-    >
-      <SelectTrigger className={cn("w-full", className)}>
-        <SelectValue placeholder={placeholder}>
-          {selectedItem ? selectedItem.label : (value === "" && emptyLabel) ? emptyLabel : value ? value : undefined}
-        </SelectValue>
-      </SelectTrigger>
+    <div className="relative">
+      <Select 
+        open={open} 
+        onOpenChange={handleOpenChange}
+        value={value === "" ? "__empty__" : value} 
+        onValueChange={handleValueChange}
+        disabled={disabled}
+      >
+        <SelectTrigger className={cn("w-full", className, showClearButton && value && value !== "" && "pr-8")}>
+          <SelectValue placeholder={placeholder}>
+            {selectedItem ? selectedItem.label : (value === "" && emptyLabel) ? emptyLabel : value ? value : undefined}
+          </SelectValue>
+        </SelectTrigger>
       <SelectContent>
         <div className="flex items-center px-3 pb-2">
           <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
@@ -107,7 +115,17 @@ export function SearchableSelect({
             No options found
           </div>
         )}
-      </SelectContent>
-    </Select>
+        </SelectContent>
+      </Select>
+      {showClearButton && value && value !== "" && (
+        <button
+          type="button"
+          onClick={handleClear}
+          className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 shrink-0 opacity-50 hover:opacity-100 transition-opacity z-10"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      )}
+    </div>
   );
 }

@@ -85,6 +85,7 @@ interface OrganizationPosition {
     full_title: string;
     created_at: string;
     updated_at: string;
+    updated_by?: { name: string } | null;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -469,6 +470,7 @@ export default function OrganizationPositionsApi() {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
+                                        <TableHead className="w-[60px]">#</TableHead>
                                         <TableHead className="w-[120px]">
                                             <Button
                                                 variant="ghost"
@@ -536,20 +538,32 @@ export default function OrganizationPositionsApi() {
                                             </Button>
                                         </TableHead>
                                         <TableHead className="w-[80px]">Status</TableHead>
+                                        <TableHead>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="-ml-3 h-8 data-[state=open]:bg-accent"
+                                                onClick={() => handleSort('updated_at')}
+                                            >
+                                                Updated At
+                                                {getSortIcon('updated_at')}
+                                            </Button>
+                                        </TableHead>
+                                        <TableHead>Updated By</TableHead>
                                         <TableHead className="w-[120px]">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {loading && positions.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={8} className="text-center py-12">
+                                            <TableCell colSpan={10} className="text-center py-12">
                                                 <RotateCcw className="h-8 w-8 animate-spin mx-auto mb-2" />
                                                 Loading positions...
                                             </TableCell>
                                         </TableRow>
                                     ) : positions.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={8} className="text-center py-12">
+                                            <TableCell colSpan={10} className="text-center py-12">
                                                 <div className="flex flex-col items-center">
                                                     <Briefcase className="h-12 w-12 text-muted-foreground mb-4" />
                                                     <h3 className="text-lg font-semibold mb-2">No positions found</h3>
@@ -573,8 +587,11 @@ export default function OrganizationPositionsApi() {
                                             </TableCell>
                                         </TableRow>
                                     ) : (
-                                        positions.map((position) => (
+                                        positions.map((position, index) => (
                                             <TableRow key={position.id} className={!position.is_active ? 'opacity-60' : ''}>
+                                                <TableCell className="text-center text-muted-foreground">
+                                                    {(currentPage - 1) * perPage + index + 1}
+                                                </TableCell>
                                                 <TableCell className="font-medium">
                                                     {position.position_code}
                                                 </TableCell>
@@ -633,6 +650,12 @@ export default function OrganizationPositionsApi() {
                                                     <Badge variant={position.is_active ? "default" : "secondary"} className="text-xs">
                                                         {position.is_active ? 'Active' : 'Inactive'}
                                                     </Badge>
+                                                </TableCell>
+                                                <TableCell>
+                                                    {new Date(position.updated_at).toLocaleString()}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {position.updated_by ? position.updated_by.name : '-'}
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="flex items-center gap-1">

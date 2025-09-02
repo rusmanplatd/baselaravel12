@@ -17,6 +17,7 @@ class OrganizationPositionLevelController extends Controller
     {
         $organizationPositionLevels = OrganizationPositionLevel::ordered()
             ->withCount('organizationPositions')
+            ->with('updatedBy:id,name')
             ->get();
 
         return response()->json([

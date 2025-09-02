@@ -52,6 +52,7 @@ class OrganizationPositionController extends Controller
                 'max_incumbents',
                 'is_active',
                 'created_at',
+                'updated_at',
                 AllowedSort::callback('level', function ($query, $descending, $property) {
                     return $query->join('organization_position_levels', 'organization_positions.organization_position_level_id', '=', 'organization_position_levels.id')
                         ->orderBy('organization_position_levels.hierarchy_level', $descending ? 'desc' : 'asc');
@@ -62,7 +63,7 @@ class OrganizationPositionController extends Controller
                 }),
             ])
             ->defaultSort('title')
-            ->with(['organizationUnit.organization', 'activeMemberships.user', 'organizationPositionLevel'])
+            ->with(['organizationUnit.organization', 'activeMemberships.user', 'organizationPositionLevel', 'updatedBy'])
             ->withCount(['activeMemberships'])
             ->paginate($perPage)
             ->appends($request->query());

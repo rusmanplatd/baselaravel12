@@ -218,4 +218,14 @@ class Client extends PassportClient
                     ->orWhere('user_access_scope', 'custom');
             });
     }
+
+    public function createdBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function updatedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
 }

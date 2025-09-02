@@ -9,6 +9,7 @@ use App\Models\Chat\Message;
 use App\Models\Chat\Participant;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -460,5 +461,15 @@ class User extends Authenticatable implements HasPasskeys
     public function hasDeviceAccessToConversation(string $conversationId, string $deviceId): bool
     {
         return $this->getActiveEncryptionKeyForConversationAndDevice($conversationId, $deviceId) !== null;
+    }
+
+    public function createdBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function updatedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'updated_by');
     }
 }

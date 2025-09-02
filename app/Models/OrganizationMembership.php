@@ -220,4 +220,14 @@ class OrganizationMembership extends Model
             ->setDescriptionForEvent(fn (string $eventName) => "Organization membership {$eventName}")
             ->useLogName('organization');
     }
+
+    public function createdBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function updatedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
 }
