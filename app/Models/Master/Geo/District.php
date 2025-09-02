@@ -71,30 +71,6 @@ class District extends Model
     /*******************************
      ** SCOPE
      *******************************/
-    public function scopeGrid($query)
-    {
-        return $query
-            ->latest();
-    }
-
-    public function scopeFilters($query)
-    {
-        $request = request();
-
-        return $query
-            ->when(
-                $province_id = $request->province_id,
-                function ($q) use (&$province_id) {
-                    $q->whereRelation('city', 'province_id', $province_id);
-                }
-            )
-            ->when(
-                $city_id = $request->city_id,
-                function ($q) use (&$city_id) {
-                    $q->where('city_id', $city_id);
-                }
-            );
-    }
 
     /*******************************
      ** SAVING

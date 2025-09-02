@@ -72,36 +72,6 @@ class Province extends Model
     /*******************************
      ** SCOPE
      *******************************/
-    public function scopeGrid($query)
-    {
-        return $query
-            ->latest();
-    }
-
-    public function scopeFilters($query)
-    {
-        $request = request();
-
-        return $query
-            ->when(
-                $country_id = $request->country_id,
-                function ($q) use (&$country_id) {
-                    $q->where('country_id', $country_id);
-                }
-            )
-            ->when(
-                $code = $request->code,
-                function ($q) use (&$code) {
-                    $q->where('code', 'like', '%'.$code.'%');
-                }
-            )
-            ->when(
-                $name = $request->name,
-                function ($q) use (&$name) {
-                    $q->where('name', 'like', '%'.$name.'%');
-                }
-            );
-    }
 
     /*******************************
      ** SAVING

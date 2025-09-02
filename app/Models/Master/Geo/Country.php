@@ -68,36 +68,6 @@ class Country extends Model
     /*******************************
      ** SCOPE
      *******************************/
-    public function scopeGrid($query)
-    {
-        return $query
-            ->latest();
-    }
-
-    public function scopeFilters($query)
-    {
-        $request = request();
-
-        return $query
-            ->when(
-                $code = $request->code,
-                function ($q) use (&$code) {
-                    $q->where('code', 'like', '%'.$code.'%');
-                }
-            )
-            ->when(
-                $name = $request->name,
-                function ($q) use (&$name) {
-                    $q->where('name', 'like', '%'.$name.'%');
-                }
-            )
-            ->when(
-                $iso_code = $request->iso_code,
-                function ($q) use (&$iso_code) {
-                    $q->where('iso_code', 'like', '%'.$iso_code.'%');
-                }
-            );
-    }
 
     /*******************************
      ** SAVING

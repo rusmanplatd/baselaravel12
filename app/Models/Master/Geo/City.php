@@ -73,24 +73,6 @@ class City extends Model
     /*******************************
      ** SCOPE
      *******************************/
-    public function scopeGrid($query)
-    {
-        return $query
-            ->latest();
-    }
-
-    public function scopeFilters($query)
-    {
-        $request = request();
-
-        return $query
-            ->when(
-                $province_id = $request->province_id,
-                function ($q) use (&$province_id) {
-                    $q->where('province_id', $province_id);
-                }
-            );
-    }
 
     /*******************************
      ** SAVING

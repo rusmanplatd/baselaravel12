@@ -66,36 +66,6 @@ class Village extends Model
     /*******************************
      ** SCOPE
      *******************************/
-    public function scopeGrid($query)
-    {
-        return $query
-            ->latest();
-    }
-
-    public function scopeFilters($query)
-    {
-        $request = request();
-
-        return $query
-            ->when(
-                $province_id = $request->province_id,
-                function ($q) use (&$province_id) {
-                    $q->whereRelation('district.city', 'province_id', $province_id);
-                }
-            )
-            ->when(
-                $city_id = $request->city_id,
-                function ($q) use (&$city_id) {
-                    $q->whereRelation('districts', 'city_id', $city_id);
-                }
-            )
-            ->when(
-                $district_id = $request->district_id,
-                function ($q) use (&$district_id) {
-                    $q->where('district_id', $district_id);
-                }
-            );
-    }
 
     /*******************************
      ** SAVING
