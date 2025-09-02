@@ -8,45 +8,84 @@ use App\Http\Requests\OrganizationPosition\UpdateOrganizationPositionRequest;
 use App\Models\OrganizationPosition;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\AllowedSort;
+use Spatie\QueryBuilder\QueryBuilder;
 
 class OrganizationPositionController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = OrganizationPosition::with(['organizationUnit.organization', 'activeMemberships.user', 'organizationPositionLevel'])
-            ->leftJoin('organization_position_levels', 'organization_positions.organization_position_level_id', '=', 'organization_position_levels.id');
+        $perPage = $request->input('per_page', 15);
+        $perPage = in_array($perPage, [5, 10, 15, 25, 50, 100]) ? $perPage : 15;
 
-        if ($request->has('organization_unit_id')) {
-            $query->where('organization_positions.organization_unit_id', $request->organization_unit_id);
-        }
+        $positions = QueryBuilder::for(OrganizationPosition::class)
+            ->allowedFilters([
+                AllowedFilter::partial('position_code'),
+                AllowedFilter::partial('title'),
+                AllowedFilter::partial('job_description'),
+                AllowedFilter::exact('organization_unit_id'),
+                AllowedFilter::exact('organization_position_level_id'),
+                AllowedFilter::exact('is_active'),
+                AllowedFilter::scope('board'),
+                AllowedFilter::scope('executive'),
+                AllowedFilter::scope('management'),
+                AllowedFilter::scope('active'),
+                AllowedFilter::scope('available'),
+                AllowedFilter::callback('min_salary_from', function ($query, $value) {
+                    return $query->where('min_salary', '>=', $value);
+                }),
+                AllowedFilter::callback('max_salary_to', function ($query, $value) {
+                    return $query->where('max_salary', '<=', $value);
+                }),
+                AllowedFilter::callback('position_level', function ($query, $value) {
+                    return $query->whereHas('organizationPositionLevel', function ($q) use ($value) {
+                        $q->where('hierarchy_level', $value);
+                    });
+                }),
+            ])
+            ->allowedSorts([
+                'position_code',
+                'title',
+                'min_salary',
+                'max_salary',
+                'max_incumbents',
+                'is_active',
+                'created_at',
+                AllowedSort::callback('level', function ($query, $descending, $property) {
+                    return $query->join('organization_position_levels', 'organization_positions.organization_position_level_id', '=', 'organization_position_levels.id')
+                        ->orderBy('organization_position_levels.hierarchy_level', $descending ? 'desc' : 'asc');
+                }),
+                AllowedSort::callback('unit', function ($query, $descending, $property) {
+                    return $query->join('organization_units', 'organization_positions.organization_unit_id', '=', 'organization_units.id')
+                        ->orderBy('organization_units.name', $descending ? 'desc' : 'asc');
+                }),
+            ])
+            ->defaultSort('title')
+            ->with(['organizationUnit.organization', 'activeMemberships.user', 'organizationPositionLevel'])
+            ->withCount(['activeMemberships'])
+            ->paginate($perPage)
+            ->appends($request->query());
 
-        if ($request->has('position_level')) {
-            $query->where('organization_position_levels.hierarchy_level', $request->position_level);
-        }
+        return response()->json($positions);
+    }
 
-        if ($request->has('board_only') && $request->board_only) {
-            $query->board();
-        }
-
-        if ($request->has('executive_only') && $request->executive_only) {
-            $query->executive();
-        }
-
-        if ($request->has('management_only') && $request->management_only) {
-            $query->management();
-        }
-
-        if ($request->has('active_only') && $request->active_only) {
-            $query->active();
-        }
-
-        if ($request->has('available_only') && $request->available_only) {
-            $query->whereRaw('(SELECT COUNT(*) FROM organization_memberships WHERE organization_position_id = organization_positions.id AND status = "active") < max_incumbents');
-        }
-
-        $positions = $query->select('organization_positions.*')
-            ->orderBy('organization_position_levels.hierarchy_level')
-            ->orderBy('organization_positions.title')
+    public function list(Request $request): JsonResponse
+    {
+        $positions = QueryBuilder::for(OrganizationPosition::class)
+            ->allowedFilters([
+                AllowedFilter::partial('title'),
+                AllowedFilter::exact('organization_unit_id'),
+                AllowedFilter::exact('is_active'),
+                AllowedFilter::scope('active'),
+                AllowedFilter::scope('available'),
+            ])
+            ->allowedSorts(['title', 'position_code'])
+            ->defaultSort('title')
+            ->select(['id', 'position_code', 'title', 'organization_unit_id', 'max_incumbents', 'is_active'])
+            ->with(['organizationUnit:id,name', 'organizationPositionLevel:id,name,code'])
+            ->withCount(['activeMemberships'])
+            ->limit($request->input('limit', 100))
             ->get();
 
         return response()->json($positions);
@@ -54,9 +93,26 @@ class OrganizationPositionController extends Controller
 
     public function store(StoreOrganizationPositionRequest $request): JsonResponse
     {
+        $validatedData = $request->validated();
+        $validatedData['created_by'] = auth()->id();
+        $validatedData['updated_by'] = auth()->id();
 
-        $position = OrganizationPosition::create($request->all());
-        $position->load(['organizationUnit.organization', 'activeMemberships.user']);
+        // Handle position level mapping
+        if (isset($validatedData['position_level'])) {
+            $positionLevel = \App\Models\OrganizationPositionLevel::where('code', $validatedData['position_level'])->first();
+            if ($positionLevel) {
+                $validatedData['organization_position_level_id'] = $positionLevel->id;
+            }
+            unset($validatedData['position_level']);
+        }
+
+        $position = OrganizationPosition::create($validatedData);
+        $position->load(['organizationUnit.organization', 'activeMemberships.user', 'organizationPositionLevel']);
+
+        activity()
+            ->performedOn($position)
+            ->causedBy(auth()->user())
+            ->log('Created organization position '.$position->title);
 
         return response()->json($position, 201);
     }
@@ -74,9 +130,25 @@ class OrganizationPositionController extends Controller
 
     public function update(UpdateOrganizationPositionRequest $request, OrganizationPosition $organizationPosition): JsonResponse
     {
+        $validatedData = $request->validated();
+        $validatedData['updated_by'] = auth()->id();
 
-        $organizationPosition->update($request->all());
-        $organizationPosition->load(['organizationUnit.organization', 'activeMemberships.user']);
+        // Handle position level mapping
+        if (isset($validatedData['position_level'])) {
+            $positionLevel = \App\Models\OrganizationPositionLevel::where('code', $validatedData['position_level'])->first();
+            if ($positionLevel) {
+                $validatedData['organization_position_level_id'] = $positionLevel->id;
+            }
+            unset($validatedData['position_level']);
+        }
+
+        $organizationPosition->update($validatedData);
+        $organizationPosition->load(['organizationUnit.organization', 'activeMemberships.user', 'organizationPositionLevel']);
+
+        activity()
+            ->performedOn($organizationPosition)
+            ->causedBy(auth()->user())
+            ->log('Updated organization position '.$organizationPosition->title);
 
         return response()->json($organizationPosition);
     }
@@ -88,6 +160,13 @@ class OrganizationPositionController extends Controller
                 'message' => 'Cannot delete position with active or historical memberships. Please reassign or remove memberships first.',
             ], 400);
         }
+
+        $positionTitle = $organizationPosition->title;
+
+        activity()
+            ->performedOn($organizationPosition)
+            ->causedBy(auth()->user())
+            ->log('Deleted organization position '.$positionTitle);
 
         $organizationPosition->delete();
 

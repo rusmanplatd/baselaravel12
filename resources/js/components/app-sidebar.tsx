@@ -67,7 +67,7 @@ const mainNavItems: NavItem[] = [
         title: 'Positions',
         href: '/organization-positions',
         icon: Target,
-        permission: 'position.view',
+        permission: 'org_position:read',
     },
     {
         title: 'Memberships',

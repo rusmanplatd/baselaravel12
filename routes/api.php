@@ -49,10 +49,14 @@ Route::prefix('v1')->group(function () {
     Route::get('organization-position-levels/active', [\App\Http\Controllers\Api\OrganizationPositionLevelController::class, 'getActive']);
     Route::get('organization-position-levels/hierarchy', [\App\Http\Controllers\Api\OrganizationPositionLevelController::class, 'getByHierarchy']);
 
-    Route::apiResource('organization-positions', \App\Http\Controllers\Api\OrganizationPositionController::class);
+    // Organization positions list endpoint (must come before resource routes)
+    Route::get('organization-positions/list', [\App\Http\Controllers\Api\OrganizationPositionController::class, 'list']);
     Route::get('organization-positions/available', [\App\Http\Controllers\Api\OrganizationPositionController::class, 'getAvailablePositions']);
     Route::get('organization-positions/level/{level}', [\App\Http\Controllers\Api\OrganizationPositionController::class, 'getByLevel']);
     Route::get('organization-positions/{organizationPosition}/incumbents', [\App\Http\Controllers\Api\OrganizationPositionController::class, 'getIncumbents']);
+    
+    // Organization positions resource routes
+    Route::apiResource('organization-positions', \App\Http\Controllers\Api\OrganizationPositionController::class);
 
     Route::apiResource('organization-memberships', \App\Http\Controllers\Api\OrganizationMembershipController::class);
     Route::post('organization-memberships/{organizationMembership}/activate', [\App\Http\Controllers\Api\OrganizationMembershipController::class, 'activate']);

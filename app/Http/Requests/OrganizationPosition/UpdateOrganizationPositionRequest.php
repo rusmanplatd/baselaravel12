@@ -24,16 +24,19 @@ class UpdateOrganizationPositionRequest extends FormRequest
         $organizationPosition = $this->route('organization_position');
 
         return [
-            'position_code' => 'required|string|unique:organization_positions,position_code,'.($organizationPosition?->id ?? 'NULL'),
+            'organization_unit_id' => 'required|exists:organization_units,id',
+            'position_code' => 'required|string|max:50|unique:organization_positions,position_code,'.($organizationPosition?->id ?? 'NULL'),
             'title' => 'required|string|max:255',
             'position_level' => 'required|in:board_member,c_level,vice_president,director,senior_manager,manager,assistant_manager,supervisor,senior_staff,staff,junior_staff',
-            'job_description' => 'nullable|string',
-            'qualifications' => 'nullable|array',
-            'responsibilities' => 'nullable|array',
-            'min_salary' => 'nullable|numeric|min:0',
-            'max_salary' => 'nullable|numeric|min:0|gte:min_salary',
+            'job_description' => 'nullable|string|max:5000',
+            'qualifications' => 'nullable|array|max:20',
+            'qualifications.*' => 'required|string|max:500',
+            'responsibilities' => 'nullable|array|max:20',
+            'responsibilities.*' => 'required|string|max:500',
+            'min_salary' => 'nullable|numeric|min:0|max:99999999.99',
+            'max_salary' => 'nullable|numeric|min:0|max:99999999.99|gte:min_salary',
             'is_active' => 'boolean',
-            'max_incumbents' => 'integer|min:1',
+            'max_incumbents' => 'integer|min:1|max:100',
         ];
     }
 

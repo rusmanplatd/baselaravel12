@@ -3,9 +3,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
+import ActivityLogModal from '@/components/ActivityLogModal';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
+import { useState } from 'react';
 import { 
     Briefcase, 
     Edit, 
@@ -105,6 +107,13 @@ const positionLevelColors: Record<string, string> = {
 };
 
 export default function Show({ position }: Props) {
+    const [activityLogModal, setActivityLogModal] = useState({
+        isOpen: false,
+        subjectType: '',
+        subjectId: '',
+        title: '',
+    });
+
     const getAvailableSlots = () => {
         return position.max_incumbents - position.active_memberships.length;
     };
@@ -115,6 +124,15 @@ export default function Show({ position }: Props) {
 
     const getInitials = (name: string) => {
         return name.split(' ').map(word => word[0]).join('').toUpperCase();
+    };
+
+    const showActivityLog = () => {
+        setActivityLogModal({
+            isOpen: true,
+            subjectType: 'App\\Models\\OrganizationPosition',
+            subjectId: position.id,
+            title: `${position.title} (${position.position_code})`,
+        });
     };
 
     return (
@@ -140,6 +158,10 @@ export default function Show({ position }: Props) {
                                         Back to Positions
                                     </Button>
                                 </Link>
+                                <Button variant="outline" size="sm" onClick={showActivityLog}>
+                                    <FileText className="mr-2 h-4 w-4" />
+                                    Activity Log
+                                </Button>
                                 <Link href={`/organization-positions/${position.id}/edit`}>
                                     <Button size="sm">
                                         <Edit className="mr-2 h-4 w-4" />
@@ -378,6 +400,14 @@ export default function Show({ position }: Props) {
                     </CardContent>
                 </Card>
             </div>
+
+            <ActivityLogModal
+                isOpen={activityLogModal.isOpen}
+                onClose={() => setActivityLogModal(prev => ({ ...prev, isOpen: false }))}
+                subjectType={activityLogModal.subjectType}
+                subjectId={activityLogModal.subjectId}
+                title={activityLogModal.title}
+            />
         </AppLayout>
     );
 }

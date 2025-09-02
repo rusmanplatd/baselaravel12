@@ -29,16 +29,23 @@ interface UseApiDataOptions {
 }
 
 interface UseApiDataReturn<T> {
-  data: PaginatedResponse<T> | null;
+  data: T[];
   loading: boolean;
   error: string | null;
   filters: Record<string, string>;
   sort: string;
+  perPage: number;
+  currentPage: number;
+  totalPages: number;
+  total: number;
+  from: number;
+  to: number;
   updateFilter: (key: string, value: string) => void;
   updateSort: (field: string) => void;
   updatePerPage: (perPage: number) => void;
   goToPage: (page: number) => void;
   refresh: () => void;
+  clearFilters: () => void;
 }
 
 // Helper function to get URL parameters
@@ -76,7 +83,7 @@ export function useApiData<T>({
   // Initialize state from URL parameters
   const urlParams = getUrlParams();
   
-  const [data, setData] = useState<PaginatedResponse<T> | null>(null);
+  const [paginatedResponse, setPaginatedResponse] = useState<PaginatedResponse<T> | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
@@ -126,10 +133,10 @@ export function useApiData<T>({
         params.append('per_page', perPage.toString());
       }
 
-      const url = `/api/v1/geo/${endpoint}${params.toString() ? '?' + params.toString() : ''}`;
+      const url = `${endpoint}${params.toString() ? '?' + params.toString() : ''}`;
       const data = await apiService.get<PaginatedResponse<T>>(url);
       
-      setData(data);
+      setPaginatedResponse(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -183,20 +190,38 @@ export function useApiData<T>({
     syncToUrl(filters, sort, perPage, newPage);
   }, [filters, sort, perPage, syncToUrl]);
 
+  const clearFilters = useCallback(() => {
+    const clearedFilters = Object.keys(initialFilters).reduce((acc, key) => {
+      acc[key] = '';
+      return acc;
+    }, {} as Record<string, string>);
+    
+    setFilters(clearedFilters);
+    setPage(1);
+    syncToUrl(clearedFilters, sort, perPage, 1);
+  }, [initialFilters, sort, perPage, syncToUrl]);
+
   const refresh = useCallback(() => {
     fetchData();
   }, [fetchData]);
 
   return {
-    data,
+    data: paginatedResponse?.data || [],
     loading,
     error,
     filters,
     sort,
+    perPage,
+    currentPage: paginatedResponse?.current_page || 1,
+    totalPages: paginatedResponse?.last_page || 1,
+    total: paginatedResponse?.total || 0,
+    from: paginatedResponse?.from || 0,
+    to: paginatedResponse?.to || 0,
     updateFilter,
     updateSort,
     updatePerPage,
     goToPage,
     refresh,
+    clearFilters,
   };
 }

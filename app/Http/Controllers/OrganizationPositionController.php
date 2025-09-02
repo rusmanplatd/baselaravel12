@@ -13,41 +13,15 @@ class OrganizationPositionController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:position.view')->only(['index', 'show']);
-        $this->middleware('permission:position.create')->only(['create', 'store']);
-        $this->middleware('permission:position.edit')->only(['edit', 'update']);
-        $this->middleware('permission:position.delete')->only(['destroy']);
+        $this->middleware('permission:org_position:read')->only(['index', 'show']);
+        $this->middleware('permission:org_position:write')->only(['create', 'store', 'edit', 'update']);
+        $this->middleware('permission:org_position:delete')->only(['destroy']);
     }
 
     public function index(Request $request)
     {
-        $query = OrganizationPosition::query()
-            ->with(['organizationUnit.organization', 'activeMemberships.user', 'organizationPositionLevel'])
-            ->withCount(['activeMemberships'])
-            ->leftJoin('organization_position_levels', 'organization_positions.organization_position_level_id', '=', 'organization_position_levels.id');
-
-        if ($request->filled('organization_unit_id')) {
-            $query->where('organization_positions.organization_unit_id', $request->organization_unit_id);
-        }
-
-        if ($request->filled('position_level')) {
-            $query->where('organization_position_levels.hierarchy_level', $request->position_level);
-        }
-
-        $positions = $query->select('organization_positions.*')
-            ->orderBy('organization_position_levels.hierarchy_level')
-            ->orderBy('organization_positions.title')
-            ->paginate(10);
-
-        $organizationUnits = OrganizationUnit::with('organization')
-            ->orderBy('name')
-            ->get(['id', 'name', 'organization_id']);
-
-        return Inertia::render('OrganizationPositions/Index', [
-            'positions' => $positions,
-            'organizationUnits' => $organizationUnits,
-            'filters' => $request->only(['organization_unit_id', 'position_level']),
-        ]);
+        // Use the new API-driven table interface
+        return Inertia::render('OrganizationPositions/IndexApi');
     }
 
     public function create()
