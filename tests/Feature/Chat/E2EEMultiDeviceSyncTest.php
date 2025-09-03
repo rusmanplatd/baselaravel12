@@ -252,7 +252,8 @@ describe('E2EE Multi-Device Synchronization', function () {
             $syncResult = $this->multiDeviceService->syncEncryptionKeys(
                 $this->user1->id,
                 $this->conversation->id,
-                [$device1->id, $device2->id, $device3->id]
+                [$device1->id, $device2->id, $device3->id],
+                $symmetricKey
             );
 
             $syncEndTime = microtime(true);
@@ -272,9 +273,9 @@ describe('E2EE Multi-Device Synchronization', function () {
 
             expect($allKeys->count())->toBe(3);
 
-            $deviceIds = $allKeys->pluck('device_id')->sort()->values();
+            $deviceIds = $allKeys->pluck('device_id')->unique()->sort()->values();
             $expectedDeviceIds = collect([$device1->id, $device2->id, $device3->id])->sort()->values();
-            expect($deviceIds)->toBe($expectedDeviceIds);
+            expect($deviceIds)->toEqual($expectedDeviceIds);
 
             // Verify each device can decrypt with their respective keys
             foreach ($allKeys as $key) {
@@ -664,6 +665,15 @@ describe('E2EE Multi-Device Synchronization', function () {
                 'user_id' => $this->user1->id,
                 'device_name' => 'Secondary Device',
                 'public_key' => $keyPair2['public_key'],
+                'is_trusted' => true,
+            ]);
+
+            // Create device for user2 (message sender)
+            $user2KeyPair = $this->encryptionService->generateKeyPair();
+            $user2Device = UserDevice::factory()->create([
+                'user_id' => $this->user2->id,
+                'device_name' => 'User2 Device',
+                'public_key' => $user2KeyPair['public_key'],
                 'is_trusted' => true,
             ]);
 

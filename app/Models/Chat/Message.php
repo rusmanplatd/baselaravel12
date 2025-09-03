@@ -150,6 +150,17 @@ class Message extends Model
             throw new \App\Exceptions\EncryptionException('Message cannot be empty');
         }
 
+        // Check if sender has any active, trusted devices
+        $senderActiveDevices = \App\Models\UserDevice::where('user_id', $senderId)
+            ->where('is_active', true)
+            ->where('is_trusted', true)
+            ->whereNull('revoked_at')
+            ->count();
+
+        if ($senderActiveDevices === 0) {
+            throw new \App\Exceptions\DeviceRevokedException('No active, trusted devices available for message encryption');
+        }
+
         $encryptionService = app(ChatEncryptionService::class);
 
         $encrypted = $encryptionService->encryptMessage($content, $symmetricKey);

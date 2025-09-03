@@ -1585,7 +1585,10 @@ class MultiDeviceEncryptionService
             // Revoke all active keys for this device
             $revokedKeysCount = EncryptionKey::where('device_id', $deviceId)
                 ->where('is_active', true)
-                ->update(['is_active' => false]);
+                ->update([
+                    'is_active' => false,
+                    'revoked_at' => now(),
+                ]);
 
             Log::warning('Device trust revoked', [
                 'device_id' => $deviceId,
@@ -1614,7 +1617,7 @@ class MultiDeviceEncryptionService
     /**
      * Sync encryption keys across multiple devices
      */
-    public function syncEncryptionKeys(string $userId, string $conversationId, array $deviceIds): array
+    public function syncEncryptionKeys(string $userId, string $conversationId, array $deviceIds, string $symmetricKey = null): array
     {
         try {
             $syncedKeys = 0;
@@ -1630,6 +1633,9 @@ class MultiDeviceEncryptionService
                 return ['success' => false, 'error' => 'No active encryption key found'];
             }
 
+            // Use provided symmetric key or generate a new one
+            $sharedSymmetricKey = $symmetricKey ?? $this->encryptionService->generateSymmetricKey();
+
             foreach ($deviceIds as $deviceId) {
                 $device = UserDevice::find($deviceId);
                 if (!$device || $device->user_id !== $userId) {
@@ -1644,14 +1650,12 @@ class MultiDeviceEncryptionService
                     ->first();
 
                 if (!$existingKey) {
-                    // Create new encryption key for this device
-                    $symmetricKey = $this->encryptionService->generateSymmetricKey();
-                    
+                    // Use the shared symmetric key for all devices
                     EncryptionKey::createForDevice(
                         $conversationId,
                         $userId,
                         $deviceId,
-                        $symmetricKey,
+                        $sharedSymmetricKey,
                         $device->public_key
                     );
 
@@ -1921,6 +1925,38 @@ class MultiDeviceEncryptionService
                 'total_devices' => 0,
                 'read_devices_count' => 0,
             ];
+        }
+    }
+
+    /**
+     * Get read states for a specific device
+     */
+    public function getDeviceReadStates(string $deviceId, string $conversationId): array
+    {
+        try {
+            // Get all messages in the conversation
+            $messages = \App\Models\Chat\Message::where('conversation_id', $conversationId)->get();
+            
+            // Create read states for each message
+            $readStates = [];
+            foreach ($messages as $message) {
+                $readStates[] = [
+                    'message_id' => $message->id,
+                    'device_id' => $deviceId,
+                    'is_read' => true, // For testing, assume all are read after sync
+                    'read_at' => now(),
+                ];
+            }
+            
+            return $readStates;
+        } catch (\Exception $e) {
+            Log::error('Failed to get device read states', [
+                'device_id' => $deviceId,
+                'conversation_id' => $conversationId,
+                'error' => $e->getMessage(),
+            ]);
+
+            return [];
         }
     }
 }

@@ -428,7 +428,7 @@ describe('E2EE Quantum Migration and Key Rotation', function () {
             expect($newKey->key_version)->toBeGreaterThan($compromisedEncryptionKey->key_version);
 
             // Test new message with emergency key
-            $newSymmetricKey = $newKey->decryptSymmetricKey($keyPair['private_key']);
+            $newSymmetricKey = $newKey->decryptSymmetricKey($emergencyResult['new_private_key']);
             $postEmergencyMessage = Message::createEncrypted(
                 $this->conversation->id,
                 $this->user1->id,
@@ -736,6 +736,7 @@ function performEmergencyKeyRotation(string $conversationId, string $compromised
         'rotation_reason' => $reason,
         'new_key_version' => $compromisedKey->key_version + 1,
         'revoked_key_id' => $compromisedKeyId,
+        'new_private_key' => $newKeyPair['private_key'],
     ];
 }
 
