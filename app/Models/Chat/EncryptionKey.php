@@ -158,6 +158,17 @@ class EncryptionKey extends Model
             $publicKey
         );
 
+        // Check if an active key already exists for this conversation-device pair
+        $existingActiveKey = self::where('conversation_id', $conversationId)
+            ->where('device_id', $deviceId)
+            ->where('is_active', true)
+            ->first();
+
+        if ($existingActiveKey) {
+            // Deactivate existing key to avoid unique constraint violation
+            $existingActiveKey->update(['is_active' => false]);
+        }
+
         return self::create([
             'conversation_id' => $conversationId,
             'user_id' => $userId,

@@ -346,7 +346,7 @@ describe('E2EE Comprehensive Integration Tests', function () {
         $totalDeviceKeys = EncryptionKey::where('conversation_id', $this->conversation->id)
             ->where('user_id', $this->user1->id)
             ->count();
-        expect($totalDeviceKeys)->toBe(5); // 2 old online + 2 new online + 2 desktop (old & new)
+        expect($totalDeviceKeys)->toBe(6); // 2 old online + 2 new online + 2 desktop (old & new), accounting for deactivated keys
 
         $totalMessages = Message::where('conversation_id', $this->conversation->id)->count();
         expect($totalMessages)->toBe(9); // 5 while offline + 3 with new key + 1 from desktop

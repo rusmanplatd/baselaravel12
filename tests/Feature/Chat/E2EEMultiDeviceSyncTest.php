@@ -18,7 +18,7 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     $this->encryptionService = new ChatEncryptionService;
     $this->multiDeviceService = new MultiDeviceEncryptionService($this->encryptionService);
-    $this->quantumService = new QuantumCryptoService;
+    $this->quantumService = new QuantumCryptoService($this->encryptionService);
 
     $this->user1 = User::factory()->create();
     $this->user2 = User::factory()->create();
