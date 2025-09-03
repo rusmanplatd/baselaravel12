@@ -20,11 +20,6 @@ return new class extends Migration
         DB::statement('DELETE FROM oauth_refresh_tokens WHERE access_token_id NOT IN (SELECT id FROM oauth_access_tokens)');
         DB::statement('DELETE FROM oauth_auth_codes WHERE client_id NOT IN (SELECT id FROM oauth_clients)');
 
-        // Make organization_id required
-        Schema::table('oauth_clients', function (Blueprint $table) {
-            $table->ulid('organization_id')->nullable(false)->change();
-        });
-
         // Make client_type required with default
         Schema::table('oauth_clients', function (Blueprint $table) {
             $table->string('client_type')->default('confidential')->nullable(false)->change();

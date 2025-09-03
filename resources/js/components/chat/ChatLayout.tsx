@@ -325,7 +325,8 @@ export default function ChatLayout({ user, inviteCode }: ChatLayoutProps) {
           isOpen={showDeviceSetup}
           onClose={() => setShowDeviceSetup(false)}
           onDeviceRegistered={(deviceInfo) => {
-            registerDevice(deviceInfo);
+            // Device already registered by DeviceSetup component
+            // registerDevice(deviceInfo);
             setShowDeviceSetup(false);
           }}
         />
@@ -336,7 +337,8 @@ export default function ChatLayout({ user, inviteCode }: ChatLayoutProps) {
           isOpen={showNewDeviceSetup}
           onClose={() => setShowNewDeviceSetup(false)}
           onDeviceRegistered={(deviceInfo) => {
-            registerDevice(deviceInfo);
+            // Device already registered by DeviceSetup component
+            // registerDevice(deviceInfo);
             setShowNewDeviceSetup(false);
             toast.success('Device registered successfully');
           }}

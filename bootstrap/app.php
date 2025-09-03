@@ -30,10 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
             // Ensure API routes don't get the default auth middleware
         ]);
 
-        $middleware->replace(
-            \Illuminate\Auth\Middleware\Authenticate::class,
-            \App\Http\Middleware\Authenticate::class
-        );
+        // Use Laravel's standard authentication middleware
 
         $middleware->alias([
             'auth' => \App\Http\Middleware\Authenticate::class,
