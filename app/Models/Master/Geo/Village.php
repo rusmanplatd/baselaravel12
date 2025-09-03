@@ -35,6 +35,8 @@ class Village extends Model
         'updated_by' => 'string',
     ];
 
+    protected $appends = ['districts'];
+
     /*******************************
      ** ACTIVITY LOG
      *******************************/
@@ -55,6 +57,11 @@ class Village extends Model
     /*******************************
      ** ACCESSOR
      *******************************/
+    
+    public function getDistrictsAttribute()
+    {
+        return $this->district;
+    }
 
     /*******************************
      ** RELATION

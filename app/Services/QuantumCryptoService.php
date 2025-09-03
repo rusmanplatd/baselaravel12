@@ -326,6 +326,25 @@ class QuantumCryptoService
     /**
      * Validate quantum key pair
      */
+    public function isAvailable(): bool
+    {
+        return $this->isMLKEMAvailable();
+    }
+
+    public function generateKeyPair(string $algorithm): array
+    {
+        if (str_starts_with($algorithm, 'ML-KEM-')) {
+            $securityLevel = (int) str_replace('ML-KEM-', '', $algorithm);
+            return $this->generateMLKEMKeyPair($securityLevel);
+        }
+
+        if ($algorithm === 'HYBRID-RSA4096-MLKEM768') {
+            return $this->generateHybridKeyPair(4096, 768);
+        }
+
+        throw new \InvalidArgumentException("Unsupported algorithm: {$algorithm}");
+    }
+
     public function validateQuantumKeyPair(string $publicKey, string $privateKey, string $algorithm): bool
     {
         try {

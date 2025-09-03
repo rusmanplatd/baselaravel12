@@ -39,6 +39,10 @@ class UserDevice extends Model
         'last_key_rotation_at',
         'capabilities_verified_at',
         'last_quantum_health_check',
+        'encryption_capabilities',
+        'quantum_ready',
+        'preferred_algorithm',
+        'quantum_health_score',
     ];
 
     protected $casts = [
@@ -54,6 +58,9 @@ class UserDevice extends Model
         'device_capabilities' => 'array',
         'device_info' => 'array',
         'failed_auth_attempts' => 'integer',
+        'encryption_capabilities' => 'array',
+        'quantum_ready' => 'boolean',
+        'quantum_health_score' => 'integer',
     ];
 
     protected $hidden = [

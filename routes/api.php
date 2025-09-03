@@ -29,7 +29,7 @@ Route::prefix('v1')->group(function () {
         Route::get('countries/{country}/provinces', [\App\Http\Controllers\Api\Geo\ProvinceController::class, 'byCountry'])->name('provinces.by-country');
         Route::get('provinces/{province}/cities', [\App\Http\Controllers\Api\Geo\CityController::class, 'byProvince'])->name('cities.by-province');
         Route::get('cities/{city}/districts', [\App\Http\Controllers\Api\Geo\DistrictController::class, 'byCity'])->name('districts.by-city');
-        Route::get('districts/{district}/villages', [\App\Http\Controllers\Api\Geo\VillageController::class, 'bydistricts'])->name('villages.by-districts');
+        Route::get('districts/{district}/villages', [\App\Http\Controllers\Api\Geo\VillageController::class, 'byDistrict'])->name('villages.by-districts');
 
         // Resource routes (read-only operations public)
         Route::get('countries', [\App\Http\Controllers\Api\Geo\CountryController::class, 'index'])->name('countries.index');

@@ -127,7 +127,7 @@ class City extends Model
 
     public function canDeleted(): bool
     {
-        if ($this->district()->exists()) {
+        if ($this->districts()->exists()) {
             return false;
         }
 

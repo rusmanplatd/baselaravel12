@@ -31,6 +31,8 @@ class EncryptionKey extends Model
         'is_active',
         'algorithm',
         'key_strength',
+        'revoked_at',
+        'revocation_reason',
     ];
 
     protected $attributes = [
@@ -41,6 +43,7 @@ class EncryptionKey extends Model
         'expires_at' => 'datetime',
         'is_active' => 'boolean',
         'key_version' => 'integer',
+        'revoked_at' => 'datetime',
     ];
 
     protected $hidden = [

@@ -136,3 +136,15 @@ class UnauthorizedChatAccessException extends ChatException
         );
     }
 }
+
+class RateLimitException extends ChatException
+{
+    public function __construct(string $message = 'Rate limit exceeded', array $context = [])
+    {
+        parent::__construct(
+            $message,
+            'RATE_LIMIT_EXCEEDED',
+            $context
+        );
+    }
+}

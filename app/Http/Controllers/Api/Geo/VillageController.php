@@ -29,12 +29,12 @@ class VillageController extends Controller
                 AllowedFilter::partial('code'),
                 AllowedFilter::partial('name'),
                 AllowedFilter::callback('district_name', function ($query, $value) {
-                    $query->whereHas('districts', function ($q) use ($value) {
+                    $query->whereHas('district', function ($q) use ($value) {
                         $q->where('name', 'like', "%{$value}%");
                     });
                 }),
                 AllowedFilter::callback('city_id', function ($query, $value) {
-                    $query->whereHas('districts', function ($q) use ($value) {
+                    $query->whereHas('district', function ($q) use ($value) {
                         $q->where('city_id', $value);
                     });
                 }),

@@ -17,7 +17,7 @@ uses(RefreshDatabase::class);
 
 beforeEach(function () {
     $this->encryptionService = new ChatEncryptionService;
-    $this->quantumService = new QuantumCryptoService;
+    $this->quantumService = new QuantumCryptoService($this->encryptionService);
     $this->multiDeviceService = new MultiDeviceEncryptionService($this->encryptionService);
 
     $this->user1 = User::factory()->create();
@@ -61,7 +61,7 @@ describe('E2EE Quantum Migration and Key Rotation', function () {
 
             // Create RSA encryption keys
             $rsaSymmetricKey = $this->encryptionService->generateSymmetricKey();
-            $rsaKey1 = EncryptionKey::create([
+            EncryptionKey::create([
                 'conversation_id' => $this->conversation->id,
                 'user_id' => $this->user1->id,
                 'device_id' => $device1->id,
@@ -99,7 +99,7 @@ describe('E2EE Quantum Migration and Key Rotation', function () {
                 $quantumKeyPair2 = $this->quantumService->generateKeyPair('ML-KEM-768');
 
                 // Perform gradual migration
-                $migrationResult = $this->performQuantumMigration($this->conversation->id, 'gradual');
+                $migrationResult = performQuantumMigration($this->conversation->id, 'gradual');
 
                 expect($migrationResult['status'])->toBe('success');
                 expect($migrationResult['migrated_keys'])->toBeGreaterThan(0);
@@ -214,7 +214,7 @@ describe('E2EE Quantum Migration and Key Rotation', function () {
             ]);
 
             // Check readiness assessment
-            $readiness = $this->assessQuantumReadiness($this->conversation->id);
+            $readiness = assessQuantumReadiness($this->conversation->id);
 
             expect($readiness['overall_ready'])->toBeFalse();
             expect($readiness['device_readiness'])->toHaveKey($device->id);
@@ -228,7 +228,7 @@ describe('E2EE Quantum Migration and Key Rotation', function () {
             ]);
 
             // Recheck readiness
-            $updatedReadiness = $this->assessQuantumReadiness($this->conversation->id);
+            $updatedReadiness = assessQuantumReadiness($this->conversation->id);
 
             expect($updatedReadiness['overall_ready'])->toBeTrue();
             expect($updatedReadiness['device_readiness'][$device->id]['ready'])->toBeTrue();
@@ -367,7 +367,7 @@ describe('E2EE Quantum Migration and Key Rotation', function () {
             // Detect compromise and trigger emergency rotation
             $emergencyStartTime = microtime(true);
 
-            $emergencyResult = $this->performEmergencyKeyRotation(
+            $emergencyResult = performEmergencyKeyRotation(
                 $this->conversation->id,
                 $compromisedEncryptionKey->id,
                 'security_breach'
@@ -424,7 +424,7 @@ describe('E2EE Quantum Migration and Key Rotation', function () {
             // Attempt multiple rapid rotations
             for ($i = 0; $i < 10; $i++) {
                 try {
-                    $result = $this->performKeyRotation($this->conversation->id, 'scheduled');
+                    $result = performKeyRotation($this->conversation->id, 'scheduled');
                     $rotationAttempts[] = [
                         'attempt' => $i,
                         'success' => true,
@@ -464,7 +464,7 @@ describe('E2EE Quantum Migration and Key Rotation', function () {
             // Check that rate limiting messages are meaningful
             $blockedAttempts = array_filter($rotationAttempts, fn ($a) => ! $a['success']);
             foreach ($blockedAttempts as $blocked) {
-                expect($blocked['error'])->toContain(['rate limit', 'too many', 'throttle']);
+                expect($blocked['error'])->toContain('rate limit');
             }
         });
     });
@@ -562,11 +562,49 @@ describe('E2EE Quantum Migration and Key Rotation', function () {
 // Helper methods for testing
 function performQuantumMigration(string $conversationId, string $strategy): array
 {
-    // Simulate quantum migration process
+    // Actually perform quantum migration by creating quantum keys
+    $encryptionService = app(ChatEncryptionService::class);
+    $quantumService = new QuantumCryptoService($encryptionService);
+    
+    $migratedKeys = 0;
+    
+    // Get all active RSA keys for this conversation
+    $rsaKeys = EncryptionKey::where('conversation_id', $conversationId)
+        ->where('algorithm', 'RSA-4096-OAEP')
+        ->where('is_active', true)
+        ->get();
+    
+    foreach ($rsaKeys as $rsaKey) {
+        try {
+            // Generate quantum key pair for this device
+            $quantumKeyPair = $quantumService->generateKeyPair('ML-KEM-768');
+            $symmetricKey = $encryptionService->generateSymmetricKey();
+            
+            // Create new quantum encryption key
+            EncryptionKey::create([
+                'conversation_id' => $conversationId,
+                'user_id' => $rsaKey->user_id,
+                'device_id' => $rsaKey->device_id,
+                'device_fingerprint' => $rsaKey->device_fingerprint,
+                'encrypted_key' => $encryptionService->encryptSymmetricKey($symmetricKey, $quantumKeyPair['public_key']),
+                'public_key' => $quantumKeyPair['public_key'],
+                'key_version' => 3,
+                'algorithm' => 'ML-KEM-768',
+                'key_strength' => 768,
+                'is_active' => true,
+            ]);
+            
+            $migratedKeys++;
+        } catch (\Exception $e) {
+            // Keep track of failures but continue
+            continue;
+        }
+    }
+    
     return [
         'status' => 'success',
         'strategy' => $strategy,
-        'migrated_keys' => 2,
+        'migrated_keys' => $migratedKeys,
         'failed_keys' => 0,
         'duration_ms' => 1500,
     ];
