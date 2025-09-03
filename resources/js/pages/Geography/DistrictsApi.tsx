@@ -3,15 +3,30 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SearchableSelect, type SearchableSelectItem } from '@/components/ui/searchable-select';
 import { PermissionGuard } from '@/components/permission-guard';
 import ActivityLogModal from '@/components/ActivityLogModal';
-import ApiPagination from '@/components/api-pagination';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
-import { Eye, Edit, Trash2, Search, MapPin, Plus, ArrowUpDown, FileText, X } from 'lucide-react';
-import React, { useState, useCallback, useEffect } from 'react';
+import {
+    Eye,
+    Edit,
+    Trash2,
+    Plus,
+    Search,
+    ArrowUpDown,
+    RotateCcw,
+    X,
+    SortAsc,
+    SortDesc,
+    FileText,
+    MapPin
+} from 'lucide-react';
+import { useState, useCallback, useEffect } from 'react';
 import { usePublicApiData } from '@/hooks/usePublicApiData';
 import { debounce } from 'lodash';
 import { apiService } from '@/services/ApiService';
@@ -65,6 +80,7 @@ export default function DistrictsApi() {
         updatePerPage,
         goToPage,
         refresh,
+        clearFilters,
         perPage,
         currentPage,
         totalPages,
@@ -79,6 +95,7 @@ export default function DistrictsApi() {
             city_id: '',
         },
         initialSort: 'name',
+        initialPerPage: 15,
     });
 
     // Local input state for immediate UI feedback
@@ -88,14 +105,6 @@ export default function DistrictsApi() {
         city_id: filters.city_id || '',
     });
 
-    // Sync input values with filters when filters change (from URL or other sources)
-    useEffect(() => {
-        setInputValues({
-            code: filters.code || '',
-            name: filters.name || '',
-            city_id: filters.city_id || '',
-        });
-    }, [filters.code, filters.name, filters.city_id]);
 
     const [cities, setCities] = useState<City[]>([]);
 
@@ -140,12 +149,57 @@ export default function DistrictsApi() {
 
     const getSortIcon = (field: string) => {
         if (sort === field) {
-            return <ArrowUpDown className="h-4 w-4 text-primary" />;
+            return <SortAsc className="h-4 w-4" />;
         }
         if (sort === `-${field}`) {
-            return <ArrowUpDown className="h-4 w-4 text-primary rotate-180" />;
+            return <SortDesc className="h-4 w-4" />;
         }
-        return <ArrowUpDown className="h-4 w-4 text-muted-foreground opacity-50" />;
+        return <ArrowUpDown className="h-4 w-4 opacity-50" />;
+    };
+
+    const handleClearFilters = () => {
+        setInputValues({
+            code: '',
+            name: '',
+            city_id: '',
+        });
+        clearFilters();
+    };
+
+    const hasActiveFilters = Object.values(inputValues).some(value => value !== '');
+
+    const getActiveFilters = () => {
+        const activeFilters: Array<{key: string, value: string, label: string, displayValue: string}> = [];
+
+        Object.entries(inputValues).forEach(([key, value]) => {
+            if (value !== '') {
+                let label = '';
+                let displayValue = value;
+
+                switch (key) {
+                    case 'code':
+                        label = 'Code';
+                        break;
+                    case 'name':
+                        label = 'Name';
+                        break;
+                    case 'city_id': {
+                        label = 'City';
+                        const city = cities.find(c => c.id === value);
+                        displayValue = city?.name || value;
+                        break;
+                    }
+                }
+
+                activeFilters.push({ key, value, label, displayValue });
+            }
+        });
+
+        return activeFilters;
+    };
+
+    const removeFilter = (filterKey: string) => {
+        handleFilterChange(filterKey, '');
     };
 
     const handleDelete = async (district: District) => {
@@ -259,61 +313,30 @@ export default function DistrictsApi() {
                                 />
                             </div>
                             
-                            {(inputValues.code || inputValues.name || inputValues.city_id) && (
+
+                            {hasActiveFilters && (
                                 <div className="flex items-center gap-2 flex-wrap pt-2 border-t">
                                     <span className="text-sm text-muted-foreground">Active filters:</span>
-                                    {inputValues.code && (
-                                        <Badge variant="secondary" className="gap-1">
-                                            Code: {inputValues.code}
+                                    {getActiveFilters().map((filter) => (
+                                        <Badge key={filter.key} variant="secondary" className="gap-1">
+                                            {filter.label}: {filter.displayValue}
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                onClick={() => handleFilterChange('code', '')}
+                                                onClick={() => removeFilter(filter.key)}
                                                 className="h-4 w-4 p-0 hover:bg-transparent"
                                             >
                                                 <X className="h-3 w-3" />
                                             </Button>
                                         </Badge>
-                                    )}
-                                    {inputValues.name && (
-                                        <Badge variant="secondary" className="gap-1">
-                                            Name: {inputValues.name}
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => handleFilterChange('name', '')}
-                                                className="h-4 w-4 p-0 hover:bg-transparent"
-                                            >
-                                                <X className="h-3 w-3" />
-                                            </Button>
-                                        </Badge>
-                                    )}
-                                    {inputValues.city_id && (
-                                        <Badge variant="secondary" className="gap-1">
-                                            City: {cities.find(c => c.id === inputValues.city_id)?.name || inputValues.city_id}
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={() => handleFilterChange('city_id', '')}
-                                                className="h-4 w-4 p-0 hover:bg-transparent"
-                                            >
-                                                <X className="h-3 w-3" />
-                                            </Button>
-                                        </Badge>
+                                    ))
                                     )}
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        onClick={() => {
-                                            const clearedFilters = { code: '', name: '', city_id: '' };
-                                            setInputValues(clearedFilters);
-                                            Object.entries(clearedFilters).forEach(([key, value]) => {
-                                                updateFilter(key, value);
-                                            });
-                                        }}
-                                        className="gap-1 text-muted-foreground hover:text-foreground"
+                                        onClick={handleClearFilters}
+                                        className="text-xs text-muted-foreground hover:text-destructive px-2 h-6"
                                     >
-                                        <X className="h-3 w-3" />
                                         Clear all
                                     </Button>
                                 </div>
@@ -321,24 +344,50 @@ export default function DistrictsApi() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        {loading ? (
-                            <div className="text-center py-8">
-                                <p className="text-muted-foreground">Loading...</p>
+                        <Separator className="mb-6" />
+
+                        {/* Results Header */}
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-4">
+                                <div className="text-sm text-muted-foreground">
+                                    {loading ? 'Loading...' : `Showing ${from} to ${to} of ${total} results`}
+                                </div>
+                                {hasActiveFilters && (
+                                    <Button onClick={handleClearFilters} variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive">
+                                        <X className="mr-1 h-3 w-3" />
+                                        Clear all
+                                    </Button>
+                                )}
                             </div>
-                        ) : !districts?.length ? (
-                            <div className="text-center py-8">
-                                <MapPin className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                                <p className="text-muted-foreground">No districts found</p>
+                            <div className="flex items-center gap-2">
+                                <Label htmlFor="per-page">Show:</Label>
+                                <Select value={perPage.toString()} onValueChange={(value) => updatePerPage(parseInt(value))}>
+                                    <SelectTrigger className="w-20">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="5">5</SelectItem>
+                                        <SelectItem value="10">10</SelectItem>
+                                        <SelectItem value="15">15</SelectItem>
+                                        <SelectItem value="25">25</SelectItem>
+                                        <SelectItem value="50">50</SelectItem>
+                                        <SelectItem value="100">100</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
-                        ) : (
+                        </div>
+
+                        {/* Data Table */}
+                        <div className="rounded-md border overflow-x-auto">
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead className="w-[60px]">#</TableHead>
-                                        <TableHead>
+                                        <TableHead className="w-[60px] sticky left-0 bg-background border-r">#</TableHead>
+                                        <TableHead className="sticky left-[60px] bg-background border-r">
                                             <Button
                                                 variant="ghost"
-                                                className="h-auto p-0 font-semibold"
+                                                size="sm"
+                                                className="-ml-3 h-8 data-[state=open]:bg-accent"
                                                 onClick={() => handleSort('code')}
                                             >
                                                 Code
@@ -348,7 +397,8 @@ export default function DistrictsApi() {
                                         <TableHead>
                                             <Button
                                                 variant="ghost"
-                                                className="h-auto p-0 font-semibold"
+                                                size="sm"
+                                                className="-ml-3 h-8 data-[state=open]:bg-accent"
                                                 onClick={() => handleSort('name')}
                                             >
                                                 Name
@@ -362,7 +412,8 @@ export default function DistrictsApi() {
                                         <TableHead>
                                             <Button
                                                 variant="ghost"
-                                                className="h-auto p-0 font-semibold"
+                                                size="sm"
+                                                className="-ml-3 h-8 data-[state=open]:bg-accent"
                                                 onClick={() => handleSort('created_at')}
                                             >
                                                 Created
@@ -372,7 +423,8 @@ export default function DistrictsApi() {
                                         <TableHead>
                                             <Button
                                                 variant="ghost"
-                                                className="h-auto p-0 font-semibold"
+                                                size="sm"
+                                                className="-ml-3 h-8 data-[state=open]:bg-accent"
                                                 onClick={() => handleSort('updated_at')}
                                             >
                                                 Updated At
@@ -380,18 +432,49 @@ export default function DistrictsApi() {
                                             </Button>
                                         </TableHead>
                                         <TableHead>Updated By</TableHead>
-                                        <TableHead className="w-[100px]">Actions</TableHead>
+                                        <TableHead className="w-[120px] sticky right-0 bg-background border-l">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {districts.map((district, index) => (
-                                        <TableRow key={district.id}>
-                                            <TableCell className="text-center text-muted-foreground">
-                                                {(currentPage - 1) * perPage + index + 1}
+                                    {loading && districts.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={10} className="text-center py-12">
+                                                <RotateCcw className="h-8 w-8 animate-spin mx-auto mb-2" />
+                                                Loading districts...
                                             </TableCell>
-                                            <TableCell className="font-medium">
-                                                <Badge variant="outline">{district.code}</Badge>
+                                        </TableRow>
+                                    ) : districts.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={10} className="text-center py-12">
+                                                <div className="flex flex-col items-center">
+                                                    <MapPin className="h-12 w-12 text-muted-foreground mb-4" />
+                                                    <h3 className="text-lg font-semibold mb-2">No districts found</h3>
+                                                    <p className="text-muted-foreground mb-4">
+                                                        {hasActiveFilters
+                                                            ? 'No districts match your current filters.'
+                                                            : 'Get started by creating your first district.'
+                                                        }
+                                                    </p>
+                                                    {!hasActiveFilters && (
+                                                        <PermissionGuard permission="geo_district:write">
+                                                            <Button onClick={() => window.location.href = route('geography.districts.create')}>
+                                                                <Plus className="mr-2 h-4 w-4" />
+                                                                Create District
+                                                            </Button>
+                                                        </PermissionGuard>
+                                                    )}
+                                                </div>
                                             </TableCell>
+                                        </TableRow>
+                                    ) : (
+                                        districts.map((district, index) => (
+                                            <TableRow key={district.id}>
+                                                <TableCell className="text-center text-muted-foreground sticky left-0 bg-background border-r">
+                                                    {(currentPage - 1) * perPage + index + 1}
+                                                </TableCell>
+                                                <TableCell className="font-medium sticky left-[60px] bg-background border-r">
+                                                    <Badge variant="outline">{district.code}</Badge>
+                                                </TableCell>
                                             <TableCell>{district.name}</TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
@@ -471,27 +554,133 @@ export default function DistrictsApi() {
                                                 </div>
                                             </TableCell>
                                         </TableRow>
-                                    ))}
+                                        ))
+                                    )}
                                 </TableBody>
                             </Table>
-                        )}
+                        </div>
                     </CardContent>
 
-                    {total > 0 && (
-                        <ApiPagination
-                            meta={{
-                                current_page: currentPage,
-                                last_page: totalPages,
-                                per_page: perPage,
-                                total: total,
-                                from: from,
-                                to: to,
-                                links: [] // Not used in current implementation
-                            }}
-                            onPageChange={goToPage}
-                            onPerPageChange={updatePerPage}
-                        />
-                    )}
+                        {/* Pagination */}
+                        {totalPages > 1 && (
+                            <div className="flex items-center justify-between pt-4">
+                                <div className="text-sm text-muted-foreground">
+                                    Page {currentPage} of {totalPages} ({total} total results)
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => goToPage(currentPage - 1)}
+                                        disabled={currentPage === 1 || loading}
+                                    >
+                                        Previous
+                                    </Button>
+
+                                    {/* Page numbers */}
+                                    {(() => {
+                                        const pages = [];
+                                        const showEllipsis = totalPages > 7;
+
+                                        if (!showEllipsis) {
+                                            // Show all pages if 7 or fewer
+                                            for (let i = 1; i <= totalPages; i++) {
+                                                pages.push(
+                                                    <Button
+                                                        key={i}
+                                                        variant={currentPage === i ? "default" : "outline"}
+                                                        size="sm"
+                                                        onClick={() => goToPage(i)}
+                                                        disabled={loading}
+                                                        className="min-w-[36px]"
+                                                    >
+                                                        {i}
+                                                    </Button>
+                                                );
+                                            }
+                                        } else {
+                                            // Always show first page
+                                            pages.push(
+                                                <Button
+                                                    key={1}
+                                                    variant={currentPage === 1 ? "default" : "outline"}
+                                                    size="sm"
+                                                    onClick={() => goToPage(1)}
+                                                    disabled={loading}
+                                                    className="min-w-[36px]"
+                                                >
+                                                    1
+                                                </Button>
+                                            );
+
+                                            // Add ellipsis if current page is far from start
+                                            if (currentPage > 4) {
+                                                pages.push(
+                                                    <span key="ellipsis-start" className="px-2 text-muted-foreground">
+                                                        ...
+                                                    </span>
+                                                );
+                                            }
+
+                                            // Show pages around current page
+                                            const start = Math.max(2, currentPage - 1);
+                                            const end = Math.min(totalPages - 1, currentPage + 1);
+
+                                            for (let i = start; i <= end; i++) {
+                                                pages.push(
+                                                    <Button
+                                                        key={i}
+                                                        variant={currentPage === i ? "default" : "outline"}
+                                                        size="sm"
+                                                        onClick={() => goToPage(i)}
+                                                        disabled={loading}
+                                                        className="min-w-[36px]"
+                                                    >
+                                                        {i}
+                                                    </Button>
+                                                );
+                                            }
+
+                                            // Add ellipsis if current page is far from end
+                                            if (currentPage < totalPages - 3) {
+                                                pages.push(
+                                                    <span key="ellipsis-end" className="px-2 text-muted-foreground">
+                                                        ...
+                                                    </span>
+                                                );
+                                            }
+
+                                            // Always show last page
+                                            if (totalPages > 1) {
+                                                pages.push(
+                                                    <Button
+                                                        key={totalPages}
+                                                        variant={currentPage === totalPages ? "default" : "outline"}
+                                                        size="sm"
+                                                        onClick={() => goToPage(totalPages)}
+                                                        disabled={loading}
+                                                        className="min-w-[36px]"
+                                                    >
+                                                        {totalPages}
+                                                    </Button>
+                                                );
+                                            }
+                                        }
+
+                                        return pages;
+                                    })()}
+
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => goToPage(currentPage + 1)}
+                                        disabled={currentPage === totalPages || loading}
+                                    >
+                                        Next
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
                 </Card>
             </div>
 

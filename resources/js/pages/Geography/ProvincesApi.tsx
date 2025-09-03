@@ -90,6 +90,7 @@ export default function ProvincesApi() {
     });
 
     const [countries, setCountries] = useState<Country[]>([]);
+    const [countriesLoading, setCountriesLoading] = useState(false);
 
     const [activityLogModal, setActivityLogModal] = useState({
         isOpen: false,
@@ -100,9 +101,20 @@ export default function ProvincesApi() {
 
     // Load countries for filter dropdown
     React.useEffect(() => {
+        setCountriesLoading(true);
         apiService.get<Country[]>('/api/v1/geo/countries/list')
             .then(data => setCountries(data))
-            .catch(console.error);
+            .catch(console.error)
+            .finally(() => setCountriesLoading(false));
+    }, []);
+
+    // Refetch countries based on search query
+    const handleCountriesRefetch = useCallback((searchQuery: string) => {
+        setCountriesLoading(true);
+        apiService.get<Country[]>(`/api/v1/geo/countries/list?filter[name]=${encodeURIComponent(searchQuery)}`)
+            .then(data => setCountries(data))
+            .catch(console.error)
+            .finally(() => setCountriesLoading(false));
     }, []);
 
     // Convert countries to SearchableSelectItem format
@@ -292,6 +304,9 @@ export default function ProvincesApi() {
                                     onValueChange={(value) => handleFilterChange('country_id', value)}
                                     emptyLabel="All Countries"
                                     searchPlaceholder="Search countries..."
+                                    onRefetch={handleCountriesRefetch}
+                                    refetchDelay={500}
+                                    disabled={countriesLoading}
                                 />
                             </div>
 

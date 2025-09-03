@@ -26,6 +26,8 @@ interface SearchableSelectProps {
   emptyLabel?: string;
   searchPlaceholder?: string;
   showClearButton?: boolean;
+  onRefetch?: (searchQuery: string) => void;
+  refetchDelay?: number;
 }
 
 export function SearchableSelect({
@@ -38,9 +40,22 @@ export function SearchableSelect({
   emptyLabel = "All",
   searchPlaceholder = "Search...",
   showClearButton = true,
+  onRefetch,
+  refetchDelay = 300,
 }: SearchableSelectProps) {
   const [open, setOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
+
+  // Debounced refetch effect
+  React.useEffect(() => {
+    if (!onRefetch || !searchQuery.trim()) return;
+
+    const timeoutId = setTimeout(() => {
+      onRefetch(searchQuery);
+    }, refetchDelay);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, onRefetch, refetchDelay]);
 
   const filteredItems = React.useMemo(() => {
     if (!searchQuery.trim()) return items;
@@ -49,7 +64,7 @@ export function SearchableSelect({
     return items.filter(item => 
       item.label.toLowerCase().includes(query) ||
       item.value.toLowerCase().includes(query) ||
-      (item.searchText && item.searchText.toLowerCase().includes(query))
+      item.searchText?.toLowerCase().includes(query)
     );
   }, [items, searchQuery]);
 
@@ -84,7 +99,7 @@ export function SearchableSelect({
       >
         <SelectTrigger className={cn("w-full", className, showClearButton && value && value !== "" && "pr-8")}>
           <SelectValue placeholder={placeholder}>
-            {selectedItem ? selectedItem.label : (value === "" && emptyLabel) ? emptyLabel : value ? value : undefined}
+            {selectedItem?.label || (value === "" ? emptyLabel : value) || undefined}
           </SelectValue>
         </SelectTrigger>
       <SelectContent>
