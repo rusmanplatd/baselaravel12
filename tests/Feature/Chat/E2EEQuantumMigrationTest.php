@@ -633,8 +633,8 @@ function performQuantumMigration(string $conversationId, string $strategy): arra
             // In production, this would use quantum key encapsulation
             $dummyEncryptedKey = base64_encode(random_bytes(512)); // Simulate encrypted symmetric key
             
-            // Deactivate the old RSA key
-            $rsaKey->update(['is_active' => false]);
+            // Keep RSA key active for coexistence during migration
+            // With the new unique constraint including algorithm, both can be active
             
             // Create new quantum encryption key
             EncryptionKey::create([

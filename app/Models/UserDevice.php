@@ -27,6 +27,7 @@ class UserDevice extends Model
         'user_agent',
         'last_used_at',
         'is_trusted',
+        'trust_level',
         'is_active',
         'verified_at',
         'device_capabilities',

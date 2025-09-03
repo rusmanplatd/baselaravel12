@@ -158,14 +158,15 @@ class EncryptionKey extends Model
             $publicKey
         );
 
-        // Check if an active key already exists for this conversation-device pair
+        // Check if an active key already exists for this conversation-device-algorithm combination
         $existingActiveKey = self::where('conversation_id', $conversationId)
             ->where('device_id', $deviceId)
+            ->where('algorithm', 'RSA-4096-OAEP') // Current default algorithm
             ->where('is_active', true)
             ->first();
 
         if ($existingActiveKey) {
-            // Deactivate existing key to avoid unique constraint violation
+            // Deactivate existing key of same algorithm to avoid unique constraint violation
             $existingActiveKey->update(['is_active' => false]);
         }
 
