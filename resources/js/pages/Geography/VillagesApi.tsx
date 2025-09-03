@@ -110,6 +110,7 @@ export default function VillagesApi() {
     });
 
     const [districts, setDistricts] = useState<District[]>([]);
+    const [districtsLoading, setDistrictsLoading] = useState(false);
 
     const [activityLogModal, setActivityLogModal] = useState({
         isOpen: false,
@@ -120,9 +121,29 @@ export default function VillagesApi() {
 
     // Load districts for filter dropdown
     useEffect(() => {
+        setDistrictsLoading(true);
         apiService.get<District[]>('/api/v1/geo/districts/list')
             .then(data => setDistricts(data))
-            .catch(console.error);
+            .catch(console.error)
+            .finally(() => setDistrictsLoading(false));
+    }, []);
+
+    // Refetch districts based on search query
+    const handleDistrictsRefetch = useCallback((searchQuery: string) => {
+        setDistrictsLoading(true);
+        apiService.get<District[]>(`/api/v1/geo/districts/list?filter[name]=${encodeURIComponent(searchQuery)}`)
+            .then(data => setDistricts(data))
+            .catch(console.error)
+            .finally(() => setDistrictsLoading(false));
+    }, []);
+
+    // Clear districts filter and reload all districts
+    const handleDistrictsClear = useCallback(() => {
+        setDistrictsLoading(true);
+        apiService.get<District[]>('/api/v1/geo/districts/list')
+            .then(data => setDistricts(data))
+            .catch(console.error)
+            .finally(() => setDistrictsLoading(false));
     }, []);
 
     // Convert districts to SearchableSelectItem format
@@ -312,6 +333,10 @@ export default function VillagesApi() {
                                     onValueChange={(value) => handleFilterChange('district_id', value)}
                                     emptyLabel="All Districts"
                                     searchPlaceholder="Search districts..."
+                                    onRefetch={handleDistrictsRefetch}
+                                    onClear={handleDistrictsClear}
+                                    refetchDelay={500}
+                                    disabled={districtsLoading}
                                 />
                             </div>
 

@@ -117,6 +117,15 @@ export default function ProvincesApi() {
             .finally(() => setCountriesLoading(false));
     }, []);
 
+    // Clear countries filter and reload all countries
+    const handleCountriesClear = useCallback(() => {
+        setCountriesLoading(true);
+        apiService.get<Country[]>('/api/v1/geo/countries/list')
+            .then(data => setCountries(data))
+            .catch(console.error)
+            .finally(() => setCountriesLoading(false));
+    }, []);
+
     // Convert countries to SearchableSelectItem format
     const countrySelectItems: SearchableSelectItem[] = countries.map((country) => ({
         value: country.id,
@@ -305,6 +314,7 @@ export default function ProvincesApi() {
                                     emptyLabel="All Countries"
                                     searchPlaceholder="Search countries..."
                                     onRefetch={handleCountriesRefetch}
+                                    onClear={handleCountriesClear}
                                     refetchDelay={500}
                                     disabled={countriesLoading}
                                 />

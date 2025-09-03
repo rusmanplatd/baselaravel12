@@ -97,6 +97,7 @@ export default function CitiesApi() {
     });
 
     const [provinces, setProvinces] = useState<Province[]>([]);
+    const [provincesLoading, setProvincesLoading] = useState(false);
 
     const [activityLogModal, setActivityLogModal] = useState({
         isOpen: false,
@@ -107,9 +108,29 @@ export default function CitiesApi() {
 
     // Load provinces for filter dropdown
     useEffect(() => {
+        setProvincesLoading(true);
         apiService.get<Province[]>('/api/v1/geo/provinces/list')
             .then(data => setProvinces(data))
-            .catch(console.error);
+            .catch(console.error)
+            .finally(() => setProvincesLoading(false));
+    }, []);
+
+    // Refetch provinces based on search query
+    const handleProvincesRefetch = useCallback((searchQuery: string) => {
+        setProvincesLoading(true);
+        apiService.get<Province[]>(`/api/v1/geo/provinces/list?filter[name]=${encodeURIComponent(searchQuery)}`)
+            .then(data => setProvinces(data))
+            .catch(console.error)
+            .finally(() => setProvincesLoading(false));
+    }, []);
+
+    // Clear provinces filter and reload all provinces
+    const handleProvincesClear = useCallback(() => {
+        setProvincesLoading(true);
+        apiService.get<Province[]>('/api/v1/geo/provinces/list')
+            .then(data => setProvinces(data))
+            .catch(console.error)
+            .finally(() => setProvincesLoading(false));
     }, []);
 
     // Convert provinces to SearchableSelectItem format
@@ -300,6 +321,10 @@ export default function CitiesApi() {
                                     onValueChange={(value) => handleFilterChange('province_id', value)}
                                     emptyLabel="All Provinces"
                                     searchPlaceholder="Search provinces..."
+                                    onRefetch={handleProvincesRefetch}
+                                    onClear={handleProvincesClear}
+                                    refetchDelay={500}
+                                    disabled={provincesLoading}
                                 />
                             </div>
                             

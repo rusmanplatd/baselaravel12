@@ -28,6 +28,7 @@ interface SearchableSelectProps {
   showClearButton?: boolean;
   onRefetch?: (searchQuery: string) => void;
   refetchDelay?: number;
+  onClear?: () => void;
 }
 
 export function SearchableSelect({
@@ -42,6 +43,7 @@ export function SearchableSelect({
   showClearButton = true,
   onRefetch,
   refetchDelay = 300,
+  onClear,
 }: SearchableSelectProps) {
   const [open, setOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
@@ -79,12 +81,18 @@ export function SearchableSelect({
 
   const handleValueChange = (newValue: string) => {
     // Convert the special empty value back to empty string
-    const actualValue = newValue === "__empty__" ? "" : newValue;
+    const actualValue = newValue === "all" ? "" : newValue;
     onValueChange?.(actualValue);
+    
+    // If clearing (selecting empty option), trigger onClear callback
+    if (actualValue === "" && onClear) {
+      onClear();
+    }
   };
 
   const handleClear = () => {
     onValueChange?.("");
+    onClear?.();
     setOpen(false);
   };
 
@@ -93,7 +101,7 @@ export function SearchableSelect({
       <Select 
         open={open} 
         onOpenChange={handleOpenChange}
-        value={value === "" ? "__empty__" : value} 
+        value={value === "" ? "all" : value} 
         onValueChange={handleValueChange}
         disabled={disabled}
       >
@@ -115,7 +123,7 @@ export function SearchableSelect({
         </div>
         <div className="border-t border-border mx-1"></div>
         {emptyLabel && (
-          <SelectItem value="__empty__">
+          <SelectItem value="all">
             {emptyLabel}
           </SelectItem>
         )}

@@ -107,6 +107,7 @@ export default function DistrictsApi() {
 
 
     const [cities, setCities] = useState<City[]>([]);
+    const [citiesLoading, setCitiesLoading] = useState(false);
 
     const [activityLogModal, setActivityLogModal] = useState({
         isOpen: false,
@@ -117,9 +118,29 @@ export default function DistrictsApi() {
 
     // Load cities for filter dropdown
     useEffect(() => {
+        setCitiesLoading(true);
         apiService.get<City[]>('/api/v1/geo/cities/list')
             .then(data => setCities(data))
-            .catch(console.error);
+            .catch(console.error)
+            .finally(() => setCitiesLoading(false));
+    }, []);
+
+    // Refetch cities based on search query
+    const handleCitiesRefetch = useCallback((searchQuery: string) => {
+        setCitiesLoading(true);
+        apiService.get<City[]>(`/api/v1/geo/cities/list?filter[name]=${encodeURIComponent(searchQuery)}`)
+            .then(data => setCities(data))
+            .catch(console.error)
+            .finally(() => setCitiesLoading(false));
+    }, []);
+
+    // Clear cities filter and reload all cities
+    const handleCitiesClear = useCallback(() => {
+        setCitiesLoading(true);
+        apiService.get<City[]>('/api/v1/geo/cities/list')
+            .then(data => setCities(data))
+            .catch(console.error)
+            .finally(() => setCitiesLoading(false));
     }, []);
 
     // Convert cities to SearchableSelectItem format
@@ -310,6 +331,10 @@ export default function DistrictsApi() {
                                     onValueChange={(value) => handleFilterChange('city_id', value)}
                                     emptyLabel="All Cities"
                                     searchPlaceholder="Search cities..."
+                                    onRefetch={handleCitiesRefetch}
+                                    onClear={handleCitiesClear}
+                                    refetchDelay={500}
+                                    disabled={citiesLoading}
                                 />
                             </div>
                             
@@ -329,8 +354,7 @@ export default function DistrictsApi() {
                                                 <X className="h-3 w-3" />
                                             </Button>
                                         </Badge>
-                                    ))
-                                    )}
+                                    ))}
                                     <Button
                                         variant="ghost"
                                         size="sm"
