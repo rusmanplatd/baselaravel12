@@ -28,6 +28,8 @@ class UserDevice extends Model
         'last_used_at',
         'is_trusted',
         'trust_level',
+        'revoked_at',
+        'revocation_reason',
         'is_active',
         'verified_at',
         'device_capabilities',
@@ -49,6 +51,7 @@ class UserDevice extends Model
     protected $casts = [
         'last_used_at' => 'datetime',
         'verified_at' => 'datetime',
+        'revoked_at' => 'datetime',
         'auto_trust_expires_at' => 'datetime',
         'locked_until' => 'datetime',
         'last_key_rotation_at' => 'datetime',
@@ -86,6 +89,26 @@ class UserDevice extends Model
     public function outgoingKeyShares(): HasMany
     {
         return $this->hasMany(DeviceKeyShare::class, 'from_device_id');
+    }
+
+    /**
+     * Get capabilities as an alias for device_capabilities
+     */
+    public function getCapabilitiesAttribute(): ?string
+    {
+        $capabilities = $this->device_capabilities;
+        
+        // If it's already a string, return it
+        if (is_string($capabilities)) {
+            return $capabilities;
+        }
+        
+        // If it's an array, encode it to JSON string
+        if (is_array($capabilities)) {
+            return json_encode($capabilities);
+        }
+        
+        return null;
     }
 
     public function incomingKeyShares(): HasMany
