@@ -466,12 +466,12 @@ export default function OrganizationPositionsApi() {
                         </div>
 
                         {/* Data Table */}
-                        <div className="rounded-md border">
+                        <div className="rounded-md border overflow-x-auto">
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead className="w-[60px]">#</TableHead>
-                                        <TableHead className="w-[120px]">
+                                        <TableHead className="w-[60px] sticky left-0 bg-background border-r">#</TableHead>
+                                        <TableHead className="w-[120px] sticky left-[30px] bg-background border-r">
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
@@ -550,20 +550,20 @@ export default function OrganizationPositionsApi() {
                                             </Button>
                                         </TableHead>
                                         <TableHead>Updated By</TableHead>
-                                        <TableHead className="w-[120px]">Actions</TableHead>
+                                        <TableHead className="w-[120px] sticky right-0 bg-background border-l">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {loading && positions.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={10} className="text-center py-12">
+                                            <TableCell colSpan={11} className="text-center py-12">
                                                 <RotateCcw className="h-8 w-8 animate-spin mx-auto mb-2" />
                                                 Loading positions...
                                             </TableCell>
                                         </TableRow>
                                     ) : positions.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={10} className="text-center py-12">
+                                            <TableCell colSpan={11} className="text-center py-12">
                                                 <div className="flex flex-col items-center">
                                                     <Briefcase className="h-12 w-12 text-muted-foreground mb-4" />
                                                     <h3 className="text-lg font-semibold mb-2">No positions found</h3>
@@ -589,10 +589,10 @@ export default function OrganizationPositionsApi() {
                                     ) : (
                                         positions.map((position, index) => (
                                             <TableRow key={position.id} className={!position.is_active ? 'opacity-60' : ''}>
-                                                <TableCell className="text-center text-muted-foreground">
+                                                <TableCell className="text-center text-muted-foreground sticky left-0 bg-background border-r">
                                                     {(currentPage - 1) * perPage + index + 1}
                                                 </TableCell>
-                                                <TableCell className="font-medium">
+                                                <TableCell className="font-medium sticky left-[30px] bg-background border-r">
                                                     {position.position_code}
                                                 </TableCell>
                                                 <TableCell>
@@ -657,7 +657,7 @@ export default function OrganizationPositionsApi() {
                                                 <TableCell>
                                                     {position.updated_by ? position.updated_by.name : '-'}
                                                 </TableCell>
-                                                <TableCell>
+                                                <TableCell className="sticky right-0 bg-background border-l">
                                                     <div className="flex items-center gap-1">
                                                         <PermissionGuard permission="org_position:read">
                                                             <Link href={`/organization-positions/${position.id}`}>
@@ -709,15 +709,7 @@ export default function OrganizationPositionsApi() {
                                 <div className="text-sm text-muted-foreground">
                                     Page {currentPage} of {totalPages} ({total} total results)
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => goToPage(1)}
-                                        disabled={currentPage === 1 || loading}
-                                    >
-                                        First
-                                    </Button>
+                                <div className="flex items-center gap-1">
                                     <Button
                                         variant="outline"
                                         size="sm"
@@ -726,6 +718,100 @@ export default function OrganizationPositionsApi() {
                                     >
                                         Previous
                                     </Button>
+                                    
+                                    {/* Page numbers */}
+                                    {(() => {
+                                        const pages = [];
+                                        const showEllipsis = totalPages > 7;
+                                        
+                                        if (!showEllipsis) {
+                                            // Show all pages if 7 or fewer
+                                            for (let i = 1; i <= totalPages; i++) {
+                                                pages.push(
+                                                    <Button
+                                                        key={i}
+                                                        variant={currentPage === i ? "default" : "outline"}
+                                                        size="sm"
+                                                        onClick={() => goToPage(i)}
+                                                        disabled={loading}
+                                                        className="min-w-[36px]"
+                                                    >
+                                                        {i}
+                                                    </Button>
+                                                );
+                                            }
+                                        } else {
+                                            // Always show first page
+                                            pages.push(
+                                                <Button
+                                                    key={1}
+                                                    variant={currentPage === 1 ? "default" : "outline"}
+                                                    size="sm"
+                                                    onClick={() => goToPage(1)}
+                                                    disabled={loading}
+                                                    className="min-w-[36px]"
+                                                >
+                                                    1
+                                                </Button>
+                                            );
+                                            
+                                            // Add ellipsis if current page is far from start
+                                            if (currentPage > 4) {
+                                                pages.push(
+                                                    <span key="ellipsis-start" className="px-2 text-muted-foreground">
+                                                        ...
+                                                    </span>
+                                                );
+                                            }
+                                            
+                                            // Show pages around current page
+                                            const start = Math.max(2, currentPage - 1);
+                                            const end = Math.min(totalPages - 1, currentPage + 1);
+                                            
+                                            for (let i = start; i <= end; i++) {
+                                                pages.push(
+                                                    <Button
+                                                        key={i}
+                                                        variant={currentPage === i ? "default" : "outline"}
+                                                        size="sm"
+                                                        onClick={() => goToPage(i)}
+                                                        disabled={loading}
+                                                        className="min-w-[36px]"
+                                                    >
+                                                        {i}
+                                                    </Button>
+                                                );
+                                            }
+                                            
+                                            // Add ellipsis if current page is far from end
+                                            if (currentPage < totalPages - 3) {
+                                                pages.push(
+                                                    <span key="ellipsis-end" className="px-2 text-muted-foreground">
+                                                        ...
+                                                    </span>
+                                                );
+                                            }
+                                            
+                                            // Always show last page
+                                            if (totalPages > 1) {
+                                                pages.push(
+                                                    <Button
+                                                        key={totalPages}
+                                                        variant={currentPage === totalPages ? "default" : "outline"}
+                                                        size="sm"
+                                                        onClick={() => goToPage(totalPages)}
+                                                        disabled={loading}
+                                                        className="min-w-[36px]"
+                                                    >
+                                                        {totalPages}
+                                                    </Button>
+                                                );
+                                            }
+                                        }
+                                        
+                                        return pages;
+                                    })()}
+                                    
                                     <Button
                                         variant="outline"
                                         size="sm"
@@ -733,14 +819,6 @@ export default function OrganizationPositionsApi() {
                                         disabled={currentPage === totalPages || loading}
                                     >
                                         Next
-                                    </Button>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => goToPage(totalPages)}
-                                        disabled={currentPage === totalPages || loading}
-                                    >
-                                        Last
                                     </Button>
                                 </div>
                             </div>

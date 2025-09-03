@@ -7,6 +7,9 @@ Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');
 
+// Public API documentation
+Route::get('developer/api-reference', [\App\Http\Controllers\DeveloperController::class, 'apiReference'])->name('developer.api-reference');
+
 Route::middleware(['auth', 'verified', 'mfa.verified'])->group(function () {
     // Tenant management routes (before tenant middleware)
     Route::get('tenant/select', [\App\Http\Controllers\TenantController::class, 'select'])->name('tenant.select');

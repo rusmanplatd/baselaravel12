@@ -4,10 +4,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { NavigationMenu, NavigationMenuItem, NavigationMenuList, navigationMenuTriggerStyle } from '@/components/ui/navigation-menu';
+import { NotificationPanel } from '@/components/ui/notification-panel';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { UserMenuContent } from '@/components/user-menu-content';
 import { useInitials } from '@/hooks/use-initials';
+import { useNotifications } from '@/hooks/use-notifications';
 import { cn } from '@/lib/utils';
 import { type BreadcrumbItem, type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
@@ -46,6 +48,7 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
     const page = usePage<SharedData>();
     const { auth } = page.props;
     const getInitials = useInitials();
+    const { notifications, markAsRead, markAllAsRead, removeNotification } = useNotifications();
     return (
         <>
             <div className="border-b border-sidebar-border/80">
@@ -129,6 +132,12 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                             <Button variant="ghost" size="icon" className="group h-9 w-9 cursor-pointer">
                                 <Search className="!size-5 opacity-80 group-hover:opacity-100" />
                             </Button>
+                            <NotificationPanel
+                                notifications={notifications}
+                                onMarkAsRead={markAsRead}
+                                onMarkAllAsRead={markAllAsRead}
+                                onRemove={removeNotification}
+                            />
                             <div className="hidden lg:flex">
                                 {rightNavItems.map((item) => (
                                     <TooltipProvider key={item.title} delayDuration={0}>

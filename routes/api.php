@@ -461,4 +461,23 @@ Route::middleware('auth:api')->prefix('v1')->group(function () {
             ->name('show')
             ->middleware('throttle:60,1');
     });
+
+    // Notification API endpoints
+    Route::prefix('notifications')->name('api.notifications.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\NotificationController::class, 'index'])
+            ->name('index')
+            ->middleware('throttle:60,1');
+        Route::post('/', [\App\Http\Controllers\Api\NotificationController::class, 'store'])
+            ->name('store')
+            ->middleware('throttle:10,1');
+        Route::patch('{id}/read', [\App\Http\Controllers\Api\NotificationController::class, 'markAsRead'])
+            ->name('read')
+            ->middleware('throttle:60,1');
+        Route::patch('read-all', [\App\Http\Controllers\Api\NotificationController::class, 'markAllAsRead'])
+            ->name('read-all')
+            ->middleware('throttle:10,1');
+        Route::delete('{id}', [\App\Http\Controllers\Api\NotificationController::class, 'destroy'])
+            ->name('destroy')
+            ->middleware('throttle:60,1');
+    });
 });
