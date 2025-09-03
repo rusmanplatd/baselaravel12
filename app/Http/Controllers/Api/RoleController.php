@@ -14,6 +14,8 @@ use Knuckles\Scribe\Attributes\Endpoint;
 use Knuckles\Scribe\Attributes\Group;
 use Knuckles\Scribe\Attributes\QueryParam;
 use Knuckles\Scribe\Attributes\Response as ScribeResponse;
+use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\QueryBuilder;
 
 #[Group('Role & Permission Management')]
 class RoleController extends Controller
@@ -26,6 +28,10 @@ class RoleController extends Controller
     #[QueryParam('organization_id', 'integer', 'Filter by organization/team ID', false, 1)]
     #[QueryParam('search', 'string', 'Search roles by name', false, 'admin')]
     #[QueryParam('per_page', 'integer', 'Number of results per page', false, 15)]
+    #[QueryParam('sort', 'string', 'Sort field with optional - prefix for descending', false, 'name')]
+    #[QueryParam('filter[name]', 'string', 'Filter by role name', false, 'admin')]
+    #[QueryParam('filter[guard_name]', 'string', 'Filter by guard name', false, 'web')]
+    #[QueryParam('filter[team_id]', 'string', 'Filter by team/organization ID', false, '1')]
     #[ScribeResponse([
         'data' => [
             ['id' => 1, 'name' => 'admin', 'permissions' => [['name' => 'org:admin']]],
@@ -35,19 +41,27 @@ class RoleController extends Controller
     ])]
     public function index(Request $request)
     {
-        $query = Role::with('permissions');
+        $perPage = $request->input('per_page', 15);
+        $perPage = in_array($perPage, [5, 10, 15, 25, 50, 100]) ? $perPage : 15;
 
-        // Filter by organization/team
-        if ($request->has('organization_id')) {
-            $query->where('team_id', $request->organization_id);
-        }
-
-        // Search by name
-        if ($request->has('search')) {
-            $query->where('name', 'like', '%'.$request->search.'%');
-        }
-
-        $roles = $query->paginate($request->get('per_page', 15));
+        $roles = QueryBuilder::for(Role::class)
+            ->allowedFilters([
+                AllowedFilter::partial('name'),
+                AllowedFilter::exact('guard_name'),
+                AllowedFilter::exact('team_id'),
+            ])
+            ->allowedSorts([
+                'name',
+                'guard_name',
+                'users_count',
+                'created_at',
+                'updated_at',
+            ])
+            ->defaultSort('name')
+            ->with(['permissions', 'organization', 'updatedBy'])
+            ->withCount(['users'])
+            ->paginate($perPage)
+            ->appends($request->query());
 
         return response()->json($roles);
     }

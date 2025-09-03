@@ -718,12 +718,12 @@ export default function OrganizationPositionsApi() {
                                     >
                                         Previous
                                     </Button>
-                                    
+
                                     {/* Page numbers */}
                                     {(() => {
                                         const pages = [];
                                         const showEllipsis = totalPages > 7;
-                                        
+
                                         if (!showEllipsis) {
                                             // Show all pages if 7 or fewer
                                             for (let i = 1; i <= totalPages; i++) {
@@ -754,7 +754,7 @@ export default function OrganizationPositionsApi() {
                                                     1
                                                 </Button>
                                             );
-                                            
+
                                             // Add ellipsis if current page is far from start
                                             if (currentPage > 4) {
                                                 pages.push(
@@ -763,11 +763,11 @@ export default function OrganizationPositionsApi() {
                                                     </span>
                                                 );
                                             }
-                                            
+
                                             // Show pages around current page
                                             const start = Math.max(2, currentPage - 1);
                                             const end = Math.min(totalPages - 1, currentPage + 1);
-                                            
+
                                             for (let i = start; i <= end; i++) {
                                                 pages.push(
                                                     <Button
@@ -782,7 +782,7 @@ export default function OrganizationPositionsApi() {
                                                     </Button>
                                                 );
                                             }
-                                            
+
                                             // Add ellipsis if current page is far from end
                                             if (currentPage < totalPages - 3) {
                                                 pages.push(
@@ -791,7 +791,7 @@ export default function OrganizationPositionsApi() {
                                                     </span>
                                                 );
                                             }
-                                            
+
                                             // Always show last page
                                             if (totalPages > 1) {
                                                 pages.push(
@@ -808,10 +808,10 @@ export default function OrganizationPositionsApi() {
                                                 );
                                             }
                                         }
-                                        
+
                                         return pages;
                                     })()}
-                                    
+
                                     <Button
                                         variant="outline"
                                         size="sm"

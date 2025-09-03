@@ -2,8 +2,11 @@
 
 namespace App\Models\Auth;
 
+use App\Models\Organization;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Auth;
 use Spatie\Permission\Models\Role as SpatieRole;
 
@@ -45,5 +48,15 @@ class Role extends SpatieRole
                 $model->updated_by = Auth::id();
             }
         });
+    }
+
+    public function organization(): BelongsTo
+    {
+        return $this->belongsTo(Organization::class, 'team_id');
+    }
+
+    public function updatedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'updated_by');
     }
 }

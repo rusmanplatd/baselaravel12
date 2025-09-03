@@ -451,6 +451,9 @@ Route::middleware('auth:api')->prefix('v1')->group(function () {
 
     // User API endpoints
     Route::prefix('users')->name('api.users.')->group(function () {
+        Route::get('/', [UserApiController::class, 'index'])
+            ->name('index')
+            ->middleware('throttle:60,1');
         Route::get('search', [UserApiController::class, 'search'])
             ->name('search')
             ->middleware('throttle:30,1');

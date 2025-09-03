@@ -3,11 +3,27 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { SearchableSelect, type SearchableSelectItem } from '@/components/ui/searchable-select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useApiData } from '@/hooks/useApiData';
 import { PermissionGuard } from '@/components/permission-guard';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, Link, router } from '@inertiajs/react';
-import { Eye, Edit, Trash2, Search, Users } from 'lucide-react';
+import { Head, Link } from '@inertiajs/react';
+import {
+    Eye,
+    Edit,
+    Trash2,
+    Search,
+    Users,
+    ArrowUpDown,
+    SortAsc,
+    SortDesc,
+    X,
+    RotateCcw
+} from 'lucide-react';
 import { useState, useCallback } from 'react';
 import { debounce } from 'lodash';
 
@@ -27,51 +43,178 @@ interface User {
     updated_at: string;
 }
 
-interface Props {
-    users: {
-        data: User[];
-        current_page: number;
-        last_page: number;
-        per_page: number;
-        total: number;
-    };
-    filters: {
-        search?: string;
-    };
-}
+const verificationStatusOptions: SearchableSelectItem[] = [
+    { value: '1', label: 'Verified', searchText: 'verified email confirmed' },
+    { value: '0', label: 'Unverified', searchText: 'unverified email pending' },
+];
+
+const hasRolesOptions: SearchableSelectItem[] = [
+    { value: '1', label: 'Has Roles', searchText: 'has roles assigned' },
+    { value: '0', label: 'No Roles', searchText: 'no roles empty' },
+];
 
 const breadcrumbItems: BreadcrumbItem[] = [
     { href: route('dashboard'), title: 'Dashboard' },
     { href: '', title: 'Users' },
 ];
 
-export default function UsersIndex({ users, filters }: Props) {
-    const [searchValue, setSearchValue] = useState(filters.search || '');
+export default function UsersIndex() {
+    const [inputValues, setInputValues] = useState({
+        name: '',
+        email: '',
+        email_verified: '',
+        has_roles: '',
+    });
 
-    const debouncedSearch = useCallback(
-        debounce((value: string) => {
-            router.get(route('users.index'), {
-                ...filters,
-                search: value || undefined,
-            }, {
-                preserveState: true,
-                preserveScroll: true,
-            });
+    const {
+        data: users,
+        loading,
+        error,
+        sort,
+        perPage,
+        currentPage,
+        totalPages,
+        total,
+        from,
+        to,
+        updateFilter,
+        updateSort,
+        updatePerPage,
+        goToPage,
+        refresh,
+        clearFilters,
+    } = useApiData<User>({
+        endpoint: '/api/v1/users',
+        initialFilters: {
+            name: '',
+            email: '',
+            email_verified: '',
+            has_roles: '',
+        },
+        initialSort: 'name',
+        initialPerPage: 15,
+    });
+
+    // Debounced search input
+    const debouncedUpdateFilter = useCallback(
+        debounce((key: string, value: string) => {
+            updateFilter(key, value);
         }, 500),
-         
-        [filters]
+        [updateFilter]
     );
 
-    const handleSearch = (value: string) => {
-        setSearchValue(value);
-        debouncedSearch(value);
+    const handleFilterChange = (key: string, value: string) => {
+        setInputValues(prev => ({ ...prev, [key]: value }));
+        debouncedUpdateFilter(key, value);
     };
 
-    const handleDelete = (user: User) => {
-        if (confirm(`Are you sure you want to delete the user "${user.name}"?`)) {
-            router.delete(route('users.destroy', user.id));
+    const handleSort = (field: string) => {
+        updateSort(field);
+    };
+
+    const getSortIcon = (field: string) => {
+        if (sort === field) {
+            return <SortAsc className="h-4 w-4" />;
+        }
+        if (sort === `-${field}`) {
+            return <SortDesc className="h-4 w-4" />;
+        }
+        return <ArrowUpDown className="h-4 w-4 opacity-50" />;
+    };
+
+    const handleClearFilters = () => {
+        setInputValues({
+            name: '',
+            email: '',
+            email_verified: '',
+            has_roles: '',
+        });
+        clearFilters();
+    };
+
+    const handleDelete = async (user: User) => {
+        if (!confirm(`Are you sure you want to delete the user "${user.name}"?`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/users/${user.id}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
+                    'Accept': 'application/json',
+                },
+            });
+
+            if (response.ok) {
+                refresh();
+            } else {
+                const errorData = await response.json();
+                alert(errorData.message || 'Failed to delete user');
+            }
+        } catch (error) {
+            console.error('Error deleting user:', error);
+            alert('Failed to delete user');
         }
     };
+
+    const hasActiveFilters = Object.values(inputValues).some(value => value !== '');
+
+    const getActiveFilters = () => {
+        const activeFilters: Array<{key: string, value: string, label: string, displayValue: string}> = [];
+
+        Object.entries(inputValues).forEach(([key, value]) => {
+            if (value !== '') {
+                let label = '';
+                let displayValue = value;
+
+                switch (key) {
+                    case 'name':
+                        label = 'Name';
+                        break;
+                    case 'email':
+                        label = 'Email';
+                        break;
+                    case 'email_verified':
+                        label = 'Status';
+                        displayValue = value === '1' ? 'Verified' : 'Unverified';
+                        break;
+                    case 'has_roles':
+                        label = 'Roles';
+                        displayValue = value === '1' ? 'Has Roles' : 'No Roles';
+                        break;
+                }
+
+                activeFilters.push({ key, value, label, displayValue });
+            }
+        });
+
+        return activeFilters;
+    };
+
+    const removeFilter = (filterKey: string) => {
+        handleFilterChange(filterKey, '');
+    };
+
+    if (error) {
+        return (
+            <AppLayout breadcrumbs={breadcrumbItems}>
+                <Head title="Users" />
+                <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
+                    <Card>
+                        <CardContent className="pt-6">
+                            <div className="text-center text-destructive">
+                                Error loading users: {error}
+                                <Button onClick={refresh} className="ml-4">
+                                    Try Again
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            </AppLayout>
+        );
+    }
 
     return (
         <AppLayout breadcrumbs={breadcrumbItems}>
@@ -95,118 +238,405 @@ export default function UsersIndex({ users, filters }: Props) {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>All Users ({users.total})</CardTitle>
+                        <CardTitle>All Users ({total || 0})</CardTitle>
                         <CardDescription>
                             View and manage all system users and their roles
                         </CardDescription>
-                        
-                        <div className="flex gap-4">
-                            <div className="relative flex-1 max-w-sm">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                                <Input
-                                    placeholder="Search users..."
-                                    value={searchValue}
-                                    onChange={(e) => handleSearch(e.target.value)}
-                                    className="pl-10"
-                                />
-                            </div>
-                        </div>
                     </CardHeader>
                     <CardContent>
-                        {users.data.length === 0 ? (
-                            <div className="text-center py-8">
-                                <p className="text-muted-foreground">No users found</p>
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4 z-10" />
+                                    <Input
+                                        placeholder="Search by name..."
+                                        value={inputValues.name}
+                                        onChange={(e) => handleFilterChange('name', e.target.value)}
+                                        className="pl-10 pr-10"
+                                    />
+                                    {inputValues.name && (
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => handleFilterChange('name', '')}
+                                            className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 hover:bg-muted"
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </Button>
+                                    )}
+                                </div>
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4 z-10" />
+                                    <Input
+                                        placeholder="Search by email..."
+                                        value={inputValues.email}
+                                        onChange={(e) => handleFilterChange('email', e.target.value)}
+                                        className="pl-10 pr-10"
+                                    />
+                                    {inputValues.email && (
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => handleFilterChange('email', '')}
+                                            className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 hover:bg-muted"
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </Button>
+                                    )}
+                                </div>
+                                <SearchableSelect
+                                    placeholder="Email verification..."
+                                    items={verificationStatusOptions}
+                                    value={inputValues.email_verified}
+                                    onValueChange={(value) => handleFilterChange('email_verified', value)}
+                                    emptyLabel="All Statuses"
+                                    searchPlaceholder="Search status..."
+                                />
+                                <SearchableSelect
+                                    placeholder="Role assignment..."
+                                    items={hasRolesOptions}
+                                    value={inputValues.has_roles}
+                                    onValueChange={(value) => handleFilterChange('has_roles', value)}
+                                    emptyLabel="All Users"
+                                    searchPlaceholder="Search roles..."
+                                />
                             </div>
-                        ) : (
+
+                            {hasActiveFilters && (
+                                <div className="flex items-center gap-2 flex-wrap pt-2 border-t">
+                                    <span className="text-sm text-muted-foreground">Active filters:</span>
+                                    {getActiveFilters().map((filter) => (
+                                        <Badge key={filter.key} variant="secondary" className="gap-1">
+                                            {filter.label}: {filter.displayValue}
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => removeFilter(filter.key)}
+                                                className="h-4 w-4 p-0 hover:bg-transparent"
+                                            >
+                                                <X className="h-3 w-3" />
+                                            </Button>
+                                        </Badge>
+                                    ))}
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={handleClearFilters}
+                                        className="text-xs text-muted-foreground hover:text-destructive px-2 h-6"
+                                    >
+                                        Clear all
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+
+                        <Separator className="mb-6" />
+
+                        {/* Results Header */}
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-4">
+                                <div className="text-sm text-muted-foreground">
+                                    {loading ? 'Loading...' : `Showing ${from} to ${to} of ${total} results`}
+                                </div>
+                                {hasActiveFilters && (
+                                    <Button onClick={handleClearFilters} variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive">
+                                        <X className="mr-1 h-3 w-3" />
+                                        Clear all
+                                    </Button>
+                                )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Label htmlFor="per-page">Show:</Label>
+                                <Select value={perPage.toString()} onValueChange={(value) => updatePerPage(parseInt(value))}>
+                                    <SelectTrigger className="w-20">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="5">5</SelectItem>
+                                        <SelectItem value="10">10</SelectItem>
+                                        <SelectItem value="15">15</SelectItem>
+                                        <SelectItem value="25">25</SelectItem>
+                                        <SelectItem value="50">50</SelectItem>
+                                        <SelectItem value="100">100</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+
+                        {/* Data Table */}
+                        <div className="rounded-md border overflow-x-auto">
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>User</TableHead>
-                                        <TableHead>Email Status</TableHead>
-                                        <TableHead>Roles</TableHead>
-                                        <TableHead>Joined</TableHead>
-                                        <TableHead className="w-[100px]">Actions</TableHead>
+                                        <TableHead className="w-[60px]">#</TableHead>
+                                        <TableHead>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="-ml-3 h-8 data-[state=open]:bg-accent"
+                                                onClick={() => handleSort('name')}
+                                            >
+                                                User
+                                                {getSortIcon('name')}
+                                            </Button>
+                                        </TableHead>
+                                        <TableHead>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="-ml-3 h-8 data-[state=open]:bg-accent"
+                                                onClick={() => handleSort('email_verified_at')}
+                                            >
+                                                Email Status
+                                                {getSortIcon('email_verified_at')}
+                                            </Button>
+                                        </TableHead>
+                                        <TableHead>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="-ml-3 h-8 data-[state=open]:bg-accent"
+                                                onClick={() => handleSort('roles_count')}
+                                            >
+                                                Roles
+                                                {getSortIcon('roles_count')}
+                                            </Button>
+                                        </TableHead>
+                                        <TableHead>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="-ml-3 h-8 data-[state=open]:bg-accent"
+                                                onClick={() => handleSort('created_at')}
+                                            >
+                                                Joined
+                                                {getSortIcon('created_at')}
+                                            </Button>
+                                        </TableHead>
+                                        <TableHead className="w-[120px]">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {users.data.map((user) => (
-                                        <TableRow key={user.id}>
-                                            <TableCell className="font-medium">
-                                                <div>
-                                                    <p className="font-medium">{user.name}</p>
-                                                    <p className="text-sm text-muted-foreground">{user.email}</p>
-                                                </div>
+                                    {loading && users.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={6} className="text-center py-12">
+                                                <RotateCcw className="h-8 w-8 animate-spin mx-auto mb-2" />
+                                                Loading users...
                                             </TableCell>
-                                            <TableCell>
-                                                <Badge variant={user.email_verified_at ? "default" : "destructive"}>
-                                                    {user.email_verified_at ? 'Verified' : 'Unverified'}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="flex flex-wrap gap-1">
-                                                    {user.roles.length === 0 ? (
-                                                        <Badge variant="secondary">No roles</Badge>
-                                                    ) : (
-                                                        <>
-                                                            <Badge variant="secondary">
-                                                                {user.roles_count} roles
-                                                            </Badge>
-                                                            {user.roles.slice(0, 2).map((role) => (
-                                                                <Badge key={role.id} variant="outline" className="text-xs">
-                                                                    {role.name}
-                                                                </Badge>
-                                                            ))}
-                                                            {user.roles.length > 2 && (
-                                                                <Badge variant="outline" className="text-xs">
-                                                                    +{user.roles.length - 2} more
-                                                                </Badge>
-                                                            )}
-                                                        </>
-                                                    )}
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                {new Date(user.created_at).toLocaleDateString()}
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="flex items-center gap-2">
-                                                    <PermissionGuard permission="users.read">
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            asChild
-                                                        >
-                                                            <Link href={route('users.show', user.id)}>
-                                                                <Eye className="h-4 w-4" />
-                                                            </Link>
-                                                        </Button>
-                                                    </PermissionGuard>
-                                                    <PermissionGuard permission="users.update">
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            asChild
-                                                        >
-                                                            <Link href={route('users.edit', user.id)}>
-                                                                <Edit className="h-4 w-4" />
-                                                            </Link>
-                                                        </Button>
-                                                    </PermissionGuard>
-                                                    <PermissionGuard permission="users.delete">
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            onClick={() => handleDelete(user)}
-                                                        >
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
-                                                    </PermissionGuard>
+                                        </TableRow>
+                                    ) : users.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={6} className="text-center py-12">
+                                                <div className="flex flex-col items-center">
+                                                    <Users className="h-12 w-12 text-muted-foreground mb-4" />
+                                                    <h3 className="text-lg font-semibold mb-2">No users found</h3>
+                                                    <p className="text-muted-foreground mb-4">
+                                                        {hasActiveFilters
+                                                            ? 'No users match your current filters.'
+                                                            : 'No users have been registered yet.'
+                                                        }
+                                                    </p>
                                                 </div>
                                             </TableCell>
                                         </TableRow>
-                                    ))}
+                                    ) : (
+                                        users.map((user, index) => (
+                                            <TableRow key={user.id}>
+                                                <TableCell className="text-center text-muted-foreground">
+                                                    {(currentPage - 1) * perPage + index + 1}
+                                                </TableCell>
+                                                <TableCell className="font-medium">
+                                                    <div>
+                                                        <p className="font-medium">{user.name}</p>
+                                                        <p className="text-sm text-muted-foreground">{user.email}</p>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Badge variant={user.email_verified_at ? "default" : "destructive"}>
+                                                        {user.email_verified_at ? 'Verified' : 'Unverified'}
+                                                    </Badge>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {user.roles.length === 0 ? (
+                                                            <Badge variant="secondary">No roles</Badge>
+                                                        ) : (
+                                                            <>
+                                                                <Badge variant="secondary">
+                                                                    {user.roles_count} roles
+                                                                </Badge>
+                                                                {user.roles.slice(0, 2).map((role) => (
+                                                                    <Badge key={role.id} variant="outline" className="text-xs">
+                                                                        {role.name}
+                                                                    </Badge>
+                                                                ))}
+                                                                {user.roles.length > 2 && (
+                                                                    <Badge variant="outline" className="text-xs">
+                                                                        +{user.roles.length - 2} more
+                                                                    </Badge>
+                                                                )}
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    {new Date(user.created_at).toLocaleDateString()}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex items-center gap-1">
+                                                        <PermissionGuard permission="users.read">
+                                                            <Link href={route('users.show', user.id)}>
+                                                                <Button variant="ghost" size="sm" title="View Details">
+                                                                    <Eye className="h-4 w-4" />
+                                                                </Button>
+                                                            </Link>
+                                                        </PermissionGuard>
+                                                        <PermissionGuard permission="users.update">
+                                                            <Link href={route('users.edit', user.id)}>
+                                                                <Button variant="ghost" size="sm" title="Edit">
+                                                                    <Edit className="h-4 w-4" />
+                                                                </Button>
+                                                            </Link>
+                                                        </PermissionGuard>
+                                                        <PermissionGuard permission="users.delete">
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                title="Delete"
+                                                                onClick={() => handleDelete(user)}
+                                                                className="text-destructive hover:text-destructive"
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                        </PermissionGuard>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))
+                                    )}
                                 </TableBody>
                             </Table>
+                        </div>
+
+                        {/* Pagination */}
+                        {totalPages > 1 && (
+                            <div className="flex items-center justify-between pt-4">
+                                <div className="text-sm text-muted-foreground">
+                                    Page {currentPage} of {totalPages} ({total} total results)
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => goToPage(currentPage - 1)}
+                                        disabled={currentPage === 1 || loading}
+                                    >
+                                        Previous
+                                    </Button>
+
+                                    {/* Page numbers */}
+                                    {(() => {
+                                        const pages = [];
+                                        const showEllipsis = totalPages > 7;
+
+                                        if (!showEllipsis) {
+                                            // Show all pages if 7 or fewer
+                                            for (let i = 1; i <= totalPages; i++) {
+                                                pages.push(
+                                                    <Button
+                                                        key={i}
+                                                        variant={currentPage === i ? "default" : "outline"}
+                                                        size="sm"
+                                                        onClick={() => goToPage(i)}
+                                                        disabled={loading}
+                                                        className="min-w-[36px]"
+                                                    >
+                                                        {i}
+                                                    </Button>
+                                                );
+                                            }
+                                        } else {
+                                            // Always show first page
+                                            pages.push(
+                                                <Button
+                                                    key={1}
+                                                    variant={currentPage === 1 ? "default" : "outline"}
+                                                    size="sm"
+                                                    onClick={() => goToPage(1)}
+                                                    disabled={loading}
+                                                    className="min-w-[36px]"
+                                                >
+                                                    1
+                                                </Button>
+                                            );
+
+                                            // Add ellipsis if current page is far from start
+                                            if (currentPage > 4) {
+                                                pages.push(
+                                                    <span key="ellipsis-start" className="px-2 text-muted-foreground">
+                                                        ...
+                                                    </span>
+                                                );
+                                            }
+
+                                            // Show pages around current page
+                                            const start = Math.max(2, currentPage - 1);
+                                            const end = Math.min(totalPages - 1, currentPage + 1);
+
+                                            for (let i = start; i <= end; i++) {
+                                                pages.push(
+                                                    <Button
+                                                        key={i}
+                                                        variant={currentPage === i ? "default" : "outline"}
+                                                        size="sm"
+                                                        onClick={() => goToPage(i)}
+                                                        disabled={loading}
+                                                        className="min-w-[36px]"
+                                                    >
+                                                        {i}
+                                                    </Button>
+                                                );
+                                            }
+
+                                            // Add ellipsis if current page is far from end
+                                            if (currentPage < totalPages - 3) {
+                                                pages.push(
+                                                    <span key="ellipsis-end" className="px-2 text-muted-foreground">
+                                                        ...
+                                                    </span>
+                                                );
+                                            }
+
+                                            // Always show last page
+                                            if (totalPages > 1) {
+                                                pages.push(
+                                                    <Button
+                                                        key={totalPages}
+                                                        variant={currentPage === totalPages ? "default" : "outline"}
+                                                        size="sm"
+                                                        onClick={() => goToPage(totalPages)}
+                                                        disabled={loading}
+                                                        className="min-w-[36px]"
+                                                    >
+                                                        {totalPages}
+                                                    </Button>
+                                                );
+                                            }
+                                        }
+
+                                        return pages;
+                                    })()}
+
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => goToPage(currentPage + 1)}
+                                        disabled={currentPage === totalPages || loading}
+                                    >
+                                        Next
+                                    </Button>
+                                </div>
+                            </div>
                         )}
                     </CardContent>
                 </Card>
