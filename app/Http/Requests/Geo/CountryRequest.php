@@ -55,4 +55,31 @@ class CountryRequest extends FormRequest
             'phone_code' => 'phone code',
         ];
     }
+
+    /**
+     * Get the body parameters for API documentation.
+     *
+     * @return array<string, array>
+     */
+    public function bodyParameters(): array
+    {
+        return [
+            'code' => [
+                'description' => 'The country code',
+                'example' => 'ID',
+            ],
+            'name' => [
+                'description' => 'The country name',
+                'example' => 'Indonesia',
+            ],
+            'iso_code' => [
+                'description' => 'The ISO code for the country (optional)',
+                'example' => 'IDN',
+            ],
+            'phone_code' => [
+                'description' => 'The phone code for the country (optional)',
+                'example' => '+62',
+            ],
+        ];
+    }
 }

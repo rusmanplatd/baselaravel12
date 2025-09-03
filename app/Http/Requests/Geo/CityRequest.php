@@ -54,4 +54,27 @@ class CityRequest extends FormRequest
             'name' => 'city name',
         ];
     }
+
+    /**
+     * Get the body parameters for API documentation.
+     *
+     * @return array<string, array>
+     */
+    public function bodyParameters(): array
+    {
+        return [
+            'province_id' => [
+                'description' => 'The ID of the province this city belongs to',
+                'example' => '1101',
+            ],
+            'code' => [
+                'description' => 'The city code',
+                'example' => '110101',
+            ],
+            'name' => [
+                'description' => 'The city name',
+                'example' => 'Jakarta Selatan',
+            ],
+        ];
+    }
 }

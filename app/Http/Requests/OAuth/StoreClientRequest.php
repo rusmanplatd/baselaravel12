@@ -42,4 +42,59 @@ class StoreClientRequest extends FormRequest
             'logo_url' => 'sometimes|url',
         ];
     }
+
+    /**
+     * Get the body parameters for API documentation.
+     *
+     * @return array<string, array>
+     */
+    public function bodyParameters(): array
+    {
+        return [
+            'name' => [
+                'description' => 'The name of the OAuth client',
+                'example' => 'My Application',
+            ],
+            'redirect_uris' => [
+                'description' => 'Array of redirect URIs for the OAuth client',
+                'example' => ['https://myapp.com/oauth/callback'],
+            ],
+            'organization_id' => [
+                'description' => 'The ID of the organization this client belongs to',
+                'example' => 1,
+            ],
+            'client_type' => [
+                'description' => 'The type of OAuth client',
+                'example' => 'web',
+            ],
+            'user_access_scope' => [
+                'description' => 'Defines which users can access this client',
+                'example' => 'organization_members',
+            ],
+            'user_access_rules' => [
+                'description' => 'Custom rules for user access (required if user_access_scope is custom)',
+                'example' => [
+                    'user_ids' => [1, 2, 3],
+                    'roles' => ['admin', 'manager'],
+                    'email_domains' => ['company.com']
+                ],
+            ],
+            'allowed_scopes' => [
+                'description' => 'Array of OAuth scopes this client is allowed to request (optional)',
+                'example' => ['profile', 'email', 'organization.read'],
+            ],
+            'description' => [
+                'description' => 'Description of the OAuth client (optional)',
+                'example' => 'My application for managing users',
+            ],
+            'website' => [
+                'description' => 'Website URL of the client application (optional)',
+                'example' => 'https://myapp.com',
+            ],
+            'logo_url' => [
+                'description' => 'URL to the client application logo (optional)',
+                'example' => 'https://myapp.com/logo.png',
+            ],
+        ];
+    }
 }

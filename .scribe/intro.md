@@ -3,7 +3,7 @@
 Laravel 12 + React fullstack application API with OAuth 2.0/OIDC provider, organization management, and comprehensive authentication features.
 
 <aside>
-    <strong>Base URL</strong>: <code>http://localhost:8000</code>
+    <strong>Base URL</strong>: <code>http://localhost</code>
 </aside>
 
     This documentation aims to provide all the information you need to work with our API.

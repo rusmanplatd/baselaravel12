@@ -30,4 +30,35 @@ class UpdateClientRequest extends FormRequest
             'logo_url' => 'sometimes|url',
         ];
     }
+
+    /**
+     * Get the body parameters for API documentation.
+     *
+     * @return array<string, array>
+     */
+    public function bodyParameters(): array
+    {
+        return [
+            'name' => [
+                'description' => 'The name of the OAuth client (optional)',
+                'example' => 'Updated Application Name',
+            ],
+            'redirect_uris' => [
+                'description' => 'Array of redirect URIs for the OAuth client (optional)',
+                'example' => ['https://myapp.com/oauth/callback', 'https://myapp.com/oauth/callback2'],
+            ],
+            'description' => [
+                'description' => 'Description of the OAuth client (optional)',
+                'example' => 'Updated description for my application',
+            ],
+            'website' => [
+                'description' => 'Website URL of the client application (optional)',
+                'example' => 'https://myupdatedapp.com',
+            ],
+            'logo_url' => [
+                'description' => 'URL to the client application logo (optional)',
+                'example' => 'https://myupdatedapp.com/new-logo.png',
+            ],
+        ];
+    }
 }

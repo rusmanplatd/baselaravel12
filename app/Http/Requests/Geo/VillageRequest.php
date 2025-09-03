@@ -54,4 +54,27 @@ class VillageRequest extends FormRequest
             'name' => 'village name',
         ];
     }
+
+    /**
+     * Get the body parameters for API documentation.
+     *
+     * @return array<string, array>
+     */
+    public function bodyParameters(): array
+    {
+        return [
+            'district_id' => [
+                'description' => 'The ID of the district this village belongs to',
+                'example' => '110101010101',
+            ],
+            'code' => [
+                'description' => 'The village code',
+                'example' => '1101010101001',
+            ],
+            'name' => [
+                'description' => 'The village name',
+                'example' => 'Kebayoran Lama Utara',
+            ],
+        ];
+    }
 }

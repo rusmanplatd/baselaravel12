@@ -54,4 +54,27 @@ class ProvinceRequest extends FormRequest
             'name' => 'province name',
         ];
     }
+
+    /**
+     * Get the body parameters for API documentation.
+     *
+     * @return array<string, array>
+     */
+    public function bodyParameters(): array
+    {
+        return [
+            'country_id' => [
+                'description' => 'The ID of the country this province belongs to',
+                'example' => '01',
+            ],
+            'code' => [
+                'description' => 'The province code',
+                'example' => '11',
+            ],
+            'name' => [
+                'description' => 'The province name',
+                'example' => 'DKI Jakarta',
+            ],
+        ];
+    }
 }

@@ -54,4 +54,27 @@ class DistrictRequest extends FormRequest
             'name' => 'district name',
         ];
     }
+
+    /**
+     * Get the body parameters for API documentation.
+     *
+     * @return array<string, array>
+     */
+    public function bodyParameters(): array
+    {
+        return [
+            'city_id' => [
+                'description' => 'The ID of the city this district belongs to',
+                'example' => '11010101',
+            ],
+            'code' => [
+                'description' => 'The district code',
+                'example' => '1101010101',
+            ],
+            'name' => [
+                'description' => 'The district name',
+                'example' => 'Kebayoran Lama',
+            ],
+        ];
+    }
 }
