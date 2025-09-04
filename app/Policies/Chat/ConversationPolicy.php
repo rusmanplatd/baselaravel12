@@ -34,7 +34,17 @@ class ConversationPolicy
             ->where('user_id', $user->id)
             ->first();
 
-        return $participant && $participant->isAdmin() && $participant->isActive();
+        if (!$participant || !$participant->isActive()) {
+            return false;
+        }
+
+        // For direct conversations, any active participant can update (especially for encryption setup)
+        if ($conversation->type === 'direct') {
+            return true;
+        }
+
+        // For group conversations, only admins can update
+        return $participant->isAdmin();
     }
 
     public function delete(User $user, Conversation $conversation): bool
