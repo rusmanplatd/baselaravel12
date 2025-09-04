@@ -14,6 +14,7 @@ import DeviceManagementDialog from './DeviceManagementDialog';
 import AccessRevokedOverlay from './AccessRevokedOverlay';
 import E2EEStatusBadge from './E2EEStatusBadge';
 import MentionNotifications from './MentionNotification';
+import SignalProtocolSettings from '@/components/ui/signal-protocol-settings';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -63,6 +64,7 @@ export default function ChatLayout({ user, inviteCode }: ChatLayoutProps) {
   const [showNewDeviceSetup, setShowNewDeviceSetup] = useState(false);
   const [showNewDeviceManagement, setShowNewDeviceManagement] = useState(false);
   const [accessRevoked, setAccessRevoked] = useState(false);
+  const [showSignalSettings, setShowSignalSettings] = useState(false);
 
   // Handle invite code if provided
   useEffect(() => {
@@ -128,31 +130,51 @@ export default function ChatLayout({ user, inviteCode }: ChatLayoutProps) {
               )}
               
               {deviceRegistered && (
-                <Dialog open={showDeviceManagement} onOpenChange={setShowDeviceManagement}>
-                  <DialogTrigger asChild>
-                    <Button size="sm" variant="outline">
-                      <CogIcon className="h-4 w-4 mr-1" />
-                      Devices
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle>Device Management</DialogTitle>
-                      <DialogDescription>
-                        Manage your devices and encryption settings
-                      </DialogDescription>
-                    </DialogHeader>
-                    <DeviceManagement 
-                      onDeviceRegistered={() => {
-                        setShowDeviceManagement(false);
-                        toast.success('Device registered successfully');
-                      }}
-                      onDeviceRemoved={(deviceId) => {
-                        toast.success('Device removed successfully');
-                      }}
-                    />
-                  </DialogContent>
-                </Dialog>
+                <>
+                  <Dialog open={showSignalSettings} onOpenChange={setShowSignalSettings}>
+                    <DialogTrigger asChild>
+                      <Button size="sm" variant="outline">
+                        <ShieldCheckIcon className="h-4 w-4 mr-1" />
+                        Signal
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle>Signal Protocol Settings</DialogTitle>
+                        <DialogDescription>
+                          Manage Signal Protocol encryption, keys, and security settings
+                        </DialogDescription>
+                      </DialogHeader>
+                      <SignalProtocolSettings />
+                    </DialogContent>
+                  </Dialog>
+
+                  <Dialog open={showDeviceManagement} onOpenChange={setShowDeviceManagement}>
+                    <DialogTrigger asChild>
+                      <Button size="sm" variant="outline">
+                        <CogIcon className="h-4 w-4 mr-1" />
+                        Devices
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle>Device Management</DialogTitle>
+                        <DialogDescription>
+                          Manage your devices and encryption settings
+                        </DialogDescription>
+                      </DialogHeader>
+                      <DeviceManagement 
+                        onDeviceRegistered={() => {
+                          setShowDeviceManagement(false);
+                          toast.success('Device registered successfully');
+                        }}
+                        onDeviceRemoved={(deviceId) => {
+                          toast.success('Device removed successfully');
+                        }}
+                      />
+                    </DialogContent>
+                  </Dialog>
+                </>
               )}
             </div>
           </div>

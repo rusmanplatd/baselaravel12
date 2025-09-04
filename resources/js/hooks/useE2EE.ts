@@ -5,6 +5,9 @@ import { e2eeErrorRecovery } from '@/services/E2EEErrorRecovery';
 import { multiDeviceE2EEService } from '@/services/MultiDeviceE2EEService';
 import { doubleRatchetE2EE } from '@/services/DoubleRatchetE2EE';
 import { optimizedE2EEService } from '@/services/OptimizedE2EEService';
+import { signalSessionManager, type SessionInfo, type MessageDeliveryOptions } from '@/services/SignalSessionManager';
+import { signalProtocolService } from '@/services/SignalProtocolService';
+import { x3dhKeyAgreement } from '@/services/X3DHKeyAgreement';
 import { apiService } from '@/services/ApiService';
 import { toast } from 'sonner';
 import type { EncryptionKey, KeyPair, E2EEStatus, EncryptedMessageData, Message, Conversation, User } from '@/types/chat';
@@ -65,7 +68,7 @@ interface UseE2EEReturn {
   status: E2EEStatus;
   initializeE2EE: () => Promise<boolean>;
   generateKeyPair: () => Promise<KeyPair | null>;
-  encryptMessage: (message: string, conversationId: string) => Promise<EncryptedMessageData | null>;
+  encryptMessage: (message: string, conversationId: string, options?: MessageDeliveryOptions) => Promise<EncryptedMessageData | null>;
   decryptMessage: (encryptedData: EncryptedMessageData, conversationId: string) => Promise<string | null>;
   rotateConversationKey: (conversationId: string, reason?: string) => Promise<boolean>;
   setupConversationEncryption: (conversationId: string, participantPublicKeys: string[]) => Promise<boolean>;
@@ -77,6 +80,14 @@ interface UseE2EEReturn {
   getKeyStatistics: (conversationId: string) => Promise<any>;
   verifyKeyIntegrity: () => Promise<boolean>;
   validateHealth: () => Promise<any>;
+
+  // Signal Protocol features
+  establishSignalSession: (conversationId: string, userId: string) => Promise<SessionInfo>;
+  sendSignalMessage: (conversationId: string, userId: string, message: string, options?: MessageDeliveryOptions) => Promise<{ messageId: string; delivered: boolean }>;
+  getSessionInfo: (conversationId: string, userId: string) => SessionInfo | null;
+  verifyUserIdentity: (conversationId: string, userId: string, fingerprint: string) => Promise<boolean>;
+  getSignalStatistics: () => any;
+  rotateSignalSession: (conversationId: string, userId: string) => Promise<void>;
 
   // Message Scheduling
   scheduleMessage: (
@@ -206,6 +217,14 @@ export function useE2EE(userId?: string, currentConversationId?: string): UseE2E
     try {
       setError(null);
       
+      // Initialize Signal Protocol services first
+      try {
+        await signalSessionManager.initialize();
+        console.log('Signal Protocol initialized successfully');
+      } catch (signalError) {
+        console.warn('Signal Protocol initialization failed, falling back to legacy encryption:', signalError);
+      }
+      
       // Check if keys already exist
       const storedPrivateKey = userId ? await SecureStorage.getPrivateKey(userId) : null;
       
@@ -290,7 +309,7 @@ export function useE2EE(userId?: string, currentConversationId?: string): UseE2E
   const encryptMessage = useCallback(async (
     message: string,
     conversationId: string,
-    algorithm?: string
+    options?: MessageDeliveryOptions & { algorithm?: string }
   ): Promise<EncryptedMessageData | null> => {
     try {
       if (!userId) {
@@ -298,7 +317,7 @@ export function useE2EE(userId?: string, currentConversationId?: string): UseE2E
       }
 
       // If no algorithm specified, try to negotiate the strongest available
-      let targetAlgorithm = algorithm;
+      let targetAlgorithm = options?.algorithm;
       if (!targetAlgorithm) {
         try {
           // Try to get the strongest algorithm for this conversation
@@ -980,6 +999,137 @@ export function useE2EE(userId?: string, currentConversationId?: string): UseE2E
     }
   }, [validateHealth]);
 
+  // Signal Protocol methods
+
+  // Establish Signal session with a user
+  const establishSignalSession = useCallback(async (
+    conversationId: string,
+    userId: string
+  ): Promise<SessionInfo> => {
+    try {
+      const result = await signalSessionManager.establishSession(conversationId, userId);
+      const sessionInfo = signalSessionManager.getConversationSessions(conversationId);
+      
+      if (!sessionInfo) {
+        throw new Error('Failed to create session info');
+      }
+
+      // Find session for user
+      for (const session of sessionInfo.sessions.values()) {
+        if (session.userId === userId) {
+          return session;
+        }
+      }
+      
+      throw new Error('Session established but not found');
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Failed to establish Signal session');
+      handleE2EEError(error, 'signalSessionEstablishment', { conversationId });
+      throw error;
+    }
+  }, [handleE2EEError]);
+
+  // Send message using Signal Protocol
+  const sendSignalMessage = useCallback(async (
+    conversationId: string,
+    userId: string,
+    message: string,
+    options: MessageDeliveryOptions = {
+      priority: 'normal',
+      requiresReceipt: false,
+      forwardSecrecy: true,
+    }
+  ): Promise<{ messageId: string; delivered: boolean }> => {
+    try {
+      const result = await signalSessionManager.sendMessage(conversationId, userId, message, options);
+      return {
+        messageId: result.messageId,
+        delivered: result.deliveryStatus === 'sent',
+      };
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Failed to send Signal message');
+      handleE2EEError(error, 'signalMessageSend', { conversationId });
+      return {
+        messageId: '',
+        delivered: false,
+      };
+    }
+  }, [handleE2EEError]);
+
+  // Get session information
+  const getSessionInfo = useCallback((
+    conversationId: string,
+    userId: string
+  ): SessionInfo | null => {
+    const conversation = signalSessionManager.getConversationSessions(conversationId);
+    if (!conversation) return null;
+
+    for (const session of conversation.sessions.values()) {
+      if (session.userId === userId && session.isActive) {
+        return session;
+      }
+    }
+
+    return null;
+  }, []);
+
+  // Verify user identity using Signal Protocol
+  const verifyUserIdentity = useCallback(async (
+    conversationId: string,
+    userId: string,
+    fingerprint: string
+  ): Promise<boolean> => {
+    try {
+      const verified = await signalSessionManager.verifyUserIdentity(conversationId, userId, fingerprint);
+      
+      if (verified) {
+        toast.success('User identity verified successfully');
+      } else {
+        toast.error('User identity verification failed');
+      }
+      
+      return verified;
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Identity verification failed');
+      handleE2EEError(error, 'identityVerification', { conversationId });
+      return false;
+    }
+  }, [handleE2EEError]);
+
+  // Get Signal Protocol statistics
+  const getSignalStatistics = useCallback(() => {
+    try {
+      return {
+        sessionStats: signalSessionManager.getSessionStatistics(),
+        protocolStats: signalProtocolService.getStatistics(),
+        x3dhStats: x3dhKeyAgreement.getPreKeyStatistics(),
+      };
+    } catch (err) {
+      console.error('Failed to get Signal statistics:', err);
+      return null;
+    }
+  }, []);
+
+  // Rotate Signal session keys
+  const rotateSignalSession = useCallback(async (
+    conversationId: string,
+    userId: string
+  ): Promise<void> => {
+    try {
+      const sessionInfo = getSessionInfo(conversationId, userId);
+      if (!sessionInfo) {
+        throw new Error('No active session found');
+      }
+
+      await signalSessionManager.rotateSessionKeys(sessionInfo.sessionId);
+      toast.success('Session keys rotated successfully');
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Failed to rotate session keys');
+      handleE2EEError(error, 'sessionKeyRotation', { conversationId });
+      throw error;
+    }
+  }, [getSessionInfo, handleE2EEError]);
+
   // Initialize on mount
   useEffect(() => {
     if (userId && !isReady && !status.enabled) {
@@ -1004,6 +1154,14 @@ export function useE2EE(userId?: string, currentConversationId?: string): UseE2E
     getKeyStatistics,
     verifyKeyIntegrity,
     validateHealth,
+
+    // Signal Protocol features
+    establishSignalSession,
+    sendSignalMessage,
+    getSessionInfo,
+    verifyUserIdentity,
+    getSignalStatistics,
+    rotateSignalSession,
 
     // Message Scheduling
     scheduleMessage,

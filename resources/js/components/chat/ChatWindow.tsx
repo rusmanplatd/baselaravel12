@@ -8,6 +8,11 @@ import ThreadView from './ThreadView';
 import { format } from 'date-fns';
 import { ShieldCheckIcon, UserIcon, ChatBubbleLeftRightIcon, CogIcon } from '@heroicons/react/24/outline';
 import GroupSettings from './GroupSettings';
+import SignalMessageComposer from '@/components/ui/signal-message-composer';
+import SignalProtocolStatus from '@/components/ui/signal-protocol-status';
+import IdentityVerificationDialog from '@/components/ui/identity-verification-dialog';
+import { useE2EE } from '@/hooks/useE2EE';
+import type { MessageDeliveryOptions } from '@/services/SignalSessionManager';
 
 interface ChatWindowProps {
   conversation: Conversation;
@@ -57,6 +62,22 @@ export default function ChatWindow({
     expandedThreads: new Set(),
     selectedThread: undefined,
   });
+
+  // Signal Protocol integration
+  const {
+    isSignalEnabled,
+    sessionInfo,
+    signalStatistics,
+    healthScore,
+    establishSignalSession,
+    verifyUserIdentity,
+    rotateKeys,
+    refreshStatistics
+  } = useE2EE();
+
+  const [showSignalStatus, setShowSignalStatus] = useState(false);
+  const [showIdentityVerification, setShowIdentityVerification] = useState(false);
+  const [useSignalComposer, setUseSignalComposer] = useState(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -115,6 +136,35 @@ export default function ChatWindow({
     setShowThreadView(!showThreadView);
   };
 
+  // Signal Protocol message sending
+  const handleSignalMessage = async (content: string, options: MessageDeliveryOptions & { useSignal: boolean }) => {
+    try {
+      if (options.useSignal && isSignalEnabled) {
+        // Establish session if needed
+        const otherParticipant = conversation.participants?.find(p => p.user_id !== currentUser.id);
+        if (otherParticipant) {
+          await establishSignalSession(otherParticipant.user_id.toString(), otherParticipant.user_id.toString());
+        }
+      }
+      
+      await onSendMessage(content, {
+        ...options,
+        signalProtocol: options.useSignal,
+        messageId: crypto.randomUUID()
+      });
+    } catch (error) {
+      console.error('Failed to send Signal message:', error);
+      throw error;
+    }
+  };
+
+  // Check if we should automatically enable Signal Protocol
+  useEffect(() => {
+    if (conversation && isSignalEnabled && conversation.type === 'direct') {
+      setUseSignalComposer(true);
+    }
+  }, [conversation, isSignalEnabled]);
+
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
@@ -134,12 +184,30 @@ export default function ChatWindow({
               </h2>
               <p className="text-sm text-gray-500 flex items-center">
                 <ShieldCheckIcon className={`h-4 w-4 mr-1 ${encryptionReady ? 'text-green-500' : 'text-gray-400'}`} />
-                {encryptionReady ? 'End-to-end encrypted' : 'Encryption not available'} • {getConversationSubtitle()}
+                {isSignalEnabled && sessionInfo ? 'Signal Protocol' : encryptionReady ? 'End-to-end encrypted' : 'Encryption not available'} • {getConversationSubtitle()}
+                {isSignalEnabled && sessionInfo && (
+                  <button
+                    onClick={() => setShowSignalStatus(true)}
+                    className="ml-2 text-xs text-blue-600 hover:text-blue-800 underline"
+                  >
+                    View Status
+                  </button>
+                )}
               </p>
             </div>
           </div>
           
           <div className="flex items-center space-x-3">
+            {isSignalEnabled && sessionInfo?.verificationStatus === 'unverified' && (
+              <button
+                onClick={() => setShowIdentityVerification(true)}
+                className="px-3 py-1 bg-yellow-100 text-yellow-800 border border-yellow-200 rounded-full text-xs font-medium hover:bg-yellow-200"
+                title="Verify identity for enhanced security"
+              >
+                Verify Identity
+              </button>
+            )}
+            
             {hasThreads && (
               <button
                 onClick={handleToggleThreadView}
@@ -274,18 +342,90 @@ export default function ChatWindow({
       </div>
 
       {/* Message Input */}
-      <TiptapMessageEditor 
-        onSendMessage={onSendMessage}
-        replyingTo={replyingTo}
-        onCancelReply={() => onReplyClick?.(null)}
-        onTyping={async (isTyping: boolean) => {
-          console.log('Typing:', isTyping);
-        }}
-        encryptionReady={encryptionReady}
-        disabled={!encryptionReady}
-        participants={conversation.participants || []}
-        currentUserId={currentUser.id}
-      />
+      {useSignalComposer && isSignalEnabled ? (
+        <SignalMessageComposer
+          conversationId={conversation.id}
+          recipientUserId={conversation.type === 'direct' ? 
+            conversation.participants?.find(p => p.user_id !== currentUser.id)?.user_id.toString() 
+            : undefined
+          }
+          isSignalEnabled={isSignalEnabled}
+          sessionVerified={sessionInfo?.verificationStatus === 'verified'}
+          onSendMessage={handleSignalMessage}
+          placeholder="Type a message..."
+          disabled={!encryptionReady}
+        />
+      ) : (
+        <TiptapMessageEditor 
+          onSendMessage={onSendMessage}
+          replyingTo={replyingTo}
+          onCancelReply={() => onReplyClick?.(null)}
+          onTyping={async (isTyping: boolean) => {
+            console.log('Typing:', isTyping);
+          }}
+          encryptionReady={encryptionReady}
+          disabled={!encryptionReady}
+          participants={conversation.participants || []}
+          currentUserId={currentUser.id}
+        />
+      )}
+
+      {/* Signal Protocol Status Dialog */}
+      {showSignalStatus && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowSignalStatus(false)}>
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">Signal Protocol Status</h3>
+              <button
+                onClick={() => setShowSignalStatus(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ×
+              </button>
+            </div>
+            <SignalProtocolStatus
+              sessionInfo={sessionInfo}
+              statistics={signalStatistics}
+              healthScore={healthScore}
+              onVerifyIdentity={() => {
+                setShowSignalStatus(false);
+                setShowIdentityVerification(true);
+              }}
+              onRotateKeys={rotateKeys}
+              onRefreshStats={refreshStatistics}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Identity Verification Dialog */}
+      {showIdentityVerification && sessionInfo && (
+        <IdentityVerificationDialog
+          isOpen={showIdentityVerification}
+          onOpenChange={setShowIdentityVerification}
+          sessionInfo={sessionInfo}
+          remoteUserName={
+            conversation.type === 'direct'
+              ? conversation.participants?.find(p => p.user_id !== currentUser.id)?.user?.name || 'Unknown'
+              : 'Group Member'
+          }
+          localFingerprint={sessionInfo.localFingerprint || ''}
+          remoteFingerprint={sessionInfo.remoteFingerprint || ''}
+          onVerifyIdentity={async (fingerprint: string, method: string) => {
+            try {
+              const otherParticipant = conversation.participants?.find(p => p.user_id !== currentUser.id);
+              if (otherParticipant) {
+                const result = await verifyUserIdentity(otherParticipant.user_id.toString(), fingerprint);
+                return result;
+              }
+              return false;
+            } catch (error) {
+              console.error('Identity verification failed:', error);
+              return false;
+            }
+          }}
+        />
+      )}
     </div>
   );
 }

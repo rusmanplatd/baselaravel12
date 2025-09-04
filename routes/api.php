@@ -364,6 +364,43 @@ Route::middleware('auth:api')->prefix('v1')->group(function () {
         Route::get('channels/{channel}/members', [\App\Http\Controllers\Api\Chat\ChannelController::class, 'getMembers'])
             ->name('channels.members')
             ->middleware('throttle:60,1');
+
+        // Signal Protocol endpoints
+        Route::prefix('signal')->name('signal.')->group(function () {
+            // X3DH Prekey Bundle Management
+            Route::post('upload-bundle', [\App\Http\Controllers\Api\Chat\SignalProtocolController::class, 'uploadPreKeyBundle'])
+                ->name('upload-bundle')
+                ->middleware('throttle:10,1');
+            
+            Route::get('prekey-bundle/{userId}', [\App\Http\Controllers\Api\Chat\SignalProtocolController::class, 'getPreKeyBundle'])
+                ->name('get-prekey-bundle')
+                ->where('userId', '[0-9]+')
+                ->middleware('throttle:30,1');
+
+            // Message Sending
+            Route::post('messages/send', [\App\Http\Controllers\Api\Chat\SignalProtocolController::class, 'sendSignalMessage'])
+                ->name('send-message')
+                ->middleware('throttle:60,1');
+
+            // Session Management
+            Route::get('sessions/info', [\App\Http\Controllers\Api\Chat\SignalProtocolController::class, 'getSessionInfo'])
+                ->name('session-info')
+                ->middleware('throttle:60,1');
+            
+            Route::post('sessions/rotate-keys', [\App\Http\Controllers\Api\Chat\SignalProtocolController::class, 'rotateSessionKeys'])
+                ->name('rotate-session-keys')
+                ->middleware('throttle:10,1');
+
+            // Identity Verification
+            Route::post('identity/verify', [\App\Http\Controllers\Api\Chat\SignalProtocolController::class, 'verifyUserIdentity'])
+                ->name('verify-identity')
+                ->middleware('throttle:10,1');
+
+            // Statistics and Monitoring
+            Route::get('statistics', [\App\Http\Controllers\Api\Chat\SignalProtocolController::class, 'getStatistics'])
+                ->name('statistics')
+                ->middleware('throttle:30,1');
+        });
     });
 
     // Key Recovery and Backup Management
