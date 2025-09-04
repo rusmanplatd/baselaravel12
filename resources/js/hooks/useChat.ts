@@ -109,33 +109,57 @@ export function useChat(user: any): UseChatReturn {
       // Check if device is already registered
       const deviceId = await multiDeviceE2EEService.getDeviceId();
       if (deviceId) {
-        setDeviceRegistered(true);
-        setEncryptionReady(true);
-        setE2eeStatus({
-          enabled: true,
-          keyGenerated: true,
-          conversationKeysReady: true,
-          version: '2.0'
-        });
-
-        // Load security status
+        // Try to register device if not already registered
         try {
-          const securityStatus = await multiDeviceE2EEService.getDeviceSecurityReport();
-          setDeviceSecurityStatus(securityStatus);
-        } catch (err) {
-          console.warn('Could not load device security status:', err);
+          const result = await multiDeviceE2EEService.registerDevice();
+          if (result.device) {
+            console.log('Device registered successfully:', result.device);
+            setDeviceRegistered(true);
+            setEncryptionReady(true);
+            setE2eeStatus({
+              enabled: true,
+              keyGenerated: true,
+              conversationKeysReady: true,
+              version: '2.0'
+            });
+
+            // Load security status
+            try {
+              const securityStatus = await multiDeviceE2EEService.getDeviceSecurityReport();
+              setDeviceSecurityStatus(securityStatus);
+            } catch (err) {
+              console.warn('Could not load device security status:', err);
+            }
+            return;
+          }
+        } catch (registrationError: any) {
+          // If device is already registered, that's fine
+          if (registrationError.message?.includes('already registered') || 
+              registrationError.status === 409) {
+            console.log('Device already registered');
+            setDeviceRegistered(true);
+            setEncryptionReady(true);
+            setE2eeStatus({
+              enabled: true,
+              keyGenerated: true,
+              conversationKeysReady: true,
+              version: '2.0'
+            });
+            return;
+          }
+          console.warn('Device registration failed:', registrationError);
         }
-      } else {
-        // Device needs registration
-        setDeviceRegistered(false);
-        setEncryptionReady(false);
-        setE2eeStatus({
-          enabled: false,
-          keyGenerated: false,
-          conversationKeysReady: false,
-          version: '2.0'
-        });
       }
+      
+      // Device needs initialization/registration
+      setDeviceRegistered(false);
+      setEncryptionReady(false);
+      setE2eeStatus({
+        enabled: false,
+        keyGenerated: false,
+        conversationKeysReady: false,
+        version: '2.0'
+      });
     } catch (error) {
       console.error('Failed to initialize encryption:', error);
       setError('Failed to initialize encryption');
@@ -157,6 +181,7 @@ export function useChat(user: any): UseChatReturn {
     try {
       const result = await multiDeviceE2EEService.registerDevice();
       if (result.device) {
+        console.log('Device registered successfully:', result.device);
         setDeviceRegistered(true);
         setEncryptionReady(true);
         setE2eeStatus({
@@ -166,7 +191,20 @@ export function useChat(user: any): UseChatReturn {
           version: '2.0'
         });
       }
-    } catch (error) {
+    } catch (error: any) {
+      // If device is already registered, that's fine
+      if (error.message?.includes('already registered') || error.status === 409) {
+        console.log('Device already registered');
+        setDeviceRegistered(true);
+        setEncryptionReady(true);
+        setE2eeStatus({
+          enabled: true,
+          keyGenerated: true,
+          conversationKeysReady: true,
+          version: '2.0'
+        });
+        return;
+      }
       console.error('Failed to register device:', error);
       throw error;
     }
@@ -188,9 +226,14 @@ export function useChat(user: any): UseChatReturn {
       rawMessages.map(async (message) => {
         if (message.encrypted_content) {
           try {
+            // Parse encrypted content if it's a string
+            const encryptedMessage = typeof message.encrypted_content === 'string' 
+              ? JSON.parse(message.encrypted_content)
+              : message.encrypted_content;
+              
             const decryptedContent = await multiDeviceE2EEService.decryptMessage(
-              message.encrypted_content,
-              message.conversation_id
+              message.conversation_id,
+              encryptedMessage
             );
 
             return {
@@ -233,8 +276,9 @@ export function useChat(user: any): UseChatReturn {
       // Setup conversation encryption first
       await setupConversationEncryption(conversationId);
 
-      const rawMessages = await apiService.get<Message[]>(`/api/v1/chat/conversations/${conversationId}/messages`);
-      const decryptedMessages = await decryptMessages(rawMessages.reverse() || []);
+      const response = await apiService.get<{ data?: Message[]; messages?: Message[] } | Message[]>(`/api/v1/chat/conversations/${conversationId}/messages`);
+      const rawMessages = Array.isArray(response) ? response : (response.data || response.messages || []);
+      const decryptedMessages = await decryptMessages(rawMessages.reverse());
       setMessages(decryptedMessages);
     } catch (err) {
       handleError(err);
@@ -285,40 +329,74 @@ export function useChat(user: any): UseChatReturn {
       // Handle encryption
       if (encryptionReady && deviceRegistered && content) {
         try {
+          // Convert HTML to plain text if needed
+          const plainTextContent = content.replace(/<[^>]*>/g, '').trim();
+          if (!plainTextContent) {
+            console.warn('No plain text content to encrypt');
+            return;
+          }
+
           const encryptedData = await multiDeviceE2EEService.encryptMessage(
-            content,
-            activeConversation.id
+            activeConversation.id,
+            plainTextContent
           );
 
-          if (encryptedData) {
+          if (encryptedData && encryptedData.data) {
             messageData = {
               ...messageData,
-              encrypted_content: encryptedData.data,
+              encrypted_content: {
+                data: encryptedData.data,
+                iv: encryptedData.iv,
+                hmac: encryptedData.hmac,
+                auth_data: encryptedData.authData,
+              },
               content_hash: encryptedData.hash,
             };
           } else {
-            messageData.content = content;
+            console.error('Encryption failed, no encrypted data returned');
+            return;
           }
         } catch (error) {
-          console.error('Failed to encrypt message, sending plaintext:', error);
-          messageData.content = content;
+          console.error('Failed to encrypt message:', error);
+          throw error;
         }
-      } else if (content) {
-        messageData.content = content;
+      } else {
+        if (!encryptionReady || !deviceRegistered) {
+          setError('Device encryption is not ready. Please set up your device first.');
+          return;
+        }
+        console.warn('No content provided');
+        return;
       }
 
       const rawMessage = await apiService.post<Message>(`/api/v1/chat/conversations/${activeConversation.id}/messages`, messageData);
 
       // Decrypt the returned message for display
-      const decryptedMessage = encryptionReady && deviceRegistered && rawMessage.encrypted_content
-        ? {
+      let decryptedMessage = rawMessage;
+      if (encryptionReady && deviceRegistered && rawMessage.encrypted_content) {
+        try {
+          // Parse encrypted content if it's a string
+          const encryptedMessage = typeof rawMessage.encrypted_content === 'string' 
+            ? JSON.parse(rawMessage.encrypted_content)
+            : rawMessage.encrypted_content;
+            
+          const decryptedContent = await multiDeviceE2EEService.decryptMessage(
+            rawMessage.conversation_id,
+            encryptedMessage
+          );
+          
+          decryptedMessage = {
             ...rawMessage,
-            content: await multiDeviceE2EEService.decryptMessage(
-              rawMessage.encrypted_content,
-              rawMessage.conversation_id
-            ) || content
-          }
-        : rawMessage;
+            content: decryptedContent || content
+          };
+        } catch (error) {
+          console.error('Failed to decrypt returned message:', error);
+          decryptedMessage = {
+            ...rawMessage,
+            content: content // Use original content as fallback
+          };
+        }
+      }
 
       setMessages(prev => [...prev, decryptedMessage]);
 
