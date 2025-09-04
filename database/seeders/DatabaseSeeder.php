@@ -95,6 +95,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             PassportOAuthSeeder::class,
             PersonalAccessTokenSeeder::class,
+            OAuthClientSeeder::class, // Ensure OAuth clients are properly seeded
         ]);
 
         // Assign roles to demo users

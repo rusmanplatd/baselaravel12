@@ -40,6 +40,54 @@ class Client extends PassportClient
         'logo_url',
     ];
 
+    /**
+     * Boot the model.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($client) {
+            // Set default user_access_scope if not provided
+            if (empty($client->user_access_scope)) {
+                $client->user_access_scope = 'all_users';
+            }
+
+            // Set default organization_id from first organization if not provided
+            if (empty($client->organization_id)) {
+                $defaultOrganization = Organization::first();
+                if ($defaultOrganization) {
+                    $client->organization_id = $defaultOrganization->id;
+                }
+            }
+
+            // Set default client_type if not provided
+            if (empty($client->client_type)) {
+                $client->client_type = 'confidential';
+            }
+
+            // Set default revoked status if not provided
+            if ($client->revoked === null) {
+                $client->revoked = false;
+            }
+        });
+
+        static::saving(function ($client) {
+            // Validate required fields before saving
+            if (empty($client->user_access_scope)) {
+                throw new \InvalidArgumentException('user_access_scope is required for OAuth clients');
+            }
+
+            if (empty($client->organization_id)) {
+                throw new \InvalidArgumentException('organization_id is required for OAuth clients');
+            }
+
+            if (!in_array($client->user_access_scope, ['all_users', 'organization_members', 'custom'])) {
+                throw new \InvalidArgumentException('Invalid user_access_scope. Must be one of: all_users, organization_members, custom');
+            }
+        });
+    }
+
     protected function casts(): array
     {
         return array_merge(parent::casts(), [

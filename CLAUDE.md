@@ -311,6 +311,14 @@ E2E test categories:
 - **E2E Testing**: Playwright with comprehensive chat and encryption test suites
 - **Specialized Testing**: Custom scripts for E2EE validation and performance benchmarking
 
+### Data Manipulation Rules
+- **NEVER use `php artisan tinker`**: Tinker should never be used for data manipulation, seeding, or any database operations
+- **Use proper seeders**: For database seeding, always use `php artisan db:seed` with proper seeder classes in `database/seeders/`
+- **Use migrations**: For schema changes, create and run migrations with `php artisan make:migration` and `php artisan migrate`
+- **Use factories**: For test data generation, use model factories with `php artisan make:factory`
+- **Use Artisan commands**: Create custom Artisan commands for one-time data operations with `php artisan make:command`
+- **Production safety**: Tinker poses significant risks in production environments and should be avoided entirely
+
 ### Key Configuration Files
 - `composer.json` - Development scripts and dependency management
 - `docker-compose.yml` - Local development environment
