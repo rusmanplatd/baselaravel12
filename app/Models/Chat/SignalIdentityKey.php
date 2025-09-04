@@ -20,11 +20,18 @@ class SignalIdentityKey extends Model
         'private_key_encrypted',
         'key_fingerprint',
         'is_active',
+        'quantum_public_key',
+        'quantum_private_key_encrypted',
+        'quantum_algorithm',
+        'is_quantum_capable',
+        'quantum_version',
     ];
 
     protected $casts = [
         'registration_id' => 'integer',
         'is_active' => 'boolean',
+        'is_quantum_capable' => 'boolean',
+        'quantum_version' => 'integer',
     ];
 
     /**
@@ -70,7 +77,7 @@ class SignalIdentityKey extends Model
     /**
      * Get the current active identity key for a user.
      */
-    public static function getCurrentForUser(int $userId): ?self
+    public static function getCurrentForUser(string $userId): ?self
     {
         return self::where('user_id', $userId)
             ->where('is_active', true)
@@ -88,5 +95,44 @@ class SignalIdentityKey extends Model
         } while (self::where('registration_id', $registrationId)->exists());
 
         return $registrationId;
+    }
+
+    /**
+     * Check if this key supports quantum algorithms.
+     */
+    public function isQuantumCapable(): bool
+    {
+        return $this->is_quantum_capable && !empty($this->quantum_algorithm);
+    }
+
+    /**
+     * Get supported algorithms for this identity key.
+     */
+    public function getSupportedAlgorithms(): array
+    {
+        $algorithms = ['Curve25519', 'P-256', 'RSA-4096-OAEP', 'RSA-2048-OAEP'];
+        
+        if ($this->isQuantumCapable()) {
+            $quantumAlgorithms = [];
+            
+            switch ($this->quantum_algorithm) {
+                case 'ML-KEM-1024':
+                    $quantumAlgorithms = ['ML-KEM-1024', 'ML-KEM-768', 'ML-KEM-512'];
+                    break;
+                case 'ML-KEM-768':
+                    $quantumAlgorithms = ['ML-KEM-768', 'ML-KEM-512'];
+                    break;
+                case 'ML-KEM-512':
+                    $quantumAlgorithms = ['ML-KEM-512'];
+                    break;
+            }
+            
+            if (!empty($quantumAlgorithms)) {
+                $quantumAlgorithms[] = 'HYBRID-RSA4096-MLKEM768';
+                $algorithms = array_merge($quantumAlgorithms, $algorithms);
+            }
+        }
+        
+        return $algorithms;
     }
 }

@@ -20,6 +20,10 @@ class SignalOnetimePrekey extends Model
         'is_used',
         'used_at',
         'used_by_user_id',
+        'quantum_public_key',
+        'quantum_private_key_encrypted',
+        'quantum_algorithm',
+        'is_quantum_capable',
     ];
 
     protected $casts = [
@@ -27,6 +31,7 @@ class SignalOnetimePrekey extends Model
         'is_used' => 'boolean',
         'used_at' => 'datetime',
         'used_by_user_id' => 'integer',
+        'is_quantum_capable' => 'boolean',
     ];
 
     /**
@@ -69,7 +74,7 @@ class SignalOnetimePrekey extends Model
     /**
      * Mark this prekey as used.
      */
-    public function markAsUsed(int $usedByUserId): bool
+    public function markAsUsed(string $usedByUserId): bool
     {
         return $this->update([
             'is_used' => true,
@@ -81,7 +86,7 @@ class SignalOnetimePrekey extends Model
     /**
      * Generate a new key ID for a user.
      */
-    public static function generateKeyId(int $userId): int
+    public static function generateKeyId(string $userId): int
     {
         $latestKey = self::where('user_id', $userId)
             ->orderBy('key_id', 'desc')
@@ -93,7 +98,7 @@ class SignalOnetimePrekey extends Model
     /**
      * Generate multiple key IDs for batch creation.
      */
-    public static function generateKeyIds(int $userId, int $count): array
+    public static function generateKeyIds(string $userId, int $count): array
     {
         $latestKey = self::where('user_id', $userId)
             ->orderBy('key_id', 'desc')
@@ -107,7 +112,7 @@ class SignalOnetimePrekey extends Model
     /**
      * Clean up used prekeys older than specified days.
      */
-    public static function cleanupUsedKeys(int $userId, int $olderThanDays = 30): int
+    public static function cleanupUsedKeys(string $userId, int $olderThanDays = 30): int
     {
         return self::where('user_id', $userId)
             ->where('is_used', true)

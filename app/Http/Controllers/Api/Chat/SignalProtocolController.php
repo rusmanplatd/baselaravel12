@@ -46,6 +46,7 @@ class SignalProtocolController extends Controller
                 ['user_id' => $user->id, 'registration_id' => $request->registration_id],
                 [
                     'public_key' => $request->identity_key,
+                    'private_key_encrypted' => '', // This would normally be encrypted and stored securely
                     'key_fingerprint' => SignalIdentityKey::calculateFingerprint($request->identity_key),
                     'is_active' => true,
                 ]
@@ -61,6 +62,7 @@ class SignalProtocolController extends Controller
                 'user_id' => $user->id,
                 'key_id' => $request->signed_pre_key['key_id'],
                 'public_key' => $request->signed_pre_key['public_key'],
+                'private_key_encrypted' => '', // This would normally be encrypted and stored securely
                 'signature' => $request->signed_pre_key['signature'],
                 'generated_at' => now(),
                 'is_active' => true,
@@ -69,19 +71,16 @@ class SignalProtocolController extends Controller
             // Deactivate old signed prekeys (keep latest 3)
             SignalSignedPrekey::cleanupOldKeys($user->id, 3);
 
-            // Create one-time prekeys
-            $onetimePrekeys = collect($request->one_time_pre_keys)->map(function ($prekey) use ($user) {
-                return [
+            // Create one-time prekeys (use individual create calls to generate ULIDs)
+            foreach ($request->one_time_pre_keys as $prekey) {
+                SignalOnetimePrekey::create([
                     'user_id' => $user->id,
                     'key_id' => $prekey['key_id'],
                     'public_key' => $prekey['public_key'],
+                    'private_key_encrypted' => '', // This would normally be encrypted and stored securely
                     'is_used' => false,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ];
-            });
-
-            SignalOnetimePrekey::insert($onetimePrekeys->toArray());
+                ]);
+            }
 
             // Update user stats
             $this->updateUserStats($user->id);
@@ -112,7 +111,7 @@ class SignalProtocolController extends Controller
     /**
      * Get prekey bundle for a specific user.
      */
-    public function getPreKeyBundle(Request $request, int $userId): JsonResponse
+    public function getPreKeyBundle(Request $request, string $userId): JsonResponse
     {
         $targetUser = User::findOrFail($userId);
         $requestingUser = Auth::user();
@@ -196,8 +195,8 @@ class SignalProtocolController extends Controller
     public function sendSignalMessage(Request $request): JsonResponse
     {
         $request->validate([
-            'conversation_id' => 'required|integer|exists:conversations,id',
-            'recipient_user_id' => 'required|integer|exists:users,id',
+            'conversation_id' => 'required|string|exists:chat_conversations,id',
+            'recipient_user_id' => 'required|string|exists:sys_users,id',
             'signal_message' => 'required|array',
             'signal_message.type' => 'required|in:prekey,normal',
             'signal_message.version' => 'required|integer',
@@ -309,8 +308,8 @@ class SignalProtocolController extends Controller
     public function getSessionInfo(Request $request): JsonResponse
     {
         $request->validate([
-            'conversation_id' => 'required|integer|exists:conversations,id',
-            'user_id' => 'required|integer|exists:users,id',
+            'conversation_id' => 'required|string|exists:chat_conversations,id',
+            'user_id' => 'required|string|exists:sys_users,id',
         ]);
 
         $user = Auth::user();
@@ -352,8 +351,8 @@ class SignalProtocolController extends Controller
     public function verifyUserIdentity(Request $request): JsonResponse
     {
         $request->validate([
-            'conversation_id' => 'required|integer|exists:conversations,id',
-            'user_id' => 'required|integer|exists:users,id',
+            'conversation_id' => 'required|string|exists:chat_conversations,id',
+            'user_id' => 'required|string|exists:sys_users,id',
             'fingerprint' => 'required|string|size:64', // SHA-256 hex
             'verification_method' => 'required|in:fingerprint,qr_code,safety_numbers',
         ]);

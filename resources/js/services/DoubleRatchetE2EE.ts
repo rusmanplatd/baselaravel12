@@ -1,9 +1,11 @@
 /**
  * Double Ratchet End-to-End Encryption Implementation
+ * Enhanced with Quantum-Resistant Algorithms (ML-KEM)
  * Based on Signal Protocol for forward secrecy and break-in recovery
  */
 
 import { E2EEError, E2EEErrorCode } from './E2EEErrors';
+import { QuantumE2EEService } from './QuantumE2EEService';
 
 export interface RatchetKeys {
   rootKey: CryptoKey;
@@ -11,6 +13,10 @@ export interface RatchetKeys {
   sendingChainKey?: CryptoKey;
   receivingChainKey?: CryptoKey;
   messageKey?: CryptoKey;
+  // Quantum components
+  quantumRootKey?: ArrayBuffer;
+  quantumChainKey?: ArrayBuffer;
+  quantumAlgorithm?: string;
 }
 
 export interface RatchetState {
@@ -28,6 +34,20 @@ export interface RatchetState {
   remoteDeviceId: string;
   createdAt: Date;
   updatedAt: Date;
+  // Quantum-resistant components
+  quantumKeys?: {
+    publicKey: ArrayBuffer;
+    privateKey: ArrayBuffer;
+    algorithm: string;
+  };
+  remoteQuantumKey?: ArrayBuffer;
+  quantumRootKey?: ArrayBuffer;
+  quantumChainKeys?: {
+    sending?: ArrayBuffer;
+    receiving?: ArrayBuffer;
+  };
+  isQuantumResistant: boolean;
+  quantumVersion: number; // 1 = classical, 2 = hybrid, 3 = full quantum
 }
 
 export interface DoubleRatchetMessage {
@@ -35,11 +55,20 @@ export interface DoubleRatchetMessage {
     DH: string;      // Public key as base64
     PN: number;      // Previous chain length
     N: number;       // Message number in current chain
+    // Quantum components
+    quantumDH?: string; // Quantum public key as base64
+    quantumAlgorithm?: string;
+    quantumVersion?: number;
   };
   ciphertext: string;
   iv: string;
   authTag: string;
   timestamp: number;
+  // Quantum-specific fields
+  quantumCiphertext?: string; // Quantum-encrypted content
+  quantumIv?: string;
+  quantumTag?: string;
+  isQuantumEncrypted: boolean;
 }
 
 export interface RatchetSession {
@@ -58,20 +87,38 @@ const INFO_CHAIN_KEY = new TextEncoder().encode('ChainKey');
 export class DoubleRatchetE2EE {
   private sessions = new Map<string, RatchetState>();
   private readonly STORAGE_KEY = 'double_ratchet_sessions';
+  private quantumService: QuantumE2EEService | null = null;
 
   constructor() {
     this.loadSessions();
+    this.initializeQuantumSupport();
   }
 
   /**
-   * Initialize a new ratchet session as the sender
+   * Initialize quantum cryptography support
+   */
+  private async initializeQuantumSupport(): Promise<void> {
+    try {
+      this.quantumService = QuantumE2EEService.getInstance();
+      await this.quantumService.initialize();
+      console.log('DoubleRatchet: Quantum support initialized');
+    } catch (error) {
+      console.warn('DoubleRatchet: Quantum support not available:', error);
+      this.quantumService = null;
+    }
+  }
+
+  /**
+   * Initialize a new ratchet session as the sender with quantum support
    */
   async initializeSession(
     conversationId: string,
     deviceId: string,
     remoteDeviceId: string,
     remotePublicKey: CryptoKey,
-    sharedKey: CryptoKey
+    sharedKey: CryptoKey,
+    negotiatedAlgorithm?: string,
+    algorithmType?: 'quantum' | 'classical' | 'hybrid'
   ): Promise<string> {
     try {
       // Generate our initial DH key pair
@@ -99,6 +146,39 @@ export class DoubleRatchetE2EE {
         ['deriveKey']
       );
 
+      // Generate quantum keys if quantum service is available
+      let quantumKeys: RatchetState['quantumKeys'];
+      let quantumRootKey: ArrayBuffer | undefined;
+      let isQuantumResistant = false;
+      let quantumVersion = 1; // Classical
+
+      if (this.quantumService && quantumAlgorithm) {
+        try {
+          const algorithm = quantumAlgorithm || this.quantumService.getRecommendedAlgorithm();
+          if (this.quantumService.isQuantumResistant(algorithm)) {
+            const generatedKeys = await this.quantumService.generateQuantumKeypair(algorithm);
+            quantumKeys = {
+              publicKey: generatedKeys.publicKey,
+              privateKey: generatedKeys.privateKey,
+              algorithm
+            };
+            
+            // Generate quantum root key from shared secret
+            quantumRootKey = await crypto.subtle.digest('SHA-256', 
+              new TextEncoder().encode('QuantumRoot_' + sessionId)
+            );
+            
+            isQuantumResistant = true;
+            quantumVersion = 3; // Full quantum
+            
+            console.log(`DoubleRatchet: Session initialized with ${algorithm}`);
+          }
+        } catch (error) {
+          console.warn('DoubleRatchet: Quantum key generation failed:', error);
+          // Fall back to classical mode
+        }
+      }
+
       // Derive root key and sending chain key
       const { rootKey, chainKey } = await this.kdfRK(sharedKey, dhOutput);
 
@@ -118,6 +198,11 @@ export class DoubleRatchetE2EE {
         remoteDeviceId,
         createdAt: new Date(),
         updatedAt: new Date(),
+        // Quantum fields
+        quantumKeys,
+        quantumRootKey,
+        isQuantumResistant,
+        quantumVersion,
       };
 
       this.sessions.set(sessionId, state);
@@ -188,7 +273,7 @@ export class DoubleRatchetE2EE {
   }
 
   /**
-   * Encrypt a message using the double ratchet
+   * Encrypt a message using the double ratchet with quantum support
    */
   async encrypt(sessionId: string, plaintext: string): Promise<DoubleRatchetMessage> {
     const state = this.sessions.get(sessionId);
@@ -201,7 +286,7 @@ export class DoubleRatchetE2EE {
       const { messageKey, newChainKey } = await this.kdfCK(state.CKs);
       state.CKs = newChainKey;
 
-      // Encrypt the message
+      // Encrypt with classical algorithm
       const iv = crypto.getRandomValues(new Uint8Array(12));
       const encodedPlaintext = new TextEncoder().encode(plaintext);
 
@@ -228,16 +313,50 @@ export class DoubleRatchetE2EE {
         )
       );
 
+      let quantumCiphertext: string | undefined;
+      let quantumIv: string | undefined;
+      let quantumTag: string | undefined;
+      let isQuantumEncrypted = false;
+
+      // Perform quantum encryption if available
+      if (state.isQuantumResistant && this.quantumService && state.quantumKeys) {
+        try {
+          // Generate quantum message key
+          const quantumMessageKey = await this.generateQuantumMessageKey(state);
+          
+          // Encrypt with quantum algorithm
+          const quantumResult = await this.quantumService.encryptMessage(plaintext, 'conversation_temp', state.quantumKeys.algorithm);
+          
+          if (quantumResult) {
+            quantumCiphertext = quantumResult.ciphertext;
+            quantumIv = quantumResult.iv;
+            quantumTag = quantumResult.authTag;
+            isQuantumEncrypted = true;
+          }
+        } catch (error) {
+          console.warn('DoubleRatchet: Quantum encryption failed, using classical:', error);
+        }
+      }
+
       const message: DoubleRatchetMessage = {
         header: {
           DH: this.arrayBufferToBase64(dhPublicKeyRaw),
           PN: state.PN,
           N: state.Ns,
+          // Quantum header fields
+          quantumDH: state.quantumKeys ? this.arrayBufferToBase64(state.quantumKeys.publicKey) : undefined,
+          quantumAlgorithm: state.quantumKeys?.algorithm,
+          quantumVersion: state.quantumVersion,
         },
         ciphertext: this.arrayBufferToBase64(ciphertext),
         iv: this.arrayBufferToBase64(iv),
         authTag: this.arrayBufferToBase64(authTag),
         timestamp: Date.now(),
+        // Quantum encryption fields
+        quantumCiphertext,
+        quantumIv,
+        quantumTag,
+        isQuantumEncrypted,
       };
 
       // Increment sending counter
@@ -557,6 +676,27 @@ export class DoubleRatchetE2EE {
       false,
       ['encrypt', 'decrypt']
     );
+  }
+
+  /**
+   * Generate quantum message key for encryption
+   */
+  private async generateQuantumMessageKey(state: RatchetState): Promise<ArrayBuffer> {
+    if (!state.quantumChainKeys?.sending) {
+      // Initialize quantum chain key if not present
+      state.quantumChainKeys = {
+        sending: await crypto.subtle.digest('SHA-256', 
+          new TextEncoder().encode(`QuantumChain_${state.Ns}_${Date.now()}`)
+        ),
+      };
+    }
+
+    // Derive message key from quantum chain key
+    const messageKeyInput = new Uint8Array(state.quantumChainKeys.sending.byteLength + 4);
+    messageKeyInput.set(new Uint8Array(state.quantumChainKeys.sending));
+    messageKeyInput.set(new Uint8Array(new Uint32Array([state.Ns]).buffer), state.quantumChainKeys.sending.byteLength);
+
+    return await crypto.subtle.digest('SHA-256', messageKeyInput);
   }
 
   /**

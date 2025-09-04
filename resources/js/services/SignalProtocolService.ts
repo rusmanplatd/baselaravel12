@@ -1,18 +1,21 @@
 /**
  * Signal Protocol Service
- * Combines X3DH key agreement with Double Ratchet for complete Signal-like E2EE
+ * Enhanced Signal Protocol implementation with Quantum-Resistant Cryptography
  * 
  * Features:
- * - X3DH key agreement for initial key exchange
- * - Double Ratchet for forward secrecy and break-in recovery
- * - Session management
+ * - X3DH key agreement for initial key exchange (with ML-KEM support)
+ * - Double Ratchet for forward secrecy and break-in recovery (quantum-enhanced)
+ * - Session management with quantum algorithm negotiation
  * - Message ordering and out-of-order delivery
- * - Key rotation and maintenance
- * - Signal-style message format
+ * - Key rotation and maintenance (classical + quantum)
+ * - Signal-style message format with quantum extensions
+ * - Hybrid encryption mode for compatibility
+ * - Multi-device support with quantum synchronization
  */
 
 import { x3dhKeyAgreement, type PreKeyBundle, type X3DHResult } from './X3DHKeyAgreement';
 import { doubleRatchetE2EE, type DoubleRatchetMessage, type RatchetState } from './DoubleRatchetE2EE';
+import { QuantumE2EEService } from './QuantumE2EEService';
 import { E2EEError } from './E2EEErrors';
 import { apiService } from './ApiService';
 
@@ -26,6 +29,12 @@ export interface SignalMessage {
   identityKey?: string;
   message: DoubleRatchetMessage;
   timestamp: number;
+  // Quantum-enhanced fields
+  quantumBaseKey?: string; // Quantum ephemeral key
+  quantumIdentityKey?: string;
+  quantumAlgorithm?: string;
+  isQuantumResistant: boolean;
+  encryptionVersion: number; // 1=classical, 2=hybrid, 3=full quantum
 }
 
 export interface SignalSession {
@@ -54,6 +63,7 @@ export class SignalProtocolService {
   private readonly STORAGE_KEY = 'signal_protocol_state';
   private readonly MESSAGE_QUEUE_SIZE = 1000;
   private readonly SESSION_TIMEOUT = 30 * 24 * 60 * 60 * 1000; // 30 days
+  private quantumService: QuantumE2EEService | null = null;
 
   constructor() {
     this.state = {
@@ -62,6 +72,21 @@ export class SignalProtocolService {
       pendingPreKeyMessages: new Map(),
     };
     this.loadState();
+    this.initializeQuantumSupport();
+  }
+
+  /**
+   * Initialize quantum cryptography support
+   */
+  private async initializeQuantumSupport(): Promise<void> {
+    try {
+      this.quantumService = QuantumE2EEService.getInstance();
+      await this.quantumService.initialize();
+      console.log('SignalProtocol: Quantum support initialized');
+    } catch (error) {
+      console.warn('SignalProtocol: Quantum support not available:', error);
+      this.quantumService = null;
+    }
   }
 
   /**

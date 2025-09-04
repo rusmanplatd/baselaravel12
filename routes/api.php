@@ -374,7 +374,7 @@ Route::middleware('auth:api')->prefix('v1')->group(function () {
             
             Route::get('prekey-bundle/{userId}', [\App\Http\Controllers\Api\Chat\SignalProtocolController::class, 'getPreKeyBundle'])
                 ->name('get-prekey-bundle')
-                ->where('userId', '[0-9]+')
+                ->where('userId', '[0-9A-Za-z]+')
                 ->middleware('throttle:30,1');
 
             // Message Sending

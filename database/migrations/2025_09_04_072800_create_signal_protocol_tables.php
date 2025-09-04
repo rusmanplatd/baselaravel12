@@ -20,12 +20,20 @@ return new class extends Migration
             $table->text('private_key_encrypted'); // Encrypted private key
             $table->string('key_fingerprint', 64); // SHA-256 hash of public key
             $table->boolean('is_active')->default(true);
+            // Quantum-resistant key fields
+            $table->text('quantum_public_key')->nullable(); // ML-KEM public key
+            $table->text('quantum_private_key_encrypted')->nullable(); // Encrypted ML-KEM private key
+            $table->string('quantum_algorithm')->nullable(); // ML-KEM-512, ML-KEM-768, ML-KEM-1024
+            $table->boolean('is_quantum_capable')->default(false);
+            $table->integer('quantum_version')->default(1); // 1=classical, 2=hybrid, 3=quantum
             $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('sys_users')->onDelete('cascade');
 
             $table->index(['user_id', 'is_active']);
+            $table->index(['user_id', 'is_quantum_capable']);
             $table->index('registration_id');
+            $table->index('quantum_algorithm');
         });
 
         // Signed prekeys table
@@ -38,12 +46,18 @@ return new class extends Migration
             $table->text('signature'); // Base64 encoded signature
             $table->timestamp('generated_at');
             $table->boolean('is_active')->default(true);
+            // Quantum-resistant key fields
+            $table->text('quantum_public_key')->nullable(); // ML-KEM public key
+            $table->text('quantum_private_key_encrypted')->nullable(); // Encrypted ML-KEM private key
+            $table->string('quantum_algorithm')->nullable(); // ML-KEM algorithm
+            $table->boolean('is_quantum_capable')->default(false);
             $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('sys_users')->onDelete('cascade');
 
             $table->unique(['user_id', 'key_id']);
             $table->index(['user_id', 'is_active']);
+            $table->index(['user_id', 'is_quantum_capable']);
         });
 
         // One-time prekeys table
@@ -56,6 +70,11 @@ return new class extends Migration
             $table->boolean('is_used')->default(false);
             $table->timestamp('used_at')->nullable();
             $table->ulid('used_by_user_id')->nullable();
+            // Quantum-resistant key fields
+            $table->text('quantum_public_key')->nullable(); // ML-KEM public key
+            $table->text('quantum_private_key_encrypted')->nullable(); // Encrypted ML-KEM private key
+            $table->string('quantum_algorithm')->nullable(); // ML-KEM algorithm
+            $table->boolean('is_quantum_capable')->default(false);
             $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('sys_users')->onDelete('cascade');
@@ -63,6 +82,7 @@ return new class extends Migration
 
             $table->unique(['user_id', 'key_id']);
             $table->index(['user_id', 'is_used']);
+            $table->index(['user_id', 'is_quantum_capable']);
             $table->index('is_used');
         });
 
@@ -70,11 +90,11 @@ return new class extends Migration
         Schema::create('signal_sessions', function (Blueprint $table) {
             $table->ulid('id')->primary();
             $table->string('session_id')->unique();
-            $table->ulid('conversation_id')->constrained('chat_conversations')->onDelete('cascade');
-            $table->ulid('local_user_id')->constrained('sys_users')->onDelete('cascade');
-            $table->ulid('remote_user_id')->constrained('sys_users')->onDelete('cascade');
-            $table->ulid('local_device_id')->nullable()->constrained('user_devices')->onDelete('cascade');
-            $table->ulid('remote_device_id')->nullable()->constrained('user_devices')->onDelete('cascade');
+            $table->ulid('conversation_id');
+            $table->ulid('local_user_id');
+            $table->ulid('remote_user_id');
+            $table->ulid('local_device_id')->nullable();
+            $table->ulid('remote_device_id')->nullable();
             $table->integer('local_registration_id');
             $table->integer('remote_registration_id');
             $table->text('remote_identity_key'); // Base64 encoded
@@ -88,11 +108,27 @@ return new class extends Migration
             $table->integer('messages_received')->default(0);
             $table->integer('key_rotations')->default(0);
             $table->timestamp('last_activity_at');
+            // Quantum-resistant session fields
+            $table->text('quantum_keys_encrypted')->nullable(); // Encrypted quantum key pairs
+            $table->text('remote_quantum_key')->nullable(); // Remote quantum public key
+            $table->text('quantum_root_key_encrypted')->nullable(); // Encrypted quantum root key
+            $table->text('quantum_chain_keys_encrypted')->nullable(); // Encrypted quantum chain keys
+            $table->string('quantum_algorithm')->nullable(); // Current quantum algorithm
+            $table->boolean('is_quantum_resistant')->default(false);
+            $table->integer('quantum_version')->default(1); // 1=classical, 2=hybrid, 3=quantum
             $table->timestamps();
+
+            $table->foreign('conversation_id')->references('id')->on('chat_conversations')->onDelete('cascade');
+            $table->foreign('local_user_id')->references('id')->on('sys_users')->onDelete('cascade');
+            $table->foreign('remote_user_id')->references('id')->on('sys_users')->onDelete('cascade');
+            $table->foreign('local_device_id')->references('id')->on('user_devices')->onDelete('cascade');
+            $table->foreign('remote_device_id')->references('id')->on('user_devices')->onDelete('cascade');
 
             $table->index(['conversation_id', 'is_active']);
             $table->index(['local_user_id', 'remote_user_id']);
+            $table->index(['conversation_id', 'is_quantum_resistant']);
             $table->index('last_activity_at');
+            $table->index('quantum_algorithm');
         });
 
         // Signal messages table
@@ -115,6 +151,13 @@ return new class extends Migration
             $table->enum('delivery_status', ['pending', 'sent', 'delivered', 'failed'])->default('pending');
             $table->timestamp('sent_at');
             $table->timestamp('delivered_at')->nullable();
+            // Quantum-enhanced message fields
+            $table->text('quantum_base_key')->nullable(); // Base64 encoded quantum ephemeral key
+            $table->text('quantum_identity_key')->nullable(); // Base64 encoded quantum identity key
+            $table->string('quantum_algorithm')->nullable(); // ML-KEM algorithm used
+            $table->boolean('is_quantum_resistant')->default(false);
+            $table->integer('encryption_version')->default(1); // 1=classical, 2=hybrid, 3=quantum
+            $table->json('quantum_ratchet_data')->nullable(); // Quantum-specific message data
             $table->timestamps();
 
             $table->foreign('conversation_id')->references('id')->on('chat_conversations')->onDelete('cascade');
@@ -124,7 +167,10 @@ return new class extends Migration
 
             $table->index(['conversation_id', 'sent_at']);
             $table->index(['sender_user_id', 'recipient_user_id']);
+            $table->index(['conversation_id', 'is_quantum_resistant']);
             $table->index('delivery_status');
+            $table->index('quantum_algorithm');
+            $table->index('encryption_version');
         });
 
         // Prekey bundle requests/sharing log
@@ -135,7 +181,7 @@ return new class extends Migration
             $table->ulid('identity_key_id');
             $table->ulid('signed_prekey_id');
             $table->ulid('onetime_prekey_id')->nullable();
-            
+
             $table->foreign('requester_user_id')->references('id')->on('sys_users')->onDelete('cascade');
             $table->foreign('target_user_id')->references('id')->on('sys_users')->onDelete('cascade');
             $table->foreign('identity_key_id')->references('id')->on('signal_identity_keys')->onDelete('cascade');
@@ -176,7 +222,7 @@ return new class extends Migration
             $table->ulid('verifier_user_id');
             $table->ulid('target_user_id');
             $table->ulid('session_id');
-            
+
             $table->foreign('verifier_user_id')->references('id')->on('sys_users')->onDelete('cascade');
             $table->foreign('target_user_id')->references('id')->on('sys_users')->onDelete('cascade');
             $table->foreign('session_id')->references('id')->on('signal_sessions')->onDelete('cascade');

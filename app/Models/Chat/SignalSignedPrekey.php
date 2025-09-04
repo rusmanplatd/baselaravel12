@@ -20,12 +20,17 @@ class SignalSignedPrekey extends Model
         'signature',
         'generated_at',
         'is_active',
+        'quantum_public_key',
+        'quantum_private_key_encrypted',
+        'quantum_algorithm',
+        'is_quantum_capable',
     ];
 
     protected $casts = [
         'key_id' => 'integer',
         'generated_at' => 'datetime',
         'is_active' => 'boolean',
+        'is_quantum_capable' => 'boolean',
     ];
 
     /**
@@ -48,7 +53,7 @@ class SignalSignedPrekey extends Model
     /**
      * Get the current active signed prekey for a user.
      */
-    public static function getCurrentForUser(int $userId): ?self
+    public static function getCurrentForUser(string $userId): ?self
     {
         return self::where('user_id', $userId)
             ->where('is_active', true)
@@ -59,7 +64,7 @@ class SignalSignedPrekey extends Model
     /**
      * Generate a new key ID for a user.
      */
-    public static function generateKeyId(int $userId): int
+    public static function generateKeyId(string $userId): int
     {
         $latestKey = self::where('user_id', $userId)
             ->orderBy('key_id', 'desc')
@@ -79,7 +84,7 @@ class SignalSignedPrekey extends Model
     /**
      * Deactivate old signed prekeys, keeping only the latest N.
      */
-    public static function cleanupOldKeys(int $userId, int $keepCount = 3): int
+    public static function cleanupOldKeys(string $userId, int $keepCount = 3): int
     {
         $keysToKeep = self::where('user_id', $userId)
             ->orderBy('generated_at', 'desc')

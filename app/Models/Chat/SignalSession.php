@@ -4,6 +4,7 @@ namespace App\Models\Chat;
 
 use App\Models\User;
 use App\Models\UserDevice;
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SignalSession extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUlids;
 
     protected $fillable = [
         'session_id',
@@ -33,6 +34,13 @@ class SignalSession extends Model
         'messages_received',
         'key_rotations',
         'last_activity_at',
+        'quantum_keys_encrypted',
+        'remote_quantum_key',
+        'quantum_root_key_encrypted',
+        'quantum_chain_keys_encrypted',
+        'quantum_algorithm',
+        'is_quantum_resistant',
+        'quantum_version',
     ];
 
     protected $casts = [
@@ -45,6 +53,8 @@ class SignalSession extends Model
         'messages_received' => 'integer',
         'key_rotations' => 'integer',
         'last_activity_at' => 'datetime',
+        'is_quantum_resistant' => 'boolean',
+        'quantum_version' => 'integer',
     ];
 
     /**
@@ -107,9 +117,9 @@ class SignalSession extends Model
      * Get active session for conversation and users.
      */
     public static function getActiveSession(
-        int $conversationId,
-        int $localUserId,
-        int $remoteUserId
+        string $conversationId,
+        string $localUserId,
+        string $remoteUserId
     ): ?self {
         return self::where('conversation_id', $conversationId)
             ->where('local_user_id', $localUserId)
