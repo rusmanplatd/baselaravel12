@@ -152,11 +152,11 @@ export class DoubleRatchetE2EE {
       let isQuantumResistant = false;
       let quantumVersion = 1; // Classical
 
-      if (this.quantumService && quantumAlgorithm) {
+      if (this.quantumService && x3dhResult.usedQuantumAlgorithm) {
         try {
-          const algorithm = quantumAlgorithm || this.quantumService.getRecommendedAlgorithm();
+          const algorithm = x3dhResult.usedQuantumAlgorithm || this.quantumService.getRecommendedAlgorithm();
           if (this.quantumService.isQuantumResistant(algorithm)) {
-            const generatedKeys = await this.quantumService.generateQuantumKeypair(algorithm);
+            const generatedKeys = await this.quantumService.generateQuantumKeyPair(algorithm);
             quantumKeys = {
               publicKey: generatedKeys.publicKey,
               privateKey: generatedKeys.privateKey,
@@ -255,6 +255,8 @@ export class DoubleRatchetE2EE {
         remoteDeviceId,
         createdAt: new Date(),
         updatedAt: new Date(),
+        isQuantumResistant: false,
+        quantumVersion: 1,
       };
 
       this.sessions.set(sessionId, state);
@@ -324,13 +326,23 @@ export class DoubleRatchetE2EE {
           // Generate quantum message key
           const quantumMessageKey = await this.generateQuantumMessageKey(state);
           
-          // Encrypt with quantum algorithm
-          const quantumResult = await this.quantumService.encryptMessage(plaintext, 'conversation_temp', state.quantumKeys.algorithm);
+          // Encrypt with quantum algorithm using quantum message key
+          const encoder = new TextEncoder();
+          const plaintextBytes = encoder.encode(plaintext);
+          
+          // Use AES-GCM with the quantum-derived message key
+          const iv = crypto.getRandomValues(new Uint8Array(12));
+          const quantumResult = await crypto.subtle.encrypt(
+            { name: 'AES-GCM', iv },
+            quantumMessageKey,
+            plaintextBytes
+          );
           
           if (quantumResult) {
-            quantumCiphertext = quantumResult.ciphertext;
-            quantumIv = quantumResult.iv;
-            quantumTag = quantumResult.authTag;
+            quantumCiphertext = quantumResult;
+            quantumIv = iv;
+            // For AES-GCM, the tag is included in the ciphertext
+            quantumTag = undefined;
             isQuantumEncrypted = true;
           }
         } catch (error) {

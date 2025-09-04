@@ -375,11 +375,20 @@ test('can verify user identity', function () {
 });
 
 test('can rotate session keys', function () {
+    // Create a conversation first
+    $conversation = Conversation::factory()->create([
+        'created_by' => $this->user->id,
+        'name' => 'Test Conversation',
+        'type' => 'direct',
+    ]);
+
+    $otherUser = User::factory()->create();
+    
     $session = SignalSession::create([
         'session_id' => 'test-session-789',
-        'conversation_id' => 1,
+        'conversation_id' => $conversation->id,
         'local_user_id' => $this->user->id,
-        'remote_user_id' => 2,
+        'remote_user_id' => $otherUser->id,
         'local_registration_id' => 12345,
         'remote_registration_id' => 54321,
         'remote_identity_key' => base64_encode('remote_identity_key'),

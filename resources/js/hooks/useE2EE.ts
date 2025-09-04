@@ -104,7 +104,7 @@ interface UseE2EEReturn {
   cancelScheduledMessage: (messageId: string) => Promise<void>;
 
   // Disappearing Messages
-  setDisappearingTimer: (conversationId: string, minutes: number) => Promise<void>;
+  updateDisappearingTimer: (conversationId: string, minutes: number) => Promise<void>;
   disappearingMessages: DisappearingMessage[];
   disappearingTimer: number;
 
@@ -701,7 +701,7 @@ export function useE2EE(userId?: string, currentConversationId?: string): UseE2E
   }, []);
 
   // Set disappearing message timer
-  const setDisappearingTimer = useCallback(async (conversationId: string, minutes: number) => {
+  const updateDisappearingTimer = useCallback(async (conversationId: string, minutes: number) => {
     try {
       await apiService.post(`/api/chat/conversations/${conversationId}/disappearing-timer`, {
         timer_minutes: minutes,
@@ -1169,7 +1169,7 @@ export function useE2EE(userId?: string, currentConversationId?: string): UseE2E
     cancelScheduledMessage,
 
     // Disappearing Messages
-    setDisappearingTimer,
+    updateDisappearingTimer,
     disappearingMessages,
     disappearingTimer,
 

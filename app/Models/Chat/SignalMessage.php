@@ -30,6 +30,11 @@ class SignalMessage extends Model
         'delivery_status',
         'sent_at',
         'delivered_at',
+        'quantum_ciphertext',
+        'quantum_algorithm',
+        'is_quantum_resistant',
+        'quantum_version',
+        'quantum_key_id',
     ];
 
     protected $casts = [
@@ -41,6 +46,8 @@ class SignalMessage extends Model
         'delivery_options' => 'array',
         'sent_at' => 'datetime',
         'delivered_at' => 'datetime',
+        'is_quantum_resistant' => 'boolean',
+        'quantum_version' => 'integer',
     ];
 
     /**
@@ -92,6 +99,30 @@ class SignalMessage extends Model
     public function isPreKeyMessage(): bool
     {
         return $this->message_type === 'prekey';
+    }
+
+    /**
+     * Check if message uses quantum-resistant encryption.
+     */
+    public function isQuantumResistant(): bool
+    {
+        return $this->is_quantum_resistant === true;
+    }
+
+    /**
+     * Get quantum algorithm used for this message.
+     */
+    public function getQuantumAlgorithm(): ?string
+    {
+        return $this->quantum_algorithm;
+    }
+
+    /**
+     * Get quantum version of the encryption.
+     */
+    public function getQuantumVersion(): ?int
+    {
+        return $this->quantum_version;
     }
 
     /**

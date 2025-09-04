@@ -261,6 +261,8 @@ export class SignalProtocolService {
         version: 3, // Signal Protocol version 3
         message: ratchetMessage,
         timestamp: Date.now(),
+        isQuantumResistant: false,
+        encryptionVersion: 1,
       };
 
       // Add prekey message fields if this is the first message

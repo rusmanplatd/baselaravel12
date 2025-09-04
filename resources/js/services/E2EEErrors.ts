@@ -211,6 +211,16 @@ export class E2EEError extends Error {
     });
   }
 
+  static sessionNotFound(sessionId?: string): E2EEError {
+    return new E2EEError({
+      code: E2EEErrorCode.CONVERSATION_NOT_FOUND,
+      message: 'Signal session not found',
+      context: { sessionId },
+      recoverable: false,
+      userMessage: 'Signal session not found. Please restart the conversation.',
+    });
+  }
+
   static keyShareFailed(fromDeviceId?: string, toDeviceId?: string): E2EEError {
     return new E2EEError({
       code: E2EEErrorCode.KEY_SHARE_FAILED,

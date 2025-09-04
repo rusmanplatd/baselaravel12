@@ -653,7 +653,7 @@ export class X3DHKeyAgreement {
       try {
         // Perform ML-KEM encapsulation with remote quantum identity key
         if (bundle.quantumIdentityKey) {
-          const encapsulationResult = await this.quantumService.generateQuantumKeypair(usedQuantumAlgorithm);
+          const encapsulationResult = await this.quantumService.generateQuantumKeyPair(usedQuantumAlgorithm);
           quantumSharedSecret = encapsulationResult.publicKey;
           console.log(`X3DH: Using quantum algorithm ${usedQuantumAlgorithm}`);
         }
@@ -666,7 +666,7 @@ export class X3DHKeyAgreement {
       try {
         // Hybrid mode: use both classical and quantum
         if (bundle.quantumIdentityKey) {
-          const encapsulationResult = await this.quantumService.generateQuantumKeypair('ML-KEM-768');
+          const encapsulationResult = await this.quantumService.generateQuantumKeyPair('ML-KEM-768');
           quantumSharedSecret = encapsulationResult.publicKey;
           console.log(`X3DH: Using hybrid algorithm ${usedQuantumAlgorithm}`);
         }
