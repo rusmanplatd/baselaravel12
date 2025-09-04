@@ -3,9 +3,9 @@
 namespace App\Models\Chat;
 
 use App\Models\User;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class SignalProtocolStats extends Model
 {
@@ -72,11 +72,11 @@ class SignalProtocolStats extends Model
     {
         return self::where(function ($query) {
             $query->where('available_onetime_prekeys', '<', 10)
-                  ->orWhere('last_prekey_refresh', '<', now()->subDays(7))
-                  ->orWhereNull('last_prekey_refresh');
+                ->orWhere('last_prekey_refresh', '<', now()->subDays(7))
+                ->orWhereNull('last_prekey_refresh');
         })
-        ->with('user:id,name,email')
-        ->get();
+            ->with('user:id,name,email')
+            ->get();
     }
 
     /**
@@ -103,7 +103,7 @@ class SignalProtocolStats extends Model
         }
 
         // Check prekey refresh
-        if (!$this->last_prekey_refresh || $this->last_prekey_refresh->addDays(14)->isPast()) {
+        if (! $this->last_prekey_refresh || $this->last_prekey_refresh->addDays(14)->isPast()) {
             $healthScore -= 10;
             $issues[] = 'Prekeys need refresh';
         }
@@ -114,7 +114,7 @@ class SignalProtocolStats extends Model
                 'status' => $healthScore >= 80 ? 'healthy' : ($healthScore >= 60 ? 'warning' : 'critical'),
                 'issues' => $issues,
                 'last_calculated' => now()->toISOString(),
-            ]
+            ],
         ]);
     }
 
@@ -124,9 +124,9 @@ class SignalProtocolStats extends Model
     public static function getHealthDistribution(): array
     {
         $stats = self::whereNotNull('health_metrics')->get();
-        
+
         $distribution = ['healthy' => 0, 'warning' => 0, 'critical' => 0];
-        
+
         foreach ($stats as $stat) {
             $status = $stat->health_metrics['status'] ?? 'unknown';
             if (isset($distribution[$status])) {

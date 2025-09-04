@@ -3,13 +3,14 @@
 namespace App\Models\Chat;
 
 use App\Models\User;
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class SignalOnetimePrekey extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUlids;
 
     protected $fillable = [
         'user_id',
@@ -47,7 +48,7 @@ class SignalOnetimePrekey extends Model
     /**
      * Get an unused one-time prekey for a user.
      */
-    public static function getUnusedForUser(int $userId): ?self
+    public static function getUnusedForUser(string $userId): ?self
     {
         return self::where('user_id', $userId)
             ->where('is_used', false)
@@ -58,7 +59,7 @@ class SignalOnetimePrekey extends Model
     /**
      * Get count of unused prekeys for a user.
      */
-    public static function getUnusedCountForUser(int $userId): int
+    public static function getUnusedCountForUser(string $userId): int
     {
         return self::where('user_id', $userId)
             ->where('is_used', false)
@@ -99,7 +100,7 @@ class SignalOnetimePrekey extends Model
             ->first();
 
         $startId = $latestKey ? $latestKey->key_id + 1 : 1;
-        
+
         return range($startId, $startId + $count - 1);
     }
 

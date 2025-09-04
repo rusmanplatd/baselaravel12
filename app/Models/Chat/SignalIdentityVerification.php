@@ -3,9 +3,9 @@
 namespace App\Models\Chat;
 
 use App\Models\User;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class SignalIdentityVerification extends Model
 {
@@ -71,14 +71,14 @@ class SignalIdentityVerification extends Model
     {
         return self::where(function ($query) use ($user1Id, $user2Id) {
             $query->where('verifier_user_id', $user1Id)
-                  ->where('target_user_id', $user2Id);
+                ->where('target_user_id', $user2Id);
         })
-        ->orWhere(function ($query) use ($user1Id, $user2Id) {
-            $query->where('verifier_user_id', $user2Id)
-                  ->where('target_user_id', $user1Id);
-        })
-        ->where('verification_successful', true)
-        ->exists();
+            ->orWhere(function ($query) use ($user1Id, $user2Id) {
+                $query->where('verifier_user_id', $user2Id)
+                    ->where('target_user_id', $user1Id);
+            })
+            ->where('verification_successful', true)
+            ->exists();
     }
 
     /**

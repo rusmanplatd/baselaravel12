@@ -3,20 +3,19 @@
 namespace App\Http\Controllers\Api\Chat;
 
 use App\Http\Controllers\Controller;
-use App\Models\Chat\SignalIdentityKey;
-use App\Models\Chat\SignalSignedPrekey;
-use App\Models\Chat\SignalOnetimePrekey;
-use App\Models\Chat\SignalSession;
-use App\Models\Chat\SignalMessage;
-use App\Models\Chat\SignalPreKeyRequest;
 use App\Models\Chat\Conversation;
+use App\Models\Chat\SignalIdentityKey;
+use App\Models\Chat\SignalMessage;
+use App\Models\Chat\SignalOnetimePrekey;
+use App\Models\Chat\SignalPreKeyRequest;
+use App\Models\Chat\SignalSession;
+use App\Models\Chat\SignalSignedPrekey;
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
 
 class SignalProtocolController extends Controller
 {
@@ -96,12 +95,12 @@ class SignalProtocolController extends Controller
                     'identity_key_id' => $identityKey->id,
                     'signed_prekey_count' => SignalSignedPrekey::where('user_id', $user->id)->where('is_active', true)->count(),
                     'onetime_prekey_count' => SignalOnetimePrekey::where('user_id', $user->id)->where('is_used', false)->count(),
-                ]
+                ],
             ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to upload prekey bundle',
@@ -120,7 +119,7 @@ class SignalProtocolController extends Controller
 
         // Get identity key
         $identityKey = SignalIdentityKey::getCurrentForUser($userId);
-        if (!$identityKey) {
+        if (! $identityKey) {
             return response()->json([
                 'success' => false,
                 'message' => 'User has no identity key registered',
@@ -129,7 +128,7 @@ class SignalProtocolController extends Controller
 
         // Get current signed prekey
         $signedPrekey = SignalSignedPrekey::getCurrentForUser($userId);
-        if (!$signedPrekey) {
+        if (! $signedPrekey) {
             return response()->json([
                 'success' => false,
                 'message' => 'User has no signed prekey available',
@@ -138,7 +137,7 @@ class SignalProtocolController extends Controller
 
         // Get an unused one-time prekey (if available)
         $onetimePrekey = SignalOnetimePrekey::getUnusedForUser($userId);
-        
+
         // Mark one-time prekey as used if we found one
         if ($onetimePrekey) {
             $onetimePrekey->markAsUsed($requestingUser->id);
@@ -217,7 +216,7 @@ class SignalProtocolController extends Controller
 
             // Verify conversation access
             $conversation = Conversation::findOrFail($conversationId);
-            if (!$conversation->participants()->where('user_id', $sender->id)->exists()) {
+            if (! $conversation->participants()->where('user_id', $sender->id)->exists()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'You are not a participant in this conversation',
@@ -226,8 +225,8 @@ class SignalProtocolController extends Controller
 
             // Get or create session
             $session = SignalSession::getActiveSession($conversationId, $sender->id, $recipientUserId);
-            
-            if (!$session && $signalMessage['type'] === 'normal') {
+
+            if (! $session && $signalMessage['type'] === 'normal') {
                 return response()->json([
                     'success' => false,
                     'message' => 'No active session found. Please send a prekey message first.',
@@ -235,7 +234,7 @@ class SignalProtocolController extends Controller
             }
 
             // Create session for prekey messages
-            if (!$session && $signalMessage['type'] === 'prekey') {
+            if (! $session && $signalMessage['type'] === 'prekey') {
                 $session = SignalSession::create([
                     'session_id' => Str::uuid(),
                     'conversation_id' => $conversationId,
@@ -295,7 +294,7 @@ class SignalProtocolController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to send Signal message',
@@ -320,7 +319,7 @@ class SignalProtocolController extends Controller
 
         $session = SignalSession::getActiveSession($conversationId, $user->id, $targetUserId);
 
-        if (!$session) {
+        if (! $session) {
             return response()->json([
                 'success' => false,
                 'message' => 'No active session found',
@@ -343,7 +342,7 @@ class SignalProtocolController extends Controller
                 'remote_identity_fingerprint' => $session->getRemoteIdentityFingerprint(),
                 'is_verified' => $session->isVerified(),
                 'age_in_days' => $session->getAgeInDays(),
-            ]
+            ],
         ]);
     }
 
@@ -370,7 +369,7 @@ class SignalProtocolController extends Controller
 
             // Get active session
             $session = SignalSession::getActiveSession($conversationId, $verifier->id, $targetUserId);
-            if (!$session) {
+            if (! $session) {
                 return response()->json([
                     'success' => false,
                     'message' => 'No active session found',
@@ -404,14 +403,14 @@ class SignalProtocolController extends Controller
                 'success' => true,
                 'verification_successful' => $verificationSuccessful,
                 'session_verified' => $verificationSuccessful,
-                'message' => $verificationSuccessful 
+                'message' => $verificationSuccessful
                     ? 'User identity verified successfully'
                     : 'User identity verification failed',
             ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Verification process failed',
@@ -441,7 +440,7 @@ class SignalProtocolController extends Controller
             $session = SignalSession::where('session_id', $sessionId)
                 ->where(function ($query) use ($user) {
                     $query->where('local_user_id', $user->id)
-                          ->orWhere('remote_user_id', $user->id);
+                        ->orWhere('remote_user_id', $user->id);
                 })
                 ->where('is_active', true)
                 ->firstOrFail();
@@ -478,7 +477,7 @@ class SignalProtocolController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to rotate session keys',
@@ -539,7 +538,7 @@ class SignalProtocolController extends Controller
     /**
      * Update user statistics.
      */
-    private function updateUserStats(int $userId): void
+    private function updateUserStats(string $userId): void
     {
         \App\Models\Chat\SignalProtocolStats::updateOrCreate(
             ['user_id' => $userId],
@@ -561,23 +560,23 @@ class SignalProtocolController extends Controller
     /**
      * Calculate health score based on various metrics.
      */
-    private function calculateHealthScore(int $userId): array
+    private function calculateHealthScore(string $userId): array
     {
         $score = 100;
         $issues = [];
 
         // Check if user has identity key
         $hasIdentityKey = SignalIdentityKey::where('user_id', $userId)->where('is_active', true)->exists();
-        if (!$hasIdentityKey) {
+        if (! $hasIdentityKey) {
             $score -= 30;
             $issues[] = 'No active identity key';
         }
 
-        // Check signed prekey freshness
-        $latestSignedPrekey = SignalSignedPrekey::getCurrentForUser($userId);
-        if (!$latestSignedPrekey || $latestSignedPrekey->needsRotation()) {
+        // Check signed prekey freshness (simplified check for now)
+        $hasSignedPrekey = SignalSignedPrekey::where('user_id', $userId)->where('is_active', true)->exists();
+        if (! $hasSignedPrekey) {
             $score -= 20;
-            $issues[] = 'Signed prekey needs rotation';
+            $issues[] = 'No signed prekey available';
         }
 
         // Check one-time prekey availability
@@ -592,7 +591,7 @@ class SignalProtocolController extends Controller
             ->where('is_active', true)
             ->where('last_activity_at', '<', now()->subDays(30))
             ->count();
-        
+
         if ($inactiveSessions > 0) {
             $score -= ($inactiveSessions * 5);
             $issues[] = "Has {$inactiveSessions} inactive sessions";

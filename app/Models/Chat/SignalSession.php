@@ -3,12 +3,11 @@
 namespace App\Models\Chat;
 
 use App\Models\User;
-use App\Models\Chat\Conversation;
 use App\Models\UserDevice;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class SignalSession extends Model
 {

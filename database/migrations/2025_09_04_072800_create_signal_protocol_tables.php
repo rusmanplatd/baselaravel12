@@ -13,7 +13,7 @@ return new class extends Migration
     {
         // Identity keys table
         Schema::create('signal_identity_keys', function (Blueprint $table) {
-            $table->id();
+            $table->ulid('id')->primary();
             $table->ulid('user_id');
             $table->integer('registration_id')->unique();
             $table->text('public_key'); // Base64 encoded public key
@@ -30,7 +30,7 @@ return new class extends Migration
 
         // Signed prekeys table
         Schema::create('signal_signed_prekeys', function (Blueprint $table) {
-            $table->id();
+            $table->ulid('id')->primary();
             $table->ulid('user_id');
             $table->integer('key_id');
             $table->text('public_key'); // Base64 encoded public key
@@ -48,7 +48,7 @@ return new class extends Migration
 
         // One-time prekeys table
         Schema::create('signal_onetime_prekeys', function (Blueprint $table) {
-            $table->id();
+            $table->ulid('id')->primary();
             $table->ulid('user_id');
             $table->integer('key_id');
             $table->text('public_key'); // Base64 encoded public key
@@ -68,7 +68,7 @@ return new class extends Migration
 
         // Signal sessions table
         Schema::create('signal_sessions', function (Blueprint $table) {
-            $table->id();
+            $table->ulid('id')->primary();
             $table->string('session_id')->unique();
             $table->ulid('conversation_id')->constrained('chat_conversations')->onDelete('cascade');
             $table->ulid('local_user_id')->constrained('sys_users')->onDelete('cascade');
@@ -97,10 +97,10 @@ return new class extends Migration
 
         // Signal messages table
         Schema::create('signal_messages', function (Blueprint $table) {
-            $table->id();
+            $table->ulid('id')->primary();
             $table->string('message_id')->unique();
             $table->ulid('conversation_id');
-            $table->foreignId('session_id')->constrained('signal_sessions')->onDelete('cascade');
+            $table->ulid('session_id');
             $table->ulid('sender_user_id');
             $table->ulid('recipient_user_id');
             $table->enum('message_type', ['prekey', 'normal'])->default('normal');
@@ -118,6 +118,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->foreign('conversation_id')->references('id')->on('chat_conversations')->onDelete('cascade');
+            $table->foreign('session_id')->references('id')->on('signal_sessions')->onDelete('cascade');
             $table->foreign('sender_user_id')->references('id')->on('sys_users')->onDelete('cascade');
             $table->foreign('recipient_user_id')->references('id')->on('sys_users')->onDelete('cascade');
 
@@ -128,12 +129,18 @@ return new class extends Migration
 
         // Prekey bundle requests/sharing log
         Schema::create('signal_prekey_requests', function (Blueprint $table) {
-            $table->id();
-            $table->ulid('requester_user_id')->constrained('sys_users')->onDelete('cascade');
-            $table->ulid('target_user_id')->constrained('sys_users')->onDelete('cascade');
-            $table->foreignId('identity_key_id')->constrained('signal_identity_keys')->onDelete('cascade');
-            $table->foreignId('signed_prekey_id')->constrained('signal_signed_prekeys')->onDelete('cascade');
-            $table->foreignId('onetime_prekey_id')->nullable()->constrained('signal_onetime_prekeys')->onDelete('set null');
+            $table->ulid('id')->primary();
+            $table->ulid('requester_user_id');
+            $table->ulid('target_user_id');
+            $table->ulid('identity_key_id');
+            $table->ulid('signed_prekey_id');
+            $table->ulid('onetime_prekey_id')->nullable();
+            
+            $table->foreign('requester_user_id')->references('id')->on('sys_users')->onDelete('cascade');
+            $table->foreign('target_user_id')->references('id')->on('sys_users')->onDelete('cascade');
+            $table->foreign('identity_key_id')->references('id')->on('signal_identity_keys')->onDelete('cascade');
+            $table->foreign('signed_prekey_id')->references('id')->on('signal_signed_prekeys')->onDelete('cascade');
+            $table->foreign('onetime_prekey_id')->references('id')->on('signal_onetime_prekeys')->onDelete('set null');
             $table->string('request_id')->unique();
             $table->json('bundle_data'); // Full prekey bundle
             $table->boolean('is_consumed')->default(false);
@@ -146,9 +153,10 @@ return new class extends Migration
 
         // Key rotation log
         Schema::create('signal_key_rotations', function (Blueprint $table) {
-            $table->id();
+            $table->ulid('id')->primary();
             $table->ulid('user_id');
-            $table->foreignId('session_id')->nullable()->constrained('signal_sessions')->onDelete('cascade');
+            $table->ulid('session_id')->nullable();
+            $table->foreign('session_id')->references('id')->on('signal_sessions')->onDelete('cascade');
             $table->enum('rotation_type', ['identity', 'signed_prekey', 'onetime_prekeys', 'session_keys']);
             $table->string('old_key_id')->nullable();
             $table->string('new_key_id')->nullable();
@@ -164,10 +172,14 @@ return new class extends Migration
 
         // Identity verification attempts
         Schema::create('signal_identity_verifications', function (Blueprint $table) {
-            $table->id();
-            $table->ulid('verifier_user_id')->constrained('sys_users')->onDelete('cascade');
-            $table->ulid('target_user_id')->constrained('sys_users')->onDelete('cascade');
-            $table->foreignId('session_id')->constrained('signal_sessions')->onDelete('cascade');
+            $table->ulid('id')->primary();
+            $table->ulid('verifier_user_id');
+            $table->ulid('target_user_id');
+            $table->ulid('session_id');
+            
+            $table->foreign('verifier_user_id')->references('id')->on('sys_users')->onDelete('cascade');
+            $table->foreign('target_user_id')->references('id')->on('sys_users')->onDelete('cascade');
+            $table->foreign('session_id')->references('id')->on('signal_sessions')->onDelete('cascade');
             $table->string('verification_method'); // 'fingerprint', 'qr_code', 'safety_numbers'
             $table->string('provided_fingerprint')->nullable();
             $table->string('actual_fingerprint');
@@ -182,7 +194,7 @@ return new class extends Migration
 
         // Protocol statistics and health monitoring
         Schema::create('signal_protocol_stats', function (Blueprint $table) {
-            $table->id();
+            $table->ulid('id')->primary();
             $table->ulid('user_id');
             $table->integer('active_sessions')->default(0);
             $table->integer('total_messages_sent')->default(0);
