@@ -67,6 +67,23 @@ export function useChat(user: any): UseChatReturn {
 
   const handleError = useCallback((err: any) => {
     console.error('Chat error:', err);
+    
+    // Handle specific encryption key regeneration error
+    if (err.response?.data?.code === 'ENCRYPTION_KEYS_REGENERATED') {
+      setError('Encryption keys were regenerated. Please refresh the page to continue.');
+      // Optionally trigger a page reload or re-initialization
+      setTimeout(() => {
+        window.location.reload();
+      }, 3000);
+      return;
+    }
+    
+    // Handle other encryption errors
+    if (err.response?.data?.code === 'ENCRYPTION_KEY_CORRUPTED') {
+      setError('Encryption keys are corrupted. Please contact support.');
+      return;
+    }
+    
     setError(err.response?.data?.message || err.message || 'An error occurred');
   }, []);
 
@@ -100,7 +117,7 @@ export function useChat(user: any): UseChatReturn {
           conversationKeysReady: true,
           version: '2.0'
         });
-        
+
         // Load security status
         try {
           const securityStatus = await multiDeviceE2EEService.getDeviceSecurityReport();
@@ -175,7 +192,7 @@ export function useChat(user: any): UseChatReturn {
               message.encrypted_content,
               message.conversation_id
             );
-            
+
             return {
               ...message,
               content: decryptedContent || '[Decryption failed]',
@@ -199,7 +216,7 @@ export function useChat(user: any): UseChatReturn {
     try {
       setLoading(true);
       setError(null);
-      
+
       const data = await apiService.get<{ data?: Conversation[]; conversations?: Conversation[] }>('/api/v1/chat/conversations');
       setConversations(data.data || data.conversations || []);
     } catch (err) {
@@ -212,10 +229,10 @@ export function useChat(user: any): UseChatReturn {
   const loadMessages = useCallback(async (conversationId: string) => {
     try {
       setLoading(true);
-      
+
       // Setup conversation encryption first
       await setupConversationEncryption(conversationId);
-      
+
       const rawMessages = await apiService.get<Message[]>(`/api/v1/chat/conversations/${conversationId}/messages`);
       const decryptedMessages = await decryptMessages(rawMessages.reverse() || []);
       setMessages(decryptedMessages);
@@ -235,7 +252,7 @@ export function useChat(user: any): UseChatReturn {
     mentions?: any[];
   }) => {
     if (!activeConversation) return;
-    
+
     try {
       let messageData: any = {
         type: options?.type || 'text',
@@ -261,7 +278,7 @@ export function useChat(user: any): UseChatReturn {
       if (options?.type === 'voice' && options?.voiceData) {
         messageData.voice_duration_seconds = options.voiceData.duration;
         messageData.voice_waveform_data = options.voiceData.waveformData.join(',');
-        // In a real app, you'd upload the blob to storage first
+        // TODO: In a real app, you'd upload the blob to storage first
         // messageData.voice_file_url = await uploadVoiceFile(options.voiceData.blob);
       }
 
@@ -272,7 +289,7 @@ export function useChat(user: any): UseChatReturn {
             content,
             activeConversation.id
           );
-          
+
           if (encryptedData) {
             messageData = {
               ...messageData,
@@ -291,7 +308,7 @@ export function useChat(user: any): UseChatReturn {
       }
 
       const rawMessage = await apiService.post<Message>(`/api/v1/chat/conversations/${activeConversation.id}/messages`, messageData);
-      
+
       // Decrypt the returned message for display
       const decryptedMessage = encryptionReady && deviceRegistered && rawMessage.encrypted_content
         ? {
@@ -302,13 +319,13 @@ export function useChat(user: any): UseChatReturn {
             ) || content
           }
         : rawMessage;
-      
+
       setMessages(prev => [...prev, decryptedMessage]);
-      
+
       // Update conversation's last message timestamp
-      setConversations(prev => 
-        prev.map(conv => 
-          conv.id === activeConversation.id 
+      setConversations(prev =>
+        prev.map(conv =>
+          conv.id === activeConversation.id
             ? { ...conv, last_message_at: decryptedMessage.created_at }
             : conv
         )
@@ -328,7 +345,7 @@ export function useChat(user: any): UseChatReturn {
         participants,
         name,
       });
-      
+
       setConversations(prev => [newConversation, ...prev]);
       setActiveConversation(newConversation);
     } catch (err) {
@@ -340,8 +357,8 @@ export function useChat(user: any): UseChatReturn {
   const toggleReaction = useCallback(async (messageId: string, emoji: string) => {
     try {
       await apiService.post(`/api/v1/chat/messages/${messageId}/reactions/toggle`, { emoji });
-      
-      // In a real app, you'd update the message reactions in state
+
+      // TODO: In a real app, you'd update the message reactions in state
       // For now, we'll reload messages to see the change
       if (activeConversation) {
         loadMessages(activeConversation.id);
@@ -361,7 +378,7 @@ export function useChat(user: any): UseChatReturn {
 
   const setTyping = useCallback(async (isTyping: boolean) => {
     if (!activeConversation) return;
-    
+
     try {
       if (isTyping) {
         await apiService.post(`/api/v1/chat/conversations/${activeConversation.id}/typing`, {});
@@ -375,7 +392,7 @@ export function useChat(user: any): UseChatReturn {
 
   const searchMessages = useCallback(async (query: string): Promise<Message[]> => {
     if (!activeConversation || !query.trim()) return [];
-    
+
     try {
       const results = await apiService.get<Message[]>(`/api/v1/chat/conversations/${activeConversation.id}/messages/search?q=${encodeURIComponent(query)}`);
       return await decryptMessages(results);
@@ -394,7 +411,7 @@ export function useChat(user: any): UseChatReturn {
         description: groupData.description,
         participants: groupData.participants,
       });
-      
+
       setConversations(prev => [newGroup, ...prev]);
       setActiveConversation(newGroup);
     } catch (err: any) {
@@ -405,12 +422,12 @@ export function useChat(user: any): UseChatReturn {
 
   const updateGroupSettings = useCallback(async (settings: any) => {
     if (!activeConversation) return;
-    
+
     try {
       const updatedConversation = await apiService.put<{ conversation: Conversation }>(`/api/v1/chat/conversations/${activeConversation.id}/settings`, settings);
       setActiveConversation(updatedConversation.conversation);
-      setConversations(prev => 
-        prev.map(conv => 
+      setConversations(prev =>
+        prev.map(conv =>
           conv.id === activeConversation.id ? updatedConversation.conversation : conv
         )
       );
@@ -421,19 +438,19 @@ export function useChat(user: any): UseChatReturn {
 
   const updateParticipantRole = useCallback(async (userId: string, role: 'admin' | 'member') => {
     if (!activeConversation) return;
-    
+
     try {
       await apiService.put(`/api/v1/chat/conversations/${activeConversation.id}/participants/role`, {
         user_id: userId,
         role: role,
       });
-      
+
       // Update the conversation participants in state
       setActiveConversation(prev => {
         if (!prev) return prev;
         return {
           ...prev,
-          participants: prev.participants?.map(p => 
+          participants: prev.participants?.map(p =>
             p.user_id === userId ? { ...p, role } : p
           ) || []
         };
@@ -445,12 +462,12 @@ export function useChat(user: any): UseChatReturn {
 
   const removeParticipant = useCallback(async (userId: string) => {
     if (!activeConversation) return;
-    
+
     try {
       await apiService.delete(`/api/v1/chat/conversations/${activeConversation.id}/participants`, {
         user_id: userId,
       });
-      
+
       // Update the conversation participants in state
       setActiveConversation(prev => {
         if (!prev) return prev;
@@ -468,7 +485,7 @@ export function useChat(user: any): UseChatReturn {
     if (!activeConversation) {
       throw new Error('No active conversation');
     }
-    
+
     try {
       return await apiService.post<{ invite_url: string }>(`/api/v1/chat/conversations/${activeConversation.id}/invite-link`, options);
     } catch (err) {
@@ -482,9 +499,9 @@ export function useChat(user: any): UseChatReturn {
       const result = await apiService.post<{ conversation: Conversation }>(`/api/v1/chat/join/${inviteCode}`, {
         invite_code: inviteCode,
       });
-      
+
       const conversation = result.conversation;
-      
+
       // Add to conversations list and set as active
       setConversations(prev => {
         const exists = prev.some(conv => conv.id === conversation.id);
@@ -500,7 +517,7 @@ export function useChat(user: any): UseChatReturn {
   // Poll for typing users
   useEffect(() => {
     if (!activeConversation) return;
-    
+
     const pollTypingUsers = async () => {
       try {
         const data = await apiService.get<{ typing_users: Array<{ id: string; name: string }> }>(`/api/v1/chat/conversations/${activeConversation.id}/typing`);
@@ -509,7 +526,7 @@ export function useChat(user: any): UseChatReturn {
         // Silent fail for typing status
       }
     };
-    
+
     const interval = setInterval(pollTypingUsers, 2000);
     return () => clearInterval(interval);
   }, [activeConversation]);

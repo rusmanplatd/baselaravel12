@@ -613,7 +613,7 @@ describe('E2EE Integration and API Comprehensive Tests', function () {
 
             // Simulate audit log entries
             foreach ($operations as $operation) {
-                // In a real implementation, these would be logged automatically
+                // TODO: In a real implementation, these would be logged automatically
                 // Here we're just testing the audit API endpoint
             }
 

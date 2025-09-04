@@ -20,16 +20,16 @@ export interface MentionSuggestion {
  */
 export function parseMentions(content: string): ParsedMention[] {
   const mentions: ParsedMention[] = [];
-  
+
   // Pattern to match @mentions in various formats
   const mentionRegex = /@(?:([a-zA-Z0-9_.-]+)|"([^"]+)"|user:([a-zA-Z0-9-]+))/g;
-  
+
   let match;
   while ((match = mentionRegex.exec(content)) !== null) {
     const [fullMatch, username, displayName, userId] = match;
     const start = match.index;
     const end = start + fullMatch.length;
-    
+
     mentions.push({
       start,
       end,
@@ -37,7 +37,7 @@ export function parseMentions(content: string): ParsedMention[] {
       displayName: displayName || username || userId || 'Unknown User'
     });
   }
-  
+
   return mentions;
 }
 
@@ -45,15 +45,15 @@ export function parseMentions(content: string): ParsedMention[] {
  * Convert parsed mentions to MessageMention format (client-side only)
  */
 export function convertToMessageMentions(
-  parsedMentions: ParsedMention[], 
+  parsedMentions: ParsedMention[],
   participants: Participant[]
 ): MessageMention[] {
   return parsedMentions.map((mention, index) => {
-    const participant = participants.find(p => 
-      p.user?.id === mention.userId || 
+    const participant = participants.find(p =>
+      p.user?.id === mention.userId ||
       p.user?.name === mention.displayName
     );
-    
+
     return {
       id: `mention-${index}`,
       user_id: participant?.user?.id || mention.userId,
@@ -80,7 +80,7 @@ export function parseMentionsFromDecryptedContent(
  * Render message content with highlighted mentions
  */
 export function renderMessageWithMentions(
-  content: string, 
+  content: string,
   mentions?: MessageMention[],
   currentUserId?: string
 ): (string | React.ReactElement)[] {
@@ -103,7 +103,7 @@ export function renderMessageWithMentions(
     // Add mention element
     const isMentioningCurrentUser = mention.user_id === currentUserId;
     const mentionText = content.slice(mention.start_position, mention.end_position);
-    
+
     result.push(
       <span
         key={`mention-${index}`}
@@ -133,21 +133,21 @@ export function renderMessageWithMentions(
  * Get mention suggestions based on input
  */
 export function getMentionSuggestions(
-  query: string, 
-  participants: Participant[], 
+  query: string,
+  participants: Participant[],
   currentUserId: string
 ): MentionSuggestion[] {
   const normalizedQuery = query.toLowerCase();
-  
+
   const suggestions = participants
     .filter(p => p.user && p.user_id !== currentUserId)
     .map(participant => {
       if (!participant.user) return null;
-      
+
       const user = participant.user;
       const nameMatch = user.name.toLowerCase().includes(normalizedQuery);
       const emailMatch = user.email?.toLowerCase().includes(normalizedQuery);
-      
+
       let relevanceScore = 0;
       if (nameMatch) {
         relevanceScore += user.name.toLowerCase().startsWith(normalizedQuery) ? 100 : 50;
@@ -155,7 +155,7 @@ export function getMentionSuggestions(
       if (emailMatch) {
         relevanceScore += 25;
       }
-      
+
       if (relevanceScore > 0) {
         return {
           user,
@@ -168,7 +168,7 @@ export function getMentionSuggestions(
     .filter((suggestion): suggestion is MentionSuggestion => suggestion !== null)
     .sort((a, b) => b.relevanceScore! - a.relevanceScore!)
     .slice(0, 10); // Limit to top 10 suggestions
-    
+
   return suggestions;
 }
 
@@ -176,18 +176,18 @@ export function getMentionSuggestions(
  * Insert mention into text at cursor position
  */
 export function insertMention(
-  text: string, 
-  cursorPosition: number, 
-  user: User, 
+  text: string,
+  cursorPosition: number,
+  user: User,
   queryStart: number
 ): { newText: string; newCursorPosition: number } {
   const mentionText = `@"${user.name}"`;
   const beforeMention = text.slice(0, queryStart);
   const afterCursor = text.slice(cursorPosition);
-  
+
   const newText = beforeMention + mentionText + afterCursor;
   const newCursorPosition = queryStart + mentionText.length;
-  
+
   return { newText, newCursorPosition };
 }
 
@@ -195,7 +195,7 @@ export function insertMention(
  * Find current mention query at cursor position
  */
 export function getCurrentMentionQuery(
-  text: string, 
+  text: string,
   cursorPosition: number
 ): { query: string; start: number } | null {
   // Find the last @ before cursor position
@@ -209,17 +209,17 @@ export function getCurrentMentionQuery(
       break; // Stop if we hit whitespace before @
     }
   }
-  
+
   if (atPosition === -1) return null;
-  
+
   // Extract query from @ to cursor
   const query = text.slice(atPosition + 1, cursorPosition);
-  
+
   // Validate query (no spaces unless quoted)
   if (query.includes(' ') && !query.startsWith('"')) {
     return null;
   }
-  
+
   return {
     query: query.replace(/^"/, '').replace(/"$/, ''), // Remove quotes for matching
     start: atPosition
@@ -230,7 +230,7 @@ export function getCurrentMentionQuery(
  * Extract user ID from username (placeholder - would integrate with user lookup)
  */
 function extractUserIdFromUsername(username: string): string {
-  // In a real implementation, this would lookup the user by username
+  // TODO: In a real implementation, this would lookup the user by username
   // For now, return the username as ID
   return username;
 }

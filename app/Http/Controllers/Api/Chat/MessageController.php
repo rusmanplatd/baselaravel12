@@ -121,6 +121,28 @@ class MessageController extends Controller
                     'code' => 'ENCRYPTION_KEY_CORRUPTED',
                 ], 500);
             }
+        } catch (\App\Exceptions\EncryptionKeyCorruptedException $e) {
+            // Handle specific encryption key corruption
+            Log::warning('Encryption key corruption detected in message retrieval', [
+                'user_id' => auth()->id(),
+                'conversation_id' => $conversation->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            // Try to regenerate encryption keys as a recovery mechanism
+            try {
+                $this->regenerateEncryptionKeys($conversation);
+
+                return response()->json([
+                    'error' => 'Encryption keys were corrupted and have been regenerated. Please refresh and try again.',
+                    'code' => 'ENCRYPTION_KEYS_REGENERATED',
+                ], 409);
+            } catch (\Exception $regenerateError) {
+                return response()->json([
+                    'error' => 'Unable to decrypt messages - encryption keys are corrupted',
+                    'code' => 'ENCRYPTION_KEY_CORRUPTED',
+                ], 500);
+            }
         } catch (\Exception $e) {
             Log::error('Unexpected encryption error in message retrieval', [
                 'user_id' => auth()->id(),
@@ -455,34 +477,67 @@ class MessageController extends Controller
         foreach ($participants as $participant) {
             $user = $participant->user;
 
-            // Get or generate user's key pair
             try {
-                $userKeyPair = $this->getUserKeyPair($user->id);
-
-                // Get user's device for key creation
-                $userDevice = \App\Models\UserDevice::where('user_id', $user->id)
+                // Get all trusted devices for this user
+                $userDevices = \App\Models\UserDevice::where('user_id', $user->id)
                     ->where('is_trusted', true)
-                    ->first();
+                    ->whereNotNull('public_key')
+                    ->get();
 
-                if ($userDevice) {
+                foreach ($userDevices as $device) {
+                    // If device doesn't have a private key, generate a new keypair
+                    if (!$device->private_key) {
+                        Log::info('Device missing private key, generating new keypair', [
+                            'user_id' => $user->id,
+                            'device_id' => $device->id,
+                        ]);
+                        
+                        $keyPair = $this->encryptionService->generateKeyPair();
+                        $device->update([
+                            'public_key' => $keyPair['public_key'],
+                            'private_key' => $keyPair['private_key'],
+                        ]);
+                        
+                        // Also update user's public key if it doesn't match
+                        if ($user->public_key !== $keyPair['public_key']) {
+                            $user->update(['public_key' => $keyPair['public_key']]);
+                        }
+                    }
+
+                    // Use each device's own public key (not a generated one)
                     \App\Models\Chat\EncryptionKey::create([
                         'conversation_id' => $conversation->id,
                         'user_id' => $user->id,
-                        'device_id' => $userDevice->id,
-                        'device_fingerprint' => $userDevice->device_fingerprint,
+                        'device_id' => $device->id,
+                        'device_fingerprint' => $device->device_fingerprint,
                         'encrypted_key' => $this->encryptionService->encryptSymmetricKey(
                             $newSymmetricKey,
-                            $userKeyPair['public_key']
+                            $device->public_key
                         ),
+                        'public_key' => $device->public_key,
                         'key_version' => 1,
                         'algorithm' => 'RSA-OAEP',
                         'key_strength' => 4096,
                         'is_active' => true,
                     ]);
+
+                    Log::info('Created encryption key for device during regeneration', [
+                        'user_id' => $user->id,
+                        'device_id' => $device->id,
+                        'conversation_id' => $conversation->id,
+                    ]);
+                }
+
+                // If no trusted devices found, we can't regenerate keys for this user
+                if ($userDevices->isEmpty()) {
+                    Log::warning('No trusted devices found for user during key regeneration', [
+                        'user_id' => $user->id,
+                        'conversation_id' => $conversation->id,
+                    ]);
                 }
 
             } catch (\Exception $e) {
-                Log::error('Failed to create encryption key for user during regeneration', [
+                Log::error('Failed to create encryption keys for user during regeneration', [
                     'user_id' => $user->id,
                     'conversation_id' => $conversation->id,
                     'error' => $e->getMessage(),
@@ -548,28 +603,103 @@ class MessageController extends Controller
                     'user_id' => $userId,
                     'error' => $e->getMessage(),
                 ]);
+                // Clear the corrupted cache entry
+                cache()->forget($cacheKey);
             }
         }
 
-        // Fallback: Generate a temporary key pair and cache it
+        // Try to get the private key from user devices (multi-device setup)
         try {
-            $keyPair = $this->encryptionService->generateKeyPair();
-            $encryptedPrivateKey = $this->encryptionService->encryptForStorage($keyPair['private_key']);
-            cache()->put($cacheKey, $encryptedPrivateKey, now()->addHours(24));
-
-            // Also update user's public key if not set
             $user = \App\Models\User::find($userId);
-            if ($user && ! $user->public_key) {
-                $user->update(['public_key' => $keyPair['public_key']]);
+            if ($user) {
+                // First, try to find a trusted device with a private key
+                $trustedDevice = \App\Models\UserDevice::where('user_id', $userId)
+                    ->where('is_trusted', true)
+                    ->whereNotNull('private_key')
+                    ->first();
+                
+                if ($trustedDevice && $trustedDevice->private_key) {
+                    // Cache the private key for future use
+                    $encryptedPrivateKey = $this->encryptionService->encryptForStorage($trustedDevice->private_key);
+                    cache()->put($cacheKey, $encryptedPrivateKey, now()->addHours(24));
+                    
+                    Log::info('Recovered private key from trusted device', [
+                        'user_id' => $userId,
+                        'device_id' => $trustedDevice->id,
+                    ]);
+                    
+                    return $trustedDevice->private_key;
+                }
+                
+                // If no device has a private key, check if we have a device with just public key
+                // and generate/store the matching private key
+                $deviceWithPublicKey = \App\Models\UserDevice::where('user_id', $userId)
+                    ->where('is_trusted', true)
+                    ->whereNotNull('public_key')
+                    ->whereNull('private_key')
+                    ->first();
+                    
+                if ($deviceWithPublicKey) {
+                    Log::info('Found device with public key but no private key, generating keypair', [
+                        'user_id' => $userId,
+                        'device_id' => $deviceWithPublicKey->id,
+                    ]);
+                    
+                    // Generate new keypair and update device
+                    $keyPair = $this->encryptionService->generateKeyPair();
+                    $deviceWithPublicKey->update([
+                        'public_key' => $keyPair['public_key'],
+                        'private_key' => $keyPair['private_key'],
+                    ]);
+                    
+                    // Update user's public key to match
+                    $user->update(['public_key' => $keyPair['public_key']]);
+                    
+                    // Cache the private key
+                    $encryptedPrivateKey = $this->encryptionService->encryptForStorage($keyPair['private_key']);
+                    cache()->put($cacheKey, $encryptedPrivateKey, now()->addHours(24));
+                    
+                    return $keyPair['private_key'];
+                }
+                
+                // If no suitable device found, generate a new one
+                Log::info('No suitable device found, creating new device and keypair', [
+                    'user_id' => $userId,
+                ]);
+                
+                $keyPair = $this->getUserKeyPair($userId);
+                return $keyPair['private_key'];
             }
-
-            return $keyPair['private_key'];
         } catch (\Exception $e) {
-            Log::error('Failed to generate fallback private key', [
+            Log::warning('Failed to recover private key from user devices', [
                 'user_id' => $userId,
                 'error' => $e->getMessage(),
             ]);
-            throw new \RuntimeException('Unable to obtain private key for user - encryption service unavailable');
+        }
+
+        // Last resort: If no existing keys work, we need to trigger a full key regeneration
+        // This should be rare and indicates a serious key corruption issue
+        Log::error('Unable to obtain any valid private key for user - triggering key regeneration', [
+            'user_id' => $userId,
+        ]);
+
+        throw new \App\Exceptions\EncryptionKeyCorruptedException(
+            'Private key is corrupted or missing - conversation keys need regeneration',
+            $userId
+        );
+    }
+
+    private function verifyKeyPairMatch(string $privateKey, string $publicKey): bool
+    {
+        try {
+            // Test encryption/decryption with the key pair to verify they match
+            $testData = 'test_key_verification_' . time();
+            $encrypted = $this->encryptionService->encryptWithPublicKey($testData, $publicKey);
+            $decrypted = $this->encryptionService->decryptWithPrivateKey($encrypted, $privateKey);
+            
+            return $decrypted === $testData;
+        } catch (\Exception $e) {
+            return false;
         }
     }
 

@@ -328,6 +328,55 @@ class ChatEncryptionService
         return Crypt::decryptString($encryptedData);
     }
 
+    /**
+     * Encrypt data with a public key (for key verification purposes)
+     */
+    public function encryptWithPublicKey(string $data, string $publicKey): string
+    {
+        try {
+            $publicKeyResource = openssl_pkey_get_public($publicKey);
+            if (!$publicKeyResource) {
+                throw new EncryptionException('Invalid public key for verification');
+            }
+
+            $encrypted = '';
+            $result = openssl_public_encrypt($data, $encrypted, $publicKeyResource, OPENSSL_PKCS1_OAEP_PADDING);
+            
+            if (!$result) {
+                throw new EncryptionException('Failed to encrypt data with public key: ' . openssl_error_string());
+            }
+
+            return base64_encode($encrypted);
+        } catch (\Exception $e) {
+            throw new EncryptionException('Public key encryption failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Decrypt data with a private key (for key verification purposes)
+     */
+    public function decryptWithPrivateKey(string $encryptedData, string $privateKey): string
+    {
+        try {
+            $privateKeyResource = openssl_pkey_get_private($privateKey);
+            if (!$privateKeyResource) {
+                throw new EncryptionException('Invalid private key for verification');
+            }
+
+            $encrypted = base64_decode($encryptedData);
+            $decrypted = '';
+            $result = openssl_private_decrypt($encrypted, $decrypted, $privateKeyResource, OPENSSL_PKCS1_OAEP_PADDING);
+            
+            if (!$result) {
+                throw new EncryptionException('Failed to decrypt data with private key: ' . openssl_error_string());
+            }
+
+            return $decrypted;
+        } catch (\Exception $e) {
+            throw new EncryptionException('Private key decryption failed: ' . $e->getMessage());
+        }
+    }
+
     public function encryptFile(string $fileContent, string $symmetricKey): array
     {
         return $this->encryptMessage($fileContent, $symmetricKey);

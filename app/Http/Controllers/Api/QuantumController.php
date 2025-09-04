@@ -871,7 +871,7 @@ class QuantumController extends Controller
         if (isset($migrationData['rotate_keys']) && $migrationData['rotate_keys']) {
             \Illuminate\Support\Facades\DB::transaction(function () use ($migrationData, $migrationId) {
                 try {
-                    // In a real implementation, we'd rotate actual keys
+                    // TODO: In a real implementation, we'd rotate actual keys
                     // For testing, we'll mark all keys as inactive then create new ones
                     $user = \App\Models\User::find($migrationData['user_id']);
                     if ($user) {
@@ -933,7 +933,7 @@ class QuantumController extends Controller
             if ($validated['upgrade_all']) {
                 $devicesToUpgrade = $devices;
             } else {
-                // In a real implementation, we'd support selective device upgrade
+                // TODO: In a real implementation, we'd support selective device upgrade
                 $devicesToUpgrade = $devices;
             }
 

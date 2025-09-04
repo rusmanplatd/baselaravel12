@@ -261,7 +261,24 @@ class MultiDeviceE2EEService {
           this.setSecureStorage('device_registered', 'true');
         }
 
-        return result;
+        // Transform backend response to match frontend interface
+        const transformedResult = { ...result };
+        if (result.verification) {
+          const backendVerification = result.verification;
+          const challenge = backendVerification.challenge || backendVerification;
+          
+          transformedResult.verification = {
+            challengeId: challenge.challenge_id,
+            deviceId: challenge.device_id,
+            timestamp: challenge.timestamp,
+            nonce: challenge.nonce,
+            verificationType: challenge.verification_type,
+            expiresAt: new Date(backendVerification.expires_at || challenge.expires_at),
+            verificationMethods: backendVerification.verification_methods || []
+          };
+        }
+        
+        return transformedResult;
       } catch (error) {
         if (error instanceof ApiError) {
           throw E2EEError.apiError(error.message, error.status);
@@ -485,13 +502,83 @@ class MultiDeviceE2EEService {
       throw new Error('Device not registered');
     }
 
+    // Ensure the current device is properly registered before proceeding
+    try {
+      await this.ensureDeviceRegistration();
+    } catch (error) {
+      console.error('Failed to ensure device registration:', error);
+      throw new Error('Device registration required before encryption setup');
+    }
+
+    // If no participant devices provided, get all user devices for multi-device setup
+    let deviceKeys: Array<{ device_id: string }> = [];
+    if (participantDevices.length === 0) {
+      try {
+        const devices = await this.getUserDevices();
+        // Include all trusted and active devices
+        deviceKeys = devices
+          .filter(device => device.isTrusted && device.isActive)
+          .map(device => ({ device_id: device.id! }));
+        
+        // Ensure current device is included
+        if (this.currentDevice.id && !deviceKeys.some(dk => dk.device_id === this.currentDevice!.id)) {
+          deviceKeys.push({ device_id: this.currentDevice.id });
+        }
+
+        if (deviceKeys.length === 0) {
+          // If no devices found, fallback to current device only
+          deviceKeys = [{ device_id: this.currentDevice.id }];
+        }
+      } catch (error) {
+        console.warn('Could not get user devices, proceeding with current device only:', error);
+        // Fallback to just the current device
+        deviceKeys = [{ device_id: this.currentDevice.id }];
+      }
+    } else {
+      deviceKeys = participantDevices.map(deviceId => ({ device_id: deviceId }));
+    }
+
+    console.log('Setting up conversation encryption with device keys:', deviceKeys);
+
     const result = await apiService.post(`/api/v1/chat/conversations/${conversationId}/setup-encryption-multidevice`, {
-      device_keys: participantDevices.map(deviceId => ({ device_id: deviceId })),
+      device_keys: deviceKeys,
       initiating_device_id: this.currentDevice.id,
     });
 
     // Cache the conversation key
     await this.getConversationKey(conversationId);
+  }
+
+  /**
+   * Ensure the current device is properly registered
+   */
+  private async ensureDeviceRegistration(): Promise<void> {
+    if (!this.currentDevice) {
+      throw new Error('No current device available');
+    }
+
+    const isRegistered = this.getFromSecureStorage('device_registered');
+    if (isRegistered !== true && isRegistered !== 'true') {
+      console.log('Device not registered, registering now...');
+      await this.registerDevice();
+    }
+
+    // Verify the device exists on the server and has proper keys
+    try {
+      const devices = await this.getUserDevices();
+      const serverDevice = devices.find(d => d.fingerprint === this.currentDevice!.fingerprint);
+      
+      if (!serverDevice) {
+        console.log('Device not found on server, re-registering...');
+        await this.registerDevice();
+      } else if (!serverDevice.isTrusted) {
+        console.warn('Device exists but is not trusted - encryption may fail');
+      }
+    } catch (error) {
+      console.warn('Could not verify device registration:', error);
+      // Try to re-register
+      await this.registerDevice();
+    }
   }
 
   /**

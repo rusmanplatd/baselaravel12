@@ -6,8 +6,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
-import { 
-  DevicePhoneMobileIcon, 
+import {
+  DevicePhoneMobileIcon,
   ComputerDesktopIcon,
   GlobeAltIcon,
   DeviceTabletIcon,
@@ -47,7 +47,7 @@ const SecurityLevelBadge = ({ level, score }: { level: string; score?: number })
       case 'maximum':
         return 'default'; // green
       case 'high':
-        return 'secondary'; // blue  
+        return 'secondary'; // blue
       case 'medium':
         return 'outline'; // yellow
       case 'low':
@@ -159,7 +159,7 @@ export default function DeviceManagement({ onDeviceRegistered, onDeviceRemoved }
     try {
       setActionLoading('rotate');
       // For now, we'll just rotate keys for the current device
-      // In a real implementation, you'd need to specify which conversations
+      // TODO: In a real implementation, you'd need to specify which conversations
       await Promise.resolve(); // Placeholder
       await loadDevices();
     } catch (err) {
@@ -191,7 +191,7 @@ export default function DeviceManagement({ onDeviceRegistered, onDeviceRemoved }
           <TabsTrigger value="devices">My Devices</TabsTrigger>
           <TabsTrigger value="security" onClick={loadSecurityReport}>Security Report</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="devices" className="space-y-4">
           <div className="flex justify-between items-center">
             <div>
@@ -230,13 +230,13 @@ export default function DeviceManagement({ onDeviceRegistered, onDeviceRemoved }
                     </div>
                   </div>
                 </CardHeader>
-                
+
                 <CardContent className="pt-0">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4 text-sm text-gray-600">
                       <div className="flex items-center">
                         <ClockIcon className="h-4 w-4 mr-1" />
-                        {device.lastUsed 
+                        {device.lastUsed
                           ? `Last used ${formatDistanceToNow(device.lastUsed)} ago`
                           : 'Never used'
                         }
@@ -248,7 +248,7 @@ export default function DeviceManagement({ onDeviceRegistered, onDeviceRemoved }
                         </div>
                       )}
                     </div>
-                    
+
                     <div className="flex space-x-2">
                       {!device.isTrusted && (
                         <Button
@@ -261,7 +261,7 @@ export default function DeviceManagement({ onDeviceRegistered, onDeviceRemoved }
                           Trust
                         </Button>
                       )}
-                      
+
                       {device.isTrusted && (
                         <Button
                           size="sm"
@@ -273,7 +273,7 @@ export default function DeviceManagement({ onDeviceRegistered, onDeviceRemoved }
                           Share Keys
                         </Button>
                       )}
-                      
+
                       <Button
                         size="sm"
                         variant="outline"
@@ -299,7 +299,7 @@ export default function DeviceManagement({ onDeviceRegistered, onDeviceRemoved }
             </Card>
           )}
         </TabsContent>
-        
+
         <TabsContent value="security" className="space-y-4">
           <div className="flex justify-between items-center">
             <div>
@@ -327,9 +327,9 @@ export default function DeviceManagement({ onDeviceRegistered, onDeviceRemoved }
                 <CardContent>
                   <div className="flex items-center space-x-4">
                     <div className="flex-1">
-                      <Progress 
-                        value={securityReport.integrityReport.securityScore} 
-                        className="h-2" 
+                      <Progress
+                        value={securityReport.integrityReport.securityScore}
+                        className="h-2"
                       />
                     </div>
                     <div className="text-2xl font-bold">
@@ -439,7 +439,7 @@ export default function DeviceManagement({ onDeviceRegistered, onDeviceRemoved }
             <Button variant="outline" onClick={() => setShowTrustDialog(null)}>
               Cancel
             </Button>
-            <Button 
+            <Button
               onClick={() => showTrustDialog && handleTrustDevice(showTrustDialog)}
               disabled={!!actionLoading}
             >
@@ -462,7 +462,7 @@ export default function DeviceManagement({ onDeviceRegistered, onDeviceRemoved }
             <Button variant="outline" onClick={() => setShowRemoveDialog(null)}>
               Cancel
             </Button>
-            <Button 
+            <Button
               variant="destructive"
               onClick={() => showRemoveDialog && handleRemoveDevice(showRemoveDialog)}
               disabled={!!actionLoading}

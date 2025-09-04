@@ -36,11 +36,11 @@ export default function ConversationList({
 
   const handleCreateConversation = async () => {
     if (!newConversationEmail.trim()) return;
-    
-    // In a real app, you'd search for users by email
+
+    // TODO: In a real app, you'd search for users by email
     // For now, we'll just use the email as a participant ID
     await onCreateConversation([newConversationEmail.trim()], newConversationName.trim() || undefined);
-    
+
     setNewConversationEmail('');
     setNewConversationName('');
     setShowCreateDialog(false);
@@ -48,27 +48,27 @@ export default function ConversationList({
 
   const getConversationName = (conversation: Conversation) => {
     if (conversation.name) return conversation.name;
-    
+
     if (conversation.type === 'direct') {
       const otherParticipant = conversation.participants?.find(
         p => p.user_id !== currentUser.id
       );
       return otherParticipant?.user?.name || 'Unknown User';
     }
-    
+
     return `Group (${conversation.participants?.length || 0} members)`;
   };
 
   const getConversationAvatar = (conversation: Conversation) => {
     if (conversation.avatar_url) return conversation.avatar_url;
-    
+
     if (conversation.type === 'direct') {
       const otherParticipant = conversation.participants?.find(
         p => p.user_id !== currentUser.id
       );
       return otherParticipant?.user?.name?.charAt(0).toUpperCase() || '?';
     }
-    
+
     return '#';
   };
 
@@ -95,10 +95,10 @@ export default function ConversationList({
       <div className="p-4 border-b border-gray-200 space-y-2">
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
           <DialogTrigger asChild>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="w-full" 
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
               data-testid="create-conversation"
               disabled={!deviceRegistered}
             >
@@ -134,13 +134,13 @@ export default function ConversationList({
             </div>
           </DialogContent>
         </Dialog>
-        
+
         <CreateGroupDialog
           onCreateGroup={onCreateGroup}
           trigger={
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               className="w-full"
               disabled={!deviceRegistered}
             >
@@ -163,9 +163,9 @@ export default function ConversationList({
           >
             <div className="flex items-center space-x-3">
               <div className="h-12 w-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-medium">
-                {typeof getConversationAvatar(conversation) === 'string' && 
-                 getConversationAvatar(conversation).length === 1 ? 
-                  getConversationAvatar(conversation) : 
+                {typeof getConversationAvatar(conversation) === 'string' &&
+                 getConversationAvatar(conversation).length === 1 ?
+                  getConversationAvatar(conversation) :
                   <UserIcon className="h-6 w-6" />
                 }
               </div>
@@ -195,7 +195,7 @@ export default function ConversationList({
             </div>
           </div>
         ))}
-        
+
         {conversations.length === 0 && !loading && (
           <div className="p-8 text-center text-gray-500">
             <UserIcon className="mx-auto h-12 w-12 text-gray-400" />

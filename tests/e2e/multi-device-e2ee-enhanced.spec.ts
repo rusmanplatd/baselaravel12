@@ -99,7 +99,7 @@ test.describe('Enhanced Multi-Device E2EE Chat System', () => {
       await device1Page.fill('input[name="email"]', user1.email);
       await device1Page.fill('input[name="password"]', user1.password);
       await device1Page.click('button[type="submit"]');
-      
+
       // Wait for login to complete
       await device1Page.waitForTimeout(3000);
       currentUrl = device1Page.url();
@@ -110,7 +110,7 @@ test.describe('Enhanced Multi-Device E2EE Chat System', () => {
     if (currentUrl.includes('verify-email')) {
       console.log('Email verification required');
       // For testing purposes, try navigating directly to chat
-      // In a real test environment, you'd verify the email through database or API
+      // TODO: In a real test environment, you'd verify the email through database or API
     }
 
     // Navigate to chat
@@ -148,7 +148,7 @@ test.describe('Enhanced Multi-Device E2EE Chat System', () => {
       email: `setup.test.${timestamp}@example.com`,
       password: 'SetupPassword123!'
     };
-    
+
     // Register and login user
     await device1Page.goto('/register');
     await device1Page.fill('input[name="name"]', testUser.name);
@@ -156,10 +156,10 @@ test.describe('Enhanced Multi-Device E2EE Chat System', () => {
     await device1Page.fill('input[name="password"]', testUser.password);
     await device1Page.fill('input[name="password_confirmation"]', testUser.password);
     await device1Page.click('button[type="submit"]');
-    
+
     await device1Page.waitForTimeout(2000);
     let currentUrl = device1Page.url();
-    
+
     if (currentUrl.includes('/register')) {
       await device1Page.goto('/login');
       await device1Page.fill('input[name="email"]', testUser.email);
@@ -167,18 +167,18 @@ test.describe('Enhanced Multi-Device E2EE Chat System', () => {
       await device1Page.click('button[type="submit"]');
       await device1Page.waitForTimeout(3000);
     }
-    
+
     // Navigate to chat page - should show device setup overlay
     await device1Page.goto('/chat');
     await device1Page.waitForTimeout(3000);
-    
+
     currentUrl = device1Page.url();
     if (currentUrl.includes('/login')) {
       console.log('Authentication failed - skipping test');
       test.skip();
       return;
     }
-    
+
     // Should see device setup overlay
     await expect(device1Page.locator('[data-testid="device-setup-required"]')).toBeVisible({ timeout: 10000 });
 
@@ -242,7 +242,7 @@ test.describe('Enhanced Multi-Device E2EE Chat System', () => {
     // Click start chatting to close dialog
     await device1Page.click('button:has-text("Start Chatting")');
 
-    // Dialog should be closed 
+    // Dialog should be closed
     await expect(device1Page.locator('[data-testid="device-setup-dialog"]')).not.toBeVisible();
 
     // Test completed successfully - device setup wizard workflow is functional
@@ -256,7 +256,7 @@ test.describe('Enhanced Multi-Device E2EE Chat System', () => {
       email: `test.badge.${timestamp}@example.com`,
       password: 'TestPassword123!'
     };
-    
+
     // Register user
     await device1Page.goto('/register');
     await device1Page.fill('input[name="name"]', testUser.name);
@@ -264,10 +264,10 @@ test.describe('Enhanced Multi-Device E2EE Chat System', () => {
     await device1Page.fill('input[name="password"]', testUser.password);
     await device1Page.fill('input[name="password_confirmation"]', testUser.password);
     await device1Page.click('button[type="submit"]');
-    
+
     await device1Page.waitForTimeout(2000);
     let currentUrl = device1Page.url();
-    
+
     // Handle registration result
     if (currentUrl.includes('/register')) {
       // Manual login if registration didn't auto-login
@@ -277,21 +277,21 @@ test.describe('Enhanced Multi-Device E2EE Chat System', () => {
       await device1Page.click('button[type="submit"]');
       await device1Page.waitForTimeout(3000);
     }
-    
+
     // Navigate to chat page
     await device1Page.goto('/chat');
     await device1Page.waitForTimeout(3000);
-    
+
     currentUrl = device1Page.url();
     if (currentUrl.includes('/login')) {
       console.log('Authentication failed - still on login page');
       test.skip();
       return;
     }
-    
+
     // Should see E2EE status badge in sidebar
     await expect(device1Page.locator('[data-testid="e2ee-status-badge"]')).toBeVisible({ timeout: 10000 });
-    
+
     // Since device is not set up yet, should show disabled state
     await expect(device1Page.locator('text=Encryption Disabled')).toBeVisible();
 
