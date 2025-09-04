@@ -266,7 +266,7 @@ class MultiDeviceE2EEService {
         if (result.verification) {
           const backendVerification = result.verification;
           const challenge = backendVerification.challenge || backendVerification;
-          
+
           transformedResult.verification = {
             challengeId: challenge.challenge_id,
             deviceId: challenge.device_id,
@@ -277,7 +277,7 @@ class MultiDeviceE2EEService {
             verificationMethods: backendVerification.verification_methods || []
           };
         }
-        
+
         return transformedResult;
       } catch (error) {
         if (error instanceof ApiError) {
@@ -412,7 +412,8 @@ class MultiDeviceE2EEService {
 
   private async encryptMessageWithRetry(conversationId: string, message: string, retryCount: number): Promise<EncryptedMessage> {
     const maxRetries = 2;
-    
+    console.log('encryptMessageWithRetry called with retryCount:', retryCount, 'maxRetries:', maxRetries);
+
     // Ensure device is properly initialized and registered
     await this.ensureDeviceReady();
 
@@ -437,11 +438,30 @@ class MultiDeviceE2EEService {
       // Get or generate conversation key
       let conversationKey = this.conversationKeys.get(conversationId);
       if (!conversationKey) {
-        conversationKey = await this.getConversationKey(conversationId);
+        try {
+          conversationKey = await this.getConversationKey(conversationId);
+        } catch (keyError) {
+          // If this is a key mismatch error, throw it to be handled by the retry logic
+          if (keyError instanceof Error && keyError.message === 'KEY_MISMATCH_NEED_SETUP') {
+            throw keyError;
+          }
+          // For other key errors, re-throw them
+          throw keyError;
+        }
       }
 
       // Decrypt the symmetric key for this conversation
-      const symmetricKey = await this.decryptSymmetricKey(conversationKey.encryptedKey);
+      let symmetricKey: string;
+      try {
+        symmetricKey = await this.decryptSymmetricKey(conversationKey.encryptedKey);
+      } catch (decryptError) {
+        // If this is a key mismatch error, throw it to be handled by the retry logic
+        if (decryptError instanceof Error && decryptError.message === 'KEY_MISMATCH_NEED_SETUP') {
+          throw decryptError;
+        }
+        // For other decryption errors, re-throw them
+        throw decryptError;
+      }
 
       // Encrypt the message
       const encrypted = await this.encryptWithSymmetricKey(message, symmetricKey);
@@ -458,30 +478,94 @@ class MultiDeviceE2EEService {
       return encryptedMessage;
     } catch (error) {
       console.error('Encryption failed:', error);
-      
+      console.log('Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        name: error instanceof Error ? error.name : 'Unknown',
+        retryCount,
+        maxRetries
+      });
+
       // Handle key mismatch - device has changed and needs new conversation encryption setup
       if (error instanceof Error && error.message === 'KEY_MISMATCH_NEED_SETUP') {
-        if (retryCount < maxRetries) {
+        console.log('KEY_MISMATCH_NEED_SETUP detected in retry logic');
+        console.log('Checking retry conditions: retryCount =', retryCount, 'maxRetries =', maxRetries);
+
+        // For key mismatches, we should always attempt recovery regardless of retry count
+        // because this is a critical error that needs to be resolved
+        console.log('Key mismatch detected - attempting recovery regardless of retry count');
+        // Add a safeguard to prevent infinite loops - limit key mismatch recovery attempts
+        if (retryCount < 5) { // Allow up to 5 attempts for key mismatch recovery
           console.log(`Key mismatch detected, setting up new conversation encryption (attempt ${retryCount + 1}/${maxRetries})...`);
-          // Clear all conversation key caches to force fetching new keys
-          this.conversationKeys.clear();
-          this.symmetricKeys.clear();
-          this.keyCache.clear();
+          console.log('Current retry count:', retryCount, 'Max retries:', maxRetries);
+          console.log('Entering recovery logic...');
+
           try {
+            console.log('Starting recovery operations...');
+
+            // Clear all conversation key caches to force fetching new keys
+            console.log('Clearing all cached keys...');
+            this.conversationKeys.clear();
+            this.symmetricKeys.clear();
+            this.keyCache.clear();
+
+            // Check if we need to re-register the device with new keys
+            console.log('Checking if device needs re-registration...');
+            try {
+              // Try to ensure device registration first
+              console.log('Ensuring device registration...');
+              await this.ensureDeviceRegistration();
+              console.log('Device registration ensured successfully');
+            } catch (regError) {
+              console.log('Device registration issue detected, forcing device re-registration...', regError);
+              // Force device re-registration with new keys
+              console.log('Forcing device re-registration...');
+              await this.forceDeviceReregistration();
+              console.log('Device re-registration completed');
+            }
+
             // Setup encryption for this conversation with current device
-            await this.setupConversationEncryption(conversationId, []);
+            console.log('Setting up conversation encryption...');
+            await this.setupConversationEncryption(conversationId);
+            console.log('Conversation encryption setup completed');
+
             // Small delay to ensure setup completes
+            console.log('Waiting for setup to complete...');
             await new Promise(resolve => setTimeout(resolve, 1000));
             console.log('Conversation encryption setup completed, retrying message encryption...');
+            console.log('Retrying encryption with retry count:', retryCount + 1);
+
             return this.encryptMessageWithRetry(conversationId, message, retryCount + 1);
           } catch (setupError) {
             console.error('Failed to setup conversation encryption after key mismatch:', setupError);
+
+            // If this is still a key mismatch after setup, try one more time with fresh device
+            if (setupError instanceof Error && setupError.message === 'KEY_MISMATCH_NEED_SETUP' && retryCount === 0) {
+              console.log('Still getting key mismatch, trying complete device reset...');
+
+              // Use the dedicated complete device reset method
+              await this.completeDeviceReset();
+
+              // Setup encryption for this conversation
+              await this.setupConversationEncryption(conversationId);
+
+              // Small delay to ensure setup completes
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              console.log('Complete device reset completed, retrying encryption with retry count:', retryCount + 1);
+
+              return this.encryptMessageWithRetry(conversationId, message, retryCount + 1);
+            }
+
             // If setup fails, continue with original error handling
             throw E2EEError.encryptionFailed(conversationId, setupError instanceof Error ? setupError : error);
           }
+        } else {
+          console.error('Max key mismatch recovery attempts exceeded, giving up');
+          console.log('Final retry count:', retryCount, 'Max retries:', maxRetries);
+          console.log('Key mismatch recovery was attempted but failed after multiple attempts');
+          throw E2EEError.encryptionFailed(conversationId, new Error('Key mismatch could not be resolved after multiple recovery attempts'));
         }
       }
-      
+
       // Handle device re-registration
       if (error instanceof Error && error.message === 'DEVICE_REREGISTERED') {
         if (retryCount < maxRetries) {
@@ -494,7 +578,7 @@ class MultiDeviceE2EEService {
           throw E2EEError.encryptionFailed(conversationId, new Error('Failed after device re-registration'));
         }
       }
-      
+
       // Handle conversation setup needed
       if (error instanceof Error && error.message.includes('No encryption key found')) {
         if (retryCount < maxRetries) {
@@ -504,7 +588,7 @@ class MultiDeviceE2EEService {
           this.symmetricKeys.clear();
           this.keyCache.clear();
           try {
-            await this.setupConversationEncryption(conversationId, []);
+            await this.setupConversationEncryption(conversationId);
             // Small delay to ensure setup completes
             await new Promise(resolve => setTimeout(resolve, 500));
             console.log('Conversation encryption setup completed for new conversation, retrying...');
@@ -518,7 +602,7 @@ class MultiDeviceE2EEService {
           throw E2EEError.encryptionFailed(conversationId, error);
         }
       }
-      
+
       throw E2EEError.encryptionFailed(conversationId, error instanceof Error ? error : undefined);
     }
   }
@@ -554,7 +638,7 @@ class MultiDeviceE2EEService {
   private isNotFoundError(error: any): boolean {
     return (
       (error instanceof Error && (
-        error.message.includes('404') || 
+        error.message.includes('404') ||
         error.message.includes('not found') ||
         error.message.includes('Not Found')
       )) ||
@@ -616,7 +700,7 @@ class MultiDeviceE2EEService {
   /**
    * Set up encryption for a new conversation
    */
-  async setupConversationEncryption(conversationId: string, participantDevices: string[]): Promise<void> {
+  async setupConversationEncryption(conversationId: string, participantDevices: string[] = []): Promise<void> {
     if (!this.currentDevice?.id) {
       throw new Error('Device not registered');
     }
@@ -638,14 +722,16 @@ class MultiDeviceE2EEService {
         deviceKeys = devices
           .filter(device => device.isTrusted && device.isActive)
           .map(device => ({ device_id: device.id! }));
-        
-        // Ensure current device is included
+
+        // Ensure current device is included (this is critical for re-registered devices)
         if (this.currentDevice.id && !deviceKeys.some(dk => dk.device_id === this.currentDevice!.id)) {
+          console.log('Current device not found in user devices list, adding it explicitly');
           deviceKeys.push({ device_id: this.currentDevice.id });
         }
 
         if (deviceKeys.length === 0) {
           // If no devices found, fallback to current device only
+          console.log('No devices found, using current device only');
           deviceKeys = [{ device_id: this.currentDevice.id }];
         }
       } catch (error) {
@@ -659,13 +745,22 @@ class MultiDeviceE2EEService {
 
     console.log('Setting up conversation encryption with device keys:', deviceKeys);
 
-    const result = await apiService.post(`/api/v1/chat/conversations/${conversationId}/setup-encryption-multidevice`, {
-      device_keys: deviceKeys,
-      initiating_device_id: this.currentDevice.id,
-    });
+    try {
+      await apiService.post(`/api/v1/chat/conversations/${conversationId}/setup-encryption-multidevice`, {
+        device_keys: deviceKeys,
+        initiating_device_id: this.currentDevice.id,
+      });
 
-    // Cache the conversation key
-    await this.getConversationKey(conversationId);
+      console.log('Conversation encryption setup completed for conversation:', conversationId);
+
+      // Clear any cached keys for this conversation to force fresh key retrieval
+      const keysToDelete = Array.from(this.conversationKeys.keys()).filter(key => key.startsWith(conversationId));
+      keysToDelete.forEach(key => this.conversationKeys.delete(key));
+
+    } catch (error) {
+      console.error('Failed to setup conversation encryption:', error);
+      throw error;
+    }
   }
 
   /**
@@ -680,22 +775,32 @@ class MultiDeviceE2EEService {
     if (isRegistered !== true && isRegistered !== 'true') {
       console.log('Device not registered, registering now...');
       await this.registerDevice();
+      return;
     }
 
     // Verify the device exists on the server and has proper keys
     try {
       const devices = await this.getUserDevices();
       const serverDevice = devices.find(d => d.fingerprint === this.currentDevice!.fingerprint);
-      
+
       if (!serverDevice) {
         console.log('Device not found on server, re-registering...');
         await this.registerDevice();
       } else if (!serverDevice.isTrusted) {
         console.warn('Device exists but is not trusted - encryption may fail');
+        // Try to trust the device
+        try {
+          await this.trustDevice(this.currentDevice.id!);
+          this.currentDevice.isTrusted = true;
+          this.setSecureStorage('current_device', this.currentDevice);
+        } catch (trustError) {
+          console.warn('Could not trust device:', trustError);
+        }
       }
     } catch (error) {
       console.warn('Could not verify device registration:', error);
-      // Try to re-register
+      // If we can't verify, try to re-register
+      console.log('Attempting to re-register device due to verification failure...');
       await this.registerDevice();
     }
   }
@@ -755,6 +860,79 @@ class MultiDeviceE2EEService {
   }
 
   /**
+   * Force device re-registration with new keys
+   * This is used when key mismatches occur and we need to start fresh
+   */
+  async forceDeviceReregistration(): Promise<void> {
+    if (!this.currentDevice) {
+      throw new Error('No current device to re-register');
+    }
+
+    console.log('Forcing device re-registration with new keys...');
+
+    try {
+      // Generate new key pair
+      const newKeyPair = await this.generateKeyPair();
+      const newFingerprint = await this.generateDeviceFingerprint();
+
+      // Update current device with new keys
+      this.currentDevice.publicKey = newKeyPair.publicKey;
+      this.currentDevice.privateKey = newKeyPair.privateKey;
+      this.currentDevice.fingerprint = newFingerprint;
+
+      // Clear all cached data - this is critical to prevent using old encrypted keys
+      this.conversationKeys.clear();
+      this.symmetricKeys.clear();
+      this.keyCache.clear();
+
+      // Store updated device
+      this.setSecureStorage('current_device', this.currentDevice);
+
+      // Re-register device with new keys
+      await this.registerDevice();
+
+      console.log('Device re-registration completed successfully');
+      console.log('All conversation keys cleared - new conversation encryption setup will be required');
+    } catch (error) {
+      console.error('Failed to force device re-registration:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Complete device reset - clears everything and starts fresh
+   * This is used as a last resort when all other recovery methods fail
+   */
+  async completeDeviceReset(): Promise<void> {
+    console.log('Performing complete device reset...');
+
+    try {
+      // Clear all storage
+      this.setSecureStorage('device_registered', null);
+      this.setSecureStorage('current_device', null);
+
+      // Clear all cached data
+      this.conversationKeys.clear();
+      this.symmetricKeys.clear();
+      this.keyCache.clear();
+      this.pendingSyncMessages.clear();
+      this.syncQueue = [];
+
+      // Reset current device
+      this.currentDevice = null;
+
+      // Re-initialize everything from scratch
+      await this.initializeDevice();
+      await this.registerDevice();
+
+      console.log('Complete device reset completed successfully');
+    } catch (error) {
+      console.error('Failed to complete device reset:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Remove a device
    */
   async removeDevice(deviceId: string): Promise<void> {
@@ -775,11 +953,17 @@ class MultiDeviceE2EEService {
     }
 
     try {
-      const result = await apiService.post<{ encrypted_key: string }>(`/api/v1/chat/conversations/${conversationId}/device-key`, {
+      const result = await apiService.post<{
+        key_id: string;
+        encrypted_key: string;
+        public_key: string;
+        key_version: number;
+        device_fingerprint: string;
+      }>(`/api/v1/chat/conversations/${conversationId}/device-key`, {
         device_id: this.currentDevice.id,
         key_version: keyVersion,
       });
-      
+
       const conversationKey: ConversationKey = {
         keyId: result.key_id,
         encryptedKey: result.encrypted_key,
@@ -789,28 +973,50 @@ class MultiDeviceE2EEService {
         isActive: true,
       };
 
+      // Validate that the conversation key matches the current device fingerprint
+      if (conversationKey.deviceFingerprint !== this.currentDevice.fingerprint) {
+        console.warn('Conversation key device fingerprint mismatch:', {
+          expected: this.currentDevice.fingerprint,
+          actual: conversationKey.deviceFingerprint,
+          deviceId: this.currentDevice.id
+        });
+        console.log('This conversation key was encrypted for a different device - will need new encryption setup');
+        // Clear this key from cache and throw error to trigger setup
+        this.conversationKeys.delete(cacheKey);
+        throw new Error('KEY_MISMATCH_NEED_SETUP');
+      }
+
       this.conversationKeys.set(cacheKey, conversationKey);
       return conversationKey;
     } catch (error) {
       console.error('Failed to get conversation key:', error);
-      
+
       // If conversation key doesn't exist for this device, we need to set up encryption
       if (this.isNotFoundError(error)) {
         console.log('No encryption key found for this device in conversation, setting up encryption...');
-        
+
         try {
+          // Ensure device is properly registered before setting up encryption
+          await this.ensureDeviceRegistration();
+
           // Try to set up encryption for this conversation with this device
           await this.setupConversationEncryption(conversationId);
-          
+
           // Small delay to ensure the key is properly created
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
+          await new Promise(resolve => setTimeout(resolve, 1000));
+
           // Retry getting the key
-          const retryResult = await apiService.post<{ encrypted_key: string }>(`/api/v1/chat/conversations/${conversationId}/device-key`, {
+          const retryResult = await apiService.post<{
+            key_id: string;
+            encrypted_key: string;
+            public_key: string;
+            key_version: number;
+            device_fingerprint: string;
+          }>(`/api/v1/chat/conversations/${conversationId}/device-key`, {
             device_id: this.currentDevice.id,
             key_version: keyVersion,
           });
-          
+
           const conversationKey: ConversationKey = {
             keyId: retryResult.key_id,
             encryptedKey: retryResult.encrypted_key,
@@ -820,14 +1026,73 @@ class MultiDeviceE2EEService {
             isActive: true,
           };
 
+          // Validate that the conversation key matches the current device fingerprint
+          if (conversationKey.deviceFingerprint !== this.currentDevice.fingerprint) {
+            console.warn('Retry conversation key device fingerprint mismatch:', {
+              expected: this.currentDevice.fingerprint,
+              actual: conversationKey.deviceFingerprint,
+              deviceId: this.currentDevice.id
+            });
+            throw new Error('KEY_MISMATCH_NEED_SETUP');
+          }
+
           this.conversationKeys.set(cacheKey, conversationKey);
           return conversationKey;
         } catch (setupError) {
           console.error('Failed to set up conversation encryption:', setupError);
+
+          // If setup fails, it might be because the device needs to be re-registered
+          if (setupError instanceof Error && setupError.message.includes('device')) {
+            console.log('Device registration issue detected, attempting device re-registration...');
+            try {
+              await this.forceDeviceReregistration();
+              // Try setup again after re-registration
+              await this.setupConversationEncryption(conversationId);
+              await new Promise(resolve => setTimeout(resolve, 1000));
+
+              // Retry getting the key
+              const retryResult = await apiService.post<{
+                key_id: string;
+                encrypted_key: string;
+                public_key: string;
+                key_version: number;
+                device_fingerprint: string;
+              }>(`/api/v1/chat/conversations/${conversationId}/device-key`, {
+                device_id: this.currentDevice.id,
+                key_version: keyVersion,
+              });
+
+              const conversationKey: ConversationKey = {
+                keyId: retryResult.key_id,
+                encryptedKey: retryResult.encrypted_key,
+                publicKey: retryResult.public_key,
+                keyVersion: retryResult.key_version,
+                deviceFingerprint: retryResult.device_fingerprint,
+                isActive: true,
+              };
+
+              // Validate that the conversation key matches the current device fingerprint
+              if (conversationKey.deviceFingerprint !== this.currentDevice.fingerprint) {
+                console.warn('Re-registration retry conversation key device fingerprint mismatch:', {
+                  expected: this.currentDevice.fingerprint,
+                  actual: conversationKey.deviceFingerprint,
+                  deviceId: this.currentDevice.id
+                });
+                throw new Error('KEY_MISMATCH_NEED_SETUP');
+              }
+
+              this.conversationKeys.set(cacheKey, conversationKey);
+              return conversationKey;
+            } catch (reRegisterError) {
+              console.error('Failed to re-register device during conversation key setup:', reRegisterError);
+              throw new Error('No encryption key found for this device in conversation');
+            }
+          }
+
           throw new Error('No encryption key found for this device in conversation');
         }
       }
-      
+
       throw error;
     }
   }
@@ -840,7 +1105,7 @@ class MultiDeviceE2EEService {
         privateKeyExists: !!this.currentDevice?.privateKey,
         privateKeyLength: this.currentDevice?.privateKey?.length
       });
-      
+
       // Try to recover by creating a new device if this device doesn't have keys
       if (this.currentDevice?.id) {
         console.warn('Device exists but has no private key - this may indicate the device was registered from another session');
@@ -849,16 +1114,21 @@ class MultiDeviceE2EEService {
         this.setSecureStorage('current_device', null);
         this.currentDevice = null;
         this.conversationKeys.clear(); // Clear all cached keys
-        
+
         await this.initializeDevice();
         await this.registerDevice();
-        
+
         // Retry if we now have a private key
         if (this.currentDevice?.privateKey) {
           return this.decryptSymmetricKey(encryptedKey);
         }
       }
-      
+
+      throw E2EEError.keyGenerationFailed();
+    }
+
+    // At this point currentDevice and privateKey should exist
+    if (!this.currentDevice?.privateKey) {
       throw E2EEError.keyGenerationFailed();
     }
 
@@ -883,14 +1153,21 @@ class MultiDeviceE2EEService {
         privateKeyLength: this.currentDevice.privateKey?.length,
         deviceId: this.currentDevice.id
       });
-      
+
       // If this is an OperationError, it indicates key mismatch - need to setup new encryption
       if (error instanceof Error && error.name === 'OperationError') {
-        console.warn('OperationError detected - key mismatch. Need to setup new conversation encryption.');
-        // Instead of re-registering, throw a specific error that will trigger conversation setup
+        console.warn('OperationError detected - key mismatch. Current device key does not match the encrypted conversation key.');
+        console.log('Device fingerprint mismatch - this suggests the conversation was set up with different device keys');
+
+        // OperationError indicates key mismatch - the conversation key was encrypted with different device keys
+        console.log('Key mismatch detected - conversation key was encrypted with different device keys');
+        console.log('This requires new conversation encryption setup with current device keys');
+
+        // Don't try to re-register here as it would create infinite recursion
+        // Instead, throw the setup error to be handled by the higher-level retry logic
         throw new Error('KEY_MISMATCH_NEED_SETUP');
       }
-      
+
       throw error;
     }
   }

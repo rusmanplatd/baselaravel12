@@ -1,8 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { router } from '@inertiajs/react';
-import { Conversation, Message, User, VoiceRecording, ReactionSummary, E2EEStatus } from '@/types/chat';
+import { Conversation, Message, VoiceRecording, E2EEStatus } from '@/types/chat';
 import { multiDeviceE2EEService, SecurityReport } from '@/services/MultiDeviceE2EEService';
-import { apiService, ApiError } from '@/services/ApiService';
+import { apiService } from '@/services/ApiService';
 
 interface UseChatReturn {
   conversations: Conversation[];
@@ -67,7 +66,7 @@ export function useChat(user: any): UseChatReturn {
 
   const handleError = useCallback((err: any) => {
     console.error('Chat error:', err);
-    
+
     // Handle specific encryption key regeneration error
     if (err.response?.data?.code === 'ENCRYPTION_KEYS_REGENERATED') {
       setError('Encryption keys were regenerated. Please refresh the page to continue.');
@@ -77,13 +76,13 @@ export function useChat(user: any): UseChatReturn {
       }, 3000);
       return;
     }
-    
+
     // Handle other encryption errors
     if (err.response?.data?.code === 'ENCRYPTION_KEY_CORRUPTED') {
       setError('Encryption keys are corrupted. Please contact support.');
       return;
     }
-    
+
     setError(err.response?.data?.message || err.message || 'An error occurred');
   }, []);
 
@@ -92,17 +91,6 @@ export function useChat(user: any): UseChatReturn {
   //   // This is now handled by ApiService
   // }, []);
 
-  const getApiHeaders = useCallback(async () => {
-    try {
-      return await apiService.getHeaders();
-    } catch (error) {
-      if (error instanceof ApiError && error.status === 401) {
-        // User needs to authenticate
-        handleError(error);
-      }
-      throw error;
-    }
-  }, []);
 
   const initializeEncryption = useCallback(async () => {
     try {
@@ -134,7 +122,7 @@ export function useChat(user: any): UseChatReturn {
           }
         } catch (registrationError: any) {
           // If device is already registered, that's fine
-          if (registrationError.message?.includes('already registered') || 
+          if (registrationError.message?.includes('already registered') ||
               registrationError.status === 409) {
             console.log('Device already registered');
             setDeviceRegistered(true);
@@ -150,7 +138,7 @@ export function useChat(user: any): UseChatReturn {
           console.warn('Device registration failed:', registrationError);
         }
       }
-      
+
       // Device needs initialization/registration
       setDeviceRegistered(false);
       setEncryptionReady(false);
@@ -227,10 +215,10 @@ export function useChat(user: any): UseChatReturn {
         if (message.encrypted_content) {
           try {
             // Parse encrypted content if it's a string
-            const encryptedMessage = typeof message.encrypted_content === 'string' 
+            const encryptedMessage = typeof message.encrypted_content === 'string'
               ? JSON.parse(message.encrypted_content)
               : message.encrypted_content;
-              
+
             const decryptedContent = await multiDeviceE2EEService.decryptMessage(
               message.conversation_id,
               encryptedMessage
@@ -273,19 +261,27 @@ export function useChat(user: any): UseChatReturn {
     try {
       setLoading(true);
 
-      // Setup conversation encryption first
-      await setupConversationEncryption(conversationId);
+      // Setup conversation encryption first if encryption is ready
+      if (encryptionReady && deviceRegistered) {
+        try {
+          await setupConversationEncryption(conversationId);
+        } catch (error) {
+          console.warn('Failed to setup conversation encryption:', error);
+          // Continue loading messages even if encryption setup fails
+        }
+      }
 
       const response = await apiService.get<{ data?: Message[]; messages?: Message[] } | Message[]>(`/api/v1/chat/conversations/${conversationId}/messages`);
       const rawMessages = Array.isArray(response) ? response : (response.data || response.messages || []);
-      const decryptedMessages = await decryptMessages(rawMessages.reverse());
+      const reversedMessages = rawMessages.toReversed();
+      const decryptedMessages = await decryptMessages(reversedMessages);
       setMessages(decryptedMessages);
     } catch (err) {
       handleError(err);
     } finally {
       setLoading(false);
     }
-  }, [handleError, setupConversationEncryption, decryptMessages]);
+  }, [handleError, setupConversationEncryption, decryptMessages, encryptionReady, deviceRegistered]);
 
   const sendMessage = useCallback(async (content: string, options?: {
     type?: 'text' | 'voice';
@@ -341,7 +337,7 @@ export function useChat(user: any): UseChatReturn {
             plainTextContent
           );
 
-          if (encryptedData && encryptedData.data) {
+          if (encryptedData?.data) {
             messageData = {
               ...messageData,
               encrypted_content: {
@@ -358,7 +354,77 @@ export function useChat(user: any): UseChatReturn {
           }
         } catch (error) {
           console.error('Failed to encrypt message:', error);
-          throw error;
+
+          // Handle specific encryption errors
+          if (error instanceof Error) {
+            if (error.message.includes('KEY_MISMATCH_NEED_SETUP')) {
+              console.log('Key mismatch detected, attempting to reinitialize encryption...');
+              // Try to reinitialize encryption
+              try {
+                await initializeEncryption();
+                // Retry encryption after reinitialization
+                const encryptedData = await multiDeviceE2EEService.encryptMessage(
+                  activeConversation.id,
+                  plainTextContent
+                );
+
+                if (encryptedData?.data) {
+                  messageData = {
+                    ...messageData,
+                    encrypted_content: {
+                      data: encryptedData.data,
+                      iv: encryptedData.iv,
+                      hmac: encryptedData.hmac,
+                      auth_data: encryptedData.authData,
+                    },
+                    content_hash: encryptedData.hash,
+                  };
+                } else {
+                  throw new Error('Encryption failed after reinitialization');
+                }
+              } catch (retryError) {
+                console.error('Failed to reinitialize encryption:', retryError);
+                setError('Encryption setup failed. Please refresh the page and try again.');
+                return;
+              }
+            } else if (error.message.includes('device not registered') || error.message.includes('device not trusted')) {
+              console.log('Device registration issue, attempting to reinitialize...');
+              try {
+                await initializeEncryption();
+                // Retry encryption after reinitialization
+                const encryptedData = await multiDeviceE2EEService.encryptMessage(
+                  activeConversation.id,
+                  plainTextContent
+                );
+
+                if (encryptedData?.data) {
+                  messageData = {
+                    ...messageData,
+                    encrypted_content: {
+                      data: encryptedData.data,
+                      iv: encryptedData.iv,
+                      hmac: encryptedData.hmac,
+                      auth_data: encryptedData.authData,
+                    },
+                    content_hash: encryptedData.hash,
+                  };
+                } else {
+                  throw new Error('Encryption failed after device reinitialization');
+                }
+              } catch (retryError) {
+                console.error('Failed to reinitialize device:', retryError);
+                setError('Device setup failed. Please refresh the page and try again.');
+                return;
+              }
+            } else {
+              // For other encryption errors, show a user-friendly message
+              setError('Message encryption failed. Please try again.');
+              return;
+            }
+          } else {
+            setError('Message encryption failed. Please try again.');
+            return;
+          }
         }
       } else {
         if (!encryptionReady || !deviceRegistered) {
@@ -376,15 +442,15 @@ export function useChat(user: any): UseChatReturn {
       if (encryptionReady && deviceRegistered && rawMessage.encrypted_content) {
         try {
           // Parse encrypted content if it's a string
-          const encryptedMessage = typeof rawMessage.encrypted_content === 'string' 
+          const encryptedMessage = typeof rawMessage.encrypted_content === 'string'
             ? JSON.parse(rawMessage.encrypted_content)
             : rawMessage.encrypted_content;
-            
+
           const decryptedContent = await multiDeviceE2EEService.decryptMessage(
             rawMessage.conversation_id,
             encryptedMessage
           );
-          
+
           decryptedMessage = {
             ...rawMessage,
             content: decryptedContent || content
@@ -426,10 +492,20 @@ export function useChat(user: any): UseChatReturn {
 
       setConversations(prev => [newConversation, ...prev]);
       setActiveConversation(newConversation);
+
+      // Setup encryption for the new conversation if encryption is ready
+      if (encryptionReady && deviceRegistered) {
+        try {
+          await setupConversationEncryption(newConversation.id);
+        } catch (error) {
+          console.warn('Failed to setup encryption for new conversation:', error);
+          // Don't throw here as the conversation was created successfully
+        }
+      }
     } catch (err) {
       handleError(err);
     }
-  }, [handleError]);
+  }, [handleError, encryptionReady, deviceRegistered, setupConversationEncryption]);
 
   // New feature methods
   const toggleReaction = useCallback(async (messageId: string, emoji: string) => {
