@@ -3,10 +3,6 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use App\Models\Chat\Conversation;
-use App\Models\Chat\EncryptionKey;
-use App\Models\Chat\Message;
-use App\Models\Chat\Participant;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -356,54 +352,6 @@ class User extends Authenticatable implements HasPasskeys
         setPermissionsTeamId(null);
     }
 
-    public function chatParticipants(): HasMany
-    {
-        return $this->hasMany(Participant::class);
-    }
-
-    public function activeConversations(): BelongsToMany
-    {
-        return $this->belongsToMany(Conversation::class, 'chat_participants')
-            ->withPivot(['role', 'joined_at', 'left_at', 'last_read_at'])
-            ->whereNull('chat_participants.left_at')
-            ->where('chat_conversations.status', 'active')
-            ->withTimestamps();
-    }
-
-    public function sentMessages(): HasMany
-    {
-        return $this->hasMany(Message::class, 'sender_id');
-    }
-
-    public function chatEncryptionKeys(): HasMany
-    {
-        return $this->hasMany(EncryptionKey::class);
-    }
-
-    public function encryptionKeys(): HasMany
-    {
-        return $this->chatEncryptionKeys();
-    }
-
-    public function getActiveEncryptionKeyForConversation(string $conversationId, ?string $deviceId = null): ?EncryptionKey
-    {
-        $query = $this->chatEncryptionKeys()
-            ->where('conversation_id', $conversationId)
-            ->active()
-            ->latestVersion();
-
-        if ($deviceId) {
-            $query->where('device_id', $deviceId);
-        } else {
-            // If no device specified, get the most recent key for any trusted device
-            $trustedDeviceIds = $this->trustedActiveDevices()->pluck('id');
-            if ($trustedDeviceIds->isNotEmpty()) {
-                $query->whereIn('device_id', $trustedDeviceIds);
-            }
-        }
-
-        return $query->first();
-    }
 
     public function sessions(): HasMany
     {
@@ -423,45 +371,6 @@ class User extends Authenticatable implements HasPasskeys
             ->first();
     }
 
-    public function devices(): HasMany
-    {
-        return $this->hasMany(UserDevice::class);
-    }
-
-    public function activeDevices(): HasMany
-    {
-        return $this->devices()->active();
-    }
-
-    public function trustedActiveDevices(): HasMany
-    {
-        return $this->devices()->trusted()->active();
-    }
-
-    public function getDeviceByFingerprint(string $fingerprint): ?UserDevice
-    {
-        return $this->devices()
-            ->byFingerprint($fingerprint)
-            ->first();
-    }
-
-    public function getActiveEncryptionKeyForConversationAndDevice(string $conversationId, ?string $deviceId = null): ?EncryptionKey
-    {
-        $query = $this->chatEncryptionKeys()
-            ->where('conversation_id', $conversationId)
-            ->active();
-
-        if ($deviceId) {
-            $query->where('device_id', $deviceId);
-        }
-
-        return $query->latestVersion()->first();
-    }
-
-    public function hasDeviceAccessToConversation(string $conversationId, string $deviceId): bool
-    {
-        return $this->getActiveEncryptionKeyForConversationAndDevice($conversationId, $deviceId) !== null;
-    }
 
     public function createdBy(): BelongsTo
     {

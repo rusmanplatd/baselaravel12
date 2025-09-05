@@ -22,20 +22,11 @@ Route::middleware(['auth', 'verified', 'mfa.verified'])->group(function () {
         return Inertia::render('dashboard');
     })->name('dashboard');
 
-    Route::get('chat', function () {
-        return Inertia::render('chat');
-    })->name('chat');
-
-    Route::get('chat/join/{inviteCode}', function (string $inviteCode) {
-        return Inertia::render('chat', [
-            'inviteCode' => $inviteCode,
-        ]);
-    })->name('chat.join');
 
     // Generate personal access token for API usage
     Route::post('api/generate-token', function () {
         $user = auth()->user();
-        $token = $user->createToken('Chat Application Token')->accessToken;
+        $token = $user->createToken('API Access Token')->accessToken;
 
         return response()->json([
             'access_token' => $token,

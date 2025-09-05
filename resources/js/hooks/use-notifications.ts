@@ -32,8 +32,8 @@ const mockNotifications: Notification[] = [
     },
     {
         id: '3',
-        title: 'New chat message',
-        message: 'You have a new message from John Doe in the Project Alpha chat.',
+        title: 'System notification',
+        message: 'Your profile information has been updated successfully.',
         type: 'info',
         read: true,
         createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
