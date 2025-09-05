@@ -108,6 +108,4 @@ class DeviceCode extends Model
         return $query->where('status', 'pending')
             ->where('expires_at', '>', now());
     }
-
-
 }

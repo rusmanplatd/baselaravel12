@@ -7,8 +7,6 @@ use App\Models\Master\Geo\Country;
 use App\Models\Master\Geo\Province;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Spatie\QueryBuilder\AllowedFilter;
-use Spatie\QueryBuilder\QueryBuilder;
 
 class ProvinceController extends Controller
 {

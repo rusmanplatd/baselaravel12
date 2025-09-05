@@ -7,8 +7,6 @@ use App\Models\Master\Geo\District;
 use App\Models\Master\Geo\Village;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Spatie\QueryBuilder\AllowedFilter;
-use Spatie\QueryBuilder\QueryBuilder;
 
 class VillageController extends Controller
 {

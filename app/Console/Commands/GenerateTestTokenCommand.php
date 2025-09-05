@@ -28,27 +28,29 @@ class GenerateTestTokenCommand extends Command
         $tokenName = $this->option('name') ?: $this->ask('Token name:', 'Test API Token');
 
         $user = User::where('email', $email)->first();
-        
-        if (!$user) {
+
+        if (! $user) {
             $this->error("User with email '$email' not found.");
+
             return 1;
         }
 
         try {
             $token = $user->createToken($tokenName);
-            
-            $this->info("Token generated successfully!");
-            $this->line("");
+
+            $this->info('Token generated successfully!');
+            $this->line('');
             $this->line("User: {$user->name} ({$user->email})");
             $this->line("Token Name: {$tokenName}");
             $this->line("Token: {$token->accessToken}");
-            $this->line("");
+            $this->line('');
             $this->info("Test with: curl -H 'Authorization: Bearer {$token->accessToken}' http://localhost:8000/api/v1/quantum/health");
-            
+
             return 0;
-            
+
         } catch (\Exception $e) {
-            $this->error("Failed to generate token: " . $e->getMessage());
+            $this->error('Failed to generate token: '.$e->getMessage());
+
             return 1;
         }
     }

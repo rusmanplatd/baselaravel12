@@ -82,7 +82,7 @@ class Client extends PassportClient
                 throw new \InvalidArgumentException('organization_id is required for OAuth clients');
             }
 
-            if (!in_array($client->user_access_scope, ['all_users', 'organization_members', 'custom'])) {
+            if (! in_array($client->user_access_scope, ['all_users', 'organization_members', 'custom'])) {
                 throw new \InvalidArgumentException('Invalid user_access_scope. Must be one of: all_users, organization_members, custom');
             }
         });

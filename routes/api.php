@@ -77,7 +77,7 @@ Route::prefix('v1')->group(function () {
     Route::get('organization-positions/available', [\App\Http\Controllers\Api\OrganizationPositionController::class, 'getAvailablePositions']);
     Route::get('organization-positions/level/{level}', [\App\Http\Controllers\Api\OrganizationPositionController::class, 'getByLevel']);
     Route::get('organization-positions/{organizationPosition}/incumbents', [\App\Http\Controllers\Api\OrganizationPositionController::class, 'getIncumbents']);
-    
+
     // Organization positions resource routes
     Route::apiResource('organization-positions', \App\Http\Controllers\Api\OrganizationPositionController::class);
 
@@ -113,22 +113,22 @@ Route::middleware('auth:api')->prefix('v1')->group(function () {
         Route::get('countries/{country}', [\App\Http\Controllers\Api\Geo\CountryController::class, 'show'])->name('countries.show');
         Route::put('countries/{country}', [\App\Http\Controllers\Api\Geo\CountryController::class, 'update'])->name('countries.update');
         Route::delete('countries/{country}', [\App\Http\Controllers\Api\Geo\CountryController::class, 'destroy'])->name('countries.destroy');
-        
+
         Route::post('provinces', [\App\Http\Controllers\Api\Geo\ProvinceController::class, 'store'])->name('provinces.store');
         Route::get('provinces/{province}', [\App\Http\Controllers\Api\Geo\ProvinceController::class, 'show'])->name('provinces.show');
         Route::put('provinces/{province}', [\App\Http\Controllers\Api\Geo\ProvinceController::class, 'update'])->name('provinces.update');
         Route::delete('provinces/{province}', [\App\Http\Controllers\Api\Geo\ProvinceController::class, 'destroy'])->name('provinces.destroy');
-        
+
         Route::post('cities', [\App\Http\Controllers\Api\Geo\CityController::class, 'store'])->name('cities.store');
         Route::get('cities/{city}', [\App\Http\Controllers\Api\Geo\CityController::class, 'show'])->name('cities.show');
         Route::put('cities/{city}', [\App\Http\Controllers\Api\Geo\CityController::class, 'update'])->name('cities.update');
         Route::delete('cities/{city}', [\App\Http\Controllers\Api\Geo\CityController::class, 'destroy'])->name('cities.destroy');
-        
+
         Route::post('districts', [\App\Http\Controllers\Api\Geo\DistrictController::class, 'store'])->name('districts.store');
         Route::get('districts/{district}', [\App\Http\Controllers\Api\Geo\DistrictController::class, 'show'])->name('districts.show');
         Route::put('districts/{district}', [\App\Http\Controllers\Api\Geo\DistrictController::class, 'update'])->name('districts.update');
         Route::delete('districts/{district}', [\App\Http\Controllers\Api\Geo\DistrictController::class, 'destroy'])->name('districts.destroy');
-        
+
         Route::post('villages', [\App\Http\Controllers\Api\Geo\VillageController::class, 'store'])->name('villages.store');
         Route::get('villages/{village}', [\App\Http\Controllers\Api\Geo\VillageController::class, 'show'])->name('villages.show');
         Route::put('villages/{village}', [\App\Http\Controllers\Api\Geo\VillageController::class, 'update'])->name('villages.update');
@@ -179,7 +179,6 @@ Route::middleware('auth:api')->prefix('v1')->group(function () {
         Route::get('statistics', [WebAuthnApiController::class, 'statistics'])->name('statistics');
     });
 
-
     // User API endpoints
     Route::prefix('users')->name('api.users.')->group(function () {
         Route::get('/', [UserApiController::class, 'index'])
@@ -213,5 +212,337 @@ Route::middleware('auth:api')->prefix('v1')->group(function () {
         Route::delete('{id}', [\App\Http\Controllers\Api\NotificationController::class, 'destroy'])
             ->name('destroy')
             ->middleware('throttle:60,1');
+    });
+
+    // E2EE Chat System API
+    Route::prefix('chat')->name('api.chat.')->group(function () {
+        // Device Management
+        Route::prefix('devices')->name('devices.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Api\Chat\DeviceController::class, 'index'])
+                ->name('index');
+            Route::post('/', [\App\Http\Controllers\Api\Chat\DeviceController::class, 'register'])
+                ->name('register')
+                ->middleware('rate_limit:device_registration,per_user');
+            Route::get('{device}', [\App\Http\Controllers\Api\Chat\DeviceController::class, 'show'])
+                ->name('show');
+            Route::patch('{device}', [\App\Http\Controllers\Api\Chat\DeviceController::class, 'update'])
+                ->name('update');
+            Route::post('{device}/trust', [\App\Http\Controllers\Api\Chat\DeviceController::class, 'trust'])
+                ->name('trust');
+            Route::delete('{device}/trust', [\App\Http\Controllers\Api\Chat\DeviceController::class, 'untrust'])
+                ->name('untrust');
+            Route::delete('{device}', [\App\Http\Controllers\Api\Chat\DeviceController::class, 'revoke'])
+                ->name('revoke');
+            Route::get('{device}/verification-code', [\App\Http\Controllers\Api\Chat\DeviceController::class, 'getVerificationCode'])
+                ->name('verification-code');
+            Route::post('{device}/rotate-keys', [\App\Http\Controllers\Api\Chat\DeviceController::class, 'rotateKeys'])
+                ->name('rotate-keys');
+        });
+
+        // Conversations
+        Route::prefix('conversations')->name('conversations.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Api\Chat\ConversationController::class, 'index'])
+                ->name('index');
+            Route::post('/', [\App\Http\Controllers\Api\Chat\ConversationController::class, 'store'])
+                ->name('store')
+                ->middleware('rate_limit:create_conversation,per_user');
+            Route::get('{conversation}', [\App\Http\Controllers\Api\Chat\ConversationController::class, 'show'])
+                ->name('show');
+            Route::patch('{conversation}', [\App\Http\Controllers\Api\Chat\ConversationController::class, 'update'])
+                ->name('update');
+            Route::delete('{conversation}/leave', [\App\Http\Controllers\Api\Chat\ConversationController::class, 'leave'])
+                ->name('leave');
+            Route::post('{conversation}/participants', [\App\Http\Controllers\Api\Chat\ConversationController::class, 'addParticipant'])
+                ->name('add-participant');
+            Route::delete('{conversation}/participants', [\App\Http\Controllers\Api\Chat\ConversationController::class, 'removeParticipant'])
+                ->name('remove-participant');
+            Route::post('{conversation}/rotate-keys', [\App\Http\Controllers\Api\Chat\ConversationController::class, 'rotateKeys'])
+                ->name('rotate-keys');
+
+            // Messages within conversations
+            Route::prefix('{conversation}/messages')->name('messages.')->group(function () {
+                Route::get('/', [\App\Http\Controllers\Api\Chat\MessageController::class, 'index'])
+                    ->name('index');
+                Route::post('/', [\App\Http\Controllers\Api\Chat\MessageController::class, 'store'])
+                    ->name('store')
+                    ->middleware('rate_limit:messages,per_user');
+                Route::get('{message}', [\App\Http\Controllers\Api\Chat\MessageController::class, 'show'])
+                    ->name('show');
+                Route::patch('{message}', [\App\Http\Controllers\Api\Chat\MessageController::class, 'update'])
+                    ->name('update');
+                Route::delete('{message}', [\App\Http\Controllers\Api\Chat\MessageController::class, 'destroy'])
+                    ->name('destroy');
+                Route::post('{message}/reactions', [\App\Http\Controllers\Api\Chat\MessageController::class, 'addReaction'])
+                    ->name('add-reaction');
+                Route::delete('{message}/reactions', [\App\Http\Controllers\Api\Chat\MessageController::class, 'removeReaction'])
+                    ->name('remove-reaction');
+            });
+
+            // File attachments
+            Route::post('{conversation}/attachments', [\App\Http\Controllers\Api\Chat\MessageController::class, 'uploadAttachment'])
+                ->name('upload-attachment');
+
+            // File management
+            Route::prefix('{conversation}/files')->name('files.')->group(function () {
+                Route::post('/', [\App\Http\Controllers\Api\Chat\FileController::class, 'upload'])
+                    ->name('upload');
+                Route::post('bulk', [\App\Http\Controllers\Api\Chat\FileController::class, 'bulkUpload'])
+                    ->name('bulk-upload');
+                Route::get('{file}', [\App\Http\Controllers\Api\Chat\FileController::class, 'download'])
+                    ->name('download');
+                Route::get('{file}/info', [\App\Http\Controllers\Api\Chat\FileController::class, 'getFileInfo'])
+                    ->name('info');
+                Route::get('{file}/thumbnail', [\App\Http\Controllers\Api\Chat\FileController::class, 'thumbnail'])
+                    ->name('thumbnail');
+            });
+
+            // Polls
+            Route::prefix('{conversation}/polls')->name('polls.')->group(function () {
+                Route::get('/', [\App\Http\Controllers\Api\Chat\PollController::class, 'list'])
+                    ->name('list');
+                Route::post('/', [\App\Http\Controllers\Api\Chat\PollController::class, 'create'])
+                    ->name('create')
+                    ->middleware('rate_limit:poll_creation,per_user');
+                Route::get('{poll}', [\App\Http\Controllers\Api\Chat\PollController::class, 'show'])
+                    ->name('show');
+                Route::post('{poll}/vote', [\App\Http\Controllers\Api\Chat\PollController::class, 'vote'])
+                    ->name('vote')
+                    ->middleware('rate_limit:poll_votes,per_user');
+                Route::get('{poll}/results', [\App\Http\Controllers\Api\Chat\PollController::class, 'results'])
+                    ->name('results');
+                Route::post('{poll}/close', [\App\Http\Controllers\Api\Chat\PollController::class, 'close'])
+                    ->name('close');
+                Route::get('{poll}/analytics', [\App\Http\Controllers\Api\Chat\PollController::class, 'analytics'])
+                    ->name('analytics');
+            });
+
+            // Surveys
+            Route::prefix('{conversation}/surveys')->name('surveys.')->group(function () {
+                Route::get('/', [\App\Http\Controllers\Api\Chat\SurveyController::class, 'list'])
+                    ->name('list');
+                Route::post('/', [\App\Http\Controllers\Api\Chat\SurveyController::class, 'create'])
+                    ->name('create');
+                Route::get('{survey}', [\App\Http\Controllers\Api\Chat\SurveyController::class, 'show'])
+                    ->name('show');
+                Route::post('{survey}/respond', [\App\Http\Controllers\Api\Chat\SurveyController::class, 'respond'])
+                    ->name('respond');
+                Route::get('{survey}/results', [\App\Http\Controllers\Api\Chat\SurveyController::class, 'results'])
+                    ->name('results');
+                Route::post('{survey}/close', [\App\Http\Controllers\Api\Chat\SurveyController::class, 'close'])
+                    ->name('close');
+            });
+        });
+
+        // Backup and Export
+        Route::prefix('backups')->name('backups.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Api\Chat\BackupController::class, 'list'])
+                ->name('list');
+            Route::post('/', [\App\Http\Controllers\Api\Chat\BackupController::class, 'create'])
+                ->name('create');
+            Route::get('{backup}', [\App\Http\Controllers\Api\Chat\BackupController::class, 'show'])
+                ->name('show');
+            Route::get('{backup}/download', [\App\Http\Controllers\Api\Chat\BackupController::class, 'download'])
+                ->name('download');
+            Route::get('{backup}/progress', [\App\Http\Controllers\Api\Chat\BackupController::class, 'progress'])
+                ->name('progress');
+            Route::post('{backup}/verify', [\App\Http\Controllers\Api\Chat\BackupController::class, 'verify'])
+                ->name('verify');
+            Route::post('{backup}/cancel', [\App\Http\Controllers\Api\Chat\BackupController::class, 'cancel'])
+                ->name('cancel');
+            Route::delete('{backup}', [\App\Http\Controllers\Api\Chat\BackupController::class, 'delete'])
+                ->name('delete');
+        });
+
+        // Abuse Reporting
+        Route::prefix('abuse-reports')->name('abuse-reports.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Api\Chat\AbuseReportController::class, 'index'])
+                ->name('index');
+            Route::post('/', [\App\Http\Controllers\Api\Chat\AbuseReportController::class, 'create'])
+                ->name('create')
+                ->middleware('rate_limit:abuse_reports,per_user');
+            Route::get('stats', [\App\Http\Controllers\Api\Chat\AbuseReportController::class, 'getStats'])
+                ->name('stats');
+            Route::get('{report}', [\App\Http\Controllers\Api\Chat\AbuseReportController::class, 'show'])
+                ->name('show');
+            Route::patch('{report}/review', [\App\Http\Controllers\Api\Chat\AbuseReportController::class, 'review'])
+                ->name('review');
+        });
+
+        // Rate Limiting Management
+        Route::prefix('rate-limits')->name('rate-limits.')->group(function () {
+            Route::get('status', [\App\Http\Controllers\Api\Chat\RateLimitController::class, 'getRateLimitStatus'])
+                ->name('status');
+            Route::get('configs', [\App\Http\Controllers\Api\Chat\RateLimitController::class, 'getConfigs'])
+                ->name('configs');
+            Route::post('configs', [\App\Http\Controllers\Api\Chat\RateLimitController::class, 'createConfig'])
+                ->name('configs.create');
+            Route::patch('configs/{config}', [\App\Http\Controllers\Api\Chat\RateLimitController::class, 'updateConfig'])
+                ->name('configs.update');
+            Route::delete('configs/{config}', [\App\Http\Controllers\Api\Chat\RateLimitController::class, 'deleteConfig'])
+                ->name('configs.delete');
+            Route::get('penalties', [\App\Http\Controllers\Api\Chat\RateLimitController::class, 'getUserPenalties'])
+                ->name('penalties');
+            Route::post('penalties', [\App\Http\Controllers\Api\Chat\RateLimitController::class, 'applyUserPenalty'])
+                ->name('penalties.apply');
+            Route::get('ip-restrictions', [\App\Http\Controllers\Api\Chat\RateLimitController::class, 'getIpRestrictions'])
+                ->name('ip-restrictions');
+            Route::get('stats', [\App\Http\Controllers\Api\Chat\RateLimitController::class, 'getSystemStats'])
+                ->name('stats');
+        });
+
+        // Video/Audio Calls
+        Route::prefix('conversations/{conversation}/calls')->name('calls.')->group(function () {
+            Route::post('/', [\App\Http\Controllers\Api\Chat\VideoCallController::class, 'initiate'])
+                ->name('initiate')
+                ->middleware('rate_limit:video_calls,per_user');
+            Route::get('history', [\App\Http\Controllers\Api\Chat\VideoCallController::class, 'history'])
+                ->name('history');
+        });
+
+        Route::prefix('calls')->name('calls.')->group(function () {
+            Route::get('{call}', [\App\Http\Controllers\Api\Chat\VideoCallController::class, 'show'])
+                ->name('show');
+            Route::post('{call}/join', [\App\Http\Controllers\Api\Chat\VideoCallController::class, 'join'])
+                ->name('join');
+            Route::post('{call}/leave', [\App\Http\Controllers\Api\Chat\VideoCallController::class, 'leave'])
+                ->name('leave');
+            Route::post('{call}/reject', [\App\Http\Controllers\Api\Chat\VideoCallController::class, 'reject'])
+                ->name('reject');
+            Route::post('{call}/end', [\App\Http\Controllers\Api\Chat\VideoCallController::class, 'end'])
+                ->name('end');
+            Route::post('{call}/quality-metrics', [\App\Http\Controllers\Api\Chat\VideoCallController::class, 'updateQualityMetrics'])
+                ->name('quality-metrics');
+        });
+    });
+
+    // LiveKit Webhooks (no authentication required)
+    Route::post('livekit/webhook', [\App\Http\Controllers\Api\Chat\LiveKitWebhookController::class, 'handle'])
+        ->name('livekit.webhook');
+
+    // Webhook Management
+    Route::prefix('webhooks')->name('webhooks.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\WebhookController::class, 'index'])
+            ->name('index');
+        Route::post('/', [\App\Http\Controllers\Api\WebhookController::class, 'store'])
+            ->name('store')
+            ->middleware('throttle:10,1');
+        Route::get('events', [\App\Http\Controllers\Api\WebhookController::class, 'events'])
+            ->name('events');
+        Route::get('{webhook}', [\App\Http\Controllers\Api\WebhookController::class, 'show'])
+            ->name('show');
+        Route::patch('{webhook}', [\App\Http\Controllers\Api\WebhookController::class, 'update'])
+            ->name('update');
+        Route::delete('{webhook}', [\App\Http\Controllers\Api\WebhookController::class, 'destroy'])
+            ->name('destroy');
+        Route::post('{webhook}/regenerate-secret', [\App\Http\Controllers\Api\WebhookController::class, 'regenerateSecret'])
+            ->name('regenerate-secret');
+        Route::post('{webhook}/test', [\App\Http\Controllers\Api\WebhookController::class, 'test'])
+            ->name('test')
+            ->middleware('throttle:5,1');
+        Route::get('{webhook}/deliveries', [\App\Http\Controllers\Api\WebhookController::class, 'deliveries'])
+            ->name('deliveries');
+        Route::post('{webhook}/deliveries/{delivery}/retry', [\App\Http\Controllers\Api\WebhookController::class, 'retryDelivery'])
+            ->name('deliveries.retry')
+            ->middleware('throttle:10,1');
+    });
+
+    // Security Audit Management
+    Route::prefix('security')->name('security.')->group(function () {
+        Route::get('dashboard', [\App\Http\Controllers\Api\SecurityAuditController::class, 'dashboard'])
+            ->name('dashboard');
+        Route::get('audit-logs', [\App\Http\Controllers\Api\SecurityAuditController::class, 'index'])
+            ->name('audit-logs.index');
+        Route::get('audit-logs/{auditLog}', [\App\Http\Controllers\Api\SecurityAuditController::class, 'show'])
+            ->name('audit-logs.show');
+        Route::patch('audit-logs/{auditLog}/investigate', [\App\Http\Controllers\Api\SecurityAuditController::class, 'investigate'])
+            ->name('audit-logs.investigate');
+        Route::patch('audit-logs/{auditLog}/resolve', [\App\Http\Controllers\Api\SecurityAuditController::class, 'resolve'])
+            ->name('audit-logs.resolve');
+        Route::get('report', [\App\Http\Controllers\Api\SecurityAuditController::class, 'report'])
+            ->name('report')
+            ->middleware('throttle:5,1');
+        Route::get('event-types', [\App\Http\Controllers\Api\SecurityAuditController::class, 'eventTypes'])
+            ->name('event-types');
+    });
+
+    // Bot Management
+    Route::prefix('bots')->name('bots.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\BotController::class, 'index'])
+            ->name('index');
+        Route::post('/', [\App\Http\Controllers\Api\BotController::class, 'store'])
+            ->name('store')
+            ->middleware('throttle:10,1');
+        Route::get('capabilities', [\App\Http\Controllers\Api\BotController::class, 'capabilities'])
+            ->name('capabilities');
+        Route::get('{bot}', [\App\Http\Controllers\Api\BotController::class, 'show'])
+            ->name('show');
+        Route::patch('{bot}', [\App\Http\Controllers\Api\BotController::class, 'update'])
+            ->name('update');
+        Route::delete('{bot}', [\App\Http\Controllers\Api\BotController::class, 'destroy'])
+            ->name('destroy');
+        Route::post('{bot}/regenerate-token', [\App\Http\Controllers\Api\BotController::class, 'regenerateToken'])
+            ->name('regenerate-token');
+        Route::post('{bot}/regenerate-webhook-secret', [\App\Http\Controllers\Api\BotController::class, 'regenerateWebhookSecret'])
+            ->name('regenerate-webhook-secret');
+        Route::post('{bot}/add-to-conversation', [\App\Http\Controllers\Api\BotController::class, 'addToConversation'])
+            ->name('add-to-conversation')
+            ->middleware('throttle:20,1');
+        Route::delete('{bot}/conversations/{conversation}', [\App\Http\Controllers\Api\BotController::class, 'removeFromConversation'])
+            ->name('remove-from-conversation');
+        
+        // Bot API endpoints (authenticated with bot tokens)
+        Route::post('{bot}/send-message', [\App\Http\Controllers\Api\BotController::class, 'sendMessage'])
+            ->name('send-message')
+            ->middleware('throttle:bot-api:100,1');
+    });
+
+    // Voice Transcription Management
+    Route::prefix('voice-transcriptions')->name('voice-transcriptions.')->group(function () {
+        Route::post('transcribe', [\App\Http\Controllers\Api\VoiceTranscriptionController::class, 'transcribe'])
+            ->name('transcribe')
+            ->middleware('throttle:20,1');
+        Route::get('status/{message}', [\App\Http\Controllers\Api\VoiceTranscriptionController::class, 'status'])
+            ->name('status');
+        Route::get('{transcription}', [\App\Http\Controllers\Api\VoiceTranscriptionController::class, 'show'])
+            ->name('show');
+        Route::post('{transcription}/retry', [\App\Http\Controllers\Api\VoiceTranscriptionController::class, 'retry'])
+            ->name('retry')
+            ->middleware('throttle:10,1');
+        Route::delete('{transcription}', [\App\Http\Controllers\Api\VoiceTranscriptionController::class, 'destroy'])
+            ->name('destroy');
+        Route::post('bulk-transcribe', [\App\Http\Controllers\Api\VoiceTranscriptionController::class, 'bulkTranscribe'])
+            ->name('bulk-transcribe')
+            ->middleware('throttle:5,1');
+        Route::get('statistics', [\App\Http\Controllers\Api\VoiceTranscriptionController::class, 'statistics'])
+            ->name('statistics');
+        Route::get('search', [\App\Http\Controllers\Api\VoiceTranscriptionController::class, 'search'])
+            ->name('search');
+    });
+
+    // Message Scheduling Management
+    Route::prefix('scheduled-messages')->name('scheduled-messages.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\ScheduledMessageController::class, 'index'])
+            ->name('index');
+        Route::post('/', [\App\Http\Controllers\Api\ScheduledMessageController::class, 'store'])
+            ->name('store')
+            ->middleware('throttle:30,1');
+        Route::get('{scheduledMessage}', [\App\Http\Controllers\Api\ScheduledMessageController::class, 'show'])
+            ->name('show');
+        Route::patch('{scheduledMessage}', [\App\Http\Controllers\Api\ScheduledMessageController::class, 'update'])
+            ->name('update')
+            ->middleware('throttle:20,1');
+        Route::post('{scheduledMessage}/cancel', [\App\Http\Controllers\Api\ScheduledMessageController::class, 'cancel'])
+            ->name('cancel')
+            ->middleware('throttle:20,1');
+        Route::post('{scheduledMessage}/retry', [\App\Http\Controllers\Api\ScheduledMessageController::class, 'retry'])
+            ->name('retry')
+            ->middleware('throttle:10,1');
+        Route::delete('{scheduledMessage}', [\App\Http\Controllers\Api\ScheduledMessageController::class, 'destroy'])
+            ->name('destroy');
+        Route::get('statistics', [\App\Http\Controllers\Api\ScheduledMessageController::class, 'statistics'])
+            ->name('statistics');
+        Route::post('bulk-action', [\App\Http\Controllers\Api\ScheduledMessageController::class, 'bulkAction'])
+            ->name('bulk-action')
+            ->middleware('throttle:10,1');
     });
 });

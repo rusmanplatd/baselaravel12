@@ -15,8 +15,8 @@ class OAuthClientSeeder extends Seeder
     public function run(): void
     {
         $defaultOrg = Organization::first();
-        
-        if (!$defaultOrg) {
+
+        if (! $defaultOrg) {
             $this->command->warn('No organizations found. Creating default organization first.');
             $defaultOrg = Organization::create([
                 'name' => 'Default Organization',
@@ -33,8 +33,8 @@ class OAuthClientSeeder extends Seeder
             'secret' => null, // Public client for SPA
             'provider' => 'users',
             'redirect_uris' => [
-                config('app.url') . '/auth/callback',
-                config('app.url') . '/oauth/callback',
+                config('app.url').'/auth/callback',
+                config('app.url').'/oauth/callback',
             ],
             'grant_types' => ['authorization_code', 'refresh_token'],
             'revoked' => false,
@@ -81,10 +81,10 @@ class OAuthClientSeeder extends Seeder
         $this->createClient([
             'id' => '01K4B3Y03PK034FAJ7PCMN4DK1',
             'name' => 'Management Dashboard',
-            'secret' => Hash::make('dashboard-secret-' . \Illuminate\Support\Str::random(20)),
+            'secret' => Hash::make('dashboard-secret-'.\Illuminate\Support\Str::random(20)),
             'provider' => 'users',
             'redirect_uris' => [
-                config('app.url') . '/admin/auth/callback',
+                config('app.url').'/admin/auth/callback',
             ],
             'grant_types' => ['authorization_code', 'refresh_token', 'client_credentials'],
             'revoked' => false,
@@ -98,7 +98,7 @@ class OAuthClientSeeder extends Seeder
         $this->createClient([
             'id' => '01K4B3Y03TM2WE4P1M1MH6S4A5',
             'name' => 'Developer Tools',
-            'secret' => Hash::make('dev-tools-secret-' . \Illuminate\Support\Str::random(20)),
+            'secret' => Hash::make('dev-tools-secret-'.\Illuminate\Support\Str::random(20)),
             'provider' => 'users',
             'redirect_uris' => [
                 'http://localhost:8080/auth/callback',
@@ -122,7 +122,7 @@ class OAuthClientSeeder extends Seeder
         $this->createClient([
             'id' => '01K4B3Y03YMC0V885T65ZR986B',
             'name' => 'External Partner Integration',
-            'secret' => Hash::make('partner-secret-' . \Illuminate\Support\Str::random(32)),
+            'secret' => Hash::make('partner-secret-'.\Illuminate\Support\Str::random(32)),
             'provider' => null, // Client credentials only
             'redirect_uris' => [],
             'grant_types' => ['client_credentials'],
@@ -143,9 +143,10 @@ class OAuthClientSeeder extends Seeder
     private function createClient(array $attributes): void
     {
         $existing = Client::find($attributes['id']);
-        
+
         if ($existing) {
             $this->command->info("OAuth client '{$attributes['name']}' already exists, skipping.");
+
             return;
         }
 
@@ -153,7 +154,7 @@ class OAuthClientSeeder extends Seeder
             Client::create($attributes);
             $this->command->info("Created OAuth client: {$attributes['name']}");
         } catch (\Exception $e) {
-            $this->command->error("Failed to create OAuth client '{$attributes['name']}': " . $e->getMessage());
+            $this->command->error("Failed to create OAuth client '{$attributes['name']}': ".$e->getMessage());
         }
     }
 }

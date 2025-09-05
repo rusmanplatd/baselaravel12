@@ -22,6 +22,15 @@ Route::middleware(['auth', 'verified', 'mfa.verified'])->group(function () {
         return Inertia::render('dashboard');
     })->name('dashboard');
 
+    Route::get('chat', function () {
+        return Inertia::render('chat');
+    })->name('chat');
+
+    Route::get('chat/{conversationId}', function ($conversationId) {
+        return Inertia::render('chat', [
+            'initialConversationId' => $conversationId
+        ]);
+    })->name('chat.conversation');
 
     // Generate personal access token for API usage
     Route::post('api/generate-token', function () {

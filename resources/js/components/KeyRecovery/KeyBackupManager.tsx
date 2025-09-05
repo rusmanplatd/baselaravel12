@@ -71,7 +71,11 @@ export function KeyBackupManager({ className }: KeyBackupManagerProps) {
   const loadRecoveryStatus = async () => {
     try {
       setIsLoading(true);
-      const data = await apiService.get('/api/v1/key-recovery/status');
+      const data = await apiService.get('/api/v1/key-recovery/status') as {
+        success: boolean;
+        status: any;
+        message?: string;
+      };
       if (data.success) {
         setRecoveryStatus(data.status);
       } else {
@@ -105,7 +109,15 @@ export function KeyBackupManager({ className }: KeyBackupManagerProps) {
         payload.since_timestamp = sinceTimestamp;
       }
       
-      const data = await apiService.post(`/api/v1/key-recovery/${endpoint}`, payload);
+      const data = await apiService.post(`/api/v1/key-recovery/${endpoint}`, payload) as {
+        success: boolean;
+        backup_id: string;
+        backup_timestamp: string;
+        conversations_count: number;
+        encrypted: boolean;
+        backup_data: any;
+        message?: string;
+      };
       if (data.success) {
         setLastBackup({
           backup_id: data.backup_id,
@@ -146,7 +158,13 @@ export function KeyBackupManager({ className }: KeyBackupManagerProps) {
         backup_data: JSON.parse(backupData),
         private_key: privateKey,
         master_password: masterPassword || undefined,
-      });
+      }) as {
+        success: boolean;
+        restored_count: number;
+        total_conversations: number;
+        errors_count: number;
+        message?: string;
+      };
       if (data.success) {
         setSuccess(`Backup restored successfully! ${data.restored_count}/${data.total_conversations} conversations recovered`);
         if (data.errors_count > 0) {
@@ -178,7 +196,13 @@ export function KeyBackupManager({ className }: KeyBackupManagerProps) {
       
       const data = await apiService.post('/api/v1/key-recovery/backup/validate', {
         backup_data: JSON.parse(backupData),
-      });
+      }) as {
+        success: boolean;
+        valid: boolean;
+        backup_id: string;
+        backup_version: string;
+        message?: string;
+      };
       if (data.success) {
         if (data.valid) {
           setSuccess(`Backup is valid! ID: ${data.backup_id}, Version: ${data.backup_version}`);

@@ -62,7 +62,7 @@ class NotificationController extends Controller
 
         // In production, update the notification in database
         // For now, just return success
-        
+
         return response()->json([
             'message' => 'Notification marked as read',
             'id' => $id,
@@ -75,7 +75,7 @@ class NotificationController extends Controller
     public function markAllAsRead(Request $request): JsonResponse
     {
         // In production, update all user notifications in database
-        
+
         return response()->json([
             'message' => 'All notifications marked as read',
         ]);
@@ -87,7 +87,7 @@ class NotificationController extends Controller
     public function destroy(Request $request, string $id): JsonResponse
     {
         // In production, delete the notification from database
-        
+
         return response()->json([
             'message' => 'Notification deleted',
             'id' => $id,

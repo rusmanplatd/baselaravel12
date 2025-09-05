@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Naming Conventions and Code Style
 
 ### Naming Rules
-- **NO marketing adjectives**: Never use "advanced", "enhanced", "improved", "better", "superior", "features", "premium", or similar terms in code names
+- **NO marketing adjectives**: Never use "advanced", "enhanced", "improved", "better", "superior", "features", "optimized", "premium", or similar terms in code names
 - **Be descriptive and direct**: Use specific, functional names that describe what the code does
 - **Avoid redundancy**: Don't use "features" suffix (e.g., `useE2EE` not `useE2EEFeatures`)
 - **Keep it simple**: Prefer shorter, clearer names over verbose ones

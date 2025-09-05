@@ -75,12 +75,14 @@ class DeveloperController extends Controller
     private function getPermissionModule(string $name): string
     {
         $parts = explode(':', $name);
+
         return $parts[0] ?? 'general';
     }
 
     private function getPermissionAction(string $name): string
     {
         $parts = explode(':', $name);
+
         return $parts[1] ?? 'unknown';
     }
 

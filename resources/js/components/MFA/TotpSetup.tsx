@@ -39,7 +39,11 @@ export default function TotpSetup({ mfaEnabled, hasBackupCodes, onMfaStatusChang
         setError('');
 
         try {
-            const result = await apiService.post(route('mfa.enable'));
+            const result = await apiService.post(route('mfa.enable')) as {
+                success: boolean;
+                secret: string;
+                qr_code_url: string;
+            };
 
             if (result.success) {
                 setSecret(result.secret);

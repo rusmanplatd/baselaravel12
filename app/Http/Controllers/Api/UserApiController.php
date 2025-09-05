@@ -26,7 +26,7 @@ class UserApiController extends Controller
         // Apply sorting
         $sortField = $request->input('sort', 'name');
         $sortDirection = 'asc';
-        
+
         // Handle descending sort (prefix with -)
         if (str_starts_with($sortField, '-')) {
             $sortField = substr($sortField, 1);
@@ -48,7 +48,7 @@ class UserApiController extends Controller
 
         // Get pagination parameters
         $perPage = min(100, max(5, (int) $request->input('per_page', 15)));
-        
+
         // Paginate results
         $users = $query->paginate($perPage);
 
@@ -81,11 +81,11 @@ class UserApiController extends Controller
     {
         // Text search filters
         if ($request->filled('filter.name')) {
-            $query->where('name', 'ILIKE', '%' . $request->input('filter.name') . '%');
+            $query->where('name', 'ILIKE', '%'.$request->input('filter.name').'%');
         }
 
         if ($request->filled('filter.email')) {
-            $query->where('email', 'ILIKE', '%' . $request->input('filter.email') . '%');
+            $query->where('email', 'ILIKE', '%'.$request->input('filter.email').'%');
         }
 
         // Email verification status filter

@@ -352,7 +352,6 @@ class User extends Authenticatable implements HasPasskeys
         setPermissionsTeamId(null);
     }
 
-
     public function sessions(): HasMany
     {
         return $this->hasMany(Session::class);
@@ -370,7 +369,6 @@ class User extends Authenticatable implements HasPasskeys
             ->active()
             ->first();
     }
-
 
     public function createdBy(): BelongsTo
     {

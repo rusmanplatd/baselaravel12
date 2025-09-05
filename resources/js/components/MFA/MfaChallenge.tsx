@@ -26,7 +26,10 @@ export default function MfaChallenge() {
         try {
             const result = await apiService.post(route('mfa.verify'), {
                 code: code,
-            });
+            }) as {
+                success: boolean;
+                error?: string;
+            };
 
             if (result.success) {
                 // Redirect to intended page or dashboard

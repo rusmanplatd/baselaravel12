@@ -51,10 +51,10 @@ class PassportClientCommand extends Command
     protected function createPersonalClient()
     {
         $name = $this->option('name') ?: $this->ask('What should we name the personal access client?', config('app.name').' Personal Access Client');
-        
+
         $organization = $this->getOrganization();
         $userAccessScope = $this->getUserAccessScope();
-        
+
         $client = Client::create([
             'name' => $name,
             'secret' => null,
@@ -79,10 +79,10 @@ class PassportClientCommand extends Command
     protected function createPasswordClient()
     {
         $name = $this->option('name') ?: $this->ask('What should we name the password grant client?', config('app.name').' Password Grant Client');
-        
+
         $organization = $this->getOrganization();
         $userAccessScope = $this->getUserAccessScope();
-        
+
         $client = Client::create([
             'name' => $name,
             'secret' => Hash::make($secret = \Illuminate\Support\Str::random(40)),
@@ -108,10 +108,10 @@ class PassportClientCommand extends Command
     protected function createClientCredentialsClient()
     {
         $name = $this->option('name') ?: $this->ask('What should we name the client credentials grant client?', config('app.name').' Client Credentials Client');
-        
+
         $organization = $this->getOrganization();
         $userAccessScope = $this->getUserAccessScope();
-        
+
         $client = Client::create([
             'name' => $name,
             'secret' => Hash::make($secret = \Illuminate\Support\Str::random(40)),
@@ -142,7 +142,7 @@ class PassportClientCommand extends Command
 
         $organization = $this->getOrganization();
         $userAccessScope = $this->getUserAccessScope();
-        
+
         $client = Client::create([
             'owner_id' => $userId,
             'name' => $name,
@@ -158,11 +158,11 @@ class PassportClientCommand extends Command
 
         $this->info('Client created successfully.');
         $this->line('<comment>Client ID:</comment> '.$client->id);
-        
+
         if (! $this->option('public')) {
             $this->line('<comment>Client secret:</comment> '.$secret);
         }
-        
+
         $this->line('<comment>Organization:</comment> '.$organization->name);
         $this->line('<comment>User Access Scope:</comment> '.$userAccessScope);
     }
@@ -173,13 +173,15 @@ class PassportClientCommand extends Command
     protected function getOrganization(): Organization
     {
         $organizationId = $this->option('organization');
-        
+
         if ($organizationId) {
             $organization = Organization::find($organizationId);
-            if (!$organization) {
+            if (! $organization) {
                 $this->error("Organization with ID '$organizationId' not found.");
+
                 return $this->selectOrganization();
             }
+
             return $organization;
         }
 
@@ -192,7 +194,7 @@ class PassportClientCommand extends Command
     protected function selectOrganization(): Organization
     {
         $organizations = Organization::orderBy('name')->get();
-        
+
         if ($organizations->isEmpty()) {
             $this->error('No organizations found. Please create an organization first.');
             exit(1);
@@ -201,12 +203,13 @@ class PassportClientCommand extends Command
         if ($organizations->count() === 1) {
             $org = $organizations->first();
             $this->info("Using organization: {$org->name}");
+
             return $org;
         }
 
         $choices = $organizations->pluck('name', 'id')->toArray();
         $selectedId = $this->choice('Select an organization:', $choices);
-        
+
         return $organizations->find($selectedId);
     }
 
@@ -216,12 +219,13 @@ class PassportClientCommand extends Command
     protected function getUserAccessScope(): string
     {
         $scope = $this->option('user-access-scope');
-        
+
         if ($scope && in_array($scope, ['all_users', 'organization_members', 'custom'])) {
             return $scope;
         }
 
         $scopes = Client::getUserAccessScopes();
+
         return $this->choice('Select user access scope:', $scopes, 'all_users');
     }
 }

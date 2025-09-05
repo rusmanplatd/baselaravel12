@@ -76,7 +76,7 @@ class StoreClientRequest extends FormRequest
                 'example' => [
                     'user_ids' => [1, 2, 3],
                     'roles' => ['admin', 'manager'],
-                    'email_domains' => ['company.com']
+                    'email_domains' => ['company.com'],
                 ],
             ],
             'allowed_scopes' => [

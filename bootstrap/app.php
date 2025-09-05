@@ -38,9 +38,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => \App\Http\Middleware\CheckPermission::class,
             'permission.check' => \App\Http\Middleware\CheckPermissionMiddleware::class,
             'permission.dynamic' => \App\Http\Middleware\DynamicPermissionMiddleware::class,
+            'chat.permission' => \App\Http\Middleware\ChatPermissionMiddleware::class,
             'role' => \App\Http\Middleware\CheckRole::class,
             'organization.access' => \App\Http\Middleware\CheckOrganizationAccess::class,
             'organization.context' => \App\Http\Middleware\OrganizationContext::class,
+            'rate_limit' => \App\Http\Middleware\RateLimitMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

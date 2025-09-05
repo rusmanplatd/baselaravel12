@@ -5,9 +5,9 @@ use App\Models\Master\Geo\Country;
 use App\Models\Master\Geo\District;
 use App\Models\Master\Geo\Province;
 use App\Models\User;
-use Laravel\Passport\Passport;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
+use Laravel\Passport\Passport;
 
 uses(RefreshDatabase::class, WithFaker::class);
 

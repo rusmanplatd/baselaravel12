@@ -57,7 +57,7 @@ class Village extends Model
     /*******************************
      ** ACCESSOR
      *******************************/
-    
+
     public function getDistrictsAttribute()
     {
         return $this->district;
