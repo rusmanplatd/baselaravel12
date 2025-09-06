@@ -49,7 +49,19 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (Throwable $e, $request) {
             // Enhanced error handling with activity logging
             if ($request->is('api/*')) {
-                return null; // Let default API error handling work
+                // Return detailed error information in non-production environments
+                if (in_array(app()->environment(), ['local', 'dev', 'test', 'staging'])) {
+                    return response()->json([
+                        'error' => true,
+                        'message' => $e->getMessage(),
+                        'exception' => get_class($e),
+                        'file' => $e->getFile(),
+                        'line' => $e->getLine(),
+                        'trace' => $e->getTrace(),
+                        'environment' => app()->environment(),
+                    ], 500);
+                }
+                return null; // Let default API error handling work for production
             }
 
             // Log the exception for monitoring
@@ -67,6 +79,11 @@ return Application::configure(basePath: dirname(__DIR__))
                 } catch (\Exception $logException) {
                     // Silently fail if logging fails to avoid infinite loops
                 }
+            }
+
+            // For web requests in non-production, show detailed error page
+            if (in_array(app()->environment(), ['local', 'dev', 'test', 'staging'])) {
+                return null; // Let Laravel's detailed error page show
             }
 
             return null; // Continue with default error handling

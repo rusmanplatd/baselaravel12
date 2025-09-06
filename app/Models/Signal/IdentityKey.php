@@ -18,6 +18,7 @@ class IdentityKey extends Model
 
     protected $fillable = [
         'user_id',
+        'device_id',
         'registration_id',
         'public_key',
         'private_key_encrypted',
@@ -56,6 +57,11 @@ class IdentityKey extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function device(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\UserDevice::class, 'device_id');
     }
 
     // Scopes
@@ -148,6 +154,7 @@ class IdentityKey extends Model
         // Create new key
         return static::create([
             'user_id' => $this->user_id,
+            'device_id' => $this->device_id,
             'registration_id' => $this->registration_id + 1,
             'public_key' => $newPublicKey,
             'private_key_encrypted' => $newPrivateKeyEncrypted,

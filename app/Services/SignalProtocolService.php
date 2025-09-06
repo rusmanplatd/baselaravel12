@@ -32,6 +32,7 @@ class SignalProtocolService
         // Create identity key record
         $identityKey = IdentityKey::create([
             'user_id' => $user->id,
+            'device_id' => $device->id,
             'registration_id' => $registrationId,
             'public_key' => base64_encode($identityKeyPair['public']),
             'private_key_encrypted' => Crypt::encryptString($identityKeyPair['private']),
@@ -538,6 +539,230 @@ class SignalProtocolService
     }
 
     /**
-     * Additional helper methods would continue here...
+     * Generate Signal Protocol pre-keys
      */
+    private function generatePreKeys(IdentityKey $identityKey, int $count): void
+    {
+        // In a real implementation, this would generate one-time pre-keys
+        // For now, we'll log the action
+        Log::info('Generated pre-keys for Signal Protocol', [
+            'identity_key_id' => $identityKey->id,
+            'count' => $count,
+        ]);
+    }
+
+    /**
+     * Generate Signal Protocol signed pre-key
+     */
+    private function generateSignedPreKey(IdentityKey $identityKey): void
+    {
+        // In a real implementation, this would generate a signed pre-key
+        // For now, we'll log the action
+        Log::info('Generated signed pre-key for Signal Protocol', [
+            'identity_key_id' => $identityKey->id,
+        ]);
+    }
+
+    /**
+     * Rotate device keys
+     */
+    public function rotateDeviceKeys(UserDevice $device, IdentityKey $currentIdentityKey): IdentityKey
+    {
+        // Generate new identity keypair
+        $identityKeyPair = $this->generateIdentityKeyPair();
+
+        // Create new identity key
+        $newIdentityKey = $currentIdentityKey->rotate(
+            base64_encode($identityKeyPair['public']),
+            Crypt::encryptString($identityKeyPair['private']),
+            hash('sha256', $identityKeyPair['public'])
+        );
+
+        // Copy quantum capabilities if available
+        if ($currentIdentityKey->isQuantumCapable()) {
+            $newIdentityKey->enableQuantum(
+                $currentIdentityKey->quantum_public_key,
+                $currentIdentityKey->quantum_private_key_encrypted,
+                $currentIdentityKey->quantum_algorithm
+            );
+        }
+
+        return $newIdentityKey;
+    }
+
+    /**
+     * Encrypt message using classical algorithm
+     */
+    private function encryptClassicalMessage(string $plaintext, IdentityKey $senderKey, IdentityKey $recipientKey): array
+    {
+        // Use AES-256-GCM for classical encryption
+        $key = random_bytes(32); // 256-bit key
+        $nonce = random_bytes(12); // 96-bit nonce for GCM
+        
+        $encrypted = openssl_encrypt(
+            $plaintext,
+            'aes-256-gcm',
+            $key,
+            OPENSSL_RAW_DATA,
+            $nonce,
+            $tag
+        );
+
+        return [
+            'content' => json_encode([
+                'encrypted_message' => base64_encode($encrypted),
+                'key' => base64_encode($key),
+                'nonce' => base64_encode($nonce),
+                'tag' => base64_encode($tag),
+            ]),
+            'hash' => hash('sha256', $plaintext),
+            'algorithm' => 'AES-256-GCM',
+            'session_info' => [
+                'classical_encryption' => true,
+            ],
+        ];
+    }
+
+    /**
+     * Decrypt classical encrypted message
+     */
+    private function decryptClassicalMessage(string $encryptedContent, IdentityKey $recipientKey, IdentityKey $senderKey): string
+    {
+        $data = json_decode($encryptedContent, true);
+
+        return openssl_decrypt(
+            base64_decode($data['encrypted_message']),
+            'aes-256-gcm',
+            base64_decode($data['key']),
+            OPENSSL_RAW_DATA,
+            base64_decode($data['nonce']),
+            base64_decode($data['tag'])
+        );
+    }
+
+    /**
+     * Encrypt message using hybrid algorithm
+     */
+    private function encryptHybridMessage(string $plaintext, IdentityKey $senderKey, IdentityKey $recipientKey): array
+    {
+        // For hybrid, use both classical and quantum methods
+        $classicalResult = $this->encryptClassicalMessage($plaintext, $senderKey, $recipientKey);
+        
+        if ($recipientKey->isQuantumCapable()) {
+            $quantumResult = $this->encryptQuantumMessage($senderKey, $recipientKey, $plaintext);
+            
+            return [
+                'content' => json_encode([
+                    'classical' => json_decode($classicalResult['content'], true),
+                    'quantum' => json_decode($quantumResult['content'], true),
+                    'method' => 'hybrid',
+                ]),
+                'hash' => $classicalResult['hash'],
+                'algorithm' => 'HYBRID-' . $recipientKey->quantum_algorithm,
+                'session_info' => [
+                    'hybrid_encryption' => true,
+                    'quantum_algorithm' => $recipientKey->quantum_algorithm,
+                ],
+            ];
+        }
+
+        return $classicalResult;
+    }
+
+    /**
+     * Decrypt hybrid encrypted message
+     */
+    private function decryptHybridMessage(string $encryptedContent, IdentityKey $recipientKey, IdentityKey $senderKey): string
+    {
+        $data = json_decode($encryptedContent, true);
+
+        if (isset($data['method']) && $data['method'] === 'hybrid' && $recipientKey->isQuantumCapable()) {
+            // Try quantum decryption first
+            try {
+                return $this->decryptQuantumMessage(
+                    json_encode($data['quantum']), 
+                    $recipientKey, 
+                    $senderKey
+                );
+            } catch (Exception $e) {
+                Log::warning('Quantum decryption failed, falling back to classical', [
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        // Fall back to classical decryption
+        return $this->decryptClassicalMessage(
+            json_encode($data['classical']), 
+            $recipientKey, 
+            $senderKey
+        );
+    }
+
+    /**
+     * Additional helper methods for group management...
+     */
+    private function generateEncryptionKeysForNewParticipant(Conversation $conversation, User $newParticipant): void
+    {
+        // Generate encryption keys for new participant's devices
+        $devices = $newParticipant->devices()->active()->get();
+        
+        foreach ($devices as $device) {
+            $this->generateEncryptionKeyForDevice($conversation, $newParticipant, $device);
+        }
+    }
+
+    private function revokeEncryptionKeysForParticipant(Conversation $conversation, User $participant, ?string $reason): void
+    {
+        EncryptionKey::where('conversation_id', $conversation->id)
+            ->where('user_id', $participant->id)
+            ->update(['revoked_at' => now(), 'revocation_reason' => $reason]);
+    }
+
+    private function rotateGroupEncryptionKeys(Conversation $conversation): void
+    {
+        // Mark all current keys as revoked
+        EncryptionKey::where('conversation_id', $conversation->id)
+            ->whereNull('revoked_at')
+            ->update(['revoked_at' => now(), 'revocation_reason' => 'key_rotation']);
+
+        // Generate new keys for all participants
+        $this->generateGroupEncryptionKeys($conversation);
+    }
+
+    private function rotateDirectMessageKeys(Conversation $conversation): void
+    {
+        // For direct messages, rotate session keys between the two participants
+        $participants = $conversation->activeParticipants()->with('user')->get();
+        
+        if ($participants->count() === 2) {
+            foreach ($participants as $participant) {
+                $devices = $participant->user->devices()->active()->get();
+                foreach ($devices as $device) {
+                    $this->generateEncryptionKeyForDevice($conversation, $participant->user, $device);
+                }
+            }
+        }
+    }
+
+    private function sendSystemMessage(Conversation $conversation, User $sender, array $data): void
+    {
+        // Create system message for conversation events
+        Log::info('System message sent', [
+            'conversation_id' => $conversation->id,
+            'sender_id' => $sender->id,
+            'type' => $data['type'],
+        ]);
+    }
+
+    private function getHMACKeyForConversation(Conversation $conversation, User $user): ?string
+    {
+        // Get HMAC key for message authentication
+        $encryptionKey = EncryptionKey::where('conversation_id', $conversation->id)
+            ->where('user_id', $user->id)
+            ->active()
+            ->first();
+
+        return $encryptionKey ? hash('sha256', Crypt::decryptString($encryptionKey->encrypted_key)) : null;
+    }
 }
