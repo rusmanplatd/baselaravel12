@@ -118,15 +118,38 @@ class ConversationController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
+        $type = $request->input('type');
+        
+        // Dynamic validation based on conversation type
+        $validationRules = [
             'type' => 'required|in:direct,group,channel',
-            'name' => 'nullable|string|max:255',
-            'description' => 'nullable|string|max:1000',
-            'participants' => 'required|array|min:1|max:100',
+            'participants' => 'required|array|min:1',
             'participants.*' => 'exists:sys_users,id',
             'enable_quantum' => 'boolean',
-            'key_strength' => 'integer|in:256,512,1024',
-        ]);
+            'key_strength' => 'integer|in:512,768,1024',
+            'avatar_url' => 'nullable|url|max:255',
+            'settings' => 'nullable|array',
+        ];
+
+        // Type-specific validation rules
+        if ($type === 'direct') {
+            $validationRules['participants'] = 'required|array|size:2'; // Exactly 2 participants for direct messages
+            $validationRules['name'] = 'nullable|string|max:255';
+            $validationRules['description'] = 'nullable|string|max:500';
+        } elseif ($type === 'group') {
+            $validationRules['participants'] = 'required|array|min:2|max:100'; // 2-100 participants for groups
+            $validationRules['name'] = 'required|string|min:1|max:255'; // Name required for groups
+            $validationRules['description'] = 'nullable|string|max:1000';
+        } elseif ($type === 'channel') {
+            $validationRules['participants'] = 'required|array|min:1|max:500'; // Up to 500 for channels
+            $validationRules['name'] = 'required|string|min:1|max:255'; // Name required for channels
+            $validationRules['description'] = 'nullable|string|max:2000'; // Longer description for channels
+            $validationRules['settings.is_public'] = 'nullable|boolean';
+            $validationRules['settings.allow_member_invites'] = 'nullable|boolean';
+            $validationRules['settings.moderated'] = 'nullable|boolean';
+        }
+
+        $validator = Validator::make($request->all(), $validationRules);
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
@@ -144,10 +167,53 @@ class ConversationController extends Controller
 
             // Get participant users
             $participantUsers = User::whereIn('id', $request->participants)->get();
+            
+            // Check if all requested participants exist
+            if ($participantUsers->count() !== count($request->participants)) {
+                return response()->json(['error' => 'Some participants not found'], 404);
+            }
 
             // Ensure initiator is included
             if (! $participantUsers->pluck('id')->contains($user->id)) {
                 $participantUsers->push($user);
+            }
+
+            // For direct messages, check if conversation already exists
+            if ($type === 'direct' && $participantUsers->count() === 2) {
+                $existingConversation = $this->findExistingDirectMessage($participantUsers->pluck('id')->toArray());
+                if ($existingConversation) {
+                    DB::commit();
+                    return response()->json([
+                        'conversation' => $existingConversation,
+                        'message' => 'Direct conversation already exists',
+                        'existing' => true,
+                    ], 200);
+                }
+            }
+
+            // Prepare conversation options based on type
+            $conversationOptions = [
+                'type' => $type,
+                'name' => $request->name,
+                'description' => $request->description,
+                'avatar_url' => $request->avatar_url,
+                'enable_quantum' => $request->boolean('enable_quantum'),
+                'key_strength' => $request->input('key_strength', 768),
+                'settings' => $request->input('settings', []),
+            ];
+
+            // Add type-specific settings
+            if ($type === 'channel') {
+                $conversationOptions['settings'] = array_merge([
+                    'is_public' => false,
+                    'allow_member_invites' => true,
+                    'moderated' => false,
+                ], $conversationOptions['settings']);
+            } elseif ($type === 'group') {
+                $conversationOptions['settings'] = array_merge([
+                    'allow_member_invites' => true,
+                    'everyone_can_add_members' => true,
+                ], $conversationOptions['settings']);
             }
 
             // Create conversation with E2EE
@@ -155,13 +221,11 @@ class ConversationController extends Controller
                 $user,
                 $device,
                 $participantUsers->toArray(),
-                [
-                    'name' => $request->name,
-                    'description' => $request->description,
-                    'enable_quantum' => $request->boolean('enable_quantum'),
-                    'key_strength' => $request->input('key_strength', 256),
-                ]
+                $conversationOptions
             );
+
+            // Set appropriate roles based on conversation type
+            $this->setupConversationRoles($conversation, $user, $type);
 
             DB::commit();
 
@@ -180,21 +244,24 @@ class ConversationController extends Controller
                 'creator_id' => $user->id,
                 'type' => $conversation->type,
                 'participant_count' => $participantUsers->count(),
+                'has_name' => !empty($conversation->name),
             ]);
 
             return response()->json([
                 'conversation' => $conversation,
-                'message' => 'Conversation created successfully',
+                'message' => ucfirst($type) . ' conversation created successfully',
             ], 201);
 
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Failed to create conversation', [
                 'user_id' => $user->id,
+                'type' => $type,
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
 
-            return response()->json(['error' => 'Failed to create conversation'], 500);
+            return response()->json(['error' => 'Failed to create ' . $type . ' conversation'], 500);
         }
     }
 
@@ -411,21 +478,98 @@ class ConversationController extends Controller
     }
 
     /**
+     * Find existing direct message conversation between users
+     */
+    private function findExistingDirectMessage(array $userIds): ?Conversation
+    {
+        if (count($userIds) !== 2) {
+            return null;
+        }
+
+        return Conversation::whereType('direct')
+            ->whereHas('participants', function ($query) use ($userIds) {
+                $query->where('user_id', $userIds[0])->active();
+            })
+            ->whereHas('participants', function ($query) use ($userIds) {
+                $query->where('user_id', $userIds[1])->active();
+            })
+            ->whereHas('participants', function ($query) {
+                $query->active();
+            }, '=', 2) // Exactly 2 participants
+            ->with([
+                'participants.user:id,name,avatar',
+                'latestMessage:id,conversation_id,sender_id,type,status,created_at'
+            ])
+            ->first();
+    }
+
+    /**
+     * Setup conversation roles based on type
+     */
+    private function setupConversationRoles(Conversation $conversation, User $creator, string $type): void
+    {
+        if ($type === 'direct') {
+            // In direct messages, all participants are equal (members)
+            return;
+        }
+
+        // For groups and channels, set creator as admin
+        $creatorParticipant = $conversation->participants()
+            ->where('user_id', $creator->id)
+            ->first();
+
+        if ($creatorParticipant) {
+            $creatorParticipant->update([
+                'role' => 'admin',
+                'permissions' => [
+                    'send_messages',
+                    'delete_messages',
+                    'add_members',
+                    'remove_members',
+                    'manage_roles',
+                    'manage_settings',
+                    'pin_messages',
+                ]
+            ]);
+        }
+
+        // Set other participants as members with basic permissions
+        $otherParticipants = $conversation->participants()
+            ->where('user_id', '!=', $creator->id)
+            ->get();
+
+        foreach ($otherParticipants as $participant) {
+            $permissions = ['send_messages'];
+            
+            // Add additional permissions based on conversation type
+            if ($type === 'group') {
+                $permissions[] = 'add_members'; // Groups allow members to add others by default
+            }
+
+            $participant->update([
+                'role' => 'member',
+                'permissions' => $permissions
+            ]);
+        }
+    }
+
+    /**
      * Get encryption status for conversation
      */
     private function getEncryptionStatus(Conversation $conversation, User $user): array
     {
-        $activeKeys = $conversation->encryptionKeys()
-            ->where('user_id', $user->id)
-            ->active()
-            ->count();
+        $activeKeysQuery = $conversation->encryptionKeys()
+            ->where('user_id', $user->id);
+        
+        // Check if the active() scope exists on the relationship
+        $activeKeys = $activeKeysQuery->where('is_active', true)->count();
 
         return [
             'is_encrypted' => $conversation->isEncrypted(),
-            'algorithm' => $conversation->encryption_algorithm,
-            'key_strength' => $conversation->key_strength,
+            'algorithm' => $conversation->settings['encryption_algorithm'] ?? 'RSA-4096-OAEP',
+            'key_strength' => $conversation->settings['key_strength'] ?? 768,
             'active_keys' => $activeKeys,
-            'quantum_ready' => str_contains($conversation->encryption_algorithm, 'ML-KEM'),
+            'quantum_ready' => str_contains($conversation->settings['encryption_algorithm'] ?? '', 'ML-KEM'),
         ];
     }
 }

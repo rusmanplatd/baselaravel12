@@ -103,7 +103,7 @@ interface UseE2EEChatReturn {
     
     // Conversations
     loadConversations: () => Promise<void>;
-    createConversation: (participants: string[], options?: CreateConversationOptions) => Promise<void>;
+    createConversation: (participants: string[], options?: CreateConversationOptions) => Promise<Conversation>;
     loadConversation: (conversationId: string) => Promise<void>;
     addParticipant: (conversationId: string, userId: string) => Promise<void>;
     removeParticipant: (conversationId: string, userId: string) => Promise<void>;
@@ -137,8 +137,16 @@ interface RegisterDeviceRequest {
 interface CreateConversationOptions {
     name?: string;
     description?: string;
+    avatar_url?: string;
     type?: 'direct' | 'group' | 'channel';
     enable_quantum?: boolean;
+    key_strength?: 512 | 768 | 1024;
+    settings?: {
+        is_public?: boolean;
+        allow_member_invites?: boolean;
+        moderated?: boolean;
+        everyone_can_add_members?: boolean;
+    };
 }
 
 interface LoadMessagesOptions {
@@ -320,22 +328,37 @@ export function useE2EEChat(): UseE2EEChatReturn {
     const createConversation = useCallback(async (
         participants: string[], 
         options: CreateConversationOptions = {}
-    ): Promise<void> => {
+    ): Promise<Conversation> => {
         setIsLoading(true);
         try {
+            // Determine conversation type based on participants if not specified
+            const type = options.type || (participants.length === 1 ? 'direct' : 'group');
+            
             const response = await apiCall('/conversations', 'POST', {
                 participants,
-                type: options.type || (participants.length > 1 ? 'group' : 'direct'),
+                type,
                 name: options.name,
                 description: options.description,
+                avatar_url: options.avatar_url,
                 enable_quantum: options.enable_quantum ?? true,
+                key_strength: options.key_strength ?? 768,
+                settings: options.settings ?? {},
             });
 
-            // Add to conversations list
-            setConversations(prev => [response.conversation, ...prev]);
+            // Add to conversations list if it's a new conversation
+            if (!response.existing) {
+                setConversations(prev => [response.conversation, ...prev]);
+            }
+            
             setError(null);
+            
+            // Return conversation for further processing if needed
+            return response.conversation;
         } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to create conversation';
+            setError(errorMessage);
             console.error('Failed to create conversation:', err);
+            throw err;
         } finally {
             setIsLoading(false);
         }

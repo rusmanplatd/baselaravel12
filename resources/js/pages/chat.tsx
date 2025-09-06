@@ -94,9 +94,13 @@ export default function Chat({ auth, initialConversationId }: ChatPageProps) {
 
     const handleNewConversation = async (participants: string[], options?: any) => {
         try {
-            await createConversation(participants, options);
+            const conversation = await createConversation(participants, options);
             // Refresh conversations list
             await loadConversations();
+            // Auto-select the new conversation
+            if (conversation?.id) {
+                setSelectedConversationId(conversation.id);
+            }
         } catch (error) {
             console.error('Failed to create conversation:', error);
         }

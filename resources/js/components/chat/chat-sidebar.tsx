@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ConversationCreator } from '@/components/ui/conversation-creator';
 import { MessageSquarePlus, Search, Settings, Shield, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -50,7 +51,6 @@ export default function ChatSidebar({
     currentUser,
 }: ChatSidebarProps) {
     const [searchQuery, setSearchQuery] = useState('');
-    const [showNewChatDialog, setShowNewChatDialog] = useState(false);
 
     const filteredConversations = conversations.filter(conv => {
         if (!searchQuery) return true;
@@ -105,14 +105,20 @@ export default function ChatSidebar({
                 <div className="flex items-center justify-between mb-3">
                     <h2 className="text-lg font-semibold">Messages</h2>
                     <div className="flex items-center gap-2">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setShowNewChatDialog(true)}
-                            className="h-8 w-8"
-                        >
-                            <MessageSquarePlus className="h-4 w-4" />
-                        </Button>
+                        <ConversationCreator
+                            trigger={
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                >
+                                    <MessageSquarePlus className="h-4 w-4" />
+                                </Button>
+                            }
+                            onConversationCreated={(conversationId) => {
+                                onConversationSelect(conversationId);
+                            }}
+                        />
                         <Button variant="ghost" size="icon" className="h-8 w-8">
                             <Settings className="h-4 w-4" />
                         </Button>
@@ -234,14 +240,17 @@ export default function ChatSidebar({
 
             {/* Quick Actions */}
             <div className="p-3 border-t">
-                <Button
-                    onClick={() => setShowNewChatDialog(true)}
-                    className="w-full"
-                    size="sm"
-                >
-                    <MessageSquarePlus className="h-4 w-4 mr-2" />
-                    New Chat
-                </Button>
+                <ConversationCreator
+                    trigger={
+                        <Button className="w-full" size="sm">
+                            <MessageSquarePlus className="h-4 w-4 mr-2" />
+                            New Chat
+                        </Button>
+                    }
+                    onConversationCreated={(conversationId) => {
+                        onConversationSelect(conversationId);
+                    }}
+                />
             </div>
         </div>
     );
