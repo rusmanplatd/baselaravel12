@@ -617,7 +617,7 @@ export class QuantumLiveKitKeyProvider extends BaseKeyProvider {
       browser: 'unknown',
       fallback: true,
     };
-  }"
+  }
 
   private async getParticipantPublicKey(participantId: string): Promise<Uint8Array> {
     try {

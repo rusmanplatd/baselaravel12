@@ -150,10 +150,24 @@ class ApiService {
     /**
      * Handle API response with error handling and token refresh
      */
-    private async handleResponse<T>(response: Response): Promise<T> {
+    private async handleResponse<T>(response: Response, retryFn?: () => Promise<Response>): Promise<T> {
         if (response.status === 401) {
-            // Token is expired or invalid, clear it and throw auth error
+            // Token is expired or invalid, clear it
             this.clearTokenFromStorage();
+            
+            // If we have a retry function, try once more with a new token
+            if (retryFn && !this.isRefreshing) {
+                try {
+                    const newToken = await this.generateNewToken();
+                    if (newToken) {
+                        const retryResponse = await retryFn();
+                        return this.handleResponse<T>(retryResponse); // Don't pass retry function to avoid infinite loop
+                    }
+                } catch (retryError) {
+                    console.error('Token refresh failed:', retryError);
+                }
+            }
+            
             throw new ApiError('Authentication expired. Please refresh the page and log in again.', 401);
         }
 
@@ -190,14 +204,16 @@ class ApiService {
      * Make a GET request
      */
     public async get<T>(url: string, options: RequestInit = {}): Promise<T> {
-        const headers = await this.getHeaders();
+        const makeRequest = async (): Promise<Response> => {
+            const headers = await this.getHeaders();
+            return fetch(url, {
+                method: 'GET',
+                headers: { ...headers, ...options.headers },
+            });
+        };
 
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: { ...headers, ...options.headers },
-        });
-
-        return this.handleResponse<T>(response);
+        const response = await makeRequest();
+        return this.handleResponse<T>(response, makeRequest);
     }
 
     /**

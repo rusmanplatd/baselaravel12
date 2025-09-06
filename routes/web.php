@@ -35,6 +35,22 @@ Route::middleware(['auth', 'verified', 'mfa.verified'])->group(function () {
     // Generate personal access token for API usage
     Route::post('api/generate-token', function () {
         $user = auth()->user();
+        
+        if (!$user) {
+            return response()->json([
+                'error' => 'Unauthorized',
+                'message' => 'Authentication required to generate API token'
+            ], 401);
+        }
+        
+        // Check if user already has an active token
+        $existingTokens = $user->tokens()->where('revoked', false)->where('name', 'API Access Token')->get();
+        
+        // Revoke existing tokens to prevent token accumulation
+        foreach ($existingTokens as $existingToken) {
+            $existingToken->revoke();
+        }
+        
         $token = $user->createToken('API Access Token')->accessToken;
 
         return response()->json([
