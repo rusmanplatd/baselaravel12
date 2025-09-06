@@ -43,6 +43,7 @@ export default function TotpSetup({ mfaEnabled, hasBackupCodes, onMfaStatusChang
                 success: boolean;
                 secret: string;
                 qr_code_url: string;
+                error?: string;
             };
 
             if (result.success) {
@@ -77,10 +78,15 @@ export default function TotpSetup({ mfaEnabled, hasBackupCodes, onMfaStatusChang
             const result = await apiService.post(route('mfa.confirm'), {
                 code: verificationCode,
                 password: password,
-            });
+            }) as {
+                success: boolean;
+                backup_codes?: string[];
+                error?: string;
+                message?: string;
+            };
 
             if (result.success) {
-                setBackupCodes(result.backup_codes);
+                setBackupCodes(result.backup_codes || []);
                 setSetupStep('backup');
                 onMfaStatusChange();
             } else {
@@ -109,7 +115,10 @@ export default function TotpSetup({ mfaEnabled, hasBackupCodes, onMfaStatusChang
         try {
             const result = await apiService.post(route('mfa.disable'), {
                 password: password,
-            });
+            }) as {
+                success: boolean;
+                error?: string;
+            };
 
             if (result.success) {
                 setPassword('');
@@ -136,10 +145,14 @@ export default function TotpSetup({ mfaEnabled, hasBackupCodes, onMfaStatusChang
         try {
             const result = await apiService.post(route('mfa.backup-codes.regenerate'), {
                 password: password,
-            });
+            }) as {
+                success: boolean;
+                backup_codes?: string[];
+                error?: string;
+            };
 
             if (result.success) {
-                setBackupCodes(result.backup_codes);
+                setBackupCodes(result.backup_codes || []);
                 setPassword('');
                 setShowBackupCodes(true);
             } else {

@@ -184,7 +184,7 @@ export function SignalProtocolSettings({
   // Update settings
   const handleSettingChange = useCallback((key: keyof ProtocolSettings, value: any) => {
     setSettings(prev => ({ ...prev, [key]: value }));
-    // In a real implementation, you would save these settings
+    // TODO: In a real implementation, you would save these settings
     toast.success('Settings updated');
   }, []);
 
@@ -224,8 +224,8 @@ export function SignalProtocolSettings({
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription className="flex items-center justify-between">
             <span>Signal Protocol is not initialized. Initialize it to enable advanced E2EE features.</span>
-            <Button 
-              onClick={handleInitialize} 
+            <Button
+              onClick={handleInitialize}
               disabled={isInitializing}
               size="sm"
             >
@@ -429,7 +429,7 @@ export function SignalProtocolSettings({
                   <div className="text-sm text-gray-500">Total Messages</div>
                 </div>
               </div>
-              
+
               {/* Session list would go here */}
               <div className="text-center text-gray-500 py-8">
                 <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />

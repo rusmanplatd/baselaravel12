@@ -27,7 +27,9 @@ export default function WebAuthnManager() {
 
     const loadPasskeys = async () => {
         try {
-            const data = await apiService.get(route('webauthn.list'));
+            const data = await apiService.get(route('webauthn.list')) as {
+                passkeys: Passkey[];
+            };
             if (data.passkeys) {
                 setPasskeys(data.passkeys);
             }
@@ -47,16 +49,21 @@ export default function WebAuthnManager() {
 
         try {
             // Get registration options
-            const options = await apiService.get(route('webauthn.register.options'));
+            const options = await apiService.get(route('webauthn.register.options')) as {
+                optionsJSON: any;
+            };
 
             // Start registration
-            const credential = await startRegistration(options);
+            const credential = await startRegistration(options.optionsJSON);
 
             // Send credential to server
             const result = await apiService.post(route('webauthn.register'), {
                 ...credential,
                 name: newKeyName,
-            });
+            }) as {
+                success: boolean;
+                error?: string;
+            };
 
             if (result.success) {
                 setNewKeyName('');
@@ -82,7 +89,9 @@ export default function WebAuthnManager() {
 
         setLoading(true);
         try {
-            const result = await apiService.delete(route('webauthn.delete', passkeyId));
+            const result = await apiService.delete(route('webauthn.delete', passkeyId)) as {
+                success: boolean;
+            };
             if (result.success) {
                 await loadPasskeys();
             } else {

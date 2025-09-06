@@ -24,8 +24,8 @@ import {
   Unlock,
   RefreshCw
 } from 'lucide-react';
-import { SecurityDashboard } from '@/components/security/SecurityDashboard';
-import { WebhookManager } from '@/components/webhooks/WebhookManager';
+import SecurityDashboard from '@/components/security/SecurityDashboard';
+import WebhookManager from '@/components/webhooks/WebhookManager';
 import { toast } from 'sonner';
 
 interface SystemStats {

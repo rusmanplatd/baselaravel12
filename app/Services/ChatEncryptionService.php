@@ -16,7 +16,7 @@ class ChatEncryptionService
     public function encryptMessage(string $content, Conversation $conversation, User $user): array
     {
         $algorithm = $conversation->settings['encryption_algorithm'] ?? 'AES-256-GCM';
-        
+
         return match($algorithm) {
             'ML-KEM-768', 'ML-KEM-512', 'ML-KEM-1024' => $this->encryptWithQuantum($content, $conversation, $user),
             'signal' => $this->groupEncryptionService->encryptMessage($content, $conversation, $user),
@@ -84,9 +84,9 @@ class ChatEncryptionService
     {
         $key = $this->getOrCreateAESKey($conversation);
         $iv = random_bytes(12);
-        
+
         $encrypted = openssl_encrypt($content, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag);
-        
+
         return [
             'encrypted_content' => base64_encode($encrypted),
             'content_hash' => hash('sha256', $content),
@@ -108,7 +108,7 @@ class ChatEncryptionService
         $tag = base64_decode($message->metadata['tag'] ?? '');
 
         $decrypted = openssl_decrypt($encryptedData, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag);
-        
+
         if ($decrypted === false) {
             throw new \Exception('Decryption failed');
         }
@@ -127,14 +127,14 @@ class ChatEncryptionService
 
     private function getOrCreateAESKey(Conversation $conversation): string
     {
-        // In a real implementation, this would retrieve or create an AES key
+        // TODO: In a real implementation, this would retrieve or create an AES key
         // For testing purposes, return a mock key
         return hash('sha256', 'mock_aes_key_' . $conversation->id);
     }
 
     private function getAESKey(Conversation $conversation): ?string
     {
-        // In a real implementation, this would retrieve the AES key
+        // TODO: In a real implementation, this would retrieve the AES key
         // For testing purposes, return a mock key
         return hash('sha256', 'mock_aes_key_' . $conversation->id);
     }

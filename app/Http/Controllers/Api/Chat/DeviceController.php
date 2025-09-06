@@ -192,7 +192,7 @@ class DeviceController extends Controller
             return response()->json(['error' => 'Device is already trusted'], 400);
         }
 
-        // In a real implementation, you'd verify the code here
+        // TODO: In a real implementation, you'd verify the code here
         // For now, we'll trust immediately if verification code is provided
         if ($request->verification_code) {
             // Verify the code (implementation depends on your verification method)
@@ -475,10 +475,10 @@ class DeviceController extends Controller
             // Generate a 6-digit verification code
             $verificationCode = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
-            // Store code temporarily (in real implementation, use cache/redis)
+            // Store code temporarily (TODO: in real implementation, use cache/redis)
             cache()->put("device_verification_{$device->id}", $verificationCode, 300); // 5 minutes
 
-            // In a real implementation, you might send this via push notification, SMS, or email
+            // TODO: In a real implementation, you might send this via push notification, SMS, or email
 
             return response()->json([
                 'verification_code' => $verificationCode, // Only for development

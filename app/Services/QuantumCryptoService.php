@@ -323,7 +323,7 @@ class QuantumCryptoService
     private function generateKeyPairLibOQS(string $algorithm): array
     {
         try {
-            // In a real implementation, this would use the LibOQS PHP bindings
+            // TODO: In a real implementation, this would use the LibOQS PHP bindings
             // For now, we'll simulate the interface
             $algorithmName = $this->mapAlgorithmName($algorithm);
 

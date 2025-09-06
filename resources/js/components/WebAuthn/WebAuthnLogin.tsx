@@ -20,13 +20,20 @@ export default function WebAuthnLogin({ onSuccess }: WebAuthnLoginProps) {
 
         try {
             // Get authentication options
-            const options = await apiService.get(route('webauthn.authenticate.options'));
+            const options = await apiService.get(route('webauthn.authenticate.options')) as {
+                optionsJSON: any;
+            };
 
             // Start authentication
-            const credential = await startAuthentication(options);
+            const credential = await startAuthentication(options.optionsJSON);
 
             // Send credential to server
-            const result = await apiService.post(route('webauthn.authenticate'), credential);
+            const result = await apiService.post(route('webauthn.authenticate'), credential) as {
+                success: boolean;
+                requires_mfa?: boolean;
+                redirect_url?: string;
+                error?: string;
+            };
 
             if (result.success) {
                 if (onSuccess) {

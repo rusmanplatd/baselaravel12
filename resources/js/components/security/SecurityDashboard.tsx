@@ -15,9 +15,7 @@ import {
 } from 'lucide-react';
 import { SecurityMetrics, SecurityEvent, UserAnomaly } from '@/types/security';
 import { useSecurityApi } from '@/hooks/useSecurityApi';
-import SecurityEventsList from './SecurityEventsList';
-import SecurityMetricsChart from './SecurityMetricsChart';
-import UserAnomalyCard from './UserAnomalyCard';
+// Components will be implemented in future iterations
 
 interface SecurityDashboardProps {
   className?: string;
@@ -256,11 +254,23 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ className }) => {
         </TabsList>
 
         <TabsContent value="events" className="space-y-4">
-          <SecurityEventsList events={recentEvents} />
+          <Card>
+            <CardContent className="p-6">
+              <div className="text-muted-foreground">
+                Security events list will be implemented in future iterations.
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="trends" className="space-y-4">
-          <SecurityMetricsChart metrics={metrics} />
+          <Card>
+            <CardContent className="p-6">
+              <div className="text-muted-foreground">
+                Security metrics charts will be implemented in future iterations.
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="anomalies" className="space-y-4">
@@ -275,7 +285,13 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ className }) => {
               </Card>
             ) : (
               userAnomalies.map((anomaly, index) => (
-                <UserAnomalyCard key={index} anomaly={anomaly} />
+                <Card key={index}>
+                  <CardContent className="p-6">
+                    <div className="text-muted-foreground">
+                      User anomaly details will be implemented in future iterations.
+                    </div>
+                  </CardContent>
+                </Card>
               ))
             )}
           </div>

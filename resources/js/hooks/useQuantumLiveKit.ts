@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { 
-  Room, 
-  RoomEvent, 
-  Track, 
+import {
+  Room,
+  RoomEvent,
+  Track,
   RemoteTrack,
   RemoteParticipant,
   LocalTrack,
@@ -58,39 +58,39 @@ interface UseQuantumLiveKitReturn {
   isConnected: boolean;
   isConnecting: boolean;
   connectionQuality: string;
-  
+
   // Participants
   participants: CallParticipant[];
   localParticipant: CallParticipant | null;
-  
+
   // Media tracks
   localTracks: LocalTrack[];
   remoteTracks: RemoteTrack[];
-  
+
   // Quantum E2EE
   quantumKeyProvider: QuantumLiveKitKeyProvider | null;
   encryptionEnabled: boolean;
   keyStats: any;
-  
+
   // Call management
   connect: (roomName: string, token: string, options?: ConnectOptions) => Promise<void>;
   disconnect: () => Promise<void>;
-  
+
   // Media control
   toggleCamera: () => Promise<void>;
   toggleMicrophone: () => Promise<void>;
   startScreenShare: () => Promise<void>;
   stopScreenShare: () => Promise<void>;
-  
+
   // Advanced features
   switchCamera: () => Promise<void>;
   setVideoQuality: (quality: 'high' | 'medium' | 'low') => Promise<void>;
   enableNoiseSupression: (enabled: boolean) => Promise<void>;
-  
+
   // Statistics
   callStats: CallStats;
   refreshStats: () => Promise<void>;
-  
+
   // Error handling
   error: string | null;
   clearError: () => void;
@@ -101,17 +101,17 @@ export const useQuantumLiveKit = (options: QuantumLiveKitOptions): UseQuantumLiv
   const [isConnected, setIsConnected] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectionQuality, setConnectionQuality] = useState('unknown');
-  
+
   const [participants, setParticipants] = useState<CallParticipant[]>([]);
   const [localParticipant, setLocalParticipant] = useState<CallParticipant | null>(null);
-  
+
   const [localTracks, setLocalTracks] = useState<LocalTrack[]>([]);
   const [remoteTracks, setRemoteTracks] = useState<RemoteTrack[]>([]);
-  
+
   const [quantumKeyProvider, setQuantumKeyProvider] = useState<QuantumLiveKitKeyProvider | null>(null);
   const [encryptionEnabled, setEncryptionEnabled] = useState(false);
   const [keyStats, setKeyStats] = useState<any>({});
-  
+
   const [callStats, setCallStats] = useState<CallStats>({
     duration: 0,
     participantCount: 0,
@@ -121,9 +121,9 @@ export const useQuantumLiveKit = (options: QuantumLiveKitOptions): UseQuantumLiv
     keyRotations: 0,
     encryptionHealth: 'unknown' as const,
   });
-  
+
   const [error, setError] = useState<string | null>(null);
-  
+
   const localVideoTrackRef = useRef<LocalTrack | null>(null);
   const localAudioTrackRef = useRef<LocalTrack | null>(null);
   const localScreenTrackRef = useRef<LocalTrack | null>(null);
@@ -136,11 +136,11 @@ export const useQuantumLiveKit = (options: QuantumLiveKitOptions): UseQuantumLiv
       try {
         // Create quantum key provider if E2EE is enabled
         let keyProvider: QuantumLiveKitKeyProvider | null = null;
-        
+
         if (options.enableQuantumE2EE) {
           // Load quantum service (would be injected in real implementation)
           const quantumService = await loadQuantumService();
-          
+
           keyProvider = new QuantumLiveKitKeyProvider({
             conversationId: options.conversationId,
             userId: options.userId,
@@ -148,7 +148,7 @@ export const useQuantumLiveKit = (options: QuantumLiveKitOptions): UseQuantumLiv
             quantumService,
             keyRotationInterval: options.keyRotationInterval,
           });
-          
+
           await keyProvider.initialize();
           setQuantumKeyProvider(keyProvider);
           setEncryptionEnabled(true);
@@ -178,12 +178,12 @@ export const useQuantumLiveKit = (options: QuantumLiveKitOptions): UseQuantumLiv
         }
 
         const newRoom = new Room(roomOptions);
-        
+
         // Set up event listeners
         setupRoomEventListeners(newRoom, keyProvider);
-        
+
         setRoom(newRoom);
-        
+
       } catch (err) {
         console.error('Failed to initialize room:', err);
         setError(err instanceof Error ? err.message : 'Failed to initialize room');
@@ -205,7 +205,7 @@ export const useQuantumLiveKit = (options: QuantumLiveKitOptions): UseQuantumLiv
 
   // Set up room event listeners
   const setupRoomEventListeners = useCallback((
-    room: Room, 
+    room: Room,
     keyProvider: QuantumLiveKitKeyProvider | null
   ) => {
     room.on(RoomEvent.Connected, () => {
@@ -213,7 +213,7 @@ export const useQuantumLiveKit = (options: QuantumLiveKitOptions): UseQuantumLiv
       setIsConnecting(false);
       setError(null);
       callStartTimeRef.current = new Date();
-      
+
       // Start statistics collection
       startStatsCollection();
     });
@@ -226,11 +226,11 @@ export const useQuantumLiveKit = (options: QuantumLiveKitOptions): UseQuantumLiv
       setParticipants([]);
       setLocalParticipant(null);
       callStartTimeRef.current = null;
-      
+
       if (statsIntervalRef.current) {
         clearInterval(statsIntervalRef.current);
       }
-      
+
       if (reason) {
         setError(`Disconnected: ${reason}`);
       }
@@ -245,7 +245,7 @@ export const useQuantumLiveKit = (options: QuantumLiveKitOptions): UseQuantumLiv
           console.error('Key exchange failed for participant:', participant.sid, err);
         }
       }
-      
+
       updateParticipantList();
     });
 
@@ -253,7 +253,7 @@ export const useQuantumLiveKit = (options: QuantumLiveKitOptions): UseQuantumLiv
       if (keyProvider) {
         await keyProvider.onParticipantDisconnected(participant.sid);
       }
-      
+
       updateParticipantList();
     });
 
@@ -306,7 +306,7 @@ export const useQuantumLiveKit = (options: QuantumLiveKitOptions): UseQuantumLiv
       setError(null);
 
       const liveKitUrl = import.meta.env.VITE_LIVEKIT_URL || 'ws://localhost:7880';
-      
+
       // Add quantum-capable metadata
       const connectOptions: ConnectOptions = {
         ...options,
@@ -316,16 +316,16 @@ export const useQuantumLiveKit = (options: QuantumLiveKitOptions): UseQuantumLiv
           userId: options.userId,
           deviceId: getDeviceId(),
           quantumCapable: !!quantumKeyProvider,
-          supportedAlgorithms: quantumKeyProvider 
+          supportedAlgorithms: quantumKeyProvider
             ? ['ML-KEM-768', 'ML-KEM-1024', 'HYBRID-RSA-MLKEM']
             : ['ECDH-P384'],
           platform: navigator.platform,
           browser: getBrowserInfo(),
         }),
       };
-      
+
       await room.connect(liveKitUrl, token, connectOptions);
-      
+
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to connect';
       setError(errorMessage);
@@ -372,14 +372,14 @@ export const useQuantumLiveKit = (options: QuantumLiveKitOptions): UseQuantumLiv
           resolution: VideoPresets.h720.resolution,
           facingMode: 'user',
         });
-        
+
         localVideoTrackRef.current = videoTrack;
         await room.localParticipant.publishTrack(videoTrack, {
           name: 'camera',
           source: Track.Source.Camera,
         });
       }
-      
+
       updateParticipantList();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to toggle camera');
@@ -403,14 +403,14 @@ export const useQuantumLiveKit = (options: QuantumLiveKitOptions): UseQuantumLiv
           noiseSuppression: true,
           autoGainControl: true,
         });
-        
+
         localAudioTrackRef.current = audioTrack;
         await room.localParticipant.publishTrack(audioTrack, {
           name: 'microphone',
           source: Track.Source.Microphone,
         });
       }
-      
+
       updateParticipantList();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to toggle microphone');
@@ -435,9 +435,9 @@ export const useQuantumLiveKit = (options: QuantumLiveKitOptions): UseQuantumLiv
           Track.Kind.Video,
           { source: Track.Source.ScreenShare }
         );
-        
+
         localScreenTrackRef.current = screenTrack;
-        
+
         await room.localParticipant.publishTrack(screenTrack, {
           name: 'screen',
           source: Track.Source.ScreenShare,
@@ -534,7 +534,7 @@ export const useQuantumLiveKit = (options: QuantumLiveKitOptions): UseQuantumLiv
     // Remote participants
     room.remoteParticipants.forEach((participant) => {
       const metadata = parseParticipantMetadata(participant.metadata);
-      
+
       allParticipants.push({
         id: participant.sid,
         name: participant.identity || participant.name || 'Unknown',
@@ -572,7 +572,7 @@ export const useQuantumLiveKit = (options: QuantumLiveKitOptions): UseQuantumLiv
 
     try {
       const stats = await room.getStats();
-      const duration = callStartTimeRef.current 
+      const duration = callStartTimeRef.current
         ? Date.now() - callStartTimeRef.current.getTime()
         : 0;
 
@@ -584,7 +584,7 @@ export const useQuantumLiveKit = (options: QuantumLiveKitOptions): UseQuantumLiv
       if (quantumKeyProvider) {
         const keyStatsData = keyStats;
         const quantumRatio = quantumParticipants / participantCount;
-        
+
         if (quantumRatio >= 0.8) encryptionHealth = 'excellent';
         else if (quantumRatio >= 0.5) encryptionHealth = 'good';
         else if (quantumRatio > 0) encryptionHealth = 'poor';
@@ -618,39 +618,39 @@ export const useQuantumLiveKit = (options: QuantumLiveKitOptions): UseQuantumLiv
     isConnected,
     isConnecting,
     connectionQuality,
-    
+
     // Participants
     participants,
     localParticipant,
-    
+
     // Media tracks
     localTracks,
     remoteTracks,
-    
+
     // Quantum E2EE
     quantumKeyProvider,
     encryptionEnabled,
     keyStats,
-    
+
     // Call management
     connect,
     disconnect,
-    
+
     // Media control
     toggleCamera,
     toggleMicrophone,
     startScreenShare,
     stopScreenShare,
-    
+
     // Advanced features
     switchCamera,
     setVideoQuality,
     enableNoiseSupression,
-    
+
     // Statistics
     callStats,
     refreshStats,
-    
+
     // Error handling
     error,
     clearError,
@@ -659,7 +659,7 @@ export const useQuantumLiveKit = (options: QuantumLiveKitOptions): UseQuantumLiv
 
 // Helper functions
 async function loadQuantumService(): Promise<any> {
-  // In a real implementation, this would load your quantum crypto service
+  // TODO: In a real implementation, this would load your quantum crypto service
   return {
     generateKeyPair: async (algorithm: string) => {
       // Mock implementation

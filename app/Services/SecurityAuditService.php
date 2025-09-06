@@ -26,7 +26,7 @@ class SecurityAuditService
         'auth.mfa.enabled' => 2,
         'auth.mfa.disabled' => 6,
         'auth.mfa.failed' => 5,
-        
+
         // Device events
         'device.registered' => 3,
         'device.trusted' => 4,
@@ -34,7 +34,7 @@ class SecurityAuditService
         'device.revoked' => 6,
         'device.suspicious.access' => 8,
         'device.unknown.location' => 6,
-        
+
         // E2EE events (metadata only, never content)
         'e2ee.key.generated' => 2,
         'e2ee.key.rotated' => 3,
@@ -42,7 +42,7 @@ class SecurityAuditService
         'e2ee.encryption.failed' => 7,
         'e2ee.decryption.failed' => 6,
         'e2ee.algorithm.downgrade' => 9,
-        
+
         // Chat security events
         'chat.conversation.created' => 1,
         'chat.participant.added' => 2,
@@ -50,13 +50,13 @@ class SecurityAuditService
         'chat.message.blocked' => 5,
         'chat.file.blocked' => 4,
         'chat.suspicious.activity' => 7,
-        
+
         // System events
         'system.backup.accessed' => 5,
         'system.admin.access' => 4,
         'system.config.changed' => 6,
         'system.vulnerability.detected' => 9,
-        
+
         // API security events
         'api.rate_limit.exceeded' => 4,
         'api.unauthorized.access' => 6,
@@ -78,13 +78,13 @@ class SecurityAuditService
     ): SecurityAuditLog {
         // Calculate risk score
         $riskScore = $this->calculateRiskScore($eventType, $user, $device, $metadata);
-        
+
         // Get location info without storing personal data
         $locationInfo = $this->getSecureLocationInfo($request);
-        
+
         // Sanitize metadata to ensure no sensitive data is logged
         $sanitizedMetadata = $this->sanitizeMetadata($metadata);
-        
+
         $auditLog = SecurityAuditLog::create([
             'event_type' => $eventType,
             'severity' => $this->getSeverityFromRiskScore($riskScore),
@@ -99,24 +99,24 @@ class SecurityAuditService
             'status' => $riskScore >= 8 ? 'pending' : 'normal',
             'organization_id' => $organizationId,
         ]);
-        
+
         // Trigger immediate response for high-risk events
         if ($auditLog->isHighRisk()) {
             $this->handleHighRiskEvent($auditLog);
         }
-        
+
         // Update user risk profile
         if ($user) {
             $this->updateUserRiskProfile($user, $riskScore);
         }
-        
+
         Log::info('Security event logged', [
             'event_type' => $eventType,
             'risk_score' => $riskScore,
             'user_id' => $user?->id,
             'audit_log_id' => $auditLog->id,
         ]);
-        
+
         return $auditLog;
     }
 
@@ -127,13 +127,13 @@ class SecurityAuditService
     {
         $anomalies = [];
         $timeWindow = Carbon::now()->subHours(24);
-        
+
         // Check for unusual login patterns
         $recentLogins = SecurityAuditLog::where('user_id', $user->id)
             ->where('event_type', 'auth.login.success')
             ->where('created_at', '>=', $timeWindow)
             ->get();
-        
+
         // Multiple locations in short time
         $uniqueLocations = $recentLogins->pluck('location.country')->unique();
         if ($uniqueLocations->count() > 2) {
@@ -144,15 +144,15 @@ class SecurityAuditService
                 'locations' => $uniqueLocations->toArray(),
             ];
         }
-        
+
         // Unusual time patterns
         $loginHours = $recentLogins->map(fn($log) => Carbon::parse($log->created_at)->hour);
         $usualHours = Cache::remember(
-            "user_usual_hours_{$user->id}", 
-            3600, 
+            "user_usual_hours_{$user->id}",
+            3600,
             fn() => $this->getUserUsualLoginHours($user)
         );
-        
+
         $unusualLogins = $loginHours->filter(fn($hour) => !in_array($hour, $usualHours));
         if ($unusualLogins->count() > 0) {
             $anomalies[] = [
@@ -162,13 +162,13 @@ class SecurityAuditService
                 'unusual_hours' => $unusualLogins->unique()->values()->toArray(),
             ];
         }
-        
+
         // Failed authentication attempts
         $failedAttempts = SecurityAuditLog::where('user_id', $user->id)
             ->where('event_type', 'auth.login.failed')
             ->where('created_at', '>=', $timeWindow)
             ->count();
-        
+
         if ($failedAttempts > 5) {
             $anomalies[] = [
                 'type' => 'failed_attempts',
@@ -177,13 +177,13 @@ class SecurityAuditService
                 'count' => $failedAttempts,
             ];
         }
-        
+
         // Device changes
         $deviceChanges = SecurityAuditLog::where('user_id', $user->id)
             ->whereIn('event_type', ['device.registered', 'device.untrusted', 'device.revoked'])
             ->where('created_at', '>=', $timeWindow)
             ->count();
-        
+
         if ($deviceChanges > 3) {
             $anomalies[] = [
                 'type' => 'device_changes',
@@ -192,7 +192,7 @@ class SecurityAuditService
                 'count' => $deviceChanges,
             ];
         }
-        
+
         return $anomalies;
     }
 
@@ -204,7 +204,7 @@ class SecurityAuditService
         $logs = SecurityAuditLog::where('organization_id', $organizationId)
             ->whereBetween('created_at', [$from, $to])
             ->get();
-        
+
         return [
             'summary' => [
                 'total_events' => $logs->count(),
@@ -231,28 +231,28 @@ class SecurityAuditService
         array $metadata
     ): int {
         $baseScore = self::EVENT_RISK_SCORES[$eventType] ?? 5;
-        
+
         // Adjust based on user history
         if ($user) {
             $recentEvents = SecurityAuditLog::where('user_id', $user->id)
                 ->where('created_at', '>=', Carbon::now()->subHours(24))
                 ->count();
-            
+
             if ($recentEvents > 10) {
                 $baseScore += 2; // Increase risk for active users
             }
         }
-        
+
         // Adjust based on device trust
         if ($device && !$device->is_trusted) {
             $baseScore += 2;
         }
-        
+
         // Adjust based on metadata indicators
         if (!empty($metadata['suspicious_indicators'])) {
             $baseScore += count($metadata['suspicious_indicators']);
         }
-        
+
         return min($baseScore, 10); // Cap at 10
     }
 
@@ -278,12 +278,12 @@ class SecurityAuditService
         if (!$request) {
             return null;
         }
-        
+
         $ip = $request->ip();
         if (!$ip || $ip === '127.0.0.1') {
             return null;
         }
-        
+
         // Use a basic IP-to-country service (implement as needed)
         // This should only store country/region, not exact location
         return [
@@ -300,19 +300,19 @@ class SecurityAuditService
     {
         // Remove any potential PII or sensitive data
         $sensitiveKeys = [
-            'password', 'token', 'key', 'secret', 'content', 
+            'password', 'token', 'key', 'secret', 'content',
             'message', 'email', 'phone', 'ssn', 'credit_card',
             'encrypted_content', 'decrypted_content'
         ];
-        
+
         $sanitized = $metadata;
-        
+
         array_walk_recursive($sanitized, function (&$value, $key) use ($sensitiveKeys) {
             if (is_string($key) && in_array(strtolower($key), $sensitiveKeys)) {
                 $value = '[REDACTED]';
             }
         });
-        
+
         return $sanitized;
     }
 
@@ -324,7 +324,7 @@ class SecurityAuditService
         if (!$ip) {
             return null;
         }
-        
+
         // Hash IP with salt for privacy while maintaining ability to detect patterns
         return Hash::make($ip . config('app.key'));
     }
@@ -337,7 +337,7 @@ class SecurityAuditService
         if (!$userAgent) {
             return null;
         }
-        
+
         // Extract only basic browser/OS info, remove detailed version numbers
         return preg_replace('/\d+\.\d+(\.\d+)*/', 'X.X', $userAgent);
     }
@@ -362,12 +362,12 @@ class SecurityAuditService
             ] : null,
             'metadata' => $auditLog->metadata,
         ], $auditLog->organization_id);
-        
+
         // Auto-disable compromised accounts
         if ($auditLog->event_type === 'e2ee.key.compromised' && $auditLog->user) {
             // Revoke all user sessions and devices
             $auditLog->user->devices()->update(['is_active' => false]);
-            
+
             Log::critical('Auto-disabled user account due to key compromise', [
                 'user_id' => $auditLog->user->id,
                 'audit_log_id' => $auditLog->id,
@@ -382,18 +382,18 @@ class SecurityAuditService
     {
         $cacheKey = "user_risk_profile_{$user->id}";
         $currentProfile = Cache::get($cacheKey, ['score' => 0, 'events' => 0]);
-        
+
         $newProfile = [
             'score' => min(($currentProfile['score'] + $eventRiskScore) / 2, 10),
             'events' => $currentProfile['events'] + 1,
             'last_updated' => now(),
         ];
-        
+
         Cache::put($cacheKey, $newProfile, 3600); // 1 hour
     }
 
     /**
-     * Get user's usual login hours (simplified implementation)
+     * Get user's usual login hours (simplified implementation. TODO: Improve this logic)
      */
     private function getUserUsualLoginHours(User $user): array
     {
@@ -401,17 +401,17 @@ class SecurityAuditService
             ->where('event_type', 'auth.login.success')
             ->where('created_at', '>=', Carbon::now()->subDays(30))
             ->get();
-        
+
         $hourCounts = [];
         foreach ($loginHistory as $login) {
             $hour = Carbon::parse($login->created_at)->hour;
             $hourCounts[$hour] = ($hourCounts[$hour] ?? 0) + 1;
         }
-        
+
         // Return hours with at least 20% of total logins
         $totalLogins = $loginHistory->count();
         $threshold = max(1, $totalLogins * 0.2);
-        
+
         return array_keys(array_filter($hourCounts, fn($count) => $count >= $threshold));
     }
 
@@ -492,7 +492,7 @@ class SecurityAuditService
     private function generateSecurityRecommendations($logs): array
     {
         $recommendations = [];
-        
+
         $highRiskCount = $logs->where('risk_score', '>=', 8)->count();
         if ($highRiskCount > 10) {
             $recommendations[] = [
@@ -502,10 +502,10 @@ class SecurityAuditService
                 'description' => "There have been {$highRiskCount} critical security events. Consider reviewing security policies.",
             ];
         }
-        
+
         $failedLogins = $logs->where('event_type', 'auth.login.failed')->count();
         $totalLogins = $logs->where('event_type', 'auth.login.success')->count();
-        
+
         if ($totalLogins > 0 && ($failedLogins / $totalLogins) > 0.1) {
             $recommendations[] = [
                 'priority' => 'medium',
@@ -514,7 +514,7 @@ class SecurityAuditService
                 'description' => 'Consider implementing additional authentication measures like MFA.',
             ];
         }
-        
+
         return $recommendations;
     }
 }

@@ -65,12 +65,12 @@ export class OptimizedE2EEService {
      * Encrypt message with optimal algorithm selection
      */
     async encryptMessage(
-        content: string, 
+        content: string,
         conversationId: string,
         recipients: string[]
     ): Promise<EncryptionResult> {
         const cacheKey = `${conversationId}:${content.slice(0, 50)}`;
-        
+
         // Check cache first
         if (this.encryptionCache.has(cacheKey)) {
             return this.encryptionCache.get(cacheKey)!;
@@ -79,7 +79,7 @@ export class OptimizedE2EEService {
         try {
             // Select optimal algorithm
             const algorithm = await this.selectOptimalAlgorithm(conversationId);
-            
+
             let result: EncryptionResult;
 
             if (algorithm.includes('ML-KEM')) {
@@ -96,7 +96,7 @@ export class OptimizedE2EEService {
 
             // Cache result for performance
             this.encryptionCache.set(cacheKey, result);
-            
+
             // Clean cache periodically
             if (this.encryptionCache.size > 100) {
                 this.cleanEncryptionCache();
@@ -117,7 +117,7 @@ export class OptimizedE2EEService {
         conversationId: string
     ): Promise<DecryptionResult> {
         const cacheKey = `decrypt:${encryptedData.content_hash}`;
-        
+
         // Check cache first
         if (this.decryptionCache.has(cacheKey)) {
             return this.decryptionCache.get(cacheKey)!;
@@ -147,7 +147,7 @@ export class OptimizedE2EEService {
 
             // Cache result
             this.decryptionCache.set(cacheKey, result);
-            
+
             // Clean cache periodically
             if (this.decryptionCache.size > 50) {
                 this.cleanDecryptionCache();
@@ -167,15 +167,15 @@ export class OptimizedE2EEService {
         messages: Array<{ content: string; conversationId: string; recipients: string[] }>
     ): Promise<EncryptionResult[]> {
         const results: EncryptionResult[] = [];
-        
+
         // Process in batches for memory efficiency
         const batchSize = 10;
         for (let i = 0; i < messages.length; i += batchSize) {
             const batch = messages.slice(i, i + batchSize);
-            const batchPromises = batch.map(msg => 
+            const batchPromises = batch.map(msg =>
                 this.encryptMessage(msg.content, msg.conversationId, msg.recipients)
             );
-            
+
             const batchResults = await Promise.all(batchPromises);
             results.push(...batchResults);
         }
@@ -190,15 +190,15 @@ export class OptimizedE2EEService {
         encryptedMessages: Array<{ data: EncryptionResult; conversationId: string }>
     ): Promise<DecryptionResult[]> {
         const results: DecryptionResult[] = [];
-        
+
         // Process in batches
         const batchSize = 10;
         for (let i = 0; i < encryptedMessages.length; i += batchSize) {
             const batch = encryptedMessages.slice(i, i + batchSize);
-            const batchPromises = batch.map(msg => 
+            const batchPromises = batch.map(msg =>
                 this.decryptMessage(msg.data, msg.conversationId)
             );
-            
+
             const batchResults = await Promise.all(batchPromises);
             results.push(...batchResults);
         }
@@ -223,7 +223,7 @@ export class OptimizedE2EEService {
 
         // Check conversation requirements
         const conversationInfo = await this.getConversationEncryptionInfo(conversationId);
-        
+
         if (conversationInfo.requires_quantum && this.deviceCapabilities.quantum_ready) {
             // Use highest quantum security level based on performance
             switch (this.deviceCapabilities.performance_tier) {
@@ -258,7 +258,7 @@ export class OptimizedE2EEService {
         // Encrypt content
         const iv = crypto.getRandomValues(new Uint8Array(12));
         const encodedContent = new TextEncoder().encode(content);
-        
+
         const encrypted = await crypto.subtle.encrypt(
             { name: 'AES-GCM', iv },
             key,
@@ -286,9 +286,9 @@ export class OptimizedE2EEService {
     private async classicalDecrypt(encryptedData: EncryptionResult): Promise<DecryptionResult> {
         try {
             // This is a simplified implementation
-            // In practice, you'd retrieve the actual key for decryption
+            // TODO: In practice, you'd retrieve the actual key for decryption
             const mockDecrypted = 'Decrypted content'; // Placeholder
-            
+
             return {
                 decrypted_content: mockDecrypted,
                 verified: true,
@@ -329,7 +329,7 @@ export class OptimizedE2EEService {
      */
     private async checkQuantumReadiness(): Promise<boolean> {
         // Check if quantum crypto APIs are available
-        return typeof crypto.subtle !== 'undefined' && 
+        return typeof crypto.subtle !== 'undefined' &&
                crypto.subtle.generateKey !== undefined;
     }
 
@@ -338,7 +338,7 @@ export class OptimizedE2EEService {
      */
     private getSupportedAlgorithms(): string[] {
         const algorithms = ['AES-256-GCM'];
-        
+
         if (this.deviceCapabilities?.quantum_ready) {
             algorithms.push('ML-KEM-512', 'ML-KEM-768', 'ML-KEM-1024');
         }
@@ -375,7 +375,7 @@ export class OptimizedE2EEService {
             const contentBytes = new TextEncoder().encode(content);
             const actualHashBuffer = await crypto.subtle.digest('SHA-256', contentBytes);
             const actualHash = btoa(String.fromCharCode(...new Uint8Array(actualHashBuffer)));
-            
+
             return actualHash === expectedHash;
         } catch {
             return false;

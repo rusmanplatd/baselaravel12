@@ -135,7 +135,7 @@ const mockMessages = [
 describe('ChatInterface', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        
+
         mockUseE2EEChat.mockReturnValue({
             conversations: [mockConversation],
             messages: mockMessages,
@@ -168,13 +168,13 @@ describe('ChatInterface', () => {
         });
 
         render(<ChatInterface />);
-        
+
         expect(screen.getByText('Loading conversations...')).toBeInTheDocument();
     });
 
     it('renders conversation list', () => {
         render(<ChatInterface />);
-        
+
         expect(screen.getByText('Messages')).toBeInTheDocument();
         expect(screen.getByText('Test Conversation')).toBeInTheDocument();
         expect(screen.getByText('New Chat')).toBeInTheDocument();
@@ -182,14 +182,14 @@ describe('ChatInterface', () => {
 
     it('displays encryption status correctly', () => {
         render(<ChatInterface initialConversationId="1" />);
-        
+
         // Should show quantum E2EE badge
         expect(screen.getByText('Quantum E2EE')).toBeInTheDocument();
     });
 
     it('renders messages correctly', () => {
         render(<ChatInterface initialConversationId="1" />);
-        
+
         expect(screen.getByText('Hello world!')).toBeInTheDocument();
         expect(screen.getByText('Hi there!')).toBeInTheDocument();
         expect(screen.getByText('User 1')).toBeInTheDocument();
@@ -204,13 +204,13 @@ describe('ChatInterface', () => {
         });
 
         render(<ChatInterface initialConversationId="1" />);
-        
+
         const input = screen.getByPlaceholderText('Type an encrypted message...');
         const sendButton = screen.getByRole('button', { name: /send/i });
-        
+
         fireEvent.change(input, { target: { value: 'Test message' } });
         fireEvent.click(sendButton);
-        
+
         await waitFor(() => {
             expect(mockSendMessage).toHaveBeenCalledWith('1', 'Test message');
         });
@@ -224,13 +224,13 @@ describe('ChatInterface', () => {
         });
 
         render(<ChatInterface initialConversationId="1" />);
-        
+
         // Find and click edit button (this would be in the message actions)
         // Note: In a real test, you'd need to trigger the hover state to show actions
         const editButton = screen.getAllByText('Save')[0]; // Assuming edit mode is active
         if (editButton) {
             fireEvent.click(editButton);
-            
+
             await waitFor(() => {
                 expect(mockEditMessage).toHaveBeenCalled();
             });
@@ -239,57 +239,57 @@ describe('ChatInterface', () => {
 
     it('handles tab switching', () => {
         render(<ChatInterface initialConversationId="1" />);
-        
+
         const mediaTab = screen.getByText('Media');
         fireEvent.click(mediaTab);
-        
+
         // Should switch to media tab content
         expect(screen.getByTestId('tabs')).toHaveAttribute('data-value', 'media');
     });
 
     it('shows typing indicator', () => {
         render(<ChatInterface initialConversationId="1" />);
-        
+
         const input = screen.getByPlaceholderText('Type an encrypted message...');
         fireEvent.change(input, { target: { value: 'typing...' } });
-        
+
         // Should trigger typing handler
         expect(input.value).toBe('typing...');
     });
 
     it('handles file upload', () => {
         render(<ChatInterface initialConversationId="1" />);
-        
+
         const fileInput = screen.getByTestId('file-input');
         const file = new File(['test'], 'test.txt', { type: 'text/plain' });
-        
+
         fireEvent.change(fileInput, { target: { files: [file] } });
-        
+
         // Should handle file upload
         expect(fileInput.files).toHaveLength(1);
     });
 
     it('displays participants dialog', () => {
         render(<ChatInterface initialConversationId="1" />);
-        
+
         // Open participants dialog
         const usersButton = screen.getByLabelText(/users/i);
         fireEvent.click(usersButton);
-        
+
         expect(screen.getByTestId('dialog')).toBeInTheDocument();
         expect(screen.getByText('Participants (1)')).toBeInTheDocument();
     });
 
     it('handles search functionality', () => {
         render(<ChatInterface initialConversationId="1" />);
-        
+
         // Open search
         const searchButton = screen.getByLabelText(/search/i);
         fireEvent.click(searchButton);
-        
+
         const searchInput = screen.getByPlaceholderText('Search messages...');
         fireEvent.change(searchInput, { target: { value: 'hello' } });
-        
+
         expect(searchInput.value).toBe('hello');
     });
 
@@ -298,14 +298,14 @@ describe('ChatInterface', () => {
             ...mockConversation,
             encryption_status: { is_encrypted: false, quantum_ready: false }
         };
-        
+
         mockUseE2EEChat.mockReturnValue({
             ...mockUseE2EEChat(),
             currentConversation: unencryptedConversation
         });
 
         render(<ChatInterface initialConversationId="1" />);
-        
+
         expect(screen.getByText('This conversation is not encrypted')).toBeInTheDocument();
     });
 
@@ -318,11 +318,11 @@ describe('ChatInterface', () => {
         });
 
         render(<ChatInterface initialConversationId="1" />);
-        
+
         // Typing should send WebSocket message
         const input = screen.getByPlaceholderText('Type an encrypted message...');
         fireEvent.change(input, { target: { value: 'test' } });
-        
+
         // WebSocket message should be sent for typing indicator
         expect(mockSendWebSocketMessage).toHaveBeenCalledWith({
             type: 'typing_start',
@@ -337,29 +337,29 @@ describe('ChatInterface', () => {
         });
 
         render(<ChatInterface />);
-        
+
         expect(screen.getByText('Connection failed')).toBeInTheDocument();
     });
 
     it('handles reply functionality', () => {
         render(<ChatInterface initialConversationId="1" />);
-        
+
         // This would test the reply functionality
-        // In a real implementation, you'd find the reply button and click it
+        // TODO: In a real implementation, you'd find the reply button and click it
         // Then check if the reply preview appears
     });
 
     it('handles voice recording', () => {
         render(<ChatInterface initialConversationId="1" />);
-        
+
         const micButton = screen.getByLabelText(/mic/i);
         fireEvent.mouseDown(micButton);
-        
+
         // Should start recording
         expect(screen.getByLabelText(/stop/i)).toBeInTheDocument();
-        
+
         fireEvent.mouseUp(screen.getByLabelText(/stop/i));
-        
+
         // Should stop recording
         expect(screen.getByLabelText(/mic/i)).toBeInTheDocument();
     });

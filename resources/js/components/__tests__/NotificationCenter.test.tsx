@@ -74,7 +74,7 @@ vi.mock('@/components/ui/scroll-area', () => ({
 }));
 
 vi.mock('@/components/ui/dialog', () => ({
-    Dialog: ({ children, open, onOpenChange }: any) => 
+    Dialog: ({ children, open, onOpenChange }: any) =>
         open ? <div data-testid="dialog" onClick={() => onOpenChange?.(false)}>{children}</div> : null,
     DialogContent: ({ children }: any) => <div data-testid="dialog-content">{children}</div>,
     DialogHeader: ({ children }: any) => <div>{children}</div>,
@@ -142,7 +142,7 @@ const mockPreferences = {
 describe('NotificationCenter', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        
+
         mockUseNotifications.mockReturnValue({
             notifications: mockNotifications,
             preferences: mockPreferences,
@@ -176,26 +176,26 @@ describe('NotificationCenter', () => {
 
     it('renders notification bell with unread count', () => {
         render(<NotificationCenter />);
-        
+
         expect(screen.getByTestId('badge')).toHaveTextContent('1');
     });
 
     it('opens notification dropdown when bell is clicked', () => {
         render(<NotificationCenter />);
-        
+
         const bell = screen.getByRole('button');
         fireEvent.click(bell);
-        
+
         expect(screen.getByTestId('dropdown')).toHaveAttribute('data-open', 'true');
         expect(screen.getByText('Notifications')).toBeInTheDocument();
     });
 
     it('displays notifications correctly', () => {
         render(<NotificationCenter />);
-        
+
         const bell = screen.getByRole('button');
         fireEvent.click(bell);
-        
+
         expect(screen.getByText('New Message')).toBeInTheDocument();
         expect(screen.getByText('You have a new message from John')).toBeInTheDocument();
         expect(screen.getByText('Security Alert')).toBeInTheDocument();
@@ -204,34 +204,34 @@ describe('NotificationCenter', () => {
 
     it('shows connection status', () => {
         render(<NotificationCenter />);
-        
+
         const bell = screen.getByRole('button');
         fireEvent.click(bell);
-        
+
         expect(screen.getByText('Connected • connected')).toBeInTheDocument();
     });
 
     it('handles tab switching', () => {
         render(<NotificationCenter />);
-        
+
         const bell = screen.getByRole('button');
         fireEvent.click(bell);
-        
+
         const unreadTab = screen.getByText('Unread (1)');
         fireEvent.click(unreadTab);
-        
+
         expect(screen.getByTestId('tabs')).toHaveAttribute('data-value', 'unread');
     });
 
     it('handles search functionality', () => {
         render(<NotificationCenter />);
-        
+
         const bell = screen.getByRole('button');
         fireEvent.click(bell);
-        
+
         const searchInput = screen.getByPlaceholderText('Search notifications...');
         fireEvent.change(searchInput, { target: { value: 'message' } });
-        
+
         expect(searchInput.value).toBe('message');
     });
 
@@ -243,14 +243,14 @@ describe('NotificationCenter', () => {
         });
 
         render(<NotificationCenter />);
-        
+
         const bell = screen.getByRole('button');
         fireEvent.click(bell);
-        
+
         // Find and click mark as read button
         const markReadButton = screen.getAllByText('Mark as read')[0];
         fireEvent.click(markReadButton);
-        
+
         await waitFor(() => {
             expect(mockMarkAsRead).toHaveBeenCalledWith('1');
         });
@@ -264,13 +264,13 @@ describe('NotificationCenter', () => {
         });
 
         render(<NotificationCenter />);
-        
+
         const bell = screen.getByRole('button');
         fireEvent.click(bell);
-        
+
         const markAllReadButton = screen.getByLabelText(/checkcheck/i);
         fireEvent.click(markAllReadButton);
-        
+
         await waitFor(() => {
             expect(mockMarkAllAsRead).toHaveBeenCalled();
         });
@@ -284,14 +284,14 @@ describe('NotificationCenter', () => {
         });
 
         render(<NotificationCenter />);
-        
+
         const bell = screen.getByRole('button');
         fireEvent.click(bell);
-        
+
         // Find and click delete button
         const deleteButton = screen.getAllByText('Delete')[0];
         fireEvent.click(deleteButton);
-        
+
         await waitFor(() => {
             expect(mockDeleteNotification).toHaveBeenCalledWith('1');
         });
@@ -299,13 +299,13 @@ describe('NotificationCenter', () => {
 
     it('opens preferences dialog', () => {
         render(<NotificationCenter />);
-        
+
         const bell = screen.getByRole('button');
         fireEvent.click(bell);
-        
+
         const settingsButton = screen.getByLabelText(/settings/i);
         fireEvent.click(settingsButton);
-        
+
         expect(screen.getByTestId('dialog')).toBeInTheDocument();
         expect(screen.getByText('Notification Preferences')).toBeInTheDocument();
     });
@@ -318,7 +318,7 @@ describe('NotificationCenter', () => {
         });
 
         render(<NotificationCenter />);
-        
+
         // This would test WebSocket message handling
         // In a real test, you'd trigger the WebSocket onMessage handler
         // and verify that notifications are processed correctly
@@ -330,26 +330,26 @@ describe('NotificationCenter', () => {
         global.Notification.permission = 'granted';
 
         render(<NotificationCenter />);
-        
+
         // This would test browser notification creation
-        // In a real implementation, you'd trigger a notification
+        // TODO: In a real implementation, you'd trigger a notification
         // and verify the Notification constructor was called
     });
 
     it('handles filter by type', () => {
         render(<NotificationCenter />);
-        
+
         const bell = screen.getByRole('button');
         fireEvent.click(bell);
-        
+
         // Open filter dropdown
         const filterButton = screen.getByLabelText(/filter/i);
         fireEvent.click(filterButton);
-        
+
         // Select security filter
         const securityFilter = screen.getByText('Security');
         fireEvent.click(securityFilter);
-        
+
         // Should filter to show only security notifications
         expect(screen.getByText('Security Alert')).toBeInTheDocument();
     });
@@ -361,10 +361,10 @@ describe('NotificationCenter', () => {
         });
 
         render(<NotificationCenter />);
-        
+
         const bell = screen.getByRole('button');
         fireEvent.click(bell);
-        
+
         expect(screen.getByText('No notifications')).toBeInTheDocument();
     });
 
@@ -375,10 +375,10 @@ describe('NotificationCenter', () => {
         });
 
         render(<NotificationCenter />);
-        
+
         const bell = screen.getByRole('button');
         fireEvent.click(bell);
-        
+
         expect(screen.getByText('Loading...')).toBeInTheDocument();
     });
 
@@ -390,10 +390,10 @@ describe('NotificationCenter', () => {
         });
 
         render(<NotificationCenter />);
-        
+
         const bell = screen.getByRole('button');
         fireEvent.click(bell);
-        
+
         expect(screen.getByText('Disconnected • disconnected')).toBeInTheDocument();
     });
 });

@@ -18,6 +18,17 @@ interface Message {
     reactions?: MessageReaction[];
     replies?: Message[];
     reply_to?: Message;
+    attachments?: MessageAttachment[];
+}
+
+interface MessageAttachment {
+    id: string;
+    filename: string;
+    file_path: string;
+    file_size: number;
+    mime_type: string;
+    thumbnail_path?: string;
+    type: string;
 }
 
 interface MessageReaction {
@@ -45,16 +56,19 @@ interface Conversation {
     };
     participants: ConversationParticipant[];
     last_activity_at: string;
+    organization_id?: string;
 }
 
 interface ConversationParticipant {
     id: string;
     user_id: string;
     role: 'admin' | 'moderator' | 'member';
+    is_active: boolean;
     user: {
         id: string;
         name: string;
         avatar: string;
+        avatar_url?: string;
     };
 }
 
