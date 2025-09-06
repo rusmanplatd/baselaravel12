@@ -14,7 +14,6 @@ class DatabaseSeeder extends Seeder
         // System users and permissions
         $this->call([
             SystemUserSeeder::class,
-            PermissionSeeder::class,
             IndustrySpecificPermissionsSeeder::class,
         ]);
 
