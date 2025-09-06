@@ -91,6 +91,19 @@ class RateLimitService
     }
 
     /**
+     * Record a hit for rate limiting (alias for recordAction)
+     */
+    public function recordHit(
+        string $action,
+        string $key,
+        ?User $user = null,
+        ?string $ip = null,
+        array $metadata = []
+    ): bool {
+        return $this->recordAction($action, $key, $user, $ip, $metadata);
+    }
+
+    /**
      * Record a rate limited action
      */
     public function recordAction(

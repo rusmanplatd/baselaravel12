@@ -4,6 +4,7 @@ import AppLayout from '@/layouts/app-layout';
 import { useE2EEChat } from '@/hooks/useE2EEChat';
 import ChatSidebar from '@/components/chat/chat-sidebar';
 import ChatWindow from '@/components/chat/chat-window';
+import DeviceSetupDialog from '@/components/chat/device-setup-dialog';
 import { PageProps } from '@/types';
 
 interface ChatPageProps extends PageProps {
@@ -24,6 +25,7 @@ export default function Chat({ auth, initialConversationId }: ChatPageProps) {
         loadMessages,
         sendMessage,
         createConversation,
+        registerDevice,
         subscribeToConversation,
         unsubscribeFromConversation,
     } = useE2EEChat();
@@ -31,11 +33,20 @@ export default function Chat({ auth, initialConversationId }: ChatPageProps) {
     const [selectedConversationId, setSelectedConversationId] = useState<string | null>(
         initialConversationId || null
     );
+    const [showDeviceSetup, setShowDeviceSetup] = useState(false);
+    const [isRegisteringDevice, setIsRegisteringDevice] = useState(false);
 
     // Load conversations on mount
     useEffect(() => {
         loadConversations();
     }, [loadConversations]);
+
+    // Auto-show device setup dialog when no devices are registered
+    useEffect(() => {
+        if (devices.length === 0 && !isLoading && !showDeviceSetup) {
+            setShowDeviceSetup(true);
+        }
+    }, [devices.length, isLoading, showDeviceSetup]);
 
     // Load initial conversation if provided
     useEffect(() => {
@@ -86,6 +97,19 @@ export default function Chat({ auth, initialConversationId }: ChatPageProps) {
         }
     };
 
+    const handleRegisterDevice = async (deviceInfo: any) => {
+        setIsRegisteringDevice(true);
+        try {
+            await registerDevice(deviceInfo);
+            setShowDeviceSetup(false);
+        } catch (error) {
+            console.error('Failed to register device:', error);
+            throw error; // Re-throw so the dialog can show the error
+        } finally {
+            setIsRegisteringDevice(false);
+        }
+    };
+
     return (
         <AppLayout>
             <Head title="Chat - E2EE Secure Messaging" />
@@ -117,15 +141,14 @@ export default function Chat({ auth, initialConversationId }: ChatPageProps) {
                 </div>
             </div>
 
-            {/* Device Trust Status */}
-            {devices.length === 0 && (
-                <div className="fixed bottom-4 right-4 bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-2 rounded">
-                    <div className="font-semibold">Device Setup Required</div>
-                    <div className="text-sm">
-                        Please register your device to enable end-to-end encryption
-                    </div>
-                </div>
-            )}
+            {/* Device Setup Dialog */}
+            <DeviceSetupDialog
+                open={showDeviceSetup}
+                onOpenChange={setShowDeviceSetup}
+                onRegisterDevice={handleRegisterDevice}
+                isRegistering={isRegisteringDevice}
+                error={error}
+            />
 
             {/* Quantum Status Indicator */}
             {currentConversation?.encryption_status.quantum_ready && (
