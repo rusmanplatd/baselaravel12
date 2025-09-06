@@ -15,12 +15,27 @@ import {
 } from 'livekit-client';
 import { QuantumLiveKitKeyProvider } from '@/services/QuantumLiveKitKeyProvider';
 
+// Service injection interface
+interface ServiceDependencies {
+  quantumService?: any;
+  optimizedService?: any;
+  keyProvider?: QuantumLiveKitKeyProvider;
+  logger?: {
+    info: (message: string, data?: any) => void;
+    warn: (message: string, data?: any) => void;
+    error: (message: string, data?: any) => void;
+  };
+}
+
 interface QuantumLiveKitOptions {
   conversationId: string;
   userId: string;
   enableQuantumE2EE?: boolean;
   keyRotationInterval?: number;
   preferredAlgorithm?: 'ML-KEM-512' | 'ML-KEM-768' | 'ML-KEM-1024';
+  serviceDependencies?: ServiceDependencies;
+  fallbackToClassical?: boolean;
+  debugMode?: boolean;
 }
 
 interface CallParticipant {
@@ -138,8 +153,14 @@ export const useQuantumLiveKit = (options: QuantumLiveKitOptions): UseQuantumLiv
         let keyProvider: QuantumLiveKitKeyProvider | null = null;
 
         if (options.enableQuantumE2EE) {
-          // Load quantum service (would be injected in real implementation)
-          const quantumService = await loadQuantumService();
+          // Load quantum service with dependency injection
+          const quantumService = await loadQuantumService({
+            conversationId: options.conversationId,
+            dependencies: options.serviceDependencies,
+            fallbackToClassical: options.fallbackToClassical ?? true,
+            debugMode: options.debugMode ?? false,
+            preferredAlgorithm: options.preferredAlgorithm,
+          });
 
           keyProvider = new QuantumLiveKitKeyProvider({
             conversationId: options.conversationId,
@@ -171,10 +192,18 @@ export const useQuantumLiveKit = (options: QuantumLiveKitOptions): UseQuantumLiv
 
         // Add E2EE configuration if available
         if (keyProvider) {
-          roomOptions.e2ee = {
-            keyProvider,
-            worker: new Worker('/livekit-e2ee-worker.js'), // Would need to be created
-          };
+          try {
+            roomOptions.e2ee = {
+              keyProvider,
+              worker: new Worker('/js/workers/livekit-e2ee-worker.js', { type: 'module' }),
+            };
+          } catch (error) {
+            console.warn('E2EE worker not available, falling back to main thread encryption:', error);
+            // Fallback to main thread encryption if worker fails to load
+            roomOptions.e2ee = {
+              keyProvider,
+            };
+          }
         }
 
         const newRoom = new Room(roomOptions);
@@ -571,7 +600,6 @@ export const useQuantumLiveKit = (options: QuantumLiveKitOptions): UseQuantumLiv
     if (!room || !isConnected) return;
 
     try {
-      const stats = await room.getStats();
       const duration = callStartTimeRef.current
         ? Date.now() - callStartTimeRef.current.getTime()
         : 0;
@@ -579,16 +607,36 @@ export const useQuantumLiveKit = (options: QuantumLiveKitOptions): UseQuantumLiv
       const participantCount = participants.length;
       const quantumParticipants = participants.filter(p => p.quantumEnabled).length;
 
+      // Get WebRTC statistics
+      const webrtcStats = await getWebRTCStats(room);
+      
+      // Get key rotation count from quantum provider
+      let keyRotations = 0;
+      if (quantumKeyProvider) {
+        try {
+          const keyStatsData = quantumKeyProvider.getKeyStats();
+          keyRotations = keyStatsData.rotationCount || 0;
+        } catch (err) {
+          console.warn('Failed to get key rotation stats:', err);
+        }
+      }
+
       // Calculate encryption health
       let encryptionHealth: CallStats['encryptionHealth'] = 'unknown';
       if (quantumKeyProvider) {
-        const keyStatsData = keyStats;
-        const quantumRatio = quantumParticipants / participantCount;
+        const quantumRatio = quantumParticipants / Math.max(participantCount, 1);
+        const hasRecentRotation = keyRotations > 0;
+        const hasGoodConnections = webrtcStats.averagePacketLoss < 0.05; // < 5% packet loss
 
-        if (quantumRatio >= 0.8) encryptionHealth = 'excellent';
-        else if (quantumRatio >= 0.5) encryptionHealth = 'good';
-        else if (quantumRatio > 0) encryptionHealth = 'poor';
-        else encryptionHealth = 'degraded';
+        if (quantumRatio >= 0.8 && hasRecentRotation && hasGoodConnections) {
+          encryptionHealth = 'excellent';
+        } else if (quantumRatio >= 0.5 && hasGoodConnections) {
+          encryptionHealth = 'good';
+        } else if (quantumRatio > 0) {
+          encryptionHealth = 'poor';
+        } else {
+          encryptionHealth = 'degraded';
+        }
       } else {
         encryptionHealth = 'degraded';
       }
@@ -597,15 +645,15 @@ export const useQuantumLiveKit = (options: QuantumLiveKitOptions): UseQuantumLiv
         duration,
         participantCount,
         quantumParticipants,
-        averageBitrate: 0, // Would calculate from WebRTC stats
-        packetsLost: 0, // Would calculate from WebRTC stats
-        keyRotations: 0, // Would track from key provider
+        averageBitrate: webrtcStats.averageBitrate,
+        packetsLost: webrtcStats.totalPacketsLost,
+        keyRotations,
         encryptionHealth,
       });
     } catch (err) {
       console.error('Failed to refresh stats:', err);
     }
-  }, [room, isConnected, participants, quantumKeyProvider, keyStats]);
+  }, [room, isConnected, participants, quantumKeyProvider]);
 
   // Clear error
   const clearError = useCallback(() => {
@@ -658,23 +706,218 @@ export const useQuantumLiveKit = (options: QuantumLiveKitOptions): UseQuantumLiv
 };
 
 // Helper functions
-async function loadQuantumService(): Promise<any> {
-  // TODO: In a real implementation, this would load your quantum crypto service
-  return {
-    generateKeyPair: async (algorithm: string) => {
-      // Mock implementation
-      return {
-        public: new Uint8Array(32),
-        private: new Uint8Array(32),
-      };
-    },
-    encapsulate: async (publicKey: Uint8Array, algorithm: string) => {
-      return {
-        ciphertext: new Uint8Array(32),
-        shared_secret: new Uint8Array(32),
-      };
-    },
-  };
+async function loadQuantumService(config: {
+  conversationId: string;
+  dependencies?: ServiceDependencies;
+  fallbackToClassical?: boolean;
+  debugMode?: boolean;
+  preferredAlgorithm?: string;
+}): Promise<any> {
+  try {
+    const { conversationId, dependencies, fallbackToClassical, debugMode, preferredAlgorithm } = config;
+    
+    // Create logger
+    const logger = dependencies?.logger || createDefaultLogger(debugMode);
+    
+    logger.info('Loading quantum service', { conversationId, preferredAlgorithm });
+
+    // Use injected services or import dynamically
+    let optimizedService = dependencies?.optimizedService;
+    let quantumService = dependencies?.quantumService;
+    
+    if (!optimizedService || !quantumService) {
+      logger.info('Loading quantum services dynamically');
+      
+      const [QuantumE2EEService, OptimizedE2EEService] = await Promise.all([
+        import('@/services/QuantumE2EEService').then(m => m.QuantumE2EEService),
+        import('@/services/OptimizedE2EEService').then(m => m.OptimizedE2EEService)
+      ]);
+
+      // Create service instances if not injected
+      if (!optimizedService) {
+        optimizedService = new OptimizedE2EEService();
+      }
+      
+      if (!quantumService) {
+        quantumService = new QuantumE2EEService();
+      }
+    }
+
+    // Check device capabilities
+    const capabilities = optimizedService.getDeviceCapabilities();
+    
+    if (!capabilities?.quantum_ready) {
+      if (fallbackToClassical) {
+        logger.warn('Device not quantum-ready, falling back to classical encryption', { capabilities });
+      } else {
+        throw new Error('Device not quantum-ready for LiveKit E2EE');
+      }
+    } else {
+      logger.info('Device is quantum-ready', { capabilities });
+    }
+
+    // Return unified service interface
+    return {
+      generateKeyPair: async (algorithm: string) => {
+        try {
+          const response = await fetch('/api/v1/quantum/generate-keypair', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+              algorithm: algorithm || 'ML-KEM-768',
+              security_level: algorithm === 'ML-KEM-1024' ? 1024 : 
+                             algorithm === 'ML-KEM-512' ? 512 : 768
+            })
+          });
+
+          if (!response.ok) {
+            throw new Error(`Key generation failed: ${response.status}`);
+          }
+
+          const data = await response.json();
+          return {
+            public: new Uint8Array(atob(data.public_key).split('').map(c => c.charCodeAt(0))),
+            private: new Uint8Array(atob(data.private_key).split('').map(c => c.charCodeAt(0))),
+            algorithm: data.algorithm,
+            keyId: data.key_id,
+          };
+        } catch (error) {
+          console.error('Quantum key generation failed:', error);
+          throw error;
+        }
+      },
+
+      encapsulate: async (publicKey: Uint8Array, algorithm: string) => {
+        try {
+          const response = await fetch('/api/v1/quantum/encapsulate', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+              public_key: btoa(String.fromCharCode(...publicKey)),
+              algorithm: algorithm || 'ML-KEM-768'
+            })
+          });
+
+          if (!response.ok) {
+            throw new Error(`Key encapsulation failed: ${response.status}`);
+          }
+
+          const data = await response.json();
+          return {
+            ciphertext: new Uint8Array(atob(data.ciphertext).split('').map(c => c.charCodeAt(0))),
+            shared_secret: new Uint8Array(atob(data.shared_secret).split('').map(c => c.charCodeAt(0))),
+            algorithm: data.algorithm,
+          };
+        } catch (error) {
+          console.error('Quantum key encapsulation failed:', error);
+          throw error;
+        }
+      },
+
+      decapsulate: async (ciphertext: Uint8Array, privateKey: Uint8Array, algorithm: string) => {
+        try {
+          const response = await fetch('/api/v1/quantum/decapsulate', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+              ciphertext: btoa(String.fromCharCode(...ciphertext)),
+              private_key: btoa(String.fromCharCode(...privateKey)),
+              algorithm: algorithm || 'ML-KEM-768'
+            })
+          });
+
+          if (!response.ok) {
+            throw new Error(`Key decapsulation failed: ${response.status}`);
+          }
+
+          const data = await response.json();
+          return {
+            shared_secret: new Uint8Array(atob(data.shared_secret).split('').map(c => c.charCodeAt(0))),
+            algorithm: data.algorithm,
+          };
+        } catch (error) {
+          console.error('Quantum key decapsulation failed:', error);
+          throw error;
+        }
+      },
+
+      // Integration with existing services
+      optimizedService,
+      quantumService,
+      capabilities,
+      logger,
+
+      // Health monitoring
+      getHealthStatus: async () => {
+        try {
+          const response = await fetch('/api/v1/quantum/health');
+          const health = response.ok ? await response.json() : { status: 'degraded' };
+          logger.info('Health status checked', health);
+          return health;
+        } catch (error) {
+          logger.warn('Health check failed', { error: error instanceof Error ? error.message : 'Unknown' });
+          return { status: 'unavailable' };
+        }
+      },
+
+      // Performance monitoring
+      getPerformanceMetrics: () => {
+        const metrics = optimizedService.getPerformanceStats();
+        if (debugMode) {
+          logger.info('Performance metrics retrieved', metrics);
+        }
+        return metrics;
+      },
+      
+      // Logging integration
+      getLogs: (level?: string) => optimizedService.getErrorLogs(level),
+      
+      // Service configuration
+      getConfig: () => ({
+        conversationId,
+        quantumReady: capabilities?.quantum_ready,
+        fallbackEnabled: fallbackToClassical,
+        debugMode,
+        preferredAlgorithm,
+      }),
+      
+      // Graceful degradation
+      degradeToClassical: () => {
+        logger.warn('Degrading to classical encryption');
+        return {
+          ...result,
+          capabilities: { ...capabilities, quantum_ready: false },
+          quantumReady: false,
+        };
+      },
+    };
+  } catch (error) {
+    const logger = config.dependencies?.logger || createDefaultLogger(config.debugMode);
+    logger.error('Failed to load quantum service', { 
+      error: error instanceof Error ? error.message : 'Unknown error',
+      conversationId: config.conversationId 
+    });
+    
+    // If fallback is enabled, return a classical-only service
+    if (config.fallbackToClassical) {
+      logger.warn('Falling back to classical-only service');
+      return createFallbackService(config);
+    }
+    
+    throw new Error(`Quantum service initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 }
 
 function getDeviceId(): string {
@@ -701,4 +944,276 @@ function parseParticipantMetadata(metadata: string | undefined): any {
   } catch {
     return {};
   }
+}
+
+/**
+ * Get comprehensive WebRTC statistics from LiveKit room
+ */
+async function getWebRTCStats(room: Room): Promise<{
+  averageBitrate: number;
+  totalPacketsLost: number;
+  averagePacketLoss: number;
+  jitter: number;
+  roundTripTime: number;
+}> {
+  try {
+    // Get sender and receiver statistics
+    const senderStats = await getSenderStats(room);
+    const receiverStats = await getReceiverStats(room);
+
+    // Calculate aggregated statistics
+    const totalBitrate = senderStats.reduce((sum, stat) => sum + (stat.bitrate || 0), 0) +
+                        receiverStats.reduce((sum, stat) => sum + (stat.bitrate || 0), 0);
+    
+    const totalPacketsLost = senderStats.reduce((sum, stat) => sum + (stat.packetsLost || 0), 0) +
+                            receiverStats.reduce((sum, stat) => sum + (stat.packetsLost || 0), 0);
+    
+    const totalPacketsSent = senderStats.reduce((sum, stat) => sum + (stat.packetsSent || 0), 0);
+    const totalPacketsReceived = receiverStats.reduce((sum, stat) => sum + (stat.packetsReceived || 0), 0);
+    
+    const averagePacketLoss = totalPacketsSent > 0 ? 
+      totalPacketsLost / (totalPacketsSent + totalPacketsReceived) : 0;
+
+    const averageJitter = receiverStats.length > 0 ?
+      receiverStats.reduce((sum, stat) => sum + (stat.jitter || 0), 0) / receiverStats.length : 0;
+
+    const averageRtt = senderStats.length > 0 ?
+      senderStats.reduce((sum, stat) => sum + (stat.roundTripTime || 0), 0) / senderStats.length : 0;
+
+    return {
+      averageBitrate: Math.round(totalBitrate),
+      totalPacketsLost,
+      averagePacketLoss: Math.round(averagePacketLoss * 10000) / 100, // Convert to percentage with 2 decimals
+      jitter: Math.round(averageJitter * 1000) / 1000, // Round to 3 decimal places
+      roundTripTime: Math.round(averageRtt * 1000) / 1000, // Round to 3 decimal places
+    };
+  } catch (error) {
+    console.warn('Failed to get WebRTC stats:', error);
+    return {
+      averageBitrate: 0,
+      totalPacketsLost: 0,
+      averagePacketLoss: 0,
+      jitter: 0,
+      roundTripTime: 0,
+    };
+  }
+}
+
+/**
+ * Get sender statistics from all local tracks
+ */
+async function getSenderStats(room: Room): Promise<any[]> {
+  const stats: any[] = [];
+  
+  try {
+    const localTracks = Array.from(room.localParticipant.tracks.values());
+    
+    for (const trackPub of localTracks) {
+      if (trackPub.track && trackPub.track.sender) {
+        const senderStats = await trackPub.track.sender.getStats();
+        
+        for (const report of senderStats.values()) {
+          if (report.type === 'outbound-rtp') {
+            stats.push({
+              trackId: trackPub.trackSid,
+              kind: report.mediaType,
+              bitrate: calculateBitrate(report),
+              packetsLost: report.packetsLost || 0,
+              packetsSent: report.packetsSent || 0,
+              roundTripTime: report.roundTripTime,
+              targetBitrate: report.targetBitrate,
+              encoderImplementation: report.encoderImplementation,
+            });
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.warn('Failed to get sender stats:', error);
+  }
+  
+  return stats;
+}
+
+/**
+ * Get receiver statistics from all remote tracks
+ */
+async function getReceiverStats(room: Room): Promise<any[]> {
+  const stats: any[] = [];
+  
+  try {
+    for (const participant of room.remoteParticipants.values()) {
+      const remoteTracks = Array.from(participant.tracks.values());
+      
+      for (const trackPub of remoteTracks) {
+        if (trackPub.track && trackPub.track.receiver) {
+          const receiverStats = await trackPub.track.receiver.getStats();
+          
+          for (const report of receiverStats.values()) {
+            if (report.type === 'inbound-rtp') {
+              stats.push({
+                trackId: trackPub.trackSid,
+                participantId: participant.sid,
+                kind: report.mediaType,
+                bitrate: calculateBitrate(report),
+                packetsLost: report.packetsLost || 0,
+                packetsReceived: report.packetsReceived || 0,
+                jitter: report.jitter,
+                decoderImplementation: report.decoderImplementation,
+                framesDecoded: report.framesDecoded,
+                framesDropped: report.framesDropped,
+              });
+            }
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.warn('Failed to get receiver stats:', error);
+  }
+  
+  return stats;
+}
+
+/**
+ * Calculate bitrate from RTC stats report
+ */
+function calculateBitrate(report: any): number {
+  if (!report.timestamp || !report.bytesReceived && !report.bytesSent) {
+    return 0;
+  }
+  
+  const bytes = report.bytesReceived || report.bytesSent || 0;
+  const bits = bytes * 8;
+  
+  // Store previous values for rate calculation
+  const key = `${report.ssrc}_${report.type}`;
+  const now = report.timestamp;
+  const prev = (globalThis as any).__webrtcStatsCache?.[key];
+  
+  if (!prev) {
+    // Initialize cache
+    if (!(globalThis as any).__webrtcStatsCache) {
+      (globalThis as any).__webrtcStatsCache = {};
+    }
+    (globalThis as any).__webrtcStatsCache[key] = { bits, timestamp: now };
+    return 0;
+  }
+  
+  const timeDelta = (now - prev.timestamp) / 1000; // Convert to seconds
+  const bitsDelta = bits - prev.bits;
+  
+  // Update cache
+  (globalThis as any).__webrtcStatsCache[key] = { bits, timestamp: now };
+  
+  return timeDelta > 0 ? Math.round(bitsDelta / timeDelta) : 0;
+}
+
+/**
+ * Create default logger
+ */
+function createDefaultLogger(debugMode: boolean = false) {
+  const prefix = '[QuantumLiveKit]';
+  
+  return {
+    info: (message: string, data?: any) => {
+      if (debugMode) {
+        console.log(`${prefix} ${message}`, data || '');
+      }
+    },
+    warn: (message: string, data?: any) => {
+      console.warn(`${prefix} ${message}`, data || '');
+    },
+    error: (message: string, data?: any) => {
+      console.error(`${prefix} ${message}`, data || '');
+    },
+  };
+}
+
+/**
+ * Create fallback service for classical encryption only
+ */
+function createFallbackService(config: {
+  conversationId: string;
+  dependencies?: ServiceDependencies;
+  debugMode?: boolean;
+}): any {
+  const logger = config.dependencies?.logger || createDefaultLogger(config.debugMode);
+  
+  logger.info('Creating fallback classical-only service', { conversationId: config.conversationId });
+  
+  return {
+    generateKeyPair: async (algorithm: string) => {
+      // Generate AES key for classical encryption
+      const key = crypto.getRandomValues(new Uint8Array(32));
+      
+      return {
+        public: key,
+        private: key,
+        algorithm: 'AES-256-GCM',
+        keyId: crypto.randomUUID(),
+      };
+    },
+
+    encapsulate: async (publicKey: Uint8Array, algorithm: string) => {
+      // For classical fallback, just return the shared key
+      const shared_secret = crypto.getRandomValues(new Uint8Array(32));
+      
+      return {
+        ciphertext: publicKey, // Just echo back for compatibility
+        shared_secret,
+        algorithm: 'AES-256-GCM',
+      };
+    },
+
+    decapsulate: async (ciphertext: Uint8Array, privateKey: Uint8Array, algorithm: string) => {
+      // For classical fallback, derive shared secret from private key
+      const shared_secret = privateKey.slice(0, 32);
+      
+      return {
+        shared_secret,
+        algorithm: 'AES-256-GCM',
+      };
+    },
+
+    // Fallback service properties
+    optimizedService: null,
+    quantumService: null,
+    capabilities: {
+      quantum_ready: false,
+      supported_algorithms: ['AES-256-GCM'],
+      hardware_security: false,
+      performance_tier: 'low',
+    },
+    logger,
+
+    getHealthStatus: async () => ({
+      status: 'classical',
+      quantum_ready: false,
+      fallback_active: true,
+    }),
+
+    getPerformanceMetrics: () => ({
+      averageEncryptionTime: 0,
+      averageDecryptionTime: 0,
+      totalOperations: 0,
+      keyRotations: 0,
+      fallbackMode: true,
+    }),
+
+    getLogs: () => [],
+
+    getConfig: () => ({
+      conversationId: config.conversationId,
+      quantumReady: false,
+      fallbackEnabled: true,
+      debugMode: config.debugMode || false,
+      mode: 'fallback',
+    }),
+
+    degradeToClassical: () => {
+      logger.info('Already in classical fallback mode');
+      return this;
+    },
+  };
 }

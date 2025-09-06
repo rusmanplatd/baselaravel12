@@ -106,6 +106,7 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
         deleteMessage,
         subscribeToConversation,
         unsubscribeFromConversation,
+        uploadFile,
     } = useE2EEChat();
 
     const [messageInput, setMessageInput] = useState('');
@@ -275,14 +276,58 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
     };
 
     const handleFileUpload = async (files: FileList) => {
+        if (!selectedConversationId) {
+            toast.error('Please select a conversation first');
+            return;
+        }
+
+        const maxFileSize = 50 * 1024 * 1024; // 50MB limit
+        const allowedTypes = [
+            // Images
+            'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
+            // Documents
+            'application/pdf', 'text/plain', 'text/markdown', 
+            'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            // Audio
+            'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/m4a', 'audio/aac',
+            // Video
+            'video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo',
+            // Archives
+            'application/zip', 'application/x-rar-compressed', 'application/x-7z-compressed'
+        ];
+
         for (const file of Array.from(files)) {
             try {
-                // TODO: Implement file upload logic
-                console.log('Uploading file:', file.name);
-                toast.success(`${file.name} uploaded successfully`);
+                // Validate file size
+                if (file.size > maxFileSize) {
+                    toast.error(`${file.name} is too large. Maximum size is 50MB.`);
+                    continue;
+                }
+
+                // Validate file type
+                if (!allowedTypes.includes(file.type)) {
+                    toast.error(`${file.name} has an unsupported file type.`);
+                    continue;
+                }
+
+                // Show upload progress
+                toast.loading(`Uploading ${file.name}...`, { id: `upload-${file.name}` });
+
+                // Upload file using E2EE service
+                const fileInfo = await uploadFile(selectedConversationId, file);
+                
+                // Send message with file attachment
+                await sendMessage(selectedConversationId, `📎 Shared file: ${file.name}`, {
+                    type: 'file',
+                    file_info: fileInfo
+                });
+
+                toast.success(`${file.name} uploaded successfully`, { id: `upload-${file.name}` });
             } catch (uploadError) {
                 console.error('File upload error:', uploadError);
-                toast.error(`Failed to upload ${file.name}`);
+                toast.error(`Failed to upload ${file.name}`, { id: `upload-${file.name}` });
             }
         }
     };

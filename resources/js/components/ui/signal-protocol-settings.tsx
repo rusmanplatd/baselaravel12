@@ -87,6 +87,20 @@ export function SignalProtocolSettings({
   const [showVerificationDialog, setShowVerificationDialog] = useState(false);
   const [protocolInitialized, setProtocolInitialized] = useState(false);
 
+  // Load settings from localStorage on component mount
+  useEffect(() => {
+    try {
+      const savedSettings = localStorage.getItem('signal-protocol-settings');
+      if (savedSettings) {
+        const parsedSettings = JSON.parse(savedSettings);
+        setSettings({ ...defaultSettings, ...parsedSettings });
+      }
+    } catch (error) {
+      console.error('Failed to load Signal protocol settings from localStorage:', error);
+      // Continue with default settings
+    }
+  }, []);
+
   // Check if protocol is initialized
   useEffect(() => {
     setProtocolInitialized(signalStats?.x3dhStats?.identityKeyExists || false);
@@ -182,11 +196,29 @@ export function SignalProtocolSettings({
   }, [onClearProtocolData]);
 
   // Update settings
-  const handleSettingChange = useCallback((key: keyof ProtocolSettings, value: any) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
-    // TODO: In a real implementation, you would save these settings
-    toast.success('Settings updated');
-  }, []);
+  const handleSettingChange = useCallback(async (key: keyof ProtocolSettings, value: any) => {
+    const newSettings = { ...settings, [key]: value };
+    setSettings(newSettings);
+    
+    try {
+      // Save to localStorage for persistence across sessions
+      localStorage.setItem('signal-protocol-settings', JSON.stringify(newSettings));
+      
+      // In a production environment, you would also save to the server:
+      // await fetch('/api/v1/users/signal-settings', {
+      //   method: 'PUT',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({ [key]: value })
+      // });
+      
+      toast.success(`${key.replace(/([A-Z])/g, ' $1').toLowerCase()} updated successfully`);
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+      toast.error('Failed to save settings');
+      // Revert the state change on error
+      setSettings(settings);
+    }
+  }, [settings]);
 
   const getHealthColor = (score: number) => {
     if (score >= 80) return 'text-green-600';

@@ -102,9 +102,8 @@ class CountryController extends Controller
     {
         $validated = $request->validated();
 
-        // For public API, we'll use a default system user ID
-        // TODO: In a real application, you might want to create a system user or handle this differently
-        $systemUserId = User::where('email', 'system@geo.local')->first()?->id ?? '01HXYZ123456789ABCDEF';
+        // Get or create system user for geographic data operations
+        $systemUserId = $this->getSystemUserId();
         $validated['created_by'] = $systemUserId;
         $validated['updated_by'] = $systemUserId;
 
@@ -235,5 +234,38 @@ class CountryController extends Controller
             ->get();
 
         return response()->json($countries);
+    }
+
+    /**
+     * Get or create system user for geographic data operations
+     */
+    private function getSystemUserId(): string
+    {
+        // Check if authenticated user is available (for authenticated API calls)
+        if (auth()->check()) {
+            return auth()->id();
+        }
+
+        // Get or create system user for public API operations
+        $systemUser = User::firstOrCreate(
+            [
+                'email' => 'system@geo.internal'
+            ],
+            [
+                'name' => 'Geographic Data System',
+                'email' => 'system@geo.internal',
+                'password' => bcrypt(str()->random(32)), // Random password, not for login
+                'email_verified_at' => now(),
+                'is_active' => true,
+                'user_type' => 'system',
+                'metadata' => [
+                    'created_for' => 'geographic_data_management',
+                    'purpose' => 'System user for managing geographic data via API',
+                    'access_level' => 'system_only'
+                ]
+            ]
+        );
+
+        return $systemUser->id;
     }
 }

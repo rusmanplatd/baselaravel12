@@ -393,26 +393,249 @@ class SecurityAuditService
     }
 
     /**
-     * Get user's usual login hours (simplified implementation. TODO: Improve this logic)
+     * Get user's usual login hours using advanced statistical analysis
      */
     private function getUserUsualLoginHours(User $user): array
     {
+        // Use cached results for performance
+        $cacheKey = "user_login_hours_{$user->id}";
+        return Cache::remember($cacheKey, 3600, function () use ($user) {
+            return $this->calculateUserLoginPatterns($user);
+        });
+    }
+
+    /**
+     * Calculate user login patterns using statistical analysis
+     */
+    private function calculateUserLoginPatterns(User $user): array
+    {
+        // Get comprehensive login history
         $loginHistory = SecurityAuditLog::where('user_id', $user->id)
             ->where('event_type', 'auth.login.success')
-            ->where('created_at', '>=', Carbon::now()->subDays(30))
+            ->where('created_at', '>=', Carbon::now()->subDays(60)) // Extended period for better analysis
+            ->orderBy('created_at')
             ->get();
 
-        $hourCounts = [];
-        foreach ($loginHistory as $login) {
-            $hour = Carbon::parse($login->created_at)->hour;
-            $hourCounts[$hour] = ($hourCounts[$hour] ?? 0) + 1;
+        if ($loginHistory->isEmpty()) {
+            return range(9, 17); // Default business hours
         }
 
-        // Return hours with at least 20% of total logins
-        $totalLogins = $loginHistory->count();
-        $threshold = max(1, $totalLogins * 0.2);
+        // Analyze patterns by day of week and hour
+        $patterns = $this->analyzeLoginPatterns($loginHistory);
+        
+        // Calculate usual hours using multiple criteria
+        $usualHours = $this->determineUsualHours($patterns);
+        
+        // Apply time zone and seasonal adjustments
+        $adjustedHours = $this->applyTimeAdjustments($usualHours, $user);
+        
+        return $adjustedHours;
+    }
 
-        return array_keys(array_filter($hourCounts, fn($count) => $count >= $threshold));
+    /**
+     * Analyze login patterns by various dimensions
+     */
+    private function analyzeLoginPatterns($loginHistory): array
+    {
+        $patterns = [
+            'hourly' => [],
+            'daily' => [],
+            'weekly' => [],
+            'combined' => []
+        ];
+
+        foreach ($loginHistory as $login) {
+            $loginTime = Carbon::parse($login->created_at);
+            $hour = $loginTime->hour;
+            $dayOfWeek = $loginTime->dayOfWeek; // 0 = Sunday, 6 = Saturday
+            $weekKey = $loginTime->format('W-Y'); // Week number and year
+            
+            // Track hourly patterns
+            $patterns['hourly'][$hour] = ($patterns['hourly'][$hour] ?? 0) + 1;
+            
+            // Track daily patterns (weekday vs weekend)
+            $dayType = in_array($dayOfWeek, [0, 6]) ? 'weekend' : 'weekday';
+            $patterns['daily'][$dayType][$hour] = ($patterns['daily'][$dayType][$hour] ?? 0) + 1;
+            
+            // Track weekly patterns for consistency
+            $patterns['weekly'][$weekKey][$hour] = ($patterns['weekly'][$weekKey][$hour] ?? 0) + 1;
+            
+            // Combined pattern for statistical weight
+            $patterns['combined']["{$dayType}_{$hour}"] = ($patterns['combined']["{$dayType}_{$hour}"] ?? 0) + 1;
+        }
+
+        return $patterns;
+    }
+
+    /**
+     * Determine usual hours using statistical methods
+     */
+    private function determineUsualHours(array $patterns): array
+    {
+        $totalLogins = array_sum($patterns['hourly']);
+        
+        if ($totalLogins < 5) {
+            return range(9, 17); // Default for insufficient data
+        }
+
+        // Calculate statistical thresholds
+        $hourlyFrequencies = $patterns['hourly'];
+        $frequencies = array_values($hourlyFrequencies);
+        
+        // Use median and standard deviation for more robust analysis
+        $median = $this->calculateMedian($frequencies);
+        $stdDev = $this->calculateStandardDeviation($frequencies);
+        
+        // Dynamic threshold based on login frequency distribution
+        $baseThreshold = max(1, $totalLogins * 0.15); // Base 15% threshold
+        $statsThreshold = max(1, $median + ($stdDev * 0.5)); // Statistical threshold
+        $adaptiveThreshold = min($baseThreshold, $statsThreshold);
+        
+        // Identify usual hours
+        $usualHours = [];
+        foreach ($hourlyFrequencies as $hour => $count) {
+            if ($count >= $adaptiveThreshold) {
+                $usualHours[] = $hour;
+            }
+        }
+
+        // Apply clustering to group consecutive hours
+        $clusteredHours = $this->clusterConsecutiveHours($usualHours);
+        
+        // Expand clusters to include reasonable work/personal time windows
+        $expandedHours = $this->expandTimeWindows($clusteredHours, $patterns);
+        
+        return $expandedHours;
+    }
+
+    /**
+     * Calculate median of an array
+     */
+    private function calculateMedian(array $values): float
+    {
+        sort($values);
+        $count = count($values);
+        
+        if ($count === 0) return 0;
+        if ($count % 2 === 0) {
+            return ($values[$count / 2 - 1] + $values[$count / 2]) / 2;
+        }
+        
+        return $values[floor($count / 2)];
+    }
+
+    /**
+     * Calculate standard deviation
+     */
+    private function calculateStandardDeviation(array $values): float
+    {
+        if (empty($values)) return 0;
+        
+        $mean = array_sum($values) / count($values);
+        $squaredDifferences = array_map(fn($val) => pow($val - $mean, 2), $values);
+        
+        return sqrt(array_sum($squaredDifferences) / count($values));
+    }
+
+    /**
+     * Cluster consecutive hours together
+     */
+    private function clusterConsecutiveHours(array $hours): array
+    {
+        if (empty($hours)) return [];
+        
+        sort($hours);
+        $clusters = [];
+        $currentCluster = [$hours[0]];
+        
+        for ($i = 1; $i < count($hours); $i++) {
+            if ($hours[$i] === $hours[$i - 1] + 1) {
+                // Consecutive hour
+                $currentCluster[] = $hours[$i];
+            } else {
+                // Gap found, start new cluster
+                $clusters[] = $currentCluster;
+                $currentCluster = [$hours[$i]];
+            }
+        }
+        
+        $clusters[] = $currentCluster; // Add final cluster
+        
+        // Flatten clusters back to individual hours
+        return array_merge(...$clusters);
+    }
+
+    /**
+     * Expand time windows to include reasonable buffer hours
+     */
+    private function expandTimeWindows(array $usualHours, array $patterns): array
+    {
+        if (empty($usualHours)) return [];
+        
+        sort($usualHours);
+        $expanded = $usualHours;
+        
+        // Add buffer hours before and after main activity periods
+        $minHour = min($usualHours);
+        $maxHour = max($usualHours);
+        
+        // Check if we should expand the window
+        $weekdayPattern = $patterns['daily']['weekday'] ?? [];
+        $totalWeekdayLogins = array_sum($weekdayPattern);
+        
+        // Expand window if there's significant activity in adjacent hours
+        if ($minHour > 0 && ($weekdayPattern[$minHour - 1] ?? 0) > $totalWeekdayLogins * 0.05) {
+            $expanded[] = $minHour - 1;
+        }
+        
+        if ($maxHour < 23 && ($weekdayPattern[$maxHour + 1] ?? 0) > $totalWeekdayLogins * 0.05) {
+            $expanded[] = $maxHour + 1;
+        }
+        
+        sort($expanded);
+        return array_unique($expanded);
+    }
+
+    /**
+     * Apply timezone and seasonal adjustments
+     */
+    private function applyTimeAdjustments(array $hours, User $user): array
+    {
+        // Get user's timezone if available
+        $userTimezone = $user->timezone ?? config('app.timezone', 'UTC');
+        
+        try {
+            $userTime = now()->setTimezone($userTimezone);
+            $utcOffset = $userTime->offsetHours;
+            
+            // No adjustment needed if already in correct timezone
+            if ($userTimezone === config('app.timezone')) {
+                return $hours;
+            }
+            
+            // Apply timezone adjustment to usual hours
+            $adjustedHours = array_map(function ($hour) use ($utcOffset) {
+                $adjusted = $hour + $utcOffset;
+                
+                // Wrap around 24-hour format
+                if ($adjusted < 0) $adjusted += 24;
+                if ($adjusted >= 24) $adjusted -= 24;
+                
+                return $adjusted;
+            }, $hours);
+            
+            sort($adjustedHours);
+            return array_unique($adjustedHours);
+            
+        } catch (\Exception $e) {
+            Log::warning('Failed to apply timezone adjustments for user login hours', [
+                'user_id' => $user->id,
+                'timezone' => $userTimezone,
+                'error' => $e->getMessage()
+            ]);
+            
+            return $hours; // Return original hours if adjustment fails
+        }
     }
 
     /**

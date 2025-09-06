@@ -331,9 +331,18 @@ describe('NotificationCenter', () => {
 
         render(<NotificationCenter />);
 
-        // This would test browser notification creation
-        // TODO: In a real implementation, you'd trigger a notification
-        // and verify the Notification constructor was called
+        // Test browser notification creation by triggering a notification
+        const createButton = screen.getByRole('button', { name: /create notification/i });
+        fireEvent.click(createButton);
+        
+        // Verify the Notification constructor was called with correct parameters
+        expect(global.Notification).toHaveBeenCalledWith(
+            expect.any(String),
+            expect.objectContaining({
+                body: expect.any(String),
+                icon: expect.any(String)
+            })
+        );
     });
 
     it('handles filter by type', () => {

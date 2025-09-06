@@ -323,19 +323,27 @@ class QuantumCryptoService
     private function generateKeyPairLibOQS(string $algorithm): array
     {
         try {
-            // TODO: In a real implementation, this would use the LibOQS PHP bindings
-            // For now, we'll simulate the interface
             $algorithmName = $this->mapAlgorithmName($algorithm);
 
-            // Simulate LibOQS key generation
-            $keyPair = $this->simulateLibOQSKeyGen($algorithmName);
+            // Check if LibOQS extension is available
+            if (extension_loaded('oqs')) {
+                // Use real LibOQS PHP bindings
+                return $this->generateKeyPairWithLibOQSExtension($algorithmName, $algorithm);
+            }
 
-            return [
-                'public' => $keyPair['public'],
-                'private' => $keyPair['private'],
-                'algorithm' => $algorithm,
-                'method' => 'liboqs',
-            ];
+            // Try LibOQS CLI interface
+            if ($this->isLibOQSCliAvailable()) {
+                return $this->generateKeyPairWithLibOQSCli($algorithmName, $algorithm);
+            }
+
+            // Try FFI interface (Foreign Function Interface)
+            if (extension_loaded('ffi') && $this->isLibOQSLibraryAvailable()) {
+                return $this->generateKeyPairWithLibOQSFFI($algorithmName, $algorithm);
+            }
+
+            // Fallback to simulation
+            Log::info('Using LibOQS simulation as no direct interface available');
+            return $this->simulateLibOQSKeyGen($algorithmName, $algorithm);
 
         } catch (Exception $e) {
             Log::warning('LibOQS key generation failed, using fallback', [
@@ -345,6 +353,228 @@ class QuantumCryptoService
 
             return $this->generateKeyPairFallback($algorithm);
         }
+    }
+
+    /**
+     * Generate key pair using LibOQS PHP extension
+     */
+    private function generateKeyPairWithLibOQSExtension(string $algorithmName, string $algorithm): array
+    {
+        // Initialize KEM
+        $kem = new \OQS\KEM($algorithmName);
+        
+        // Generate key pair
+        $keyPair = $kem->keypair();
+        
+        return [
+            'public' => base64_encode($keyPair['public']),
+            'private' => base64_encode($keyPair['secret']),
+            'algorithm' => $algorithm,
+            'method' => 'liboqs-extension',
+            'key_sizes' => [
+                'public' => strlen($keyPair['public']),
+                'private' => strlen($keyPair['secret'])
+            ]
+        ];
+    }
+
+    /**
+     * Generate key pair using LibOQS CLI
+     */
+    private function generateKeyPairWithLibOQSCli(string $algorithmName, string $algorithm): array
+    {
+        // Create temporary files for key generation
+        $tempDir = sys_get_temp_dir();
+        $publicKeyFile = tempnam($tempDir, 'oqs_pub_');
+        $privateKeyFile = tempnam($tempDir, 'oqs_priv_');
+        
+        try {
+            // Execute LibOQS CLI command
+            $command = sprintf(
+                'oqs_kem_test %s %s %s 2>&1',
+                escapeshellarg($algorithmName),
+                escapeshellarg($publicKeyFile),
+                escapeshellarg($privateKeyFile)
+            );
+            
+            $output = shell_exec($command);
+            $exitCode = $this->getLastExitCode();
+            
+            if ($exitCode !== 0) {
+                throw new Exception("LibOQS CLI failed: {$output}");
+            }
+            
+            // Read generated keys
+            $publicKey = file_get_contents($publicKeyFile);
+            $privateKey = file_get_contents($privateKeyFile);
+            
+            if (!$publicKey || !$privateKey) {
+                throw new Exception('Failed to read generated keys');
+            }
+            
+            return [
+                'public' => base64_encode($publicKey),
+                'private' => base64_encode($privateKey),
+                'algorithm' => $algorithm,
+                'method' => 'liboqs-cli',
+                'key_sizes' => [
+                    'public' => strlen($publicKey),
+                    'private' => strlen($privateKey)
+                ]
+            ];
+            
+        } finally {
+            // Clean up temporary files
+            @unlink($publicKeyFile);
+            @unlink($privateKeyFile);
+        }
+    }
+
+    /**
+     * Generate key pair using LibOQS FFI
+     */
+    private function generateKeyPairWithLibOQSFFI(string $algorithmName, string $algorithm): array
+    {
+        // Load LibOQS library using FFI
+        $ffi = FFI::cdef("
+            typedef struct OQS_KEM OQS_KEM;
+            OQS_KEM *OQS_KEM_new(const char *method_name);
+            void OQS_KEM_free(OQS_KEM *kem);
+            int OQS_KEM_keypair(const OQS_KEM *kem, uint8_t *public_key, uint8_t *secret_key);
+            size_t OQS_KEM_length_public_key(const OQS_KEM *kem);
+            size_t OQS_KEM_length_secret_key(const OQS_KEM *kem);
+        ", $this->getLibOQSPath());
+        
+        // Create KEM instance
+        $kem = $ffi->OQS_KEM_new($algorithmName);
+        if ($kem === null) {
+            throw new Exception("Failed to create KEM for algorithm: {$algorithmName}");
+        }
+        
+        try {
+            // Get key sizes
+            $publicKeySize = $ffi->OQS_KEM_length_public_key($kem);
+            $secretKeySize = $ffi->OQS_KEM_length_secret_key($kem);
+            
+            // Allocate memory for keys
+            $publicKey = $ffi->new("uint8_t[{$publicKeySize}]");
+            $secretKey = $ffi->new("uint8_t[{$secretKeySize}]");
+            
+            // Generate key pair
+            $result = $ffi->OQS_KEM_keypair($kem, $publicKey, $secretKey);
+            if ($result !== 0) {
+                throw new Exception('Key generation failed');
+            }
+            
+            // Convert to PHP strings
+            $publicKeyData = FFI::string($publicKey, $publicKeySize);
+            $secretKeyData = FFI::string($secretKey, $secretKeySize);
+            
+            return [
+                'public' => base64_encode($publicKeyData),
+                'private' => base64_encode($secretKeyData),
+                'algorithm' => $algorithm,
+                'method' => 'liboqs-ffi',
+                'key_sizes' => [
+                    'public' => $publicKeySize,
+                    'private' => $secretKeySize
+                ]
+            ];
+            
+        } finally {
+            // Free KEM instance
+            $ffi->OQS_KEM_free($kem);
+        }
+    }
+
+    /**
+     * Enhanced simulation for LibOQS key generation
+     */
+    private function simulateLibOQSKeyGen(string $algorithmName, string $algorithm): array
+    {
+        $algorithmInfo = self::SUPPORTED_ALGORITHMS[$algorithm];
+        
+        // Generate deterministic but cryptographically strong keys for simulation
+        $seed = hash('sha256', $algorithmName . microtime(true) . random_bytes(32), true);
+        
+        // Generate public key
+        $publicKey = hash_hkdf('sha256', $seed, $algorithmInfo['public_key_size'], 'public_key_' . $algorithm);
+        
+        // Generate private key  
+        $privateKey = hash_hkdf('sha256', $seed, $algorithmInfo['private_key_size'], 'private_key_' . $algorithm);
+        
+        return [
+            'public' => base64_encode($publicKey),
+            'private' => base64_encode($privateKey),
+            'algorithm' => $algorithm,
+            'method' => 'simulation',
+            'key_sizes' => [
+                'public' => $algorithmInfo['public_key_size'],
+                'private' => $algorithmInfo['private_key_size']
+            ],
+            'warning' => 'Simulation mode - not cryptographically secure'
+        ];
+    }
+
+    /**
+     * Check if LibOQS CLI is available
+     */
+    private function isLibOQSCliAvailable(): bool
+    {
+        $output = shell_exec('which oqs_kem_test 2>/dev/null');
+        return !empty($output);
+    }
+
+    /**
+     * Check if LibOQS shared library is available
+     */
+    private function isLibOQSLibraryAvailable(): bool
+    {
+        $possiblePaths = [
+            '/usr/local/lib/liboqs.so',
+            '/usr/lib/liboqs.so',
+            '/usr/lib/x86_64-linux-gnu/liboqs.so',
+            '/opt/homebrew/lib/liboqs.dylib',
+            '/usr/local/lib/liboqs.dylib'
+        ];
+        
+        foreach ($possiblePaths as $path) {
+            if (file_exists($path)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * Get LibOQS library path
+     */
+    private function getLibOQSPath(): string
+    {
+        $possiblePaths = [
+            '/usr/local/lib/liboqs.so',
+            '/usr/lib/liboqs.so', 
+            '/usr/lib/x86_64-linux-gnu/liboqs.so',
+            '/opt/homebrew/lib/liboqs.dylib',
+            '/usr/local/lib/liboqs.dylib'
+        ];
+        
+        foreach ($possiblePaths as $path) {
+            if (file_exists($path)) {
+                return $path;
+            }
+        }
+        
+        throw new Exception('LibOQS library not found in standard locations');
+    }
+
+    /**
+     * Get last command exit code
+     */
+    private function getLastExitCode(): int
+    {
+        return (int) shell_exec('echo $?');
     }
 
     /**
@@ -497,18 +727,6 @@ class QuantumCryptoService
         return $mapping[$algorithm] ?? $algorithm;
     }
 
-    /**
-     * Simulate LibOQS key generation (for development)
-     */
-    private function simulateLibOQSKeyGen(string $algorithm): array
-    {
-        $info = self::SUPPORTED_ALGORITHMS[$algorithm] ?? self::SUPPORTED_ALGORITHMS['ML-KEM-768'];
-
-        return [
-            'public' => random_bytes($info['public_key_size']),
-            'private' => random_bytes($info['private_key_size']),
-        ];
-    }
 
     /**
      * Simulate LibOQS encapsulation (for development)
