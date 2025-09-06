@@ -35,6 +35,7 @@ export default function Chat({ auth, initialConversationId }: ChatPageProps) {
     );
     const [showDeviceSetup, setShowDeviceSetup] = useState(false);
     const [isRegisteringDevice, setIsRegisteringDevice] = useState(false);
+    const [deviceSetupDismissed, setDeviceSetupDismissed] = useState(false);
 
     // Load conversations on mount
     useEffect(() => {
@@ -43,10 +44,14 @@ export default function Chat({ auth, initialConversationId }: ChatPageProps) {
 
     // Auto-show device setup dialog when no devices are registered
     useEffect(() => {
-        if (devices.length === 0 && !isLoading && !showDeviceSetup) {
+        if (devices.length === 0 && !isLoading && !showDeviceSetup && !deviceSetupDismissed) {
             setShowDeviceSetup(true);
+        } else if (devices.length > 0) {
+            // Hide modal and reset dismissed state if devices are found
+            setShowDeviceSetup(false);
+            setDeviceSetupDismissed(false);
         }
-    }, [devices.length, isLoading, showDeviceSetup]);
+    }, [devices.length, isLoading, showDeviceSetup, deviceSetupDismissed]);
 
     // Load initial conversation if provided
     useEffect(() => {
@@ -102,11 +107,19 @@ export default function Chat({ auth, initialConversationId }: ChatPageProps) {
         try {
             await registerDevice(deviceInfo);
             setShowDeviceSetup(false);
+            setDeviceSetupDismissed(true); // Mark as dismissed after successful registration
         } catch (error) {
             console.error('Failed to register device:', error);
             throw error; // Re-throw so the dialog can show the error
         } finally {
             setIsRegisteringDevice(false);
+        }
+    };
+
+    const handleDeviceSetupClose = (open: boolean) => {
+        setShowDeviceSetup(open);
+        if (!open) {
+            setDeviceSetupDismissed(true); // Mark as dismissed when manually closed
         }
     };
 
@@ -144,7 +157,7 @@ export default function Chat({ auth, initialConversationId }: ChatPageProps) {
             {/* Device Setup Dialog */}
             <DeviceSetupDialog
                 open={showDeviceSetup}
-                onOpenChange={setShowDeviceSetup}
+                onOpenChange={handleDeviceSetupClose}
                 onRegisterDevice={handleRegisterDevice}
                 isRegistering={isRegisteringDevice}
                 error={error}

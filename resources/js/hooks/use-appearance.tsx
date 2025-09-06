@@ -36,14 +36,25 @@ const mediaQuery = () => {
 };
 
 const handleSystemThemeChange = () => {
-    const currentAppearance = getUserStorageItem('appearance') as Appearance;
-    applyTheme(currentAppearance || 'system');
+    try {
+        const currentAppearance = getUserStorageItem('appearance') as Appearance;
+        applyTheme(currentAppearance || 'system');
+    } catch (error) {
+        // If localStorage fails, just use system theme
+        console.warn('Failed to get appearance from storage during system theme change:', error);
+        applyTheme('system');
+    }
 };
 
 export function initializeTheme() {
-    const savedAppearance = (getUserStorageItem('appearance') as Appearance) || 'system';
-
-    applyTheme(savedAppearance);
+    try {
+        const savedAppearance = (getUserStorageItem('appearance') as Appearance) || 'system';
+        applyTheme(savedAppearance);
+    } catch (error) {
+        // If localStorage fails, just use system default
+        console.warn('Failed to initialize theme from storage, using system default:', error);
+        applyTheme('system');
+    }
 
     // Add the event listener for system theme changes...
     mediaQuery()?.addEventListener('change', handleSystemThemeChange);

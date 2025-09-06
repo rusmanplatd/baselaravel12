@@ -22,6 +22,10 @@ interface RegisterDeviceRequest {
     enable_quantum?: boolean;
     quantum_algorithm?: string;
     capabilities?: string[];
+    device_fingerprint?: string;
+    platform?: string;
+    user_agent?: string;
+    hardware_fingerprint?: string;
 }
 
 export default function DeviceSetupDialog({

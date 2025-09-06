@@ -11,6 +11,7 @@ class ApiService {
     private readonly STORAGE_KEY = 'api_token';
     private isRefreshing = false;
     private refreshPromise: Promise<string> | null = null;
+    private lastUserId: string | null = null;
 
     private constructor() {
         // Load token from storage on initialization
@@ -25,13 +26,49 @@ class ApiService {
     }
 
     /**
+     * Get the current user ID from the global page object
+     */
+    private getCurrentUserId(): string | null {
+        try {
+            const inertiaPage = (window as unknown as Record<string, any>).page;
+            return inertiaPage?.props?.auth?.user?.id || null;
+        } catch {
+            return null;
+        }
+    }
+
+    /**
+     * Check if the user has changed and clear token if so
+     */
+    private checkUserChange(): void {
+        const currentUserId = this.getCurrentUserId();
+        
+        // If user ID has changed, clear the cached token to force reload
+        if (this.lastUserId !== currentUserId) {
+            this.lastUserId = currentUserId;
+            this.accessToken = null; // Clear cached token
+            
+            // If user is null (logged out), clear storage completely
+            if (currentUserId === null) {
+                this.clearTokenFromStorage();
+            }
+        }
+    }
+
+    /**
      * Load token from localStorage
      */
     private loadTokenFromStorage(): void {
         try {
-            const token = getUserStorageItem(this.STORAGE_KEY);
-            if (token) {
-                this.accessToken = token;
+            // Check for user changes before loading
+            this.checkUserChange();
+            
+            // Only load if we don't have a cached token
+            if (!this.accessToken) {
+                const token = getUserStorageItem(this.STORAGE_KEY);
+                if (token) {
+                    this.accessToken = token;
+                }
             }
         } catch (error) {
             console.error('Failed to load token from storage:', error);
@@ -128,6 +165,13 @@ class ApiService {
      * Get current access token, generating one if needed
      */
     public async getAccessToken(): Promise<string> {
+        // Always check for user changes before returning token
+        this.checkUserChange();
+        
+        if (!this.accessToken) {
+            this.loadTokenFromStorage();
+        }
+        
         if (!this.accessToken) {
             return this.generateNewToken();
         }
@@ -344,6 +388,15 @@ class ApiService {
      */
     public clearAuth(): void {
         this.clearTokenFromStorage();
+        this.lastUserId = null;
+    }
+
+    /**
+     * Force refresh of authentication token (for login)
+     */
+    public refreshAuth(): void {
+        this.accessToken = null; // Clear cached token to force reload
+        this.checkUserChange(); // Update tracked user ID
     }
 
     /**

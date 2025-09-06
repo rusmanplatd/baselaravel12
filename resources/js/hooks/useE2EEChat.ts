@@ -222,6 +222,22 @@ export function useE2EEChat(): UseE2EEChatReturn {
         try {
             const deviceFingerprint = getDeviceFingerprint();
             
+            // Check if device is already registered before attempting registration
+            try {
+                const devicesResponse = await apiCall('/devices', 'GET');
+                const existingDevice = devicesResponse.devices?.find((device: Device) => 
+                    device.fingerprint_short === deviceFingerprint.substring(0, 8)
+                );
+                
+                if (existingDevice) {
+                    setError(`Device already registered as "${existingDevice.device_name}"`);
+                    return;
+                }
+            } catch (err) {
+                // If we can't check existing devices, proceed with registration
+                console.warn('Could not check existing devices, proceeding with registration:', err);
+            }
+            
             const response = await apiCall('/devices', 'POST', {
                 ...deviceInfo,
                 device_fingerprint: deviceFingerprint,

@@ -5,6 +5,7 @@ import { type User } from '@/types';
 import { Link, router } from '@inertiajs/react';
 import { route } from 'ziggy-js';
 import { LogOut, Settings } from 'lucide-react';
+import { onUserLogout } from '@/utils/localStorage';
 
 interface UserMenuContentProps {
     user: User;
@@ -14,6 +15,9 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
     const cleanup = useMobileNavigation();
 
     const handleLogout = () => {
+        // Clean up localStorage before logout
+        onUserLogout();
+        
         cleanup();
         router.flushAll();
     };

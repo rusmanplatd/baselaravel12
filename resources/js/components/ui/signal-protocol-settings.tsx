@@ -81,7 +81,6 @@ export function SignalProtocolSettings({
   className = ''
 }: SignalProtocolSettingsProps) {
   const { getItem, setItem } = useUserStorage();
-}: SignalProtocolSettingsProps) {
   const [settings, setSettings] = useState<ProtocolSettings>(defaultSettings);
   const [isInitializing, setIsInitializing] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
