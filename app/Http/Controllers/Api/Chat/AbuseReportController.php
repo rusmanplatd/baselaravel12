@@ -89,7 +89,7 @@ class AbuseReportController extends Controller
         $query = AbuseReport::where('reporter_user_id', $user->id);
 
         // Admin users can see all reports
-        if ($user->can('moderate_chat')) {
+        if ($user->can('chat:moderate')) {
             $query = AbuseReport::query();
 
             // Add filters for admin view
@@ -133,7 +133,7 @@ class AbuseReportController extends Controller
         }
 
         // Users can only view their own reports unless they're admin/moderator
-        if ($report->reporter_user_id !== $user->id && ! $user->can('moderate_chat')) {
+        if ($report->reporter_user_id !== $user->id && ! $user->can('chat:moderate')) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -144,7 +144,7 @@ class AbuseReportController extends Controller
     {
         $user = Auth::user();
 
-        if (! $user->can('moderate_chat')) {
+        if (! $user->can('chat:moderate')) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -190,7 +190,7 @@ class AbuseReportController extends Controller
     {
         $user = Auth::user();
 
-        if (! $user->can('moderate_chat')) {
+        if (! $user->can('chat:moderate')) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 

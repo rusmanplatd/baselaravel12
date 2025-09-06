@@ -16,7 +16,7 @@ const mainNavItems: NavItem[] = [
         title: 'Chat',
         href: '/chat',
         icon: MessageCircle,
-        permission: 'chat.conversations.read',
+        permission: 'chat:read',
     },
     {
         title: 'Organizations',

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { router } from '@inertiajs/react';
+import { apiService } from '@/services/ApiService';
 
 interface Message {
     id: string;
@@ -177,25 +178,37 @@ export function useE2EEChat(): UseE2EEChatReturn {
         return fingerprint;
     }, []);
 
-    // API call wrapper with error handling
-    const apiCall = useCallback(async (url: string, options: RequestInit = {}): Promise<any> => {
+    // API call wrapper with error handling using ApiService
+    const apiCall = useCallback(async (url: string, method: string = 'GET', data?: unknown, options: RequestInit = {}): Promise<any> => {
         try {
-            const response = await fetch(`/api/v1/chat${url}`, {
-                ...options,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-Device-Fingerprint': getDeviceFingerprint(),
-                    ...options.headers,
-                },
-            });
+            const fullUrl = `/api/v1/chat${url}`;
+            const additionalHeaders = {
+                'X-Device-Fingerprint': getDeviceFingerprint(),
+                ...options.headers,
+            };
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'API call failed');
+            let response: any;
+            switch (method.toLowerCase()) {
+                case 'get':
+                    response = await apiService.get(fullUrl, { headers: additionalHeaders });
+                    break;
+                case 'post':
+                    response = await apiService.post(fullUrl, data, { headers: additionalHeaders });
+                    break;
+                case 'put':
+                    response = await apiService.put(fullUrl, data, { headers: additionalHeaders });
+                    break;
+                case 'delete':
+                    response = await apiService.delete(fullUrl, { headers: additionalHeaders });
+                    break;
+                case 'patch':
+                    response = await apiService.patch(fullUrl, data, { headers: additionalHeaders });
+                    break;
+                default:
+                    throw new Error(`Unsupported method: ${method}`);
             }
 
-            return await response.json();
+            return response;
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Unknown error');
             throw err;
@@ -208,13 +221,10 @@ export function useE2EEChat(): UseE2EEChatReturn {
         try {
             const deviceFingerprint = getDeviceFingerprint();
             
-            const response = await apiCall('/devices', {
-                method: 'POST',
-                body: JSON.stringify({
-                    ...deviceInfo,
-                    device_fingerprint: deviceFingerprint,
-                    hardware_fingerprint: await getHardwareFingerprint(),
-                }),
+            const response = await apiCall('/devices', 'POST', {
+                ...deviceInfo,
+                device_fingerprint: deviceFingerprint,
+                hardware_fingerprint: await getHardwareFingerprint(),
             });
 
             // Update devices list
@@ -230,12 +240,9 @@ export function useE2EEChat(): UseE2EEChatReturn {
 
     const trustDevice = useCallback(async (deviceId: string, verificationCode?: string): Promise<void> => {
         try {
-            await apiCall(`/devices/${deviceId}/trust`, {
-                method: 'POST',
-                body: JSON.stringify({
-                    verification_code: verificationCode,
-                    auto_expire: true,
-                }),
+            await apiCall(`/devices/${deviceId}/trust`, 'POST', {
+                verification_code: verificationCode,
+                auto_expire: true,
             });
 
             // Refresh devices list
@@ -248,10 +255,7 @@ export function useE2EEChat(): UseE2EEChatReturn {
 
     const revokeDevice = useCallback(async (deviceId: string, reason: string): Promise<void> => {
         try {
-            await apiCall(`/devices/${deviceId}`, {
-                method: 'DELETE',
-                body: JSON.stringify({ reason }),
-            });
+            await apiCall(`/devices/${deviceId}`, 'DELETE', { reason });
 
             // Refresh devices list
             await loadDevices();
@@ -263,9 +267,7 @@ export function useE2EEChat(): UseE2EEChatReturn {
 
     const rotateDeviceKeys = useCallback(async (deviceId: string): Promise<void> => {
         try {
-            await apiCall(`/devices/${deviceId}/rotate-keys`, {
-                method: 'POST',
-            });
+            await apiCall(`/devices/${deviceId}/rotate-keys`, 'POST');
 
             // Refresh devices list
             await loadDevices();
@@ -277,7 +279,7 @@ export function useE2EEChat(): UseE2EEChatReturn {
 
     const loadDevices = useCallback(async (): Promise<void> => {
         try {
-            const response = await apiCall('/devices');
+            const response = await apiCall('/devices', 'GET');
             setDevices(response.devices);
         } catch (err) {
             console.error('Failed to load devices:', err);
@@ -288,7 +290,7 @@ export function useE2EEChat(): UseE2EEChatReturn {
     const loadConversations = useCallback(async (): Promise<void> => {
         setIsLoading(true);
         try {
-            const response = await apiCall('/conversations');
+            const response = await apiCall('/conversations', 'GET');
             setConversations(response.conversations);
             setError(null);
         } catch (err) {
@@ -304,15 +306,12 @@ export function useE2EEChat(): UseE2EEChatReturn {
     ): Promise<void> => {
         setIsLoading(true);
         try {
-            const response = await apiCall('/conversations', {
-                method: 'POST',
-                body: JSON.stringify({
-                    participants,
-                    type: options.type || (participants.length > 1 ? 'group' : 'direct'),
-                    name: options.name,
-                    description: options.description,
-                    enable_quantum: options.enable_quantum ?? true,
-                }),
+            const response = await apiCall('/conversations', 'POST', {
+                participants,
+                type: options.type || (participants.length > 1 ? 'group' : 'direct'),
+                name: options.name,
+                description: options.description,
+                enable_quantum: options.enable_quantum ?? true,
             });
 
             // Add to conversations list
@@ -327,7 +326,7 @@ export function useE2EEChat(): UseE2EEChatReturn {
 
     const loadConversation = useCallback(async (conversationId: string): Promise<void> => {
         try {
-            const response = await apiCall(`/conversations/${conversationId}`);
+            const response = await apiCall(`/conversations/${conversationId}`, 'GET');
             setCurrentConversation(response.conversation);
             setError(null);
         } catch (err) {
@@ -337,10 +336,7 @@ export function useE2EEChat(): UseE2EEChatReturn {
 
     const addParticipant = useCallback(async (conversationId: string, userId: string): Promise<void> => {
         try {
-            await apiCall(`/conversations/${conversationId}/participants`, {
-                method: 'POST',
-                body: JSON.stringify({ user_id: userId }),
-            });
+            await apiCall(`/conversations/${conversationId}/participants`, 'POST', { user_id: userId });
 
             // Refresh conversation details
             await loadConversation(conversationId);
@@ -352,10 +348,7 @@ export function useE2EEChat(): UseE2EEChatReturn {
 
     const removeParticipant = useCallback(async (conversationId: string, userId: string): Promise<void> => {
         try {
-            await apiCall(`/conversations/${conversationId}/participants`, {
-                method: 'DELETE',
-                body: JSON.stringify({ user_id: userId }),
-            });
+            await apiCall(`/conversations/${conversationId}/participants`, 'DELETE', { user_id: userId });
 
             // Refresh conversation details
             await loadConversation(conversationId);
@@ -367,9 +360,7 @@ export function useE2EEChat(): UseE2EEChatReturn {
 
     const leaveConversation = useCallback(async (conversationId: string): Promise<void> => {
         try {
-            await apiCall(`/conversations/${conversationId}/leave`, {
-                method: 'DELETE',
-            });
+            await apiCall(`/conversations/${conversationId}/leave`, 'DELETE');
 
             // Remove from conversations list
             setConversations(prev => prev.filter(c => c.id !== conversationId));
@@ -399,7 +390,7 @@ export function useE2EEChat(): UseE2EEChatReturn {
             if (options.limit) params.set('limit', options.limit.toString());
 
             const url = `/conversations/${conversationId}/messages${params.toString() ? '?' + params.toString() : ''}`;
-            const response = await apiCall(url);
+            const response = await apiCall(url, 'GET');
             
             if (options.before_id) {
                 // Prepending older messages
@@ -423,15 +414,12 @@ export function useE2EEChat(): UseE2EEChatReturn {
         options: SendMessageOptions = {}
     ): Promise<void> => {
         try {
-            const response = await apiCall(`/conversations/${conversationId}/messages`, {
-                method: 'POST',
-                body: JSON.stringify({
-                    content,
-                    type: options.type || 'text',
-                    reply_to_id: options.reply_to_id,
-                    scheduled_at: options.scheduled_at,
-                    metadata: options.file_info,
-                }),
+            const response = await apiCall(`/conversations/${conversationId}/messages`, 'POST', {
+                content,
+                type: options.type || 'text',
+                reply_to_id: options.reply_to_id,
+                scheduled_at: options.scheduled_at,
+                metadata: options.file_info,
             });
 
             // Add to messages list
@@ -448,10 +436,7 @@ export function useE2EEChat(): UseE2EEChatReturn {
         content: string
     ): Promise<void> => {
         try {
-            const response = await apiCall(`/conversations/${conversationId}/messages/${messageId}`, {
-                method: 'PATCH',
-                body: JSON.stringify({ content }),
-            });
+            const response = await apiCall(`/conversations/${conversationId}/messages/${messageId}`, 'PATCH', { content });
 
             // Update message in list
             setMessages(prev => prev.map(msg => 
@@ -465,9 +450,7 @@ export function useE2EEChat(): UseE2EEChatReturn {
 
     const deleteMessage = useCallback(async (conversationId: string, messageId: string): Promise<void> => {
         try {
-            await apiCall(`/conversations/${conversationId}/messages/${messageId}`, {
-                method: 'DELETE',
-            });
+            await apiCall(`/conversations/${conversationId}/messages/${messageId}`, 'DELETE');
 
             // Remove from messages list
             setMessages(prev => prev.filter(msg => msg.id !== messageId));
@@ -483,10 +466,7 @@ export function useE2EEChat(): UseE2EEChatReturn {
         emoji: string
     ): Promise<void> => {
         try {
-            const response = await apiCall(`/conversations/${conversationId}/messages/${messageId}/reactions`, {
-                method: 'POST',
-                body: JSON.stringify({ emoji }),
-            });
+            const response = await apiCall(`/conversations/${conversationId}/messages/${messageId}/reactions`, 'POST', { emoji });
 
             // Update message reactions
             setMessages(prev => prev.map(msg => {
@@ -510,10 +490,7 @@ export function useE2EEChat(): UseE2EEChatReturn {
         emoji: string
     ): Promise<void> => {
         try {
-            await apiCall(`/conversations/${conversationId}/messages/${messageId}/reactions`, {
-                method: 'DELETE',
-                body: JSON.stringify({ emoji }),
-            });
+            await apiCall(`/conversations/${conversationId}/messages/${messageId}/reactions`, 'DELETE', { emoji });
 
             // Remove reaction from message
             setMessages(prev => prev.map(msg => {
@@ -538,20 +515,17 @@ export function useE2EEChat(): UseE2EEChatReturn {
         formData.append('type', getFileType(file));
 
         try {
-            const response = await fetch(`/api/v1/chat/conversations/${conversationId}/attachments`, {
-                method: 'POST',
-                headers: {
-                    'X-Device-Fingerprint': getDeviceFingerprint(),
-                },
-                body: formData,
-            });
+            const response = await apiService.postFormData<{ file_info: string }>(
+                `/api/v1/chat/conversations/${conversationId}/attachments`,
+                formData,
+                {
+                    headers: {
+                        'X-Device-Fingerprint': getDeviceFingerprint(),
+                    }
+                }
+            );
 
-            if (!response.ok) {
-                throw new Error('Failed to upload file');
-            }
-
-            const data = await response.json();
-            return data.file_info;
+            return response.file_info;
         } catch (err) {
             setError('Failed to upload file');
             throw err;
@@ -704,7 +678,7 @@ function generateDeviceFingerprint(): string {
     const components = [
         navigator.userAgent,
         navigator.language,
-        navigator.platform,
+        navigator.userAgent.includes('Win') ? 'Win32' : navigator.userAgent.includes('Mac') ? 'MacIntel' : 'Linux',
         navigator.hardwareConcurrency?.toString() || '',
         screen.width + 'x' + screen.height,
         new Date().getTimezoneOffset().toString(),
@@ -735,7 +709,7 @@ async function getHardwareFingerprint(): Promise<string> {
     // WebGL fingerprint
     try {
         const canvas = document.createElement('canvas');
-        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl') as WebGLRenderingContext | null;
         if (gl) {
             const renderer = gl.getParameter(gl.RENDERER);
             const vendor = gl.getParameter(gl.VENDOR);

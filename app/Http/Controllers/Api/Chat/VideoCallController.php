@@ -320,7 +320,7 @@ class VideoCallController extends Controller
         }
 
         // Only initiator or admin can end call
-        if ($videoCall->initiated_by !== $user->id && ! $user->can('moderate_chat')) {
+        if ($videoCall->initiated_by !== $user->id && ! $user->can('chat:moderate')) {
             return response()->json(['error' => 'You do not have permission to end this call'], 403);
         }
 

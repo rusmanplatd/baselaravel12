@@ -7,6 +7,7 @@ use App\Models\Auth\Role;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class PermissionSeeder extends Seeder
@@ -125,6 +126,16 @@ class PermissionSeeder extends Seeder
             'geo_village:write' => 'Create and update villages',
             'geo_village:delete' => 'Delete villages',
             'geo_village:admin' => 'Full administrative access to villages',
+
+            // Chat permissions (GitHub-style) - global access
+            'chat:read' => 'View chat conversations and messages',
+            'chat:write' => 'Send messages and participate in chat',
+            'chat:files' => 'Upload and download files in chat',
+            'chat:calls' => 'Participate in audio/video calls',
+            'chat:manage' => 'Manage chat settings and conversations',
+            'chat:moderate' => 'Moderate chat content and users',
+            'chat:admin' => 'Full administrative access to chat system',
+
         ];
 
         // Set permissions team context to null for global permissions
@@ -202,6 +213,13 @@ class PermissionSeeder extends Seeder
                     'geo_village:write',
                     'geo_village:delete',
                     'geo_village:admin',
+                    'chat:read',
+                    'chat:write',
+                    'chat:files',
+                    'chat:calls',
+                    'chat:manage',
+                    'chat:moderate',
+                    'chat:admin',
                 ],
             ],
             'manager' => [
@@ -225,6 +243,11 @@ class PermissionSeeder extends Seeder
                     'geo_city:read',
                     'geo_district:read',
                     'geo_village:read',
+                    'chat:read',
+                    'chat:write',
+                    'chat:files',
+                    'chat:calls',
+                    'chat:manage',
                 ],
             ],
             'employee' => [
@@ -244,6 +267,10 @@ class PermissionSeeder extends Seeder
                     'geo_city:read',
                     'geo_district:read',
                     'geo_village:read',
+                    'chat:read',
+                    'chat:write',
+                    'chat:files',
+                    'chat:calls',
                 ],
             ],
             'board-member' => [
@@ -260,6 +287,11 @@ class PermissionSeeder extends Seeder
                     'profile:write',
                     'security:read',
                     'security:write',
+                    'chat:read',
+                    'chat:write',
+                    'chat:files',
+                    'chat:calls',
+                    'chat:manage',
                 ],
             ],
             'consultant' => [
@@ -273,6 +305,10 @@ class PermissionSeeder extends Seeder
                     'profile:write',
                     'security:read',
                     'security:write',
+                    'chat:read',
+                    'chat:write',
+                    'chat:files',
+                    'chat:calls',
                 ],
             ],
             'auditor' => [
@@ -291,6 +327,11 @@ class PermissionSeeder extends Seeder
                     'profile:write',
                     'security:read',
                     'security:write',
+                    'chat:read',
+                    'chat:write',
+                    'chat:files',
+                    'chat:calls',
+                    'chat:manage',
                 ],
             ],
             'security-admin' => [
@@ -315,6 +356,13 @@ class PermissionSeeder extends Seeder
                     'security:read',
                     'security:write',
                     'security:admin',
+                    'chat:read',
+                    'chat:write',
+                    'chat:files',
+                    'chat:calls',
+                    'chat:manage',
+                    'chat:moderate',
+                    'chat:admin',
                 ],
             ],
         ];
