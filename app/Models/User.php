@@ -379,4 +379,34 @@ class User extends Authenticatable implements HasPasskeys
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
+
+    /**
+     * Override the can method to automatically grant basic chat permissions to all users
+     */
+    public function can($abilities, $arguments = []): bool
+    {
+        // Define basic chat permissions that all authenticated users should have
+        $basicChatPermissions = [
+            'chat:read',
+            'chat:write',
+            'chat:files',
+            'chat:calls',
+        ];
+
+        // If checking for a basic chat permission, automatically grant it
+        if (is_string($abilities) && in_array($abilities, $basicChatPermissions)) {
+            return true;
+        }
+
+        // For arrays of abilities, check if all are basic chat permissions
+        if (is_array($abilities)) {
+            $allBasicChat = array_diff($abilities, $basicChatPermissions) === [];
+            if ($allBasicChat) {
+                return true;
+            }
+        }
+
+        // For all other permissions, use the default behavior
+        return parent::can($abilities, $arguments);
+    }
 }

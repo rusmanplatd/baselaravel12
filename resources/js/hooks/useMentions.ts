@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { getUserStorageItem, setUserStorageItem } from '@/utils/localStorage';
 
 interface MentionUser {
   id: string;
@@ -268,10 +269,10 @@ export const useMentions = ({
 
 // Helper functions
 function getDeviceFingerprint(): string {
-  let fingerprint = localStorage.getItem('device_fingerprint');
+  let fingerprint = getUserStorageItem('device_fingerprint');
   if (!fingerprint) {
     fingerprint = generateDeviceFingerprint();
-    localStorage.setItem('device_fingerprint', fingerprint);
+    setUserStorageItem('device_fingerprint', fingerprint);
   }
   return fingerprint;
 }

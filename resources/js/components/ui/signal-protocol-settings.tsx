@@ -13,6 +13,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useUserStorage } from '@/utils/localStorage';
 import {
   Shield,
   Key,
@@ -79,6 +80,8 @@ export function SignalProtocolSettings({
   onClearProtocolData,
   className = ''
 }: SignalProtocolSettingsProps) {
+  const { getItem, setItem } = useUserStorage();
+}: SignalProtocolSettingsProps) {
   const [settings, setSettings] = useState<ProtocolSettings>(defaultSettings);
   const [isInitializing, setIsInitializing] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -90,7 +93,7 @@ export function SignalProtocolSettings({
   // Load settings from localStorage on component mount
   useEffect(() => {
     try {
-      const savedSettings = localStorage.getItem('signal-protocol-settings');
+      const savedSettings = getItem('signal-protocol-settings');
       if (savedSettings) {
         const parsedSettings = JSON.parse(savedSettings);
         setSettings({ ...defaultSettings, ...parsedSettings });
@@ -202,7 +205,7 @@ export function SignalProtocolSettings({
     
     try {
       // Save to localStorage for persistence across sessions
-      localStorage.setItem('signal-protocol-settings', JSON.stringify(newSettings));
+      setItem('signal-protocol-settings', JSON.stringify(newSettings));
       
       // In a production environment, you would also save to the server:
       // await fetch('/api/v1/users/signal-settings', {

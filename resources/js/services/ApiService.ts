@@ -3,6 +3,8 @@
  * Uses Laravel Passport for API authentication
  */
 
+import { getUserStorageItem, setUserStorageItem, removeUserStorageItem } from '@/utils/localStorage';
+
 class ApiService {
     private static instance: ApiService;
     private accessToken: string | null = null;
@@ -27,7 +29,7 @@ class ApiService {
      */
     private loadTokenFromStorage(): void {
         try {
-            const token = localStorage.getItem(this.STORAGE_KEY);
+            const token = getUserStorageItem(this.STORAGE_KEY);
             if (token) {
                 this.accessToken = token;
             }
@@ -41,7 +43,7 @@ class ApiService {
      */
     private saveTokenToStorage(token: string): void {
         try {
-            localStorage.setItem(this.STORAGE_KEY, token);
+            setUserStorageItem(this.STORAGE_KEY, token);
             this.accessToken = token;
         } catch (error) {
             console.error('Failed to save token to storage:', error);
@@ -53,7 +55,7 @@ class ApiService {
      */
     private clearTokenFromStorage(): void {
         try {
-            localStorage.removeItem(this.STORAGE_KEY);
+            removeUserStorageItem(this.STORAGE_KEY);
             this.accessToken = null;
         } catch (error) {
             console.error('Failed to clear token from storage:', error);

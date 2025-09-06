@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { getUserStorageItem, setUserStorageItem } from '@/utils/localStorage';
 
 export interface ExportFormat {
   id: string;
@@ -504,10 +505,10 @@ export const useMessageExport = (): UseMessageExportReturn => {
 
 // Helper functions
 function getDeviceFingerprint(): string {
-  let fingerprint = localStorage.getItem('device_fingerprint');
+  let fingerprint = getUserStorageItem('device_fingerprint');
   if (!fingerprint) {
     fingerprint = generateDeviceFingerprint();
-    localStorage.setItem('device_fingerprint', fingerprint);
+    setUserStorageItem('device_fingerprint', fingerprint);
   }
   return fingerprint;
 }

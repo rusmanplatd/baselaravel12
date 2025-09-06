@@ -13,20 +13,20 @@ return new class extends Migration
     {
         Schema::table('user_devices', function (Blueprint $table) {
             // Core device identification
-            $table->string('device_fingerprint')->unique()->after('device_type');
+            $table->string('device_fingerprint')->after('device_type');
             $table->string('hardware_fingerprint')->nullable()->after('device_fingerprint');
-            
+
             // Device platform and user agent info
             $table->string('platform', 100)->nullable()->after('hardware_fingerprint');
             $table->string('user_agent', 500)->nullable()->after('platform');
-            
+
             // Encryption and security
             $table->text('public_key')->after('user_agent'); // E2EE public key
             $table->json('device_capabilities')->nullable()->after('public_key'); // Device features
             $table->json('encryption_capabilities')->nullable()->after('device_capabilities'); // Supported encryption
             $table->boolean('quantum_ready')->default(false)->after('encryption_capabilities');
             $table->string('security_level', 50)->default('standard')->after('quantum_ready');
-            
+
             // Update existing columns
             $table->text('public_identity_key')->nullable()->change(); // Make nullable since we have public_key now
         });
@@ -50,7 +50,7 @@ return new class extends Migration
                 'hardware_fingerprint',
                 'device_fingerprint'
             ]);
-            
+
             // Revert public_identity_key to not nullable
             $table->text('public_identity_key')->nullable(false)->change();
         });

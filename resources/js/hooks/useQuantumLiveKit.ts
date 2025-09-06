@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { getUserStorageItem, setUserStorageItem } from '@/utils/localStorage';
 import {
   Room,
   RoomEvent,
@@ -921,10 +922,10 @@ async function loadQuantumService(config: {
 }
 
 function getDeviceId(): string {
-  let deviceId = localStorage.getItem('device_id');
+  let deviceId = getUserStorageItem('device_id');
   if (!deviceId) {
     deviceId = crypto.randomUUID();
-    localStorage.setItem('device_id', deviceId);
+    setUserStorageItem('device_id', deviceId);
   }
   return deviceId;
 }

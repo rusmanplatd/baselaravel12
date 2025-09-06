@@ -25,11 +25,11 @@ class MessageController extends Controller
         $this->middleware('throttle:120,1')->only(['store']);
         $this->middleware('throttle:60,1')->only(['addReaction', 'removeReaction']);
         
-        // Apply chat permissions
-        $this->middleware('chat.permission:chat.messages.send,conversationId')->only(['store']);
-        $this->middleware('chat.permission:chat.messages.edit,conversationId')->only(['update']);
-        $this->middleware('chat.permission:chat.messages.delete,conversationId')->only(['destroy']);
-        $this->middleware('chat.permission:chat.messages.moderate,conversationId')->only(['moderate']);
+        // Apply chat permissions - using standard chat permissions that all users have
+        $this->middleware('chat.permission:chat:write,conversationId')->only(['store']);
+        $this->middleware('chat.permission:chat:write,conversationId')->only(['update']);
+        $this->middleware('chat.permission:chat:write,conversationId')->only(['destroy']);
+        $this->middleware('chat.permission:chat:moderate,conversationId')->only(['moderate']);
     }
 
     /**

@@ -215,6 +215,9 @@ class SystemUserSeeder extends Seeder
             'seeder.regular_user_id' => $regularUser->id,
         ]);
 
+        // Assign basic chat permissions to all users
+        $this->assignChatPermissionsToAllUsers();
+
         // Logout system user after seeding
         Auth::logout();
     }
@@ -652,5 +655,39 @@ class SystemUserSeeder extends Seeder
         $totalPermissions = Permission::count();
         $totalRoles = Role::count();
         $this->command->info("\nSeeding completed: {$totalPermissions} permissions, {$totalRoles} roles created/updated.");
+    }
+
+    /**
+     * Assign basic chat permissions to all users
+     */
+    private function assignChatPermissionsToAllUsers(): void
+    {
+        // Define basic chat permissions that all users should have
+        $basicChatPermissions = [
+            'chat:read',
+            'chat:write',
+            'chat:files', 
+            'chat:calls',
+        ];
+
+        // Get all users
+        $users = User::all();
+        
+        // Get the basic chat permissions
+        $permissions = Permission::whereIn('name', $basicChatPermissions)->get();
+
+        $this->command->info("Assigning basic chat permissions to all users...");
+
+        foreach ($users as $user) {
+            // Set permissions team context to null for global permissions
+            setPermissionsTeamId(null);
+            
+            // Give the user these permissions directly
+            foreach ($permissions as $permission) {
+                $user->givePermissionTo($permission);
+            }
+        }
+
+        $this->command->info("Assigned basic chat permissions to " . $users->count() . " users.");
     }
 }

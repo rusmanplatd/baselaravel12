@@ -88,7 +88,11 @@ class DeviceController extends Controller
             ->first();
 
         if ($existingDevice) {
-            return response()->json(['error' => 'Device already registered'], 409);
+            return response()->json([
+                'user_id'   => $user->id,
+                'device_fingerprint'   => $request->device_fingerprint,
+                'error' => 'Device already registered'
+            ], 409);
         }
 
         try {
@@ -159,7 +163,6 @@ class DeviceController extends Controller
                 'message' => 'Device registered successfully. Trust verification required.',
                 'requires_trust' => ! $device->is_trusted,
             ], 201);
-
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Failed to register device', [
@@ -237,7 +240,6 @@ class DeviceController extends Controller
                 ],
                 'message' => 'Device trusted successfully',
             ]);
-
         } catch (\Exception $e) {
             Log::error('Failed to trust device', [
                 'user_id' => $user->id,
@@ -292,7 +294,6 @@ class DeviceController extends Controller
             return response()->json([
                 'message' => 'Device untrusted successfully',
             ]);
-
         } catch (\Exception $e) {
             Log::error('Failed to untrust device', [
                 'user_id' => $user->id,
@@ -348,7 +349,6 @@ class DeviceController extends Controller
             return response()->json([
                 'message' => 'Device revoked successfully',
             ]);
-
         } catch (\Exception $e) {
             Log::error('Failed to revoke device', [
                 'user_id' => $user->id,
@@ -447,7 +447,6 @@ class DeviceController extends Controller
                 ],
                 'message' => 'Device updated successfully',
             ]);
-
         } catch (\Exception $e) {
             Log::error('Failed to update device', [
                 'user_id' => $user->id,
@@ -486,7 +485,6 @@ class DeviceController extends Controller
                 'message' => 'Verification code sent to your trusted devices',
                 'delivery_methods' => $this->getDeliveryMethods($user),
             ]);
-
         } catch (\Exception $e) {
             Log::error('Failed to generate verification code', [
                 'user_id' => $user->id,
@@ -531,7 +529,6 @@ class DeviceController extends Controller
                 'new_registration_id' => $newIdentityKey->registration_id,
                 'message' => 'Encryption keys rotated successfully',
             ]);
-
         } catch (\Exception $e) {
             Log::error('Failed to rotate device keys', [
                 'user_id' => $user->id,
@@ -585,7 +582,7 @@ class DeviceController extends Controller
         try {
             // Get stored verification data from Redis
             $verificationData = $this->getStoredVerificationData($device);
-            
+
             if (!$verificationData) {
                 return [
                     'valid' => false,
@@ -597,7 +594,7 @@ class DeviceController extends Controller
             // Check for rate limiting
             $rateLimitKey = "device_verify_attempts_{$device->id}";
             $attempts = cache()->get($rateLimitKey, 0);
-            
+
             if ($attempts >= 5) {
                 return [
                     'valid' => false,
@@ -613,14 +610,14 @@ class DeviceController extends Controller
                 // Clear verification data and rate limit
                 $this->clearVerificationData($device);
                 cache()->forget($rateLimitKey);
-                
+
                 // Log successful verification
                 Log::info('Device verification successful', [
                     'device_id' => $device->id,
                     'user_id' => $device->user_id,
                     'device_name' => $device->device_name
                 ]);
-                
+
                 return [
                     'valid' => true,
                     'verification_time' => now(),
@@ -629,7 +626,7 @@ class DeviceController extends Controller
             } else {
                 // Increment failed attempts
                 cache()->put($rateLimitKey, $attempts + 1, 300);
-                
+
                 // Log failed verification
                 Log::warning('Device verification failed', [
                     'device_id' => $device->id,
@@ -637,20 +634,19 @@ class DeviceController extends Controller
                     'attempts' => $attempts + 1,
                     'ip_address' => request()->ip()
                 ]);
-                
+
                 return [
                     'valid' => false,
                     'reason' => 'Invalid verification code',
                     'attempts_remaining' => 5 - ($attempts + 1)
                 ];
             }
-            
         } catch (\Exception $e) {
             Log::error('Device verification error', [
                 'device_id' => $device->id,
                 'error' => $e->getMessage()
             ]);
-            
+
             return [
                 'valid' => false,
                 'reason' => 'Verification system error',
@@ -665,7 +661,7 @@ class DeviceController extends Controller
     private function storeVerificationCode(UserDevice $device, string $code): void
     {
         $key = "device_verification_{$device->id}";
-        
+
         $verificationData = [
             'code' => $code,
             'created_at' => now()->toISOString(),
@@ -676,7 +672,7 @@ class DeviceController extends Controller
             'delivery_method' => $this->getPreferredDeliveryMethod($device->user),
             'expires_at' => now()->addMinutes(5)->toISOString()
         ];
-        
+
         // Store in Redis with 5-minute expiration
         if (cache()->getStore() instanceof \Illuminate\Cache\RedisStore) {
             cache()->put($key, $verificationData, 300);
@@ -684,7 +680,7 @@ class DeviceController extends Controller
             // Fallback to regular cache if Redis not available
             cache()->put($key, $verificationData, 300);
         }
-        
+
         // Set a cleanup job to remove expired codes
         $this->scheduleVerificationCleanup($device);
     }
@@ -696,17 +692,17 @@ class DeviceController extends Controller
     {
         $key = "device_verification_{$device->id}";
         $data = cache()->get($key);
-        
+
         if (!$data || !is_array($data)) {
             return null;
         }
-        
+
         // Check if expired
         if (isset($data['expires_at']) && now()->isAfter($data['expires_at'])) {
             $this->clearVerificationData($device);
             return null;
         }
-        
+
         return $data;
     }
 
@@ -726,36 +722,35 @@ class DeviceController extends Controller
     {
         try {
             $deliveryMethod = $this->getPreferredDeliveryMethod($user);
-            
+
             switch ($deliveryMethod) {
                 case 'push':
                     $this->sendPushNotification($device, $user, $code);
                     break;
-                    
+
                 case 'email':
                     $this->sendEmailVerification($user, $code, $device);
                     break;
-                    
+
                 case 'sms':
                     $this->sendSmsVerification($user, $code, $device);
                     break;
-                    
+
                 case 'trusted_device':
                     $this->sendToTrustedDevices($user, $code, $device);
                     break;
-                    
+
                 default:
                     // Default to trusted device notification
                     $this->sendToTrustedDevices($user, $code, $device);
             }
-            
         } catch (\Exception $e) {
             Log::error('Failed to send verification code', [
                 'device_id' => $device->id,
                 'user_id' => $user->id,
                 'error' => $e->getMessage()
             ]);
-            
+
             // Fallback to in-app notification
             $this->sendInAppNotification($user, $device);
         }
@@ -768,30 +763,30 @@ class DeviceController extends Controller
     {
         // Check user preferences
         $preferences = $user->notification_preferences ?? [];
-        
+
         if (!empty($preferences['device_verification_method'])) {
             return $preferences['device_verification_method'];
         }
-        
+
         // Auto-detect best method based on available options
         if ($user->phone && $user->phone_verified_at) {
             return 'sms';
         }
-        
+
         if ($user->email_verified_at) {
             return 'email';
         }
-        
+
         // Check if user has trusted devices
         $trustedDevicesCount = UserDevice::where('user_id', $user->id)
             ->where('is_trusted', true)
             ->where('is_active', true)
             ->count();
-            
+
         if ($trustedDevicesCount > 0) {
             return 'trusted_device';
         }
-        
+
         return 'email'; // Default fallback
     }
 
@@ -801,7 +796,7 @@ class DeviceController extends Controller
     private function getDeliveryMethods($user): array
     {
         $methods = [];
-        
+
         if ($user->email_verified_at) {
             $methods[] = [
                 'type' => 'email',
@@ -809,7 +804,7 @@ class DeviceController extends Controller
                 'primary' => true
             ];
         }
-        
+
         if ($user->phone && $user->phone_verified_at) {
             $methods[] = [
                 'type' => 'sms',
@@ -817,12 +812,12 @@ class DeviceController extends Controller
                 'primary' => false
             ];
         }
-        
+
         $trustedDevicesCount = UserDevice::where('user_id', $user->id)
             ->where('is_trusted', true)
             ->where('is_active', true)
             ->count();
-            
+
         if ($trustedDevicesCount > 0) {
             $methods[] = [
                 'type' => 'trusted_device',
@@ -830,7 +825,7 @@ class DeviceController extends Controller
                 'primary' => false
             ];
         }
-        
+
         return $methods;
     }
 
@@ -861,9 +856,8 @@ class DeviceController extends Controller
                 'expires_in' => 5 // minutes
             ], function ($message) use ($user) {
                 $message->to($user->email)
-                       ->subject('Device Verification Code - ' . config('app.name'));
+                    ->subject('Device Verification Code - ' . config('app.name'));
             });
-            
         } catch (\Exception $e) {
             Log::error('Failed to send verification email', [
                 'user_id' => $user->id,
@@ -895,7 +889,7 @@ class DeviceController extends Controller
             ->where('is_active', true)
             ->where('id', '!=', $newDevice->id)
             ->get();
-            
+
         foreach ($trustedDevices as $device) {
             // Send push notification to trusted device
             $this->sendPushNotification($device, $user, $code);
@@ -930,25 +924,25 @@ class DeviceController extends Controller
     {
         $parts = explode('@', $email);
         if (count($parts) !== 2) return $email;
-        
+
         $username = $parts[0];
         $domain = $parts[1];
-        
+
         if (strlen($username) <= 2) {
             return $email;
         }
-        
+
         $masked = substr($username, 0, 2) . str_repeat('*', strlen($username) - 2);
         return $masked . '@' . $domain;
     }
 
     /**
-     * Mask phone number for privacy  
+     * Mask phone number for privacy
      */
     private function maskPhone(string $phone): string
     {
         if (strlen($phone) <= 4) return $phone;
-        
+
         return substr($phone, 0, 2) . str_repeat('*', strlen($phone) - 4) . substr($phone, -2);
     }
 }

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { WebSocketConnectionStatus, WebSocketOptions, WebSocketMessage } from '@/types/notification';
+import { getUserStorageItem } from '@/utils/localStorage';
 
 interface UseWebSocketProps {
   url: string;
@@ -243,7 +244,7 @@ export const useAuthenticatedWebSocket = (options: WebSocketOptions = {}) => {
   useEffect(() => {
     // Get auth token from meta tag or local storage
     const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
-                  localStorage.getItem('auth_token');
+                  getUserStorageItem('auth_token');
     setAuthToken(token);
   }, []);
 

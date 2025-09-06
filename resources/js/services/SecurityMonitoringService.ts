@@ -4,6 +4,7 @@
  */
 
 import { E2EEError, E2EEErrorCode } from './E2EEErrors';
+import { getUserStorageItem, setUserStorageItem } from '@/utils/localStorage';
 
 export interface SecurityEvent {
   id: string;
@@ -362,7 +363,7 @@ export class SecurityMonitoringService {
   private checkStorageTampering(): void {
     try {
       // Basic integrity check for stored E2EE data
-      const storedDevice = localStorage.getItem('e2ee_current_device');
+      const storedDevice = getUserStorageItem('e2ee_current_device');
       if (storedDevice) {
         const device = JSON.parse(storedDevice);
         if (!device.fingerprint || !device.publicKey || !device.privateKey) {
@@ -543,7 +544,7 @@ export class SecurityMonitoringService {
 
   private loadStoredEvents(): void {
     try {
-      const stored = localStorage.getItem('e2ee_security_events');
+      const stored = getUserStorageItem('e2ee_security_events');
       if (stored) {
         const events = JSON.parse(stored);
         for (const eventData of events) {
@@ -563,7 +564,7 @@ export class SecurityMonitoringService {
   private persistEvents(): void {
     try {
       const events = Array.from(this.events.values());
-      localStorage.setItem('e2ee_security_events', JSON.stringify(events));
+      setUserStorageItem('e2ee_security_events', JSON.stringify(events));
     } catch (error) {
       console.error('Failed to persist security events:', error);
     }

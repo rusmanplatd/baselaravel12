@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { getUserStorageItem, setUserStorageItem } from '@/utils/localStorage';
 
 export type Appearance = 'light' | 'dark' | 'system';
 
@@ -35,12 +36,12 @@ const mediaQuery = () => {
 };
 
 const handleSystemThemeChange = () => {
-    const currentAppearance = localStorage.getItem('appearance') as Appearance;
+    const currentAppearance = getUserStorageItem('appearance') as Appearance;
     applyTheme(currentAppearance || 'system');
 };
 
 export function initializeTheme() {
-    const savedAppearance = (localStorage.getItem('appearance') as Appearance) || 'system';
+    const savedAppearance = (getUserStorageItem('appearance') as Appearance) || 'system';
 
     applyTheme(savedAppearance);
 
@@ -55,7 +56,7 @@ export function useAppearance() {
         setAppearance(mode);
 
         // Store in localStorage for client-side persistence...
-        localStorage.setItem('appearance', mode);
+        setUserStorageItem('appearance', mode);
 
         // Store in cookie for SSR...
         setCookie('appearance', mode);
@@ -64,7 +65,7 @@ export function useAppearance() {
     }, []);
 
     useEffect(() => {
-        const savedAppearance = localStorage.getItem('appearance') as Appearance | null;
+        const savedAppearance = getUserStorageItem('appearance') as Appearance | null;
         updateAppearance(savedAppearance || 'system');
 
         return () => mediaQuery()?.removeEventListener('change', handleSystemThemeChange);

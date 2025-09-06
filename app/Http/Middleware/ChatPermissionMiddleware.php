@@ -17,7 +17,20 @@ class ChatPermissionMiddleware
             return response()->json(['error' => 'Authentication required'], 401);
         }
 
-        // Check global permission first
+        // Define basic chat permissions that all authenticated users should have
+        $basicChatPermissions = [
+            'chat:read',
+            'chat:write',
+            'chat:files',
+            'chat:calls',
+        ];
+
+        // If this is a basic chat permission, automatically grant it to authenticated users
+        if (in_array($permission, $basicChatPermissions)) {
+            return $next($request);
+        }
+
+        // Check global permission for advanced permissions (manage, moderate, admin)
         if ($user->can($permission)) {
             return $next($request);
         }

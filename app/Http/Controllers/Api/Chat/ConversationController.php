@@ -22,12 +22,12 @@ class ConversationController extends Controller
         $this->middleware('throttle:60,1')->only(['store']);
         $this->middleware('throttle:30,1')->only(['addParticipant', 'removeParticipant']);
         
-        // Apply chat permissions
-        $this->middleware('chat.permission:chat.conversations.create')->only(['store']);
-        $this->middleware('chat.permission:chat.conversations.moderate,conversationId')->only([
+        // Apply chat permissions - using standard chat permissions that all users have
+        $this->middleware('chat.permission:chat:write')->only(['store']);
+        $this->middleware('chat.permission:chat:manage,conversationId')->only([
             'addParticipant', 'removeParticipant', 'update'
         ]);
-        $this->middleware('chat.permission:chat.encryption.manage,conversationId')->only(['rotateKeys']);
+        $this->middleware('chat.permission:chat:manage,conversationId')->only(['rotateKeys']);
     }
 
     /**

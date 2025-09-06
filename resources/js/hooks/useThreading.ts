@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { router } from '@inertiajs/react';
+import { getUserStorageItem, setUserStorageItem } from '@/utils/localStorage';
 
 export interface Thread {
     id: string;
@@ -464,10 +465,10 @@ export const useThreading = ({ conversationId }: UseThreadingOptions): UseThread
 
 // Helper function to get device fingerprint
 function getDeviceFingerprint(): string {
-    let fingerprint = localStorage.getItem('device_fingerprint');
+    let fingerprint = getUserStorageItem('device_fingerprint');
     if (!fingerprint) {
         fingerprint = generateDeviceFingerprint();
-        localStorage.setItem('device_fingerprint', fingerprint);
+        setUserStorageItem('device_fingerprint', fingerprint);
     }
     return fingerprint;
 }

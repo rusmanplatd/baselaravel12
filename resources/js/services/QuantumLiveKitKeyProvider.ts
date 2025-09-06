@@ -4,6 +4,7 @@
  */
 
 import { BaseKeyProvider } from 'livekit-client';
+import { getUserStorageItem, setUserStorageItem, removeUserStorageItem } from '@/utils/localStorage';
 
 export interface QuantumKeyMaterial {
   keyId: string;
@@ -473,14 +474,14 @@ export class QuantumLiveKitKeyProvider extends BaseKeyProvider {
 
   private async getDeviceInfoFromCache(participantId: string): Promise<any | null> {
     try {
-      const cached = localStorage.getItem(`device_info_${participantId}`);
+      const cached = getUserStorageItem(`device_info_${participantId}`);
       if (!cached) return null;
       
       const data = JSON.parse(cached);
       const maxAge = 5 * 60 * 1000; // 5 minutes
       
       if (Date.now() - data.timestamp > maxAge) {
-        localStorage.removeItem(`device_info_${participantId}`);
+        removeUserStorageItem(`device_info_${participantId}`);
         return null;
       }
       
@@ -602,7 +603,7 @@ export class QuantumLiveKitKeyProvider extends BaseKeyProvider {
         timestamp: Date.now()
       };
       
-      localStorage.setItem(`device_info_${participantId}`, JSON.stringify(cacheData));
+      setUserStorageItem(`device_info_${participantId}`, JSON.stringify(cacheData));
     } catch (error) {
       console.warn('Failed to cache device info:', error);
     }
@@ -695,10 +696,10 @@ export class QuantumLiveKitKeyProvider extends BaseKeyProvider {
   }
 
   private getDeviceFingerprint(): string {
-    let fingerprint = localStorage.getItem('device_fingerprint');
+    let fingerprint = getUserStorageItem('device_fingerprint');
     if (!fingerprint) {
       fingerprint = this.generateDeviceFingerprint();
-      localStorage.setItem('device_fingerprint', fingerprint);
+      setUserStorageItem('device_fingerprint', fingerprint);
     }
     return fingerprint;
   }

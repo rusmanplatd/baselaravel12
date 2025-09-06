@@ -1,3 +1,5 @@
+import { getUserStorageItem, setUserStorageItem } from '@/utils/localStorage';
+
 export interface QuantumKeyPair {
     publicKey: string;
     privateKey: string;
@@ -203,7 +205,7 @@ export class QuantumE2EEService {
             
             // Store device ID
             this.deviceId = data.device_id;
-            localStorage.setItem('quantum_device_id', this.deviceId);
+            setUserStorageItem('quantum_device_id', this.deviceId);
 
             return {
                 deviceId: this.deviceId,
@@ -466,10 +468,10 @@ export class QuantumE2EEService {
      * Get device ID from localStorage or generate new one
      */
     private getDeviceId(): string {
-        let deviceId = localStorage.getItem('quantum_device_id');
+        let deviceId = getUserStorageItem('quantum_device_id');
         if (!deviceId) {
             deviceId = crypto.randomUUID();
-            localStorage.setItem('quantum_device_id', deviceId);
+            setUserStorageItem('quantum_device_id', deviceId);
         }
         return deviceId;
     }

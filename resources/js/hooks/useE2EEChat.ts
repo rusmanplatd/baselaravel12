@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { router } from '@inertiajs/react';
 import { apiService } from '@/services/ApiService';
+import { getUserStorageItem, setUserStorageItem } from '@/utils/localStorage';
 
 interface Message {
     id: string;
@@ -170,10 +171,10 @@ export function useE2EEChat(): UseE2EEChatReturn {
     // Device fingerprint for E2EE
     const getDeviceFingerprint = useCallback((): string => {
         // Generate or retrieve device fingerprint
-        let fingerprint = localStorage.getItem('device_fingerprint');
+        let fingerprint = getUserStorageItem('device_fingerprint');
         if (!fingerprint) {
             fingerprint = generateDeviceFingerprint();
-            localStorage.setItem('device_fingerprint', fingerprint);
+            setUserStorageItem('device_fingerprint', fingerprint);
         }
         return fingerprint;
     }, []);

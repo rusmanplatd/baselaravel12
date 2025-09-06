@@ -1,6 +1,7 @@
 import { Notification } from '@/components/ui/notification-panel';
 import { router } from '@inertiajs/react';
 import { useCallback, useEffect, useState } from 'react';
+import { useUserStorage } from '@/utils/localStorage';
 
 interface UseNotificationsReturn {
     notifications: Notification[];
@@ -43,11 +44,12 @@ const mockNotifications: Notification[] = [
 export function useNotifications(): UseNotificationsReturn {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [isInitialized, setIsInitialized] = useState(false);
+    const { getItem, setItem } = useUserStorage();
 
     // Initialize notifications from localStorage or mock data
     useEffect(() => {
         if (!isInitialized) {
-            const stored = localStorage.getItem('notifications');
+            const stored = getItem('notifications');
             if (stored) {
                 try {
                     setNotifications(JSON.parse(stored));
@@ -64,9 +66,9 @@ export function useNotifications(): UseNotificationsReturn {
     // Save notifications to localStorage whenever they change
     useEffect(() => {
         if (isInitialized) {
-            localStorage.setItem('notifications', JSON.stringify(notifications));
+            setItem('notifications', JSON.stringify(notifications));
         }
-    }, [notifications, isInitialized]);
+    }, [notifications, isInitialized, setItem]);
 
     const unreadCount = notifications.filter(n => !n.read).length;
 
