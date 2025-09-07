@@ -8,6 +8,7 @@ use App\Models\Chat\Message;
 use App\Models\UserDevice;
 use App\Services\SignalProtocolService;
 use App\Services\WebhookService;
+use App\Events\MessageSent;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -633,7 +634,12 @@ class MessageController extends Controller
      */
     private function broadcastMessage($message, $conversation): void
     {
-        // Integration point for real-time messaging (Pusher, WebSockets, etc.)
+        // Load sender relationship for broadcasting
+        $message->load('sender:id,name,avatar');
+        
+        // Fire the MessageSent event which will be broadcast via Reverb
+        MessageSent::dispatch($message, $conversation);
+        
         Log::debug('Broadcasting message', [
             'message_id' => $message->id,
             'conversation_id' => $conversation->id,

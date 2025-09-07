@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Broadcast;
 
 Route::get('/', function () {
     return Inertia::render('welcome');
@@ -9,6 +10,9 @@ Route::get('/', function () {
 
 // Public API documentation
 Route::get('developer/api-reference', [\App\Http\Controllers\DeveloperController::class, 'apiReference'])->name('developer.api-reference');
+
+// Broadcasting authentication route (must be before auth middleware)
+Broadcast::routes(['middleware' => ['web', 'auth']]);
 
 Route::middleware(['auth', 'verified', 'mfa.verified'])->group(function () {
     // Tenant management routes (before tenant middleware)

@@ -87,6 +87,7 @@ class User extends Authenticatable implements HasPasskeys
             'birthdate' => 'date',
             'phone_verified_at' => 'datetime',
             'profile_updated_at' => 'datetime',
+            'last_seen_at' => 'datetime',
             'social_links' => 'array',
         ];
     }
@@ -378,6 +379,19 @@ class User extends Authenticatable implements HasPasskeys
     public function updatedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    /**
+     * Signal Protocol relationships
+     */
+    public function signalIdentityKeys(): HasMany
+    {
+        return $this->hasMany(\App\Models\Signal\IdentityKey::class);
+    }
+
+    public function userDevices(): HasMany
+    {
+        return $this->hasMany(UserDevice::class);
     }
 
     /**

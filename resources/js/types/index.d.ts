@@ -1,5 +1,14 @@
 import { LucideIcon } from 'lucide-react';
 import type { Config } from 'ziggy-js';
+import Echo from 'laravel-echo';
+import Pusher from 'pusher-js';
+
+declare global {
+    interface Window {
+        Echo: Echo;
+        Pusher: typeof Pusher;
+    }
+}
 
 export interface Auth {
     user: User;

@@ -133,7 +133,7 @@ class ConversationController extends Controller
 
         // Type-specific validation rules
         if ($type === 'direct') {
-            $validationRules['participants'] = 'required|array|size:2'; // Exactly 2 participants for direct messages
+            $validationRules['participants'] = 'required|array|min:1|max:2'; // 1-2 participants (initiator auto-included if not present)
             $validationRules['name'] = 'nullable|string|max:255';
             $validationRules['description'] = 'nullable|string|max:500';
         } elseif ($type === 'group') {
@@ -178,8 +178,21 @@ class ConversationController extends Controller
                 $participantUsers->push($user);
             }
 
+            // Validate direct message constraints
+            if ($type === 'direct') {
+                if ($participantUsers->count() !== 2) {
+                    return response()->json(['error' => 'Direct conversations must have exactly 2 participants'], 422);
+                }
+                
+                // Prevent creating conversation with yourself
+                $userIds = $participantUsers->pluck('id')->toArray();
+                if (count(array_unique($userIds)) < 2) {
+                    return response()->json(['error' => 'Cannot create direct conversation with yourself'], 422);
+                }
+            }
+
             // For direct messages, check if conversation already exists
-            if ($type === 'direct' && $participantUsers->count() === 2) {
+            if ($type === 'direct') {
                 $existingConversation = $this->findExistingDirectMessage($participantUsers->pluck('id')->toArray());
                 if ($existingConversation) {
                     DB::commit();
@@ -220,7 +233,7 @@ class ConversationController extends Controller
             $conversation = $this->signalService->startConversation(
                 $user,
                 $device,
-                $participantUsers->toArray(),
+                $participantUsers->all(),
                 $conversationOptions
             );
 

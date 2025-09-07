@@ -169,13 +169,18 @@ class SignalProtocolService
     ): Conversation {
         // Create conversation
         $conversation = Conversation::create([
-            'type' => count($participants) > 1 ? 'group' : 'direct',
+            'type' => $options['type'] ?? (count($participants) > 1 ? 'group' : 'direct'),
             'name' => $options['name'] ?? null,
             'description' => $options['description'] ?? null,
-            'created_by' => $initiator->id,
-            'encryption_algorithm' => $this->selectBestEncryptionAlgorithm($initiator, $participants),
-            'key_strength' => $options['key_strength'] ?? 256,
-            'status' => 'active',
+            'avatar_url' => $options['avatar_url'] ?? null,
+            'created_by_user_id' => $initiator->id,
+            'created_by_device_id' => $initiatorDevice->id,
+            'settings' => array_merge([
+                'encryption_algorithm' => $this->selectBestEncryptionAlgorithm($initiator, $participants),
+                'key_strength' => $options['key_strength'] ?? 768,
+                'enable_quantum' => $options['enable_quantum'] ?? false,
+            ], $options['settings'] ?? []),
+            'is_active' => true,
         ]);
 
         // Add initiator as admin

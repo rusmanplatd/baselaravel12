@@ -172,8 +172,7 @@ export function useE2EEChat(): UseE2EEChatReturn {
     const [isLoadingMessages, setIsLoadingMessages] = useState(false);
     const [error, setError] = useState<string | null>(null);
     
-    // Refs for WebSocket connections
-    const wsConnection = useRef<WebSocket | null>(null);
+    // Refs for tracking subscribed conversations
     const subscribedConversations = useRef<Set<string>>(new Set());
 
     // Device fingerprint for E2EE
@@ -578,22 +577,22 @@ export function useE2EEChat(): UseE2EEChatReturn {
             return;
         }
 
-        // Initialize WebSocket connection if needed
-        if (!wsConnection.current) {
-            const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws/chat`;
-            wsConnection.current = new WebSocket(wsUrl);
-
-            wsConnection.current.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                handleRealTimeMessage(data);
-            };
+        // Initialize Echo connection if needed
+        if (!window.Echo) {
+            // Echo should be initialized in bootstrap.js
+            console.error('Laravel Echo not initialized');
+            return;
         }
 
-        // Subscribe to conversation
-        wsConnection.current.send(JSON.stringify({
-            type: 'subscribe',
-            conversation_id: conversationId,
-        }));
+        // Subscribe to conversation channel
+        const channel = window.Echo.private(`conversation.${conversationId}`);
+        
+        channel.listen('.message.sent', (data: any) => {
+            handleRealTimeMessage({
+                type: 'message',
+                ...data
+            });
+        });
 
         subscribedConversations.current.add(conversationId);
     }, []);
@@ -603,10 +602,10 @@ export function useE2EEChat(): UseE2EEChatReturn {
             return;
         }
 
-        wsConnection.current?.send(JSON.stringify({
-            type: 'unsubscribe',
-            conversation_id: conversationId,
-        }));
+        // Leave the conversation channel
+        if (window.Echo) {
+            window.Echo.leave(`conversation.${conversationId}`);
+        }
 
         subscribedConversations.current.delete(conversationId);
     }, []);
@@ -665,10 +664,16 @@ export function useE2EEChat(): UseE2EEChatReturn {
         loadDevices();
     }, [loadDevices]);
 
-    // Cleanup WebSocket on unmount
+    // Cleanup subscriptions on unmount
     useEffect(() => {
         return () => {
-            wsConnection.current?.close();
+            // Leave all subscribed channels
+            subscribedConversations.current.forEach(conversationId => {
+                if (window.Echo) {
+                    window.Echo.leave(`conversation.${conversationId}`);
+                }
+            });
+            subscribedConversations.current.clear();
         };
     }, []);
 
