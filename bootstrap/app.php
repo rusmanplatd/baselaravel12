@@ -17,7 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
-        $middleware->validateCsrfTokens(except: ['api/*']);
+        $middleware->validateCsrfTokens(except: ['api/*', 'broadcasting/*', 'test-broadcasting-auth']);
 
         $middleware->web(append: [
             HandleAppearance::class,
@@ -34,6 +34,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'auth' => \App\Http\Middleware\Authenticate::class,
+            'broadcasting.auth' => \App\Http\Middleware\BroadcastingAuth::class,
             'mfa.verified' => \App\Http\Middleware\EnsureMfaVerified::class,
             'permission' => \App\Http\Middleware\CheckPermission::class,
             'permission.check' => \App\Http\Middleware\CheckPermissionMiddleware::class,

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { router } from '@inertiajs/react';
 import { apiService } from '@/services/ApiService';
 import { getUserStorageItem, setUserStorageItem } from '@/utils/localStorage';
+import { subscribeToChannel, leaveChannel, handleBroadcastingAuthError } from '@/utils/broadcastingAuth';
 
 interface Message {
     id: string;
@@ -572,29 +573,28 @@ export function useE2EEChat(): UseE2EEChatReturn {
     }, [getDeviceFingerprint]);
 
     // Real-time subscription functions
-    const subscribeToConversation = useCallback((conversationId: string): void => {
+    const subscribeToConversation = useCallback(async (conversationId: string): Promise<void> => {
         if (subscribedConversations.current.has(conversationId)) {
             return;
         }
 
-        // Initialize Echo connection if needed
-        if (!window.Echo) {
-            // Echo should be initialized in bootstrap.js
-            console.error('Laravel Echo not initialized');
-            return;
-        }
-
-        // Subscribe to conversation channel
-        const channel = window.Echo.private(`conversation.${conversationId}`);
-        
-        channel.listen('.message.sent', (data: any) => {
-            handleRealTimeMessage({
-                type: 'message',
-                ...data
+        try {
+            // Subscribe to conversation channel with enhanced error handling
+            await subscribeToChannel(`conversation.${conversationId}`, {
+                '.message.sent': (data: any) => {
+                    handleRealTimeMessage({
+                        type: 'message',
+                        ...data
+                    });
+                }
             });
-        });
 
-        subscribedConversations.current.add(conversationId);
+            subscribedConversations.current.add(conversationId);
+            console.log(`Subscribed to conversation: ${conversationId}`);
+        } catch (error) {
+            console.error(`Failed to subscribe to conversation ${conversationId}:`, error);
+            await handleBroadcastingAuthError(error);
+        }
     }, []);
 
     const unsubscribeFromConversation = useCallback((conversationId: string): void => {
@@ -603,10 +603,7 @@ export function useE2EEChat(): UseE2EEChatReturn {
         }
 
         // Leave the conversation channel
-        if (window.Echo) {
-            window.Echo.leave(`conversation.${conversationId}`);
-        }
-
+        leaveChannel(`conversation.${conversationId}`);
         subscribedConversations.current.delete(conversationId);
     }, []);
 
@@ -669,9 +666,7 @@ export function useE2EEChat(): UseE2EEChatReturn {
         return () => {
             // Leave all subscribed channels
             subscribedConversations.current.forEach(conversationId => {
-                if (window.Echo) {
-                    window.Echo.leave(`conversation.${conversationId}`);
-                }
+                leaveChannel(`conversation.${conversationId}`);
             });
             subscribedConversations.current.clear();
         };

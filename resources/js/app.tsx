@@ -7,6 +7,7 @@ import { initializeTheme } from './hooks/use-appearance';
 import { initializeLocalStorage, onUserLogin } from './utils/localStorage';
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
+import { apiService } from './services/ApiService';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -22,50 +23,47 @@ window.Echo = new Echo({
     forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? 'http') === 'https',
     disableStats: true,
     enabledTransports: ['ws', 'wss'],
-    auth: {
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
-            'X-Requested-With': 'XMLHttpRequest',
-        },
-    },
-    authorizer: (channel: any, options: any) => {
+    authorizer: (channel: { name: string }) => {
         return {
-            authorize: (socketId: string, callback: Function) => {
+            authorize: (socketId: string, callback: (error: Error | null, data: { auth: string } | null) => void) => {
                 console.log('Attempting to authorize channel:', channel.name, 'with socket ID:', socketId);
-                console.log('CSRF Token:', document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'));
-                
-                fetch('/broadcasting/auth', {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                        'X-Requested-With': 'XMLHttpRequest',
-                    },
-                    credentials: 'same-origin',
-                    body: new URLSearchParams({
-                        socket_id: socketId,
-                        channel_name: channel.name,
-                    }),
-                })
-                .then(response => {
-                    console.log('Broadcasting auth response status:', response.status);
-                    if (!response.ok) {
-                        return response.text().then(text => {
+
+                (async () => {
+                    try {
+                        // Get API token from ApiService
+                        const token = await apiService.getAccessToken();
+                        console.log('Using API token for broadcasting auth');
+
+                        const response = await fetch('/broadcasting/auth', {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                                'X-Requested-With': 'XMLHttpRequest',
+                            },
+                            body: new URLSearchParams({
+                                socket_id: socketId,
+                                channel_name: channel.name,
+                            }),
+                        });
+
+                        console.log('Broadcasting auth response status:', response.status);
+
+                        if (!response.ok) {
+                            const text = await response.text();
                             console.error('Broadcasting auth failed with response:', text);
                             throw new Error(`HTTP ${response.status}: ${response.statusText} - ${text}`);
-                        });
+                        }
+
+                        const data = await response.json();
+                        console.log('Broadcasting auth success:', data);
+                        callback(null, data);
+                    } catch (error) {
+                        console.error('Broadcasting auth error:', error);
+                        callback(error instanceof Error ? error : new Error(String(error)), null);
                     }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('Broadcasting auth success:', data);
-                    callback(null, data);
-                })
-                .catch(error => {
-                    console.error('Broadcasting auth error:', error);
-                    callback(error, null);
-                });
+                })();
             }
         };
     },
@@ -89,12 +87,13 @@ initializeLocalStorage();
 
 // Check if user is authenticated and run login cleanup if needed
 try {
-    const inertiaPage = (window as any).page;
+    const inertiaPage = (window as { page?: { props?: { auth?: { user?: { id: string } } } } }).page;
     if (inertiaPage?.props?.auth?.user?.id) {
         // User is authenticated - run login cleanup to migrate guest data
         onUserLogin(inertiaPage.props.auth.user.id);
     }
 } catch (error) {
+    console.error('Error checking user authentication status:', error);
     // Silently continue if we can't access user data
 }
 

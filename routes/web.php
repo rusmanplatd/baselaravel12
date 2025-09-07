@@ -2,7 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use Illuminate\Support\Facades\Broadcast;
 
 Route::get('/', function () {
     return Inertia::render('welcome');
@@ -11,8 +10,104 @@ Route::get('/', function () {
 // Public API documentation
 Route::get('developer/api-reference', [\App\Http\Controllers\DeveloperController::class, 'apiReference'])->name('developer.api-reference');
 
-// Broadcasting authentication route (must be before auth middleware)
-Broadcast::routes(['middleware' => ['web', 'auth']]);
+// Custom broadcasting auth route that fully supports API tokens
+Route::post('broadcasting/auth', function (\Illuminate\Http\Request $request) {
+    \Log::info('Broadcasting auth route called', [
+        'user' => Auth::user() ? Auth::user()->only(['id', 'name']) : null,
+        'socket_id' => $request->input('socket_id'),
+        'channel_name' => $request->input('channel_name'),
+        'headers' => $request->headers->all(),
+    ]);
+
+    $user = Auth::user();
+
+    if (! $user) {
+        \Log::warning('No authenticated user for broadcasting auth');
+
+        return response()->json(['message' => 'Unauthorized'], 401);
+    }
+
+    $socketId = $request->input('socket_id');
+    $channelName = $request->input('channel_name');
+
+    if (! $socketId || ! $channelName) {
+        \Log::warning('Missing required parameters', [
+            'socket_id' => $socketId,
+            'channel_name' => $channelName,
+        ]);
+
+        return response()->json(['message' => 'Missing required parameters'], 400);
+    }
+
+    \Log::info('Checking channel authorization', [
+        'channel' => $channelName,
+        'user_id' => $user->id,
+    ]);
+
+    // For user.{id} channels, check if user ID matches
+    if (preg_match('/^user\.(\w+)$/', $channelName, $matches)) {
+        $requestedUserId = $matches[1];
+
+        if ($user->id !== $requestedUserId) {
+            \Log::warning('User ID mismatch for user channel', [
+                'authenticated_user' => $user->id,
+                'requested_user' => $requestedUserId,
+            ]);
+
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        // Generate auth signature for Reverb
+        $stringToSign = $socketId.':'.$channelName;
+        $secret = env('REVERB_APP_SECRET');
+        $appId = env('REVERB_APP_ID');
+        $signature = hash_hmac('sha256', $stringToSign, $secret);
+        $auth = $appId.':'.$signature;
+
+        \Log::info('Broadcasting auth successful', [
+            'channel' => $channelName,
+            'user_id' => $user->id,
+            'auth_prefix' => substr($auth, 0, 20).'...',
+        ]);
+
+        return response()->json(['auth' => $auth]);
+    }
+
+    // For other channels, use Laravel's channel authorization
+    try {
+        $broadcastManager = app(\Illuminate\Broadcasting\BroadcastManager::class);
+        $result = $broadcastManager->auth($request, $channelName);
+
+        if ($result === false || $result === null) {
+            \Log::warning('Channel authorization failed', [
+                'channel' => $channelName,
+                'user_id' => $user->id,
+                'result' => $result,
+            ]);
+
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+
+        // Generate auth signature for Reverb
+        $stringToSign = $socketId.':'.$channelName;
+        $secret = env('REVERB_APP_SECRET');
+        $appId = env('REVERB_APP_ID');
+        $signature = hash_hmac('sha256', $stringToSign, $secret);
+        $auth = $appId.':'.$signature;
+
+        return response()->json(['auth' => $auth]);
+
+    } catch (\Exception $e) {
+        \Log::error('Broadcasting auth error', [
+            'error' => $e->getMessage(),
+            'channel' => $channelName,
+            'user_id' => $user->id,
+            'trace' => $e->getTraceAsString(),
+        ]);
+
+        return response()->json(['message' => 'Authorization failed'], 403);
+    }
+})->middleware(['broadcasting.auth']);
 
 Route::middleware(['auth', 'verified', 'mfa.verified'])->group(function () {
     // Tenant management routes (before tenant middleware)
@@ -32,29 +127,29 @@ Route::middleware(['auth', 'verified', 'mfa.verified'])->group(function () {
 
     Route::get('chat/{conversationId}', function ($conversationId) {
         return Inertia::render('chat', [
-            'initialConversationId' => $conversationId
+            'initialConversationId' => $conversationId,
         ]);
     })->name('chat.conversation');
 
     // Generate personal access token for API usage
     Route::post('api/generate-token', function () {
         $user = auth()->user();
-        
-        if (!$user) {
+
+        if (! $user) {
             return response()->json([
                 'error' => 'Unauthorized',
-                'message' => 'Authentication required to generate API token'
+                'message' => 'Authentication required to generate API token',
             ], 401);
         }
-        
+
         // Check if user already has an active token
         $existingTokens = $user->tokens()->where('revoked', false)->where('name', 'API Access Token')->get();
-        
+
         // Revoke existing tokens to prevent token accumulation
         foreach ($existingTokens as $existingToken) {
             $existingToken->revoke();
         }
-        
+
         $token = $user->createToken('API Access Token')->accessToken;
 
         return response()->json([
