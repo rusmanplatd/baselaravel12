@@ -3,6 +3,7 @@
 namespace App\Models\Chat;
 
 use App\Models\User;
+use App\Models\UserDevice;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -150,7 +151,28 @@ class Participant extends Model
 
     public function canSendMessages(): bool
     {
-        return $this->isActive() && $this->hasPermission('send_messages');
+        // Active participants can send messages by default unless explicitly restricted
+        if (!$this->isActive()) {
+            return false;
+        }
+
+        // If permissions are null or empty, allow sending messages (default behavior)
+        if (empty($this->permissions)) {
+            return true;
+        }
+
+        // Check if send_messages permission is explicitly denied
+        if (in_array('deny_send_messages', $this->permissions)) {
+            return false;
+        }
+
+        // If send_messages permission is explicitly granted, allow it
+        if (in_array('send_messages', $this->permissions)) {
+            return true;
+        }
+
+        // Default to allowing messages for active participants
+        return true;
     }
 
     public function canDeleteMessages(): bool

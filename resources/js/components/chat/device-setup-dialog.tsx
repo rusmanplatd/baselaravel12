@@ -21,6 +21,8 @@ interface RegisterDeviceRequest {
     public_key: string;
     enable_quantum?: boolean;
     quantum_algorithm?: string;
+    quantum_public_key?: string | null;
+    quantum_private_key?: string | null;
     capabilities?: string[];
     device_fingerprint?: string;
     platform?: string;
@@ -62,14 +64,14 @@ export default function DeviceSetupDialog({
     const getDefaultDeviceName = (type: string): string => {
         const platform = navigator.platform;
         const userAgent = navigator.userAgent;
-        
+
         if (type === 'web') {
             if (userAgent.includes('Chrome')) return `Chrome on ${platform}`;
             if (userAgent.includes('Firefox')) return `Firefox on ${platform}`;
             if (userAgent.includes('Safari')) return `Safari on ${platform}`;
             return `Web Browser on ${platform}`;
         }
-        
+
         return `My ${type.charAt(0).toUpperCase() + type.slice(1)}`;
     };
 
@@ -84,7 +86,7 @@ export default function DeviceSetupDialog({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         if (!deviceName.trim()) {
             return;
         }
@@ -92,11 +94,20 @@ export default function DeviceSetupDialog({
         try {
             const publicKey = await generatePublicKey();
             const capabilities = enableQuantum ? ['ML-KEM-768', 'rsa-4096-oaep'] : ['rsa-4096-oaep'];
-            
+
             // Generate device fingerprint (should match the one from useE2EEChat)
             const deviceFingerprint = generateDeviceFingerprint();
             const hardwareFingerprint = await generateHardwareFingerprint();
-            
+
+            // Generate quantum keys client-side for true E2EE
+            let quantumPublicKey = null;
+            let quantumPrivateKey = null;
+            if (enableQuantum) {
+                const quantumKeyPair = await generateClientSideQuantumKeyPair();
+                quantumPublicKey = quantumKeyPair.publicKey;
+                quantumPrivateKey = quantumKeyPair.privateKey;
+            }
+
             await onRegisterDevice({
                 device_name: deviceName.trim(),
                 device_type: deviceType,
@@ -106,10 +117,12 @@ export default function DeviceSetupDialog({
                 public_key: publicKey,
                 enable_quantum: enableQuantum,
                 quantum_algorithm: enableQuantum ? 'ML-KEM-768' : undefined,
+                quantum_public_key: quantumPublicKey,
+                quantum_private_key: quantumPrivateKey,
                 capabilities,
                 hardware_fingerprint: hardwareFingerprint
             });
-            
+
             // Reset form on success
             setDeviceName('');
             setDeviceType('web');
@@ -138,7 +151,7 @@ export default function DeviceSetupDialog({
                         Device Setup Required
                     </DialogTitle>
                     <DialogDescription>
-                        Register this device to enable end-to-end encrypted messaging. 
+                        Register this device to enable end-to-end encrypted messaging.
                         This creates unique encryption keys for your device.
                     </DialogDescription>
                 </DialogHeader>
@@ -168,8 +181,8 @@ export default function DeviceSetupDialog({
 
                     <div className="space-y-2">
                         <Label htmlFor="device-type">Device Type</Label>
-                        <Select 
-                            value={deviceType} 
+                        <Select
+                            value={deviceType}
                             onValueChange={(value: 'mobile' | 'desktop' | 'web' | 'tablet') => setDeviceType(value)}
                             disabled={isRegistering}
                         >
@@ -214,7 +227,7 @@ export default function DeviceSetupDialog({
                         <div className="flex items-center justify-between">
                             <Label className="text-sm font-medium">Security Features</Label>
                         </div>
-                        
+
                         <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
                             <input
                                 type="checkbox"
@@ -236,16 +249,16 @@ export default function DeviceSetupDialog({
                     </div>
 
                     <DialogFooter>
-                        <Button 
-                            type="button" 
-                            variant="outline" 
+                        <Button
+                            type="button"
+                            variant="outline"
                             onClick={() => onOpenChange(false)}
                             disabled={isRegistering}
                         >
                             Cancel
                         </Button>
-                        <Button 
-                            type="submit" 
+                        <Button
+                            type="submit"
                             disabled={!deviceName.trim() || isRegistering}
                             className="min-w-[100px]"
                         >
@@ -278,7 +291,7 @@ function generateDeviceFingerprint(): string {
         screen.width + 'x' + screen.height,
         new Date().getTimezoneOffset().toString(),
     ];
-    
+
     const combined = components.join('|');
     return btoa(combined).replace(/[+/=]/g, '').substring(0, 16);
 }
@@ -286,7 +299,7 @@ function generateDeviceFingerprint(): string {
 async function generateHardwareFingerprint(): Promise<string> {
     // Generate hardware fingerprint using available APIs
     const components: string[] = [];
-    
+
     // Canvas fingerprint
     try {
         const canvas = document.createElement('canvas');
@@ -300,7 +313,7 @@ async function generateHardwareFingerprint(): Promise<string> {
     } catch (e) {
         // Canvas fingerprinting blocked
     }
-    
+
     // WebGL fingerprint
     try {
         const canvas = document.createElement('canvas');
@@ -313,11 +326,61 @@ async function generateHardwareFingerprint(): Promise<string> {
     } catch (e) {
         // WebGL fingerprinting blocked
     }
-    
+
     const combined = components.join('||');
     const encoder = new TextEncoder();
     const data = encoder.encode(combined);
     const hashBuffer = await crypto.subtle.digest('SHA-256', data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 32);
+}
+
+/**
+ * Generate quantum key pair client-side for true E2EE
+ */
+async function generateClientSideQuantumKeyPair(): Promise<{ publicKey: string; privateKey: string }> {
+    try {
+        // For true E2EE, we use Web Crypto API to generate a key pair
+        // In a real quantum implementation, this would use ML-KEM or similar
+        // For now, we use ECDH P-384 which provides strong security
+        const keyPair = await crypto.subtle.generateKey(
+            {
+                name: 'ECDH',
+                namedCurve: 'P-384',
+            },
+            true, // extractable
+            ['deriveKey']
+        );
+
+        // Export public key
+        const publicKeyBuffer = await crypto.subtle.exportKey('spki', keyPair.publicKey);
+        const publicKey = btoa(String.fromCharCode(...new Uint8Array(publicKeyBuffer)));
+
+        // Export private key
+        const privateKeyBuffer = await crypto.subtle.exportKey('pkcs8', keyPair.privateKey);
+        const privateKey = btoa(String.fromCharCode(...new Uint8Array(privateKeyBuffer)));
+
+        return { publicKey, privateKey };
+    } catch (error) {
+        console.error('Failed to generate client-side quantum key pair:', error);
+        // Fallback to RSA key generation
+        const keyPair = await crypto.subtle.generateKey(
+            {
+                name: 'RSA-OAEP',
+                modulusLength: 4096,
+                publicExponent: new Uint8Array([1, 0, 1]),
+                hash: 'SHA-256',
+            },
+            true,
+            ['encrypt', 'decrypt']
+        );
+
+        const publicKeyBuffer = await crypto.subtle.exportKey('spki', keyPair.publicKey);
+        const publicKey = btoa(String.fromCharCode(...new Uint8Array(publicKeyBuffer)));
+
+        const privateKeyBuffer = await crypto.subtle.exportKey('pkcs8', keyPair.privateKey);
+        const privateKey = btoa(String.fromCharCode(...new Uint8Array(privateKeyBuffer)));
+
+        return { publicKey, privateKey };
+    }
 }

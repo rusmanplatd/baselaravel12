@@ -56,7 +56,7 @@ class MessageSent implements ShouldBroadcast
                 'id' => $this->message->id,
                 'conversation_id' => $this->message->conversation_id,
                 'sender_id' => $this->message->sender_id,
-                'type' => $this->message->type,
+                'type' => $this->message->message_type ?? $this->message->type,
                 'status' => $this->message->status,
                 'created_at' => $this->message->created_at->toISOString(),
                 'sender' => [
@@ -66,6 +66,7 @@ class MessageSent implements ShouldBroadcast
                 ],
                 // Don't broadcast encrypted content - clients will fetch/decrypt separately
             ],
+            'sender_id' => $this->message->sender_id, // Include sender ID to filter on frontend
         ];
     }
 }

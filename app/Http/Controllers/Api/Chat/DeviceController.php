@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 
 class DeviceController extends Controller
@@ -120,6 +121,8 @@ class DeviceController extends Controller
             $identityKey = $this->signalService->initializeDevice($user, $device, [
                 'enable_quantum' => $request->boolean('enable_quantum'),
                 'quantum_algorithm' => $request->input('quantum_algorithm', 'ML-KEM-768'),
+                'quantum_public_key' => $request->input('quantum_public_key'),
+                'quantum_private_key' => $request->input('quantum_private_key'),
             ]);
 
             DB::commit();

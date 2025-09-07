@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { router } from '@inertiajs/react';
 import { apiService } from '@/services/ApiService';
 import { getUserStorageItem, setUserStorageItem } from '@/utils/localStorage';
 import { subscribeToChannel, leaveChannel, handleBroadcastingAuthError } from '@/utils/broadcastingAuth';
@@ -625,10 +624,21 @@ export function useE2EEChat(): UseE2EEChatReturn {
         try {
             // Subscribe to conversation channel with enhanced error handling
             await subscribeToChannel(`conversation.${conversationId}`, {
-                '.message.sent': (data: any) => {
+                'message.sent': (data: any) => {
+                    console.log('Received real-time message:', data);
+
+                    // Get current user ID to filter out own messages
+                    const currentUserId = getUserStorageItem('user_id');
+
+                    // Don't process messages from the current user (they already see their own message)
+                    if (data.sender_id && data.sender_id.toString() === currentUserId?.toString()) {
+                        console.log('Ignoring own message in real-time update');
+                        return;
+                    }
+
                     handleRealTimeMessage({
-                        type: 'message',
-                        ...data
+                        type: 'new_message',
+                        message: data.message
                     });
                 }
             });
@@ -655,13 +665,26 @@ export function useE2EEChat(): UseE2EEChatReturn {
     const handleRealTimeMessage = useCallback((data: any): void => {
         switch (data.type) {
             case 'new_message':
-                setMessages(prev => [data.message, ...prev]);
-                // Update conversation last activity
-                setConversations(prev => prev.map(conv =>
-                    conv.id === data.message.conversation_id
-                        ? { ...conv, last_activity_at: data.message.created_at }
-                        : conv
-                ));
+                // Fetch the full message with encrypted content asynchronously
+                (async () => {
+                    try {
+                        const response = await apiService.get(`/api/v1/chat/conversations/${data.message.conversation_id}/messages/${data.message.id}`);
+                        const fullMessage = response.data.message;
+
+                        setMessages(prev => [fullMessage, ...prev]);
+
+                        // Update conversation last activity
+                        setConversations(prev => prev.map(conv =>
+                            conv.id === data.message.conversation_id
+                                ? { ...conv, last_activity_at: data.message.created_at }
+                                : conv
+                        ));
+                    } catch (error) {
+                        console.error('Failed to fetch full message for real-time update:', error);
+                        // Fallback to using the broadcasted message data
+                        setMessages(prev => [data.message, ...prev]);
+                    }
+                })();
                 break;
 
             case 'message_edited':
@@ -830,7 +853,7 @@ async function encryptMessageClientSide(content: string, conversationId: string)
         // Use Web Crypto API for client-side encryption
         const key = await crypto.subtle.generateKey(
             { name: 'AES-GCM', length: 256 },
-            false,
+            true, // Make key extractable so we can export it
             ['encrypt']
         );
 

@@ -77,11 +77,6 @@ class Conversation extends Model
         return $this->hasMany(EncryptionKey::class, 'conversation_id');
     }
 
-    public function channels(): HasMany
-    {
-        return $this->hasMany(Channel::class, 'conversation_id');
-    }
-
     public function videoCalls(): HasMany
     {
         return $this->hasMany(VideoCall::class, 'conversation_id');

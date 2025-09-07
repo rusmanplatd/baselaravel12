@@ -49,12 +49,33 @@ class Message extends Model
         'encryption_version' => 'integer',
     ];
 
+    protected $appends = [
+        'status',
+        'type',
+    ];
+
     protected $attributes = [
         'message_type' => 'text',
         'encryption_algorithm' => 'signal',
         'encryption_version' => 1,
         'is_edited' => false,
     ];
+
+    /**
+     * Get the status attribute (default to 'sent' for E2EE messages)
+     */
+    public function getStatusAttribute(): string
+    {
+        return 'sent';
+    }
+
+    /**
+     * Get the type attribute (alias for message_type)
+     */
+    public function getTypeAttribute(): string
+    {
+        return $this->message_type;
+    }
 
     public function getActivitylogOptions(): LogOptions
     {
@@ -249,7 +270,7 @@ class Message extends Model
     public function markAsRead(string $userId): void
     {
         $this->readReceipts()->updateOrCreate(
-            ['user_id' => $userId],
+            ['recipient_user_id' => $userId],
             ['read_at' => now()]
         );
     }
