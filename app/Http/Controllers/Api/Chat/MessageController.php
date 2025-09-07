@@ -5,9 +5,8 @@ namespace App\Http\Controllers\Api\Chat;
 use App\Http\Controllers\Controller;
 use App\Models\Chat\Conversation;
 use App\Models\Chat\Message;
-use App\Models\UserDevice;
-use App\Services\SignalProtocolService;
 use App\Services\WebhookService;
+use App\Services\SignalProtocolService;
 use App\Events\MessageSent;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -19,8 +18,8 @@ use Illuminate\Support\Facades\Validator;
 class MessageController extends Controller
 {
     public function __construct(
-        private SignalProtocolService $signalService,
-        private WebhookService $webhookService
+        private WebhookService $webhookService,
+        private SignalProtocolService $signalService
     ) {
         $this->middleware('auth:api');
         $this->middleware('throttle:120,1')->only(['store']);
@@ -50,7 +49,6 @@ class MessageController extends Controller
         }
 
         $user = $request->user();
-        $device = $this->getCurrentUserDevice($request);
         $conversation = Conversation::findOrFail($conversationId);
 
         // Check if user is participant
@@ -72,7 +70,7 @@ class MessageController extends Controller
                     $query->whereIn('recipient_user_id', $conversation->participants->pluck('user_id'));
                 },
             ])
-            ->orderByDesc('created_at');
+            ->orderBy('created_at');
 
         // Apply cursor-based pagination
         if ($beforeId) {
@@ -87,8 +85,11 @@ class MessageController extends Controller
 
         $messages = $query->limit($limit)->get();
 
-        // Decrypt messages for this user/device
-        $decryptedMessages = $this->decryptMessagesForUser($messages, $user, $device);
+        // Messages are now decrypted on the client side
+        $decryptedMessages = $messages->map(function ($message) {
+            $message->type = $message->message_type;
+            return $message;
+        })->toArray();
 
         // Update read status for user
         $this->markMessagesAsRead($conversation, $user, $messages);
@@ -110,7 +111,10 @@ class MessageController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'type' => 'required|in:text,image,video,audio,file,voice,poll',
-            'content' => 'required|string|max:10000',
+            'content' => 'nullable|string|max:10000', // Optional for E2EE (client encrypts)
+            'encrypted_content' => 'nullable|string', // Required for E2EE
+            'content_hash' => 'nullable|string', // Required for E2EE
+            'encryption_algorithm' => 'nullable|string', // Required for E2EE
             'reply_to_id' => 'nullable|exists:chat_messages,id',
             'scheduled_at' => 'nullable|date|after:now',
             'priority' => 'nullable|in:low,normal,high,urgent',
@@ -122,12 +126,7 @@ class MessageController extends Controller
         }
 
         $user = $request->user();
-        $device = $this->getCurrentUserDevice($request);
         $conversation = Conversation::findOrFail($conversationId);
-
-        if (! $device) {
-            return response()->json(['error' => 'Device not registered for E2EE'], 400);
-        }
 
         // Check if user can send messages
         $participant = $conversation->participants()->where('user_id', $user->id)->active()->first();
@@ -138,36 +137,39 @@ class MessageController extends Controller
         try {
             DB::beginTransaction();
 
-            // Encrypt message for all participants
-            $recipients = $conversation->activeParticipants()->with('user')->get()->pluck('user')->values()->all();
-            $encryptedMessages = $this->signalService->encryptMessage(
-                $request->content,
-                $conversation,
-                $user,
-                $device,
-                $recipients
-            );
+            // In proper E2EE, the message should already be encrypted on the client side
+            // The server should only store the encrypted content
+            $encryptedContent = $request->input('encrypted_content');
+            $contentHash = $request->input('content_hash');
+
+            if (!$encryptedContent) {
+                // In proper E2EE, encrypted content should always be provided by the client
+                return response()->json(['error' => 'Encrypted content is required for E2EE messages'], 400);
+            }
 
             // Store the message
             $message = Message::create([
                 'conversation_id' => $conversation->id,
                 'sender_id' => $user->id,
-                'sender_device_id' => $device->id,
+                'sender_device_id' => null, // Not needed for E2EE
                 'reply_to_id' => $request->reply_to_id,
                 'message_type' => $request->type,
-                'encrypted_content' => $encryptedMessages[0]['encrypted_content'], // Primary encrypted content
-                'content_hash' => $encryptedMessages[0]['content_hash'],
+                'encrypted_content' => $encryptedContent,
+                'content_hash' => $contentHash,
                 'encrypted_metadata' => $request->metadata ? json_encode($request->metadata) : null,
             ]);
 
-            // Store delivery receipts for all recipients
-            foreach ($encryptedMessages as $encryptedMessage) {
-                $message->readReceipts()->create([
-                    'recipient_user_id' => $encryptedMessage['recipient_user_id'],
-                    'recipient_device_id' => $encryptedMessage['recipient_device_id'],
-                    'status' => 'sent',
-                    'delivered_at' => now(),
-                ]);
+            // Create delivery receipts for all conversation participants
+            $participants = $conversation->activeParticipants()->with('user')->get();
+            foreach ($participants as $participant) {
+                if ($participant->user_id !== $user->id) { // Don't create receipt for sender
+                    $message->readReceipts()->create([
+                        'recipient_user_id' => $participant->user_id,
+                        'recipient_device_id' => null, // Will be set when message is delivered to specific device
+                        'status' => 'sent',
+                        'delivered_at' => now(),
+                    ]);
+                }
             }
 
             // Update conversation last activity
@@ -182,8 +184,11 @@ class MessageController extends Controller
                 'reactions.user:id,name',
             ]);
 
-            // Decrypt for response
-            $message->decrypted_content = $request->content;
+            // In proper E2EE, the server should not decrypt messages
+            // The client will decrypt the message using the encrypted_content
+            $message->decrypted_content = null; // Don't include decrypted content in response
+            // Map message_type to type for frontend compatibility
+            $message->type = $message->message_type;
 
             // Broadcast to other participants (WebSocket/Pusher integration would go here)
             $this->broadcastMessage($message, $conversation);
@@ -210,7 +215,6 @@ class MessageController extends Controller
                     'name' => $user->name,
                 ],
                 'metadata' => [
-                    'recipients' => count($encryptedMessages),
                     'is_reply' => !empty($message->reply_to_id),
                 ],
             ], $conversation->organization_id);
@@ -220,15 +224,10 @@ class MessageController extends Controller
                 'conversation_id' => $conversation->id,
                 'sender_id' => $user->id,
                 'type' => $message->type,
-                'recipients' => count($encryptedMessages),
             ]);
 
             return response()->json([
                 'message' => $message,
-                'delivery_info' => [
-                    'total_recipients' => count($encryptedMessages),
-                    'delivered' => count($encryptedMessages),
-                ],
             ], 201);
 
         } catch (\Exception $e) {
@@ -249,7 +248,6 @@ class MessageController extends Controller
     public function show(Request $request, string $conversationId, string $messageId): JsonResponse
     {
         $user = $request->user();
-        $device = $this->getCurrentUserDevice($request);
         $conversation = Conversation::findOrFail($conversationId);
 
         if (! $conversation->hasUser($user->id)) {
@@ -266,30 +264,15 @@ class MessageController extends Controller
             'readReceipts.user:id,name',
         ])->findOrFail($messageId);
 
-        // Decrypt message content
-        if ($device) {
-            try {
-                $senderDevice = UserDevice::where('user_id', $message->sender_id)->active()->first();
-                $message->decrypted_content = $this->signalService->decryptMessage(
-                    $message->encrypted_content,
-                    $conversation->encryption_algorithm,
-                    $user,
-                    $device,
-                    $message->sender,
-                    $senderDevice
-                );
-            } catch (\Exception $e) {
-                Log::warning('Failed to decrypt message', [
-                    'message_id' => $messageId,
-                    'user_id' => $user->id,
-                    'error' => $e->getMessage(),
-                ]);
-                $message->decrypted_content = '[Decryption failed]';
-            }
-        }
+        // In proper E2EE, the server should not decrypt messages
+        // The client will decrypt the message using the encrypted_content
+        $message->decrypted_content = null;
 
         // Mark as read
         $message->markAsRead($user->id);
+
+        // Map message_type to type for frontend compatibility
+        $message->type = $message->message_type;
 
         return response()->json(['message' => $message]);
     }
@@ -370,7 +353,9 @@ class MessageController extends Controller
     public function update(Request $request, string $conversationId, string $messageId): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'content' => 'required|string|max:10000',
+            'content' => 'nullable|string|max:10000', // Optional for E2EE
+            'encrypted_content' => 'nullable|string', // Required for E2EE
+            'content_hash' => 'nullable|string', // Required for E2EE
         ]);
 
         if ($validator->fails()) {
@@ -378,13 +363,8 @@ class MessageController extends Controller
         }
 
         $user = $request->user();
-        $device = $this->getCurrentUserDevice($request);
         $conversation = Conversation::findOrFail($conversationId);
         $message = Message::findOrFail($messageId);
-
-        if (! $device) {
-            return response()->json(['error' => 'Device not registered for E2EE'], 400);
-        }
 
         // Check permissions
         if ($message->sender_id !== $user->id) {
@@ -399,27 +379,26 @@ class MessageController extends Controller
         try {
             DB::beginTransaction();
 
-            // Re-encrypt with new content
-            $recipients = $conversation->activeParticipants()->with('user')->get()->pluck('user')->toArray();
-            $encryptedMessages = $this->signalService->encryptMessage(
-                $request->content,
-                $conversation,
-                $user,
-                $device,
-                $recipients
-            );
+            // In proper E2EE, the client should provide the encrypted content
+            $encryptedContent = $request->input('encrypted_content');
+            $contentHash = $request->input('content_hash');
+
+            if (!$encryptedContent) {
+                return response()->json(['error' => 'Encrypted content is required for E2EE message editing'], 400);
+            }
 
             // Update message
             $message->update([
-                'encrypted_content' => $encryptedMessages[0]['encrypted_content'],
-                'content_hash' => $encryptedMessages[0]['content_hash'],
+                'encrypted_content' => $encryptedContent,
+                'content_hash' => $contentHash,
                 'is_edited' => true,
                 'edited_at' => now(),
             ]);
 
             DB::commit();
 
-            $message->decrypted_content = $request->content;
+            // Don't include decrypted content in response
+            $message->decrypted_content = null;
 
             // Broadcast edit to other participants
             $this->broadcastMessageEdit($message, $conversation);
@@ -550,35 +529,6 @@ class MessageController extends Controller
         }
     }
 
-    /**
-     * Decrypt messages for a specific user/device
-     */
-    private function decryptMessagesForUser($messages, $user, $device): array
-    {
-        return $messages->map(function ($message) use ($user, $device) {
-            if (! $device) {
-                $message->decrypted_content = '[Device not registered]';
-
-                return $message;
-            }
-
-            try {
-                $senderDevice = UserDevice::where('user_id', $message->sender_id)->active()->first();
-                $message->decrypted_content = $this->signalService->decryptMessage(
-                    $message->encrypted_content,
-                    'AES-256-GCM', // This would come from conversation settings
-                    $user,
-                    $device,
-                    $message->sender,
-                    $senderDevice
-                );
-            } catch (\Exception $e) {
-                $message->decrypted_content = '[Decryption failed]';
-            }
-
-            return $message;
-        })->toArray();
-    }
 
     /**
      * Mark messages as read for user
@@ -593,40 +543,7 @@ class MessageController extends Controller
         }
     }
 
-    /**
-     * Get current user device from request
-     */
-    private function getCurrentUserDevice(Request $request): ?UserDevice
-    {
-        $deviceFingerprint = $request->header('X-Device-Fingerprint');
 
-        if (! $deviceFingerprint) {
-            return null;
-        }
-
-        return UserDevice::where('user_id', $request->user()->id)
-            ->where('device_fingerprint', $deviceFingerprint)
-            ->active()
-            ->first();
-    }
-
-    /**
-     * Encrypt file content
-     */
-    private function encryptFile(string $content, string $key, string $iv): string
-    {
-        return openssl_encrypt($content, 'AES-256-CBC', $key, OPENSSL_RAW_DATA, $iv);
-    }
-
-    /**
-     * Generate encrypted thumbnail
-     */
-    private function generateEncryptedThumbnail($file, string $key): ?string
-    {
-        // Implementation would depend on image processing library
-        // Return base64 encoded encrypted thumbnail
-        return null;
-    }
 
     /**
      * Broadcast message to other participants (WebSocket integration point)
@@ -666,4 +583,72 @@ class MessageController extends Controller
             'conversation_id' => $conversation->id,
         ]);
     }
+
+    /**
+     * Migration endpoint to decrypt existing quantum-encrypted messages
+     * This is a temporary endpoint to help migrate from old quantum system to new client-side E2EE
+     */
+    public function migrateMessage(Request $request, string $messageId): JsonResponse
+    {
+        $user = $request->user();
+        $message = Message::findOrFail($messageId);
+
+        // Check if user has access to this message
+        if (!$message->conversation->hasUser($user->id)) {
+            return response()->json(['error' => 'Access denied'], 403);
+        }
+
+        try {
+            // Try to decrypt the message using the old server-side logic
+            $data = json_decode($message->encrypted_content, true);
+
+            if (isset($data['ciphertext']) && isset($data['encrypted_message']) && isset($data['nonce'])) {
+                // This is a quantum-encrypted message
+
+                // Check if the encrypted_message is actually base64-encoded plain text (fallback)
+                $decoded = base64_decode($data['encrypted_message'], true);
+                if ($decoded !== false && ctype_print($decoded)) {
+                    // This is a fallback message with base64-encoded plain text
+                    return response()->json([
+                        'message_id' => $message->id,
+                        'decrypted_content' => $decoded,
+                        'migration_status' => 'success',
+                        'message_type' => 'fallback_decoded'
+                    ]);
+                } else {
+                    // This is real quantum encryption - cannot decrypt without quantum keys
+                    return response()->json([
+                        'message_id' => $message->id,
+                        'decrypted_content' => '[Message encrypted with quantum cryptography - cannot be decrypted in current environment]',
+                        'migration_status' => 'quantum_encrypted',
+                        'message_type' => 'quantum_encrypted',
+                        'error' => 'Message is quantum-encrypted and cannot be decrypted without quantum keys'
+                    ]);
+                }
+            } else {
+                // Unknown format
+                return response()->json([
+                    'message_id' => $message->id,
+                    'decrypted_content' => null,
+                    'migration_status' => 'unknown_format',
+                    'message_type' => 'unknown',
+                    'error' => 'Unknown message format'
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Message migration failed', [
+                'message_id' => $messageId,
+                'user_id' => $user->id,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'message_id' => $message->id,
+                'decrypted_content' => null,
+                'migration_status' => 'error',
+                'error' => 'Migration failed: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
 }

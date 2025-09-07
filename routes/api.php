@@ -276,6 +276,10 @@ Route::middleware('auth:api')->prefix('v1')->group(function () {
                     ->name('add-reaction');
                 Route::delete('{message}/reactions', [\App\Http\Controllers\Api\Chat\MessageController::class, 'removeReaction'])
                     ->name('remove-reaction');
+
+                // Migration endpoint for existing quantum-encrypted messages
+                Route::post('{message}/migrate', [\App\Http\Controllers\Api\Chat\MessageController::class, 'migrateMessage'])
+                    ->name('migrate');
             });
 
             // File attachments
@@ -489,7 +493,7 @@ Route::middleware('auth:api')->prefix('v1')->group(function () {
             ->middleware('throttle:20,1');
         Route::delete('{bot}/conversations/{conversation}', [\App\Http\Controllers\Api\BotController::class, 'removeFromConversation'])
             ->name('remove-from-conversation');
-        
+
         // Bot API endpoints (authenticated with bot tokens)
         Route::post('{bot}/send-message', [\App\Http\Controllers\Api\BotController::class, 'sendMessage'])
             ->name('send-message')

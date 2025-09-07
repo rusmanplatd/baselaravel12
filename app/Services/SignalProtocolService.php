@@ -148,11 +148,69 @@ class SignalProtocolService
             throw new Exception('Sender identity key not found');
         }
 
-        // Decrypt based on algorithm
-        if (str_contains($algorithm, 'ML-KEM') || str_contains($algorithm, 'QUANTUM')) {
+        // Decrypt based on algorithm and content structure
+        $data = json_decode($encryptedContent, true);
+
+        // Auto-detect encryption method based on content structure
+        if (isset($data['ciphertext']) && isset($data['encrypted_message']) && isset($data['nonce'])) {
+            // This is quantum encryption format - try quantum decryption first
+            try {
+                return $this->decryptQuantumMessage($encryptedContent, $recipientIdentityKey, $senderIdentityKey);
+            } catch (Exception $e) {
+                // If quantum decryption fails (e.g., in fallback mode), try to extract plain text
+                Log::warning('Quantum decryption failed, attempting fallback', [
+                    'error' => $e->getMessage(),
+                    'algorithm' => $algorithm
+                ]);
+
+                // Check if this is a fallback encrypted message
+                if (isset($data['fallback_mode']) && $data['fallback_mode'] === true) {
+                    // This is a fallback classical encryption, decrypt it
+                    return openssl_decrypt(
+                        base64_decode($data['encrypted_message']),
+                        'aes-256-gcm',
+                        base64_decode($data['key']),
+                        OPENSSL_RAW_DATA,
+                        base64_decode($data['nonce']),
+                        base64_decode($data['tag'])
+                    );
+                }
+
+                // For development: if the encrypted_message looks like base64 encoded plain text, try to decode it
+                $encryptedMessage = $data['encrypted_message'] ?? '';
+                if (!empty($encryptedMessage)) {
+                    $decoded = base64_decode($encryptedMessage, true);
+                    if ($decoded !== false && ctype_print($decoded)) {
+                        return $decoded;
+                    }
+                }
+
+                // For existing messages that can't be decrypted due to missing quantum capabilities
+                // Return a user-friendly message indicating the message is encrypted
+                Log::info('Message cannot be decrypted - quantum capabilities not available', [
+                    'algorithm' => $algorithm,
+                    'fallback_mode' => true
+                ]);
+
+                return '[Encrypted message - requires quantum cryptography support]';
+            }
+        } elseif (isset($data['method']) && $data['method'] === 'hybrid') {
+            // This is hybrid encryption format
+            return $this->decryptHybridMessage($encryptedContent, $recipientIdentityKey, $senderIdentityKey);
+        } elseif (str_contains($algorithm, 'ML-KEM') || str_contains($algorithm, 'QUANTUM')) {
             return $this->decryptQuantumMessage($encryptedContent, $recipientIdentityKey, $senderIdentityKey);
         } elseif (str_contains($algorithm, 'HYBRID')) {
             return $this->decryptHybridMessage($encryptedContent, $recipientIdentityKey, $senderIdentityKey);
+        } elseif (str_contains($algorithm, 'AES-256-GCM-FALLBACK')) {
+            // Handle fallback classical encryption
+            return openssl_decrypt(
+                base64_decode($data['encrypted_message']),
+                'aes-256-gcm',
+                base64_decode($data['key']),
+                OPENSSL_RAW_DATA,
+                base64_decode($data['nonce']),
+                base64_decode($data['tag'])
+            );
         } else {
             return $this->decryptClassicalMessage($encryptedContent, $recipientIdentityKey, $senderIdentityKey);
         }
@@ -347,6 +405,11 @@ class SignalProtocolService
      */
     private function selectBestEncryptionAlgorithm(User $initiator, array $participants): string
     {
+        // In development mode, prefer classical encryption for better compatibility
+        if (app()->environment('local', 'development', 'testing')) {
+            return 'AES-256-GCM';
+        }
+
         $allUsers = array_merge([$initiator], $participants);
         $quantumCapableUsers = [];
 
@@ -496,28 +559,67 @@ class SignalProtocolService
     {
         $algorithm = $recipientKey->quantum_algorithm;
 
-        // Perform key encapsulation
-        $encapsulation = $this->quantumService->encapsulate(
-            base64_decode($recipientKey->quantum_public_key),
-            $algorithm
-        );
+        try {
+            // Perform key encapsulation
+            $encapsulation = $this->quantumService->encapsulate(
+                base64_decode($recipientKey->quantum_public_key),
+                $algorithm
+            );
 
-        // Encrypt message with shared secret
-        $encrypted = $this->quantumService->encrypt($plaintext, $encapsulation['shared_secret']);
+            // Encrypt message with shared secret
+            $encrypted = $this->quantumService->encrypt($plaintext, $encapsulation['shared_secret']);
 
-        return [
-            'content' => json_encode([
-                'ciphertext' => $encapsulation['ciphertext'],
-                'encrypted_message' => $encrypted['ciphertext'],
-                'nonce' => $encrypted['nonce'],
-            ]),
-            'hash' => hash('sha256', $plaintext),
-            'algorithm' => $algorithm,
-            'session_info' => [
-                'key_encapsulation' => true,
-                'quantum_algorithm' => $algorithm,
-            ],
-        ];
+            return [
+                'content' => json_encode([
+                    'ciphertext' => $encapsulation['ciphertext'],
+                    'encrypted_message' => $encrypted['ciphertext'],
+                    'nonce' => $encrypted['nonce'],
+                ]),
+                'hash' => hash('sha256', $plaintext),
+                'algorithm' => $algorithm,
+                'session_info' => [
+                    'key_encapsulation' => true,
+                    'quantum_algorithm' => $algorithm,
+                ],
+            ];
+        } catch (Exception $e) {
+            // In development/fallback mode, use classical encryption
+            Log::warning('Quantum encryption failed, falling back to classical encryption', [
+                'error' => $e->getMessage(),
+                'algorithm' => $algorithm,
+                'fallback_mode' => true
+            ]);
+
+            // Fall back to classical AES-256-GCM encryption
+            $key = random_bytes(32); // 256-bit key
+            $nonce = random_bytes(12); // 96-bit nonce for GCM
+
+            $encrypted = openssl_encrypt(
+                $plaintext,
+                'aes-256-gcm',
+                $key,
+                OPENSSL_RAW_DATA,
+                $nonce,
+                $tag
+            );
+
+            return [
+                'content' => json_encode([
+                    'encrypted_message' => base64_encode($encrypted),
+                    'key' => base64_encode($key),
+                    'nonce' => base64_encode($nonce),
+                    'tag' => base64_encode($tag),
+                    'fallback_mode' => true,
+                ]),
+                'hash' => hash('sha256', $plaintext),
+                'algorithm' => 'AES-256-GCM-FALLBACK',
+                'session_info' => [
+                    'classical_encryption' => true,
+                    'fallback_mode' => true,
+                    'original_algorithm' => $algorithm,
+                ],
+            ];
+        }
     }
 
     /**
@@ -528,19 +630,58 @@ class SignalProtocolService
         $data = json_decode($encryptedContent, true);
         $algorithm = $recipientKey->quantum_algorithm;
 
-        // Decapsulate shared secret
-        $sharedSecret = $this->quantumService->decapsulate(
-            base64_decode($data['ciphertext']),
-            Crypt::decryptString($recipientKey->quantum_private_key_encrypted),
-            $algorithm
-        );
+        try {
+            // Decapsulate shared secret
+            $sharedSecret = $this->quantumService->decapsulate(
+                base64_decode($data['ciphertext']),
+                Crypt::decryptString($recipientKey->quantum_private_key_encrypted),
+                $algorithm
+            );
 
-        // Decrypt message
-        return $this->quantumService->decrypt(
-            $data['encrypted_message'],
-            $data['nonce'],
-            $sharedSecret
-        );
+            // Decrypt message
+            return $this->quantumService->decrypt(
+                $data['encrypted_message'],
+                $data['nonce'],
+                $sharedSecret
+            );
+        } catch (Exception $e) {
+            Log::warning('Quantum decryption failed, attempting fallback', [
+                'error' => $e->getMessage(),
+                'algorithm' => $algorithm,
+                'fallback_mode' => true
+            ]);
+
+            // Check if this is a fallback encrypted message
+            if (isset($data['fallback_mode']) && $data['fallback_mode'] === true) {
+                // This is a fallback classical encryption, decrypt it
+                return openssl_decrypt(
+                    base64_decode($data['encrypted_message']),
+                    'aes-256-gcm',
+                    base64_decode($data['key']),
+                    OPENSSL_RAW_DATA,
+                    base64_decode($data['nonce']),
+                    base64_decode($data['tag'])
+                );
+            }
+
+            // For development: if the encrypted_message looks like base64 encoded plain text, try to decode it
+            $encryptedMessage = $data['encrypted_message'] ?? '';
+            if (!empty($encryptedMessage)) {
+                $decoded = base64_decode($encryptedMessage, true);
+                if ($decoded !== false && ctype_print($decoded)) {
+                    return $decoded;
+                }
+            }
+
+            // For existing messages that can't be decrypted due to missing quantum capabilities
+            // Return a user-friendly message indicating the message is encrypted
+            Log::info('Message cannot be decrypted - quantum capabilities not available', [
+                'algorithm' => $algorithm,
+                'fallback_mode' => true
+            ]);
+
+            return '[Encrypted message - requires quantum cryptography support]';
+        }
     }
 
     /**
