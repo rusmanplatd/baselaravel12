@@ -53,6 +53,15 @@ window.Echo = new Echo({
                         if (!response.ok) {
                             const text = await response.text();
                             console.error('Broadcasting auth failed with response:', text);
+
+                            // Handle 403 errors gracefully (user doesn't have access to conversation)
+                            if (response.status === 403) {
+                                console.warn('Access denied to conversation channel. User may not have permission to access this conversation.');
+                                // Don't throw the error, just call the callback with null to prevent subscription
+                                callback(null, null);
+                                return;
+                            }
+
                             throw new Error(`HTTP ${response.status}: ${response.statusText} - ${text}`);
                         }
 

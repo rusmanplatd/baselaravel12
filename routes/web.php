@@ -73,10 +73,90 @@ Route::post('broadcasting/auth', function (\Illuminate\Http\Request $request) {
         return response()->json(['auth' => $auth]);
     }
 
+    // For conversation.{id} channels (with or without private- prefix), check if user is participant
+    if (preg_match('/^(?:private-)?conversation\.(\w+)$/', $channelName, $matches)) {
+        $conversationId = $matches[1];
+
+        \Log::info('Conversation channel auth attempt', [
+            'user_id' => $user->id,
+            'conversation_id' => $conversationId,
+        ]);
+
+        try {
+            $conversation = \App\Models\Chat\Conversation::where('id', $conversationId)->first();
+            if (!$conversation) {
+                \Log::warning('Conversation not found', [
+                    'conversation_id' => $conversationId,
+                ]);
+                return response()->json(['message' => 'Forbidden'], 403);
+            }
+
+            $participant = $conversation->participants()->where('user_id', $user->id)->first();
+            if (!$participant) {
+                \Log::warning('User not a participant', [
+                    'user_id' => $user->id,
+                    'conversation_id' => $conversationId,
+                ]);
+                return response()->json(['message' => 'Forbidden'], 403);
+            }
+
+            if ($participant->left_at !== null) {
+                \Log::warning('User has left the conversation', [
+                    'user_id' => $user->id,
+                    'conversation_id' => $conversationId,
+                    'left_at' => $participant->left_at,
+                ]);
+                return response()->json(['message' => 'Forbidden'], 403);
+            }
+
+            // Generate auth signature for Reverb
+            $stringToSign = $socketId.':'.$channelName;
+            $secret = env('REVERB_APP_SECRET');
+            $appId = env('REVERB_APP_ID');
+            $signature = hash_hmac('sha256', $stringToSign, $secret);
+            $auth = $appId.':'.$signature;
+
+            \Log::info('Conversation broadcasting auth successful', [
+                'channel' => $channelName,
+                'user_id' => $user->id,
+                'conversation_id' => $conversationId,
+                'participant_role' => $participant->role,
+                'auth_prefix' => substr($auth, 0, 20).'...',
+            ]);
+
+            return response()->json(['auth' => $auth]);
+
+        } catch (\Exception $e) {
+            \Log::error('Conversation channel auth error', [
+                'error' => $e->getMessage(),
+                'conversation_id' => $conversationId,
+                'user_id' => $user->id,
+                'exception_class' => get_class($e),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+    }
+
     // For other channels, use Laravel's channel authorization
     try {
+        \Log::info('Attempting channel authorization', [
+            'channel' => $channelName,
+            'user_id' => $user->id,
+            'socket_id' => $socketId,
+        ]);
+
         $broadcastManager = app(\Illuminate\Broadcasting\BroadcastManager::class);
         $result = $broadcastManager->auth($request, $channelName);
+
+        \Log::info('Channel authorization result', [
+            'channel' => $channelName,
+            'user_id' => $user->id,
+            'result' => $result,
+            'result_type' => gettype($result),
+        ]);
 
         if ($result === false || $result === null) {
             \Log::warning('Channel authorization failed', [
@@ -95,6 +175,12 @@ Route::post('broadcasting/auth', function (\Illuminate\Http\Request $request) {
         $signature = hash_hmac('sha256', $stringToSign, $secret);
         $auth = $appId.':'.$signature;
 
+        \Log::info('Broadcasting auth signature generated', [
+            'channel' => $channelName,
+            'user_id' => $user->id,
+            'auth_prefix' => substr($auth, 0, 20).'...',
+        ]);
+
         return response()->json(['auth' => $auth]);
 
     } catch (\Exception $e) {
@@ -102,6 +188,9 @@ Route::post('broadcasting/auth', function (\Illuminate\Http\Request $request) {
             'error' => $e->getMessage(),
             'channel' => $channelName,
             'user_id' => $user->id,
+            'exception_class' => get_class($e),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
             'trace' => $e->getTraceAsString(),
         ]);
 
@@ -126,6 +215,21 @@ Route::middleware(['auth', 'verified', 'mfa.verified'])->group(function () {
     })->name('chat');
 
     Route::get('chat/{conversationId}', function ($conversationId) {
+        $user = auth()->user();
+
+        // Check if user has access to this conversation
+        $conversation = \App\Models\Chat\Conversation::where('id', $conversationId)->first();
+
+        if (!$conversation) {
+            abort(404, 'Conversation not found');
+        }
+
+        $participant = $conversation->participants()->where('user_id', $user->id)->first();
+
+        if (!$participant || $participant->left_at !== null) {
+            abort(403, 'You do not have access to this conversation');
+        }
+
         return Inertia::render('chat', [
             'initialConversationId' => $conversationId,
         ]);

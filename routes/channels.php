@@ -56,15 +56,43 @@ Broadcast::channel('user.{id}', function ($user, $id, $request = null) {
     return $user && (int) $user->id === (int) $id;
 });
 
-// Chat-specific channels
+// Chat-specific channels (both private and public)
 Broadcast::channel('conversation.{conversationId}', function ($user, $conversationId, $request = null) {
-    // Try API token authentication if no session user
+    Log::info('Conversation channel auth called', [
+        'user' => $user ? $user->id : null,
+        'conversation_id' => $conversationId,
+        'has_request' => $request !== null,
+        'auth_user' => Auth::user() ? Auth::user()->id : null,
+    ]);
+
+    // If no user passed, try to get from Auth (already authenticated by middleware)
+    if (! $user) {
+        $user = Auth::user();
+        Log::info('Using Auth::user() for channel auth', [
+            'user_id' => $user ? $user->id : null,
+        ]);
+    }
+
+    // Try API token authentication if still no session user and request is available
     if (! $user && $request) {
         $token = $request->header('Authorization') ?? $request->get('token');
+        Log::info('Attempting token auth in channel', [
+            'has_token' => !empty($token),
+            'token_prefix' => $token ? substr($token, 0, 20) . '...' : null,
+        ]);
+
         $user = authenticateUserFromToken($token);
+
+        Log::info('Token auth result in channel', [
+            'authenticated' => $user !== null,
+            'user_id' => $user ? $user->id : null,
+        ]);
     }
 
     if (! $user) {
+        Log::warning('No authenticated user for channel auth', [
+            'conversation_id' => $conversationId,
+        ]);
         return false;
     }
 
