@@ -19,6 +19,7 @@ class SystemUserSeeder extends Seeder
             'email' => 'system@system.local',
         ], [
             'name' => 'System User',
+            'username' => 'system',
             'email' => 'system@system.local',
             'password' => Hash::make('system-user-password-'.bin2hex(random_bytes(16))),
             'email_verified_at' => now(),
@@ -34,30 +35,35 @@ class SystemUserSeeder extends Seeder
         $systemUsers = [
             [
                 'name' => 'OAuth Service',
+                'username' => 'oauth',
                 'email' => 'oauth@system.local',
                 'password' => Hash::make('password'),
                 'email_verified_at' => now(),
             ],
             [
                 'name' => 'Audit Service',
+                'username' => 'audit',
                 'email' => 'audit@system.local',
                 'password' => Hash::make('password'),
                 'email_verified_at' => now(),
             ],
             [
                 'name' => 'Backup Service',
+                'username' => 'backup',
                 'email' => 'backup@system.local',
                 'password' => Hash::make('password'),
                 'email_verified_at' => now(),
             ],
             [
                 'name' => 'Monitoring Service',
+                'username' => 'monitor',
                 'email' => 'monitor@system.local',
                 'password' => Hash::make('password'),
                 'email_verified_at' => now(),
             ],
             [
                 'name' => 'Notification Service',
+                'username' => 'notifications',
                 'email' => 'notifications@system.local',
                 'password' => Hash::make('password'),
                 'email_verified_at' => now(),
@@ -73,22 +79,26 @@ class SystemUserSeeder extends Seeder
         // Create main test user
         $testUser = User::factory()->create([
             'name' => 'Test User',
+            'username' => 'testuser',
             'email' => 'test@example.com',
         ]);
 
         // Create additional demo users
         $adminUser = User::factory()->create([
             'name' => 'Admin User',
+            'username' => 'admin',
             'email' => 'admin@example.com',
         ]);
 
         $managerUser = User::factory()->create([
             'name' => 'Manager User',
+            'username' => 'manager',
             'email' => 'manager@example.com',
         ]);
 
         $regularUser = User::factory()->create([
             'name' => 'Regular User',
+            'username' => 'user',
             'email' => 'user@example.com',
         ]);
 
@@ -125,72 +135,84 @@ class SystemUserSeeder extends Seeder
         $organizationUsers = [
             [
                 'name' => 'John Smith',
+                'username' => 'john.smith',
                 'email' => 'john.smith@techcorp.com',
                 'email_verified_at' => now(),
                 'password' => Hash::make('password'),
             ],
             [
                 'name' => 'Jane Doe',
+                'username' => 'jane.doe',
                 'email' => 'jane.doe@techcorp.com',
                 'email_verified_at' => now(),
                 'password' => Hash::make('password'),
             ],
             [
                 'name' => 'Mike Johnson',
+                'username' => 'mike.johnson',
                 'email' => 'mike.johnson@techcorpsoftware.com',
                 'email_verified_at' => now(),
                 'password' => Hash::make('password'),
             ],
             [
                 'name' => 'Sarah Wilson',
+                'username' => 'sarah.wilson',
                 'email' => 'sarah.wilson@techcorpsoftware.com',
                 'email_verified_at' => now(),
                 'password' => Hash::make('password'),
             ],
             [
                 'name' => 'David Brown',
+                'username' => 'david.brown',
                 'email' => 'david.brown@techcorpdata.com',
                 'email_verified_at' => now(),
                 'password' => Hash::make('password'),
             ],
             [
                 'name' => 'Emily Davis',
+                'username' => 'emily.davis',
                 'email' => 'emily.davis@techcorpdata.com',
                 'email_verified_at' => now(),
                 'password' => Hash::make('password'),
             ],
             [
                 'name' => 'Robert Taylor',
+                'username' => 'robert.taylor',
                 'email' => 'robert.taylor@techcorpsoftware.com',
                 'email_verified_at' => now(),
                 'password' => Hash::make('password'),
             ],
             [
                 'name' => 'Lisa Anderson',
+                'username' => 'lisa.anderson',
                 'email' => 'lisa.anderson@techcorpsoftware.com',
                 'email_verified_at' => now(),
                 'password' => Hash::make('password'),
             ],
             [
                 'name' => 'Michael Chen',
+                'username' => 'michael.chen',
                 'email' => 'michael.chen@techcorpsoftware.com',
                 'email_verified_at' => now(),
                 'password' => Hash::make('password'),
             ],
             [
                 'name' => 'Jennifer Martinez',
+                'username' => 'jennifer.martinez',
                 'email' => 'jennifer.martinez@techcorpsoftware.com',
                 'email_verified_at' => now(),
                 'password' => Hash::make('password'),
             ],
             [
                 'name' => 'Alex Thompson',
+                'username' => 'alex.thompson',
                 'email' => 'alex.thompson@techcorpsoftware.com',
                 'email_verified_at' => now(),
                 'password' => Hash::make('password'),
             ],
             [
                 'name' => 'Maria Rodriguez',
+                'username' => 'maria.rodriguez',
                 'email' => 'maria.rodriguez@techcorpsoftware.com',
                 'email_verified_at' => now(),
                 'password' => Hash::make('password'),
@@ -214,6 +236,9 @@ class SystemUserSeeder extends Seeder
             'seeder.manager_user_id' => $managerUser->id,
             'seeder.regular_user_id' => $regularUser->id,
         ]);
+
+        // Ensure all users have usernames
+        $this->ensureAllUsersHaveUsernames();
 
         // Assign basic chat permissions to all users
         $this->assignChatPermissionsToAllUsers();
@@ -655,6 +680,48 @@ class SystemUserSeeder extends Seeder
         $totalPermissions = Permission::count();
         $totalRoles = Role::count();
         $this->command->info("\nSeeding completed: {$totalPermissions} permissions, {$totalRoles} roles created/updated.");
+    }
+
+    /**
+     * Ensure all users have usernames
+     */
+    private function ensureAllUsersHaveUsernames(): void
+    {
+        $this->command->info("Ensuring all users have usernames...");
+        
+        $usersWithoutUsernames = User::whereNull('username')->orWhere('username', '')->get();
+        
+        foreach ($usersWithoutUsernames as $user) {
+            // Generate a base username from email or name
+            $baseUsername = null;
+            
+            if ($user->email) {
+                $baseUsername = strtolower(explode('@', $user->email)[0]);
+            } elseif ($user->name) {
+                $baseUsername = strtolower(str_replace(' ', '.', $user->name));
+            } else {
+                $baseUsername = 'user' . $user->id;
+            }
+            
+            // Clean the username (remove special characters, keep only alphanumeric, dots, dashes, underscores)
+            $baseUsername = preg_replace('/[^a-z0-9._-]/', '', $baseUsername);
+            
+            // Ensure uniqueness
+            $username = $baseUsername;
+            $counter = 1;
+            
+            while (User::where('username', $username)->where('id', '!=', $user->id)->exists()) {
+                $username = $baseUsername . '.' . $counter;
+                $counter++;
+            }
+            
+            $user->username = $username;
+            $user->save();
+            
+            $this->command->info("Generated username '{$username}' for user: {$user->name} ({$user->email})");
+        }
+        
+        $this->command->info("Processed " . $usersWithoutUsernames->count() . " users for username generation.");
     }
 
     /**

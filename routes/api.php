@@ -102,6 +102,24 @@ Route::prefix('v1')->group(function () {
             ->name('health');
     });
 
+    // Public Group Invitation Endpoints (no authentication required)
+    Route::prefix('invitations')->name('api.invitations.')->group(function () {
+        Route::post('accept/{token}', [\App\Http\Controllers\Api\GroupInviteController::class, 'acceptInvitation'])
+            ->name('accept')
+            ->middleware('auth:api');
+        Route::post('reject/{token}', [\App\Http\Controllers\Api\GroupInviteController::class, 'rejectInvitation'])
+            ->name('reject')
+            ->middleware('auth:api');
+    });
+
+    // Public Group Invite Link Endpoints
+    Route::prefix('invite-links')->name('api.invite-links.')->group(function () {
+        Route::post('join/{token}', [\App\Http\Controllers\Api\GroupInviteController::class, 'useInviteLink'])
+            ->name('join')
+            ->middleware('auth:api')
+            ->middleware('rate_limit:use_invite_link,per_user');
+    });
+
 });
 
 // Authenticated API routes
@@ -430,6 +448,77 @@ Route::middleware('auth:api')->prefix('v1')->group(function () {
                 ->name('end');
             Route::post('{call}/quality-metrics', [\App\Http\Controllers\Api\Chat\VideoCallController::class, 'updateQualityMetrics'])
                 ->name('quality-metrics');
+        });
+
+        // Group Management
+        Route::prefix('groups')->name('groups.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Api\GroupController::class, 'index'])
+                ->name('index');
+            Route::post('/', [\App\Http\Controllers\Api\GroupController::class, 'store'])
+                ->name('store')
+                ->middleware('rate_limit:create_group,per_user');
+            Route::get('{group}', [\App\Http\Controllers\Api\GroupController::class, 'show'])
+                ->name('show');
+            Route::patch('{group}', [\App\Http\Controllers\Api\GroupController::class, 'update'])
+                ->name('update');
+            Route::delete('{group}', [\App\Http\Controllers\Api\GroupController::class, 'destroy'])
+                ->name('destroy');
+            Route::post('{group}/join', [\App\Http\Controllers\Api\GroupController::class, 'join'])
+                ->name('join')
+                ->middleware('rate_limit:join_group,per_user');
+            Route::post('{group}/leave', [\App\Http\Controllers\Api\GroupController::class, 'leave'])
+                ->name('leave');
+
+            // Group Member Management
+            Route::prefix('{group}/members')->name('members.')->group(function () {
+                Route::get('/', [\App\Http\Controllers\Api\GroupMemberController::class, 'index'])
+                    ->name('index');
+                Route::get('{member}', [\App\Http\Controllers\Api\GroupMemberController::class, 'show'])
+                    ->name('show');
+                Route::post('/', [\App\Http\Controllers\Api\GroupMemberController::class, 'addMember'])
+                    ->name('add')
+                    ->middleware('rate_limit:add_group_member,per_user');
+                Route::delete('{member}', [\App\Http\Controllers\Api\GroupMemberController::class, 'removeMember'])
+                    ->name('remove');
+                Route::patch('{member}/role', [\App\Http\Controllers\Api\GroupMemberController::class, 'updateMemberRole'])
+                    ->name('update-role');
+                Route::post('{member}/ban', [\App\Http\Controllers\Api\GroupMemberController::class, 'banMember'])
+                    ->name('ban')
+                    ->middleware('rate_limit:ban_group_member,per_user');
+                Route::delete('banned/{userId}', [\App\Http\Controllers\Api\GroupMemberController::class, 'unbanMember'])
+                    ->name('unban');
+                Route::post('mute', [\App\Http\Controllers\Api\GroupMemberController::class, 'muteMembers'])
+                    ->name('mute')
+                    ->middleware('rate_limit:mute_group_members,per_user');
+            });
+
+            // Group Invitations
+            Route::prefix('{group}/invitations')->name('invitations.')->group(function () {
+                Route::post('/', [\App\Http\Controllers\Api\GroupInviteController::class, 'createInvitation'])
+                    ->name('create')
+                    ->middleware('rate_limit:create_group_invitation,per_user');
+                
+                // Invite Links
+                Route::prefix('links')->name('links.')->group(function () {
+                    Route::get('/', [\App\Http\Controllers\Api\GroupInviteController::class, 'getInviteLinks'])
+                        ->name('index');
+                    Route::post('/', [\App\Http\Controllers\Api\GroupInviteController::class, 'createInviteLink'])
+                        ->name('create')
+                        ->middleware('rate_limit:create_invite_link,per_user');
+                    Route::delete('{link}', [\App\Http\Controllers\Api\GroupInviteController::class, 'revokeInviteLink'])
+                        ->name('revoke');
+                });
+
+                // Join Requests
+                Route::prefix('requests')->name('requests.')->group(function () {
+                    Route::get('/', [\App\Http\Controllers\Api\GroupInviteController::class, 'getJoinRequests'])
+                        ->name('index');
+                    Route::post('{request}/approve', [\App\Http\Controllers\Api\GroupInviteController::class, 'approveJoinRequest'])
+                        ->name('approve');
+                    Route::post('{request}/reject', [\App\Http\Controllers\Api\GroupInviteController::class, 'rejectJoinRequest'])
+                        ->name('reject');
+                });
+            });
         });
     });
 

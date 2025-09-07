@@ -120,7 +120,7 @@ class ConversationController extends Controller
     {
         $type = $request->input('type');
 
-        // Dynamic validation based on conversation type
+        // Basic validation first (without participant count constraints)
         $validationRules = [
             'type' => 'required|in:direct,group,channel',
             'participants' => 'required|array|min:1',
@@ -131,17 +131,14 @@ class ConversationController extends Controller
             'settings' => 'nullable|array',
         ];
 
-        // Type-specific validation rules
+        // Type-specific validation rules (without participant count constraints yet)
         if ($type === 'direct') {
-            $validationRules['participants'] = 'required|array|min:1|max:2'; // 1-2 participants (initiator auto-included if not present)
             $validationRules['name'] = 'nullable|string|max:255';
             $validationRules['description'] = 'nullable|string|max:500';
         } elseif ($type === 'group') {
-            $validationRules['participants'] = 'required|array|min:2|max:100'; // 2-100 participants for groups
             $validationRules['name'] = 'required|string|min:1|max:255'; // Name required for groups
             $validationRules['description'] = 'nullable|string|max:1000';
         } elseif ($type === 'channel') {
-            $validationRules['participants'] = 'required|array|min:1|max:500'; // Up to 500 for channels
             $validationRules['name'] = 'required|string|min:1|max:255'; // Name required for channels
             $validationRules['description'] = 'nullable|string|max:2000'; // Longer description for channels
             $validationRules['settings.is_public'] = 'nullable|boolean';
@@ -178,7 +175,7 @@ class ConversationController extends Controller
                 $participantUsers->push($user);
             }
 
-            // Validate direct message constraints
+            // Now validate participant count constraints after adding current user
             if ($type === 'direct') {
                 if ($participantUsers->count() !== 2) {
                     return response()->json(['error' => 'Direct conversations must have exactly 2 participants'], 422);
@@ -188,6 +185,14 @@ class ConversationController extends Controller
                 $userIds = $participantUsers->pluck('id')->toArray();
                 if (count(array_unique($userIds)) < 2) {
                     return response()->json(['error' => 'Cannot create direct conversation with yourself'], 422);
+                }
+            } elseif ($type === 'group') {
+                if ($participantUsers->count() < 1 || $participantUsers->count() > 100) {
+                    return response()->json(['error' => 'Group conversations must have between 1 and 100 participants'], 422);
+                }
+            } elseif ($type === 'channel') {
+                if ($participantUsers->count() < 1 || $participantUsers->count() > 500) {
+                    return response()->json(['error' => 'Channel conversations must have between 1 and 500 participants'], 422);
                 }
             }
 
