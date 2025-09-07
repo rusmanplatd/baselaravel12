@@ -117,7 +117,7 @@ class SignalProtocolService
         }
 
         foreach ($recipients as $recipient) {
-            $recipientDevices = $recipient->userDevices()->active()->get();
+            $recipientDevices = $recipient->devices()->active()->get();
 
             foreach ($recipientDevices as $recipientDevice) {
                 $encryptedMessage = $this->encryptMessageForDevice(
@@ -277,7 +277,7 @@ class SignalProtocolService
             'conversation_id' => $conversation->id,
             'initiator_id' => $initiator->id,
             'participant_count' => count($participants),
-            'encryption_algorithm' => $conversation->encryption_algorithm,
+            'encryption_algorithm' => $conversation->settings['encryption_algorithm'] ?? 'RSA-4096-OAEP',
         ]);
 
         return $conversation;
@@ -478,7 +478,7 @@ class SignalProtocolService
         User $user,
         UserDevice $device
     ): EncryptionKey {
-        $algorithm = $conversation->encryption_algorithm;
+        $algorithm = $conversation->settings['encryption_algorithm'] ?? 'RSA-4096-OAEP';
 
         // For true E2EE, quantum keys are generated client-side
         // Server only handles classical keys for fallback scenarios
@@ -492,7 +492,7 @@ class SignalProtocolService
             'public_key' => base64_encode($keyPair['public']),
             'device_fingerprint' => $device->device_fingerprint,
             'algorithm' => $algorithm,
-            'key_strength' => $conversation->key_strength,
+            'key_strength' => $conversation->settings['key_strength'] ?? 768,
             'device_metadata' => $device->device_info,
         ]);
     }

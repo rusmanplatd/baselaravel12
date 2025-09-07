@@ -389,7 +389,7 @@ class User extends Authenticatable implements HasPasskeys
         return $this->hasMany(\App\Models\Signal\IdentityKey::class);
     }
 
-    public function userDevices(): HasMany
+    public function devices(): HasMany
     {
         return $this->hasMany(UserDevice::class);
     }
