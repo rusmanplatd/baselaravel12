@@ -12,6 +12,7 @@ import ActivityLogModal from '@/components/ActivityLogModal';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
+import { apiService } from '@/services/ApiService';
 import {
     Plus,
     Eye,
@@ -139,20 +140,8 @@ export default function PermissionsIndex() {
         }
 
         try {
-            const response = await fetch(`/api/v1/permissions/${permission.id}`, {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
-                    'Accept': 'application/json',
-                },
-            });
-
-            if (response.ok) {
-                refresh();
-            } else {
-                const errorData = await response.json();
-                alert(errorData.message || 'Failed to delete permission');
-            }
+            await apiService.delete(`/api/v1/permissions/${permission.id}`);
+            refresh();
         } catch (error) {
             console.error('Error deleting permission:', error);
             alert('Failed to delete permission');

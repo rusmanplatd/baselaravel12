@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import axios from 'axios';
+import apiService, { ApiError } from '@/services/ApiService';
 
 interface ChannelAdmin {
     id: string;
@@ -57,8 +57,8 @@ export function useChannelManagement(channelId: string) {
 
     const handleError = useCallback((err: unknown) => {
         console.error('Channel management error:', err);
-        const message = axios.isAxiosError(err) 
-            ? err.response?.data?.message || err.message 
+        const message = err instanceof ApiError 
+            ? err.message 
             : 'An error occurred';
         setError(message);
     }, []);
@@ -69,10 +69,9 @@ export function useChannelManagement(channelId: string) {
         setError(null);
         
         try {
-            const response = await axios.get(`/api/v1/chat/channels/${channelId}/statistics`, {
-                params: { period }
-            });
-            setStatistics(response.data);
+            const params = new URLSearchParams({ period });
+            const data = await apiService.get<ChannelStatistics>(`/api/v1/chat/channels/${channelId}/statistics?${params}`);
+            setStatistics(data);
         } catch (err) {
             handleError(err);
         } finally {
@@ -86,8 +85,8 @@ export function useChannelManagement(channelId: string) {
         setError(null);
         
         try {
-            const response = await axios.get(`/api/v1/chat/channels/${channelId}/manage/admins`);
-            setAdmins(response.data);
+            const data = await apiService.get<ChannelAdmin[]>(`/api/v1/chat/channels/${channelId}/manage/admins`);
+            setAdmins(data);
         } catch (err) {
             handleError(err);
         } finally {
@@ -101,8 +100,8 @@ export function useChannelManagement(channelId: string) {
         setError(null);
         
         try {
-            const response = await axios.get(`/api/v1/chat/channels/${channelId}/manage/banned-users`);
-            setBannedUsers(response.data.data || []);
+            const response = await apiService.get<{data: BannedUser[]}>(`/api/v1/chat/channels/${channelId}/manage/banned-users`);
+            setBannedUsers(response.data || []);
         } catch (err) {
             handleError(err);
         } finally {
@@ -115,7 +114,7 @@ export function useChannelManagement(channelId: string) {
         setError(null);
         
         try {
-            await axios.post(`/api/v1/chat/channels/${channelId}/manage/add-admin`, {
+            await apiService.post(`/api/v1/chat/channels/${channelId}/manage/add-admin`, {
                 user_id: userId,
                 permissions,
             });
@@ -134,7 +133,7 @@ export function useChannelManagement(channelId: string) {
         setError(null);
         
         try {
-            await axios.delete(`/api/v1/chat/channels/${channelId}/manage/remove-admin/${userId}`);
+            await apiService.delete(`/api/v1/chat/channels/${channelId}/manage/remove-admin/${userId}`);
             
             // Reload admins list
             await loadAdmins();
@@ -154,7 +153,7 @@ export function useChannelManagement(channelId: string) {
         setError(null);
         
         try {
-            await axios.post(`/api/v1/chat/channels/${channelId}/manage/ban-user`, {
+            await apiService.post(`/api/v1/chat/channels/${channelId}/manage/ban-user`, {
                 user_id: userId,
                 reason,
                 duration,
@@ -174,7 +173,7 @@ export function useChannelManagement(channelId: string) {
         setError(null);
         
         try {
-            await axios.delete(`/api/v1/chat/channels/${channelId}/manage/unban-user/${userId}`);
+            await apiService.delete(`/api/v1/chat/channels/${channelId}/manage/unban-user/${userId}`);
             
             // Reload banned users list
             await loadBannedUsers();
@@ -190,7 +189,7 @@ export function useChannelManagement(channelId: string) {
         setError(null);
         
         try {
-            await axios.patch(`/api/v1/chat/channels/${channelId}/manage/settings`, {
+            await apiService.patch(`/api/v1/chat/channels/${channelId}/manage/settings`, {
                 channel_settings: settings,
             });
             
@@ -206,7 +205,7 @@ export function useChannelManagement(channelId: string) {
         setError(null);
         
         try {
-            await axios.post(`/api/v1/chat/channels/${channelId}/manage/transfer-ownership`, {
+            await apiService.post(`/api/v1/chat/channels/${channelId}/manage/transfer-ownership`, {
                 new_owner_id: newOwnerId,
                 confirmation: 'TRANSFER',
             });
@@ -223,11 +222,11 @@ export function useChannelManagement(channelId: string) {
         setError(null);
         
         try {
-            await axios.delete(`/api/v1/chat/channels/${channelId}/manage/delete`, {
-                data: {
+            await apiService.delete(`/api/v1/chat/channels/${channelId}/manage/delete`, {
+                body: JSON.stringify({
                     confirmation: 'DELETE',
                     reason,
-                },
+                }),
             });
             
             return true;
@@ -242,10 +241,10 @@ export function useChannelManagement(channelId: string) {
         setError(null);
         
         try {
-            const response = await axios.get(`/api/v1/chat/channels/${channelId}/manage/export`);
+            const data = await apiService.get(`/api/v1/chat/channels/${channelId}/manage/export`);
             
             // Create and download the export file
-            const blob = new Blob([JSON.stringify(response.data, null, 2)], {
+            const blob = new Blob([JSON.stringify(data, null, 2)], {
                 type: 'application/json',
             });
             
@@ -271,10 +270,8 @@ export function useChannelManagement(channelId: string) {
         setError(null);
         
         try {
-            const response = await axios.get(`/api/v1/chat/channels/${channelId}/subscribers`, {
-                params: { page, per_page: 50 }
-            });
-            return response.data;
+            const params = new URLSearchParams({ page: page.toString(), per_page: '50' });
+            return await apiService.get(`/api/v1/chat/channels/${channelId}/subscribers?${params}`);
         } catch (err) {
             handleError(err);
             return null;

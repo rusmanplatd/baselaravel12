@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { apiService } from '@/services/ApiService';
 
 export interface Webhook {
   id: string;
@@ -82,21 +83,34 @@ export const useWebhookApi = () => {
     setError(null);
 
     try {
-      const response = await fetch(`/api/v1/webhooks/${endpoint}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          ...options.headers,
-        },
-        ...options,
-      });
+      const url = `/api/v1/webhooks/${endpoint}`;
+      const method = (options.method || 'GET').toUpperCase();
+      const headers = {
+        'X-Requested-With': 'XMLHttpRequest',
+        ...(options.headers as Record<string, string> | undefined),
+      };
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      let data: any;
+      switch (method) {
+        case 'GET':
+          data = await apiService.get(url, { headers });
+          break;
+        case 'POST':
+          data = await apiService.post(url, options.body ? JSON.parse(String(options.body)) : undefined, { headers });
+          break;
+        case 'PUT':
+          data = await apiService.put(url, options.body ? JSON.parse(String(options.body)) : undefined, { headers });
+          break;
+        case 'PATCH':
+          data = await apiService.patch(url, options.body ? JSON.parse(String(options.body)) : undefined, { headers });
+          break;
+        case 'DELETE':
+          data = await apiService.delete(url, { headers });
+          break;
+        default:
+          data = await apiService.request(url, { ...options, headers });
       }
 
-      const data = await response.json();
       return data;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred';
@@ -112,7 +126,7 @@ export const useWebhookApi = () => {
     limit?: number;
   } = {}): Promise<WebhooksResponse> => {
     const queryParams = new URLSearchParams();
-    
+
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
         queryParams.append(key, String(value));
@@ -135,7 +149,7 @@ export const useWebhookApi = () => {
   };
 
   const updateWebhook = async (
-    id: string, 
+    id: string,
     webhookData: Partial<Webhook>
   ): Promise<{ webhook: Webhook }> => {
     return makeApiCall<{ webhook: Webhook }>(id, {
@@ -172,14 +186,14 @@ export const useWebhookApi = () => {
     } = {}
   ): Promise<DeliveriesResponse> => {
     const queryParams = new URLSearchParams();
-    
+
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
         queryParams.append(key, String(value));
       }
     });
 
-    const endpoint = queryParams.toString() 
+    const endpoint = queryParams.toString()
       ? `${id}/deliveries?${queryParams.toString()}`
       : `${id}/deliveries`;
 

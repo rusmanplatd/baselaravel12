@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { apiService } from '@/services/ApiService';
 import { router } from '@inertiajs/react';
 import { getUserStorageItem, setUserStorageItem } from '@/utils/localStorage';
 
@@ -87,24 +88,24 @@ interface UseThreadingReturn {
     isLoading: boolean;
     isLoadingMessages: boolean;
     error: string | null;
-    
+
     // Thread management
     loadThreads: () => Promise<void>;
     createThread: (parentMessageId: string, options?: CreateThreadOptions) => Promise<Thread>;
     loadThread: (threadId: string) => Promise<void>;
     updateThread: (threadId: string, updates: Partial<Thread>) => Promise<void>;
     deleteThread: (threadId: string) => Promise<void>;
-    
+
     // Thread participation
     joinThread: (threadId: string) => Promise<void>;
     leaveThread: (threadId: string) => Promise<void>;
     updateNotificationSettings: (threadId: string, settings: Partial<ThreadParticipant['notification_settings']>) => Promise<void>;
-    
+
     // Messages in thread
     loadThreadMessages: (threadId: string, options?: LoadMessagesOptions) => Promise<void>;
     sendThreadMessage: (threadId: string, content: string, type?: string) => Promise<void>;
     markThreadAsRead: (threadId: string) => Promise<void>;
-    
+
     // Thread summary
     getThreadSummary: (parentMessageId: string) => Promise<ThreadSummary>;
 }
@@ -155,22 +156,27 @@ export const useThreading = ({ conversationId }: UseThreadingOptions): UseThread
     // API call wrapper
     const apiCall = useCallback(async (url: string, options: RequestInit = {}): Promise<any> => {
         try {
-            const response = await fetch(`/api/v1/chat/conversations/${conversationId}${url}`, {
-                ...options,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-Device-Fingerprint': getDeviceFingerprint(),
-                    ...options.headers,
-                },
-            });
+            const fullUrl = `/api/v1/chat/conversations/${conversationId}${url}`;
+            const method = (options.method || 'GET').toUpperCase();
+            const headers = {
+                'X-Device-Fingerprint': getDeviceFingerprint(),
+                ...(options.headers as Record<string, string> | undefined),
+            };
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'API call failed');
+            switch (method) {
+                case 'GET':
+                    return await apiService.get(fullUrl, { headers });
+                case 'POST':
+                    return await apiService.post(fullUrl, options.body ? JSON.parse(String(options.body)) : undefined, { headers });
+                case 'PUT':
+                    return await apiService.put(fullUrl, options.body ? JSON.parse(String(options.body)) : undefined, { headers });
+                case 'PATCH':
+                    return await apiService.patch(fullUrl, options.body ? JSON.parse(String(options.body)) : undefined, { headers });
+                case 'DELETE':
+                    return await apiService.delete(fullUrl, { headers });
+                default:
+                    return await apiService.request(fullUrl, { ...options, headers });
             }
-
-            return await response.json();
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Unknown error');
             throw err;
@@ -193,7 +199,7 @@ export const useThreading = ({ conversationId }: UseThreadingOptions): UseThread
 
     // Create new thread
     const createThread = useCallback(async (
-        parentMessageId: string, 
+        parentMessageId: string,
         options: CreateThreadOptions = {}
     ): Promise<Thread> => {
         setIsLoading(true);
@@ -210,7 +216,7 @@ export const useThreading = ({ conversationId }: UseThreadingOptions): UseThread
             const newThread = response.thread;
             setThreads(prev => [newThread, ...prev]);
             setError(null);
-            
+
             return newThread;
         } catch (err) {
             console.error('Failed to create thread:', err);
@@ -237,7 +243,7 @@ export const useThreading = ({ conversationId }: UseThreadingOptions): UseThread
 
     // Update thread
     const updateThread = useCallback(async (
-        threadId: string, 
+        threadId: string,
         updates: Partial<Thread>
     ): Promise<void> => {
         try {
@@ -248,11 +254,11 @@ export const useThreading = ({ conversationId }: UseThreadingOptions): UseThread
 
             const updatedThread = response.thread;
             setThreads(prev => prev.map(t => t.id === threadId ? updatedThread : t));
-            
+
             if (currentThread?.id === threadId) {
                 setCurrentThread(updatedThread);
             }
-            
+
             setError(null);
         } catch (err) {
             console.error('Failed to update thread:', err);
@@ -268,12 +274,12 @@ export const useThreading = ({ conversationId }: UseThreadingOptions): UseThread
             });
 
             setThreads(prev => prev.filter(t => t.id !== threadId));
-            
+
             if (currentThread?.id === threadId) {
                 setCurrentThread(null);
                 setThreadMessages([]);
             }
-            
+
             setError(null);
         } catch (err) {
             console.error('Failed to delete thread:', err);
@@ -289,12 +295,12 @@ export const useThreading = ({ conversationId }: UseThreadingOptions): UseThread
             });
 
             // Update thread participant count
-            setThreads(prev => prev.map(t => 
-                t.id === threadId 
+            setThreads(prev => prev.map(t =>
+                t.id === threadId
                     ? { ...t, participant_count: response.participant_count }
                     : t
             ));
-            
+
             setError(null);
         } catch (err) {
             console.error('Failed to join thread:', err);
@@ -309,12 +315,12 @@ export const useThreading = ({ conversationId }: UseThreadingOptions): UseThread
                 method: 'POST',
             });
 
-            setThreads(prev => prev.map(t => 
-                t.id === threadId 
+            setThreads(prev => prev.map(t =>
+                t.id === threadId
                     ? { ...t, participant_count: response.participant_count }
                     : t
             ));
-            
+
             setError(null);
         } catch (err) {
             console.error('Failed to leave thread:', err);
@@ -324,7 +330,7 @@ export const useThreading = ({ conversationId }: UseThreadingOptions): UseThread
 
     // Update notification settings
     const updateNotificationSettings = useCallback(async (
-        threadId: string, 
+        threadId: string,
         settings: Partial<ThreadParticipant['notification_settings']>
     ): Promise<void> => {
         try {
@@ -342,7 +348,7 @@ export const useThreading = ({ conversationId }: UseThreadingOptions): UseThread
 
     // Load thread messages
     const loadThreadMessages = useCallback(async (
-        threadId: string, 
+        threadId: string,
         options: LoadMessagesOptions = {}
     ): Promise<void> => {
         setIsLoadingMessages(true);
@@ -361,7 +367,7 @@ export const useThreading = ({ conversationId }: UseThreadingOptions): UseThread
             } else {
                 setThreadMessages(response.messages);
             }
-            
+
             setError(null);
         } catch (err) {
             console.error('Failed to load thread messages:', err);
@@ -372,8 +378,8 @@ export const useThreading = ({ conversationId }: UseThreadingOptions): UseThread
 
     // Send message to thread
     const sendThreadMessage = useCallback(async (
-        threadId: string, 
-        content: string, 
+        threadId: string,
+        content: string,
         type: string = 'text'
     ): Promise<void> => {
         try {
@@ -387,19 +393,19 @@ export const useThreading = ({ conversationId }: UseThreadingOptions): UseThread
 
             const newMessage = response.message;
             setThreadMessages(prev => [...prev, newMessage]);
-            
+
             // Update thread stats
-            setThreads(prev => prev.map(t => 
-                t.id === threadId 
-                    ? { 
-                        ...t, 
+            setThreads(prev => prev.map(t =>
+                t.id === threadId
+                    ? {
+                        ...t,
                         message_count: t.message_count + 1,
                         last_message_at: newMessage.created_at,
                         last_message_id: newMessage.id
                     }
                     : t
             ));
-            
+
             setError(null);
         } catch (err) {
             console.error('Failed to send thread message:', err);
@@ -413,7 +419,7 @@ export const useThreading = ({ conversationId }: UseThreadingOptions): UseThread
             await apiCall(`/threads/${threadId}/read`, {
                 method: 'POST',
             });
-            
+
             setError(null);
         } catch (err) {
             console.error('Failed to mark thread as read:', err);
@@ -440,24 +446,24 @@ export const useThreading = ({ conversationId }: UseThreadingOptions): UseThread
         isLoading,
         isLoadingMessages,
         error,
-        
+
         // Thread management
         loadThreads,
         createThread,
         loadThread,
         updateThread,
         deleteThread,
-        
+
         // Thread participation
         joinThread,
         leaveThread,
         updateNotificationSettings,
-        
+
         // Messages
         loadThreadMessages,
         sendThreadMessage,
         markThreadAsRead,
-        
+
         // Summary
         getThreadSummary,
     };
@@ -482,7 +488,7 @@ function generateDeviceFingerprint(): string {
         screen.width + 'x' + screen.height,
         new Date().getTimezoneOffset().toString(),
     ];
-    
+
     const combined = components.join('|');
     return btoa(combined).replace(/[+/=]/g, '').substring(0, 16);
 }

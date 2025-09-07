@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useToast } from './useToast';
+import { apiService } from '@/services/ApiService';
 
 export interface Group {
     id: string;
@@ -103,7 +104,7 @@ export function useGroupChat() {
     }) => {
         setLoading(true);
         setError(null);
-        
+
         try {
             const queryParams = new URLSearchParams();
             if (params?.privacy) queryParams.append('privacy', params.privacy);
@@ -111,18 +112,7 @@ export function useGroupChat() {
             if (params?.organization_id) queryParams.append('organization_id', params.organization_id);
             if (params?.per_page) queryParams.append('per_page', params.per_page.toString());
 
-            const response = await fetch(`/api/v1/chat/groups?${queryParams}`, {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('api_token')}`,
-                    'Accept': 'application/json',
-                },
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch groups');
-            }
-
-            const data = await response.json();
+            const data = await apiService.get(`/api/v1/chat/groups?${queryParams}`);
             setGroups(data.data || data);
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to fetch groups';
@@ -139,27 +129,12 @@ export function useGroupChat() {
         setError(null);
 
         try {
-            const response = await fetch('/api/v1/chat/groups', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('api_token')}`,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify(groupData),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to create group');
-            }
-
-            const data = await response.json();
+            const data = await apiService.post('/api/v1/chat/groups', groupData);
             const newGroup = data.group;
-            
+
             setGroups(prev => [newGroup, ...prev]);
             toast.success(data.message || 'Group created successfully');
-            
+
             return newGroup;
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to create group';
@@ -177,28 +152,13 @@ export function useGroupChat() {
         setError(null);
 
         try {
-            const response = await fetch(`/api/v1/chat/groups/${groupId}`, {
-                method: 'PATCH',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('api_token')}`,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify(updates),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to update group');
-            }
-
-            const data = await response.json();
+            const data = await apiService.patch(`/api/v1/chat/groups/${groupId}`, updates);
             const updatedGroup = data.group;
-            
-            setGroups(prev => prev.map(group => 
+
+            setGroups(prev => prev.map(group =>
                 group.id === groupId ? updatedGroup : group
             ));
-            
+
             toast.success(data.message || 'Group updated successfully');
             return true;
         } catch (err) {
@@ -217,24 +177,9 @@ export function useGroupChat() {
         setError(null);
 
         try {
-            const response = await fetch(`/api/v1/chat/groups/${groupId}/join`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('api_token')}`,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify({ message }),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to join group');
-            }
-
-            const data = await response.json();
+            const data = await apiService.post(`/api/v1/chat/groups/${groupId}/join`, { message });
             toast.success(data.message || 'Joined group successfully');
-            
+
             // Refresh groups to update membership status
             fetchGroups();
             return true;
@@ -254,22 +199,9 @@ export function useGroupChat() {
         setError(null);
 
         try {
-            const response = await fetch(`/api/v1/chat/groups/${groupId}/leave`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('api_token')}`,
-                    'Accept': 'application/json',
-                },
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to leave group');
-            }
-
-            const data = await response.json();
+            const data = await apiService.post(`/api/v1/chat/groups/${groupId}/leave`);
             toast.success(data.message || 'Left group successfully');
-            
+
             // Remove group from local state
             setGroups(prev => prev.filter(group => group.id !== groupId));
             return true;
@@ -295,24 +227,9 @@ export function useGroupChat() {
         setError(null);
 
         try {
-            const response = await fetch(`/api/v1/chat/groups/${groupId}/invitations/links`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('api_token')}`,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify(linkData),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to create invite link');
-            }
-
-            const data = await response.json();
+            const data = await apiService.post(`/api/v1/chat/groups/${groupId}/invitations/links`, linkData);
             toast.success(data.message || 'Invite link created successfully');
-            
+
             return data.invite_link;
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to create invite link';
@@ -330,22 +247,9 @@ export function useGroupChat() {
         setError(null);
 
         try {
-            const response = await fetch(`/api/v1/invite-links/join/${token}`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('api_token')}`,
-                    'Accept': 'application/json',
-                },
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to join group via invite link');
-            }
-
-            const data = await response.json();
+            const data = await apiService.post(`/api/v1/invite-links/join/${token}`);
             toast.success(data.message || 'Joined group successfully');
-            
+
             // Refresh groups to show new membership
             fetchGroups();
             return true;
@@ -374,18 +278,7 @@ export function useGroupChat() {
             if (params?.search) queryParams.append('search', params.search);
             if (params?.per_page) queryParams.append('per_page', params.per_page.toString());
 
-            const response = await fetch(`/api/v1/chat/groups/${groupId}/members?${queryParams}`, {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('api_token')}`,
-                    'Accept': 'application/json',
-                },
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch group members');
-            }
-
-            const data = await response.json();
+            const data = await apiService.get(`/api/v1/chat/groups/${groupId}/members?${queryParams}`);
             return data.data || data;
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to fetch group members';
@@ -407,22 +300,7 @@ export function useGroupChat() {
         setError(null);
 
         try {
-            const response = await fetch(`/api/v1/chat/groups/${groupId}/members`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('api_token')}`,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify(memberData),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to add member');
-            }
-
-            const data = await response.json();
+            const data = await apiService.post(`/api/v1/chat/groups/${groupId}/members`, memberData);
             toast.success(data.message || 'Member added successfully');
             return true;
         } catch (err) {
@@ -440,18 +318,18 @@ export function useGroupChat() {
         groups,
         loading,
         error,
-        
+
         // Group operations
         fetchGroups,
         createGroup,
         updateGroup,
         joinGroup,
         leaveGroup,
-        
+
         // Invite operations
         createInviteLink,
         joinViaInviteLink,
-        
+
         // Member operations
         fetchGroupMembers,
         addMember,

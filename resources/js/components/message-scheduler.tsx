@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, Send, Trash2, Edit, Pause, Play, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { apiService } from '@/services/ApiService';
 
 interface ScheduledMessage {
   id: string;
@@ -83,28 +84,13 @@ export const MessageScheduler: React.FC<MessageSchedulerProps> = ({
 
     setLoading(true);
     try {
-      const response = await fetch('/api/v1/scheduled-messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-        },
-        body: JSON.stringify({
-          conversation_id: conversationId,
-          content: content.trim(),
-          content_type: contentType,
-          scheduled_for: scheduleTime,
-          timezone,
-        }),
+      const data = await apiService.post('/api/v1/scheduled-messages', {
+        conversation_id: conversationId,
+        content: content.trim(),
+        content_type: contentType,
+        scheduled_for: scheduleTime,
+        timezone,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to schedule message');
-      }
-
-      const data = await response.json();
       
       if (onScheduled) {
         onScheduled(data.scheduled_message);
@@ -323,18 +309,7 @@ export const ScheduledMessagesList: React.FC<ScheduledMessagesListProps> = ({
         params.append('conversation_id', conversationId);
       }
       
-      const response = await fetch(`/api/v1/scheduled-messages?${params.toString()}`, {
-        headers: {
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to load scheduled messages');
-      }
-
-      const data = await response.json();
+      const data = await apiService.get(`/api/v1/scheduled-messages?${params.toString()}`);
       setMessages(data.scheduled_messages || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load messages');
@@ -349,18 +324,7 @@ export const ScheduledMessagesList: React.FC<ScheduledMessagesListProps> = ({
     }
 
     try {
-      const response = await fetch(`/api/v1/scheduled-messages/${messageId}/cancel`, {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to cancel message');
-      }
-
+      await apiService.post(`/api/v1/scheduled-messages/${messageId}/cancel`);
       await loadScheduledMessages();
       toast.success('Scheduled message cancelled');
     } catch (err) {
@@ -370,18 +334,7 @@ export const ScheduledMessagesList: React.FC<ScheduledMessagesListProps> = ({
 
   const handleRetry = async (messageId: string) => {
     try {
-      const response = await fetch(`/api/v1/scheduled-messages/${messageId}/retry`, {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to retry message');
-      }
-
+      await apiService.post(`/api/v1/scheduled-messages/${messageId}/retry`);
       await loadScheduledMessages();
       toast.success('Message retry scheduled');
     } catch (err) {

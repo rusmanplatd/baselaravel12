@@ -1,4 +1,5 @@
 import { getUserStorageItem, setUserStorageItem } from '@/utils/localStorage';
+import { apiService } from '@/services/ApiService';
 
 export interface QuantumKeyPair {
     publicKey: string;
@@ -35,24 +36,11 @@ export class QuantumE2EEService {
      */
     async generateKeyPair(algorithm: string = 'ML-KEM-768'): Promise<QuantumKeyPair> {
         try {
-            const response = await fetch(`${this.apiBaseUrl}/generate-keypair`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify({
-                    algorithm,
-                    security_level: this.getSecurityLevel(algorithm),
-                }),
+            const data = await apiService.post(`${this.apiBaseUrl}/generate-keypair`, {
+                algorithm,
+                security_level: this.getSecurityLevel(algorithm),
             });
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-            
             const keyPair: QuantumKeyPair = {
                 publicKey: data.public_key,
                 privateKey: data.private_key,
@@ -81,7 +69,7 @@ export class QuantumE2EEService {
         try {
             // Get recipient public keys
             const recipients = await this.getConversationRecipients(conversationId);
-            
+
             // Perform quantum key encapsulation for each recipient
             const encapsulations = await Promise.all(
                 recipients.map(recipient => this.performKeyEncapsulation(recipient.publicKey, algorithm))
@@ -182,27 +170,14 @@ export class QuantumE2EEService {
             // Generate device key pair
             const keyPair = await this.generateKeyPair('ML-KEM-768');
 
-            const response = await fetch(`${this.apiBaseUrl}/register-device`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify({
-                    device_name: deviceInfo.deviceName,
-                    device_type: this.getDeviceType(),
-                    public_key: keyPair.publicKey,
-                    capabilities: deviceInfo.capabilities,
-                    algorithm: keyPair.algorithm,
-                }),
+            const data = await apiService.post(`${this.apiBaseUrl}/register-device`, {
+                device_name: deviceInfo.deviceName,
+                device_type: this.getDeviceType(),
+                public_key: keyPair.publicKey,
+                capabilities: deviceInfo.capabilities,
+                algorithm: keyPair.algorithm,
             });
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-            
             // Store device ID
             this.deviceId = data.device_id;
             setUserStorageItem('quantum_device_id', this.deviceId);
@@ -225,24 +200,11 @@ export class QuantumE2EEService {
         algorithm: string
     ): Promise<{ sharedSecret: Uint8Array; ciphertext: string }> {
         try {
-            const response = await fetch(`${this.apiBaseUrl}/encapsulate`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify({
-                    public_key: publicKey,
-                    algorithm,
-                }),
+            const data = await apiService.post(`${this.apiBaseUrl}/encapsulate`, {
+                public_key: publicKey,
+                algorithm,
             });
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-            
             return {
                 sharedSecret: new Uint8Array(atob(data.shared_secret).split('').map(c => c.charCodeAt(0))),
                 ciphertext: data.ciphertext,
@@ -267,25 +229,12 @@ export class QuantumE2EEService {
                 throw new Error('Private key not found');
             }
 
-            const response = await fetch(`${this.apiBaseUrl}/decapsulate`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify({
-                    ciphertext,
-                    private_key: keyPair.privateKey,
-                    algorithm,
-                }),
+            const data = await apiService.post(`${this.apiBaseUrl}/decapsulate`, {
+                ciphertext,
+                private_key: keyPair.privateKey,
+                algorithm,
             });
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-            
             return new Uint8Array(atob(data.shared_secret).split('').map(c => c.charCodeAt(0)));
         } catch (error) {
             console.error('Key decapsulation failed:', error);
@@ -419,11 +368,7 @@ export class QuantumE2EEService {
         publicKey: string;
     }>> {
         try {
-            const response = await fetch(`/api/v1/chat/conversations/${conversationId}/recipients`);
-            if (!response.ok) {
-                throw new Error('Failed to fetch recipients');
-            }
-            return await response.json();
+            return await apiService.get(`/api/v1/chat/conversations/${conversationId}/recipients`);
         } catch (error) {
             console.error('Failed to get recipients:', error);
             return [];

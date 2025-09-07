@@ -1,4 +1,5 @@
 import { QuantumE2EEService } from './QuantumE2EEService';
+import { apiService } from '@/services/ApiService';
 
 export interface EncryptionResult {
     encrypted_content: string;
@@ -485,9 +486,7 @@ export class OptimizedE2EEService {
         algorithm: string;
     }> {
         try {
-            const response = await fetch(`/api/v1/chat/conversations/${conversationId}/encryption-info`);
-            if (!response.ok) throw new Error('Failed to fetch encryption info');
-            return await response.json();
+            return await apiService.get(`/api/v1/chat/conversations/${conversationId}/encryption-info`);
         } catch {
             return {
                 requires_quantum: false,
@@ -932,24 +931,7 @@ export class OptimizedE2EEService {
      */
     private async fetchKeyFromServer(keyVersion: number): Promise<Uint8Array | null> {
         try {
-            const response = await fetch(`/api/v1/chat/encryption-keys/${keyVersion}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
-                credentials: 'same-origin',
-            });
-
-            if (!response.ok) {
-                if (response.status === 404) {
-                    // Key doesn't exist on server, this is normal
-                    return null;
-                }
-                throw new Error(`Server responded with status ${response.status}`);
-            }
-
-            const data = await response.json();
+            const data = await apiService.get(`/api/v1/chat/encryption-keys/${keyVersion}`);
             if (!data.key_material) {
                 return null;
             }
@@ -967,23 +949,11 @@ export class OptimizedE2EEService {
      */
     private async uploadKeyToServer(keyVersion: number, keyMaterial: Uint8Array): Promise<boolean> {
         try {
-            const response = await fetch(`/api/v1/chat/encryption-keys/${keyVersion}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
-                credentials: 'same-origin',
-                body: JSON.stringify({
-                    key_material: btoa(String.fromCharCode(...keyMaterial)),
-                    algorithm: 'AES-256-GCM',
-                    created_at: new Date().toISOString(),
-                }),
+            await apiService.post(`/api/v1/chat/encryption-keys/${keyVersion}`, {
+                key_material: btoa(String.fromCharCode(...keyMaterial)),
+                algorithm: 'AES-256-GCM',
+                created_at: new Date().toISOString(),
             });
-
-            if (!response.ok) {
-                throw new Error(`Server responded with status ${response.status}`);
-            }
 
             this.logInfo('Key uploaded to server successfully', { keyVersion });
             return true;
@@ -1195,20 +1165,7 @@ export class OptimizedE2EEService {
      */
     private async getCurrentKeyVersion(): Promise<number> {
         try {
-            const response = await fetch('/api/v1/chat/encryption-keys/current-version', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
-                credentials: 'same-origin',
-            });
-
-            if (!response.ok) {
-                throw new Error(`Server responded with status ${response.status}`);
-            }
-
-            const data = await response.json();
+            const data = await apiService.get('/api/v1/chat/encryption-keys/current-version');
             return data.version || 1;
         } catch (error) {
             this.logWarning('Failed to get current key version from server, using default', { error });

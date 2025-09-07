@@ -15,6 +15,7 @@ import {
   ParticipantEvent
 } from 'livekit-client';
 import { QuantumLiveKitKeyProvider } from '@/services/QuantumLiveKitKeyProvider';
+import { apiService } from '@/services/ApiService';
 
 // Service injection interface
 interface ServiceDependencies {
@@ -610,7 +611,7 @@ export const useQuantumLiveKit = (options: QuantumLiveKitOptions): UseQuantumLiv
 
       // Get WebRTC statistics
       const webrtcStats = await getWebRTCStats(room);
-      
+
       // Get key rotation count from quantum provider
       let keyRotations = 0;
       if (quantumKeyProvider) {
@@ -716,19 +717,19 @@ async function loadQuantumService(config: {
 }): Promise<any> {
   try {
     const { conversationId, dependencies, fallbackToClassical, debugMode, preferredAlgorithm } = config;
-    
+
     // Create logger
     const logger = dependencies?.logger || createDefaultLogger(debugMode);
-    
+
     logger.info('Loading quantum service', { conversationId, preferredAlgorithm });
 
     // Use injected services or import dynamically
     let optimizedService = dependencies?.optimizedService;
     let quantumService = dependencies?.quantumService;
-    
+
     if (!optimizedService || !quantumService) {
       logger.info('Loading quantum services dynamically');
-      
+
       const [QuantumE2EEService, OptimizedE2EEService] = await Promise.all([
         import('@/services/QuantumE2EEService').then(m => m.QuantumE2EEService),
         import('@/services/OptimizedE2EEService').then(m => m.OptimizedE2EEService)
@@ -738,7 +739,7 @@ async function loadQuantumService(config: {
       if (!optimizedService) {
         optimizedService = new OptimizedE2EEService();
       }
-      
+
       if (!quantumService) {
         quantumService = new QuantumE2EEService();
       }
@@ -746,7 +747,7 @@ async function loadQuantumService(config: {
 
     // Check device capabilities
     const capabilities = optimizedService.getDeviceCapabilities();
-    
+
     if (!capabilities?.quantum_ready) {
       if (fallbackToClassical) {
         logger.warn('Device not quantum-ready, falling back to classical encryption', { capabilities });
@@ -761,25 +762,11 @@ async function loadQuantumService(config: {
     return {
       generateKeyPair: async (algorithm: string) => {
         try {
-          const response = await fetch('/api/v1/quantum/generate-keypair', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            credentials: 'same-origin',
-            body: JSON.stringify({
-              algorithm: algorithm || 'ML-KEM-768',
-              security_level: algorithm === 'ML-KEM-1024' ? 1024 : 
-                             algorithm === 'ML-KEM-512' ? 512 : 768
-            })
+          const data = await apiService.post('/api/v1/quantum/generate-keypair', {
+            algorithm: algorithm || 'ML-KEM-768',
+            security_level: algorithm === 'ML-KEM-1024' ? 1024 :
+                           algorithm === 'ML-KEM-512' ? 512 : 768
           });
-
-          if (!response.ok) {
-            throw new Error(`Key generation failed: ${response.status}`);
-          }
-
-          const data = await response.json();
           return {
             public: new Uint8Array(atob(data.public_key).split('').map(c => c.charCodeAt(0))),
             private: new Uint8Array(atob(data.private_key).split('').map(c => c.charCodeAt(0))),
@@ -794,24 +781,10 @@ async function loadQuantumService(config: {
 
       encapsulate: async (publicKey: Uint8Array, algorithm: string) => {
         try {
-          const response = await fetch('/api/v1/quantum/encapsulate', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            credentials: 'same-origin',
-            body: JSON.stringify({
-              public_key: btoa(String.fromCharCode(...publicKey)),
-              algorithm: algorithm || 'ML-KEM-768'
-            })
+          const data = await apiService.post('/api/v1/quantum/encapsulate', {
+            public_key: btoa(String.fromCharCode(...publicKey)),
+            algorithm: algorithm || 'ML-KEM-768'
           });
-
-          if (!response.ok) {
-            throw new Error(`Key encapsulation failed: ${response.status}`);
-          }
-
-          const data = await response.json();
           return {
             ciphertext: new Uint8Array(atob(data.ciphertext).split('').map(c => c.charCodeAt(0))),
             shared_secret: new Uint8Array(atob(data.shared_secret).split('').map(c => c.charCodeAt(0))),
@@ -825,25 +798,11 @@ async function loadQuantumService(config: {
 
       decapsulate: async (ciphertext: Uint8Array, privateKey: Uint8Array, algorithm: string) => {
         try {
-          const response = await fetch('/api/v1/quantum/decapsulate', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            credentials: 'same-origin',
-            body: JSON.stringify({
-              ciphertext: btoa(String.fromCharCode(...ciphertext)),
-              private_key: btoa(String.fromCharCode(...privateKey)),
-              algorithm: algorithm || 'ML-KEM-768'
-            })
+          const data = await apiService.post('/api/v1/quantum/decapsulate', {
+            ciphertext: btoa(String.fromCharCode(...ciphertext)),
+            private_key: btoa(String.fromCharCode(...privateKey)),
+            algorithm: algorithm || 'ML-KEM-768'
           });
-
-          if (!response.ok) {
-            throw new Error(`Key decapsulation failed: ${response.status}`);
-          }
-
-          const data = await response.json();
           return {
             shared_secret: new Uint8Array(atob(data.shared_secret).split('').map(c => c.charCodeAt(0))),
             algorithm: data.algorithm,
@@ -863,8 +822,7 @@ async function loadQuantumService(config: {
       // Health monitoring
       getHealthStatus: async () => {
         try {
-          const response = await fetch('/api/v1/quantum/health');
-          const health = response.ok ? await response.json() : { status: 'degraded' };
+          const health = await apiService.get('/api/v1/quantum/health');
           logger.info('Health status checked', health);
           return health;
         } catch (error) {
@@ -881,10 +839,10 @@ async function loadQuantumService(config: {
         }
         return metrics;
       },
-      
+
       // Logging integration
       getLogs: (level?: string) => optimizedService.getErrorLogs(level),
-      
+
       // Service configuration
       getConfig: () => ({
         conversationId,
@@ -893,7 +851,7 @@ async function loadQuantumService(config: {
         debugMode,
         preferredAlgorithm,
       }),
-      
+
       // Graceful degradation
       degradeToClassical: () => {
         logger.warn('Degrading to classical encryption');
@@ -906,17 +864,17 @@ async function loadQuantumService(config: {
     };
   } catch (error) {
     const logger = config.dependencies?.logger || createDefaultLogger(config.debugMode);
-    logger.error('Failed to load quantum service', { 
+    logger.error('Failed to load quantum service', {
       error: error instanceof Error ? error.message : 'Unknown error',
-      conversationId: config.conversationId 
+      conversationId: config.conversationId
     });
-    
+
     // If fallback is enabled, return a classical-only service
     if (config.fallbackToClassical) {
       logger.warn('Falling back to classical-only service');
       return createFallbackService(config);
     }
-    
+
     throw new Error(`Quantum service initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
@@ -965,14 +923,14 @@ async function getWebRTCStats(room: Room): Promise<{
     // Calculate aggregated statistics
     const totalBitrate = senderStats.reduce((sum, stat) => sum + (stat.bitrate || 0), 0) +
                         receiverStats.reduce((sum, stat) => sum + (stat.bitrate || 0), 0);
-    
+
     const totalPacketsLost = senderStats.reduce((sum, stat) => sum + (stat.packetsLost || 0), 0) +
                             receiverStats.reduce((sum, stat) => sum + (stat.packetsLost || 0), 0);
-    
+
     const totalPacketsSent = senderStats.reduce((sum, stat) => sum + (stat.packetsSent || 0), 0);
     const totalPacketsReceived = receiverStats.reduce((sum, stat) => sum + (stat.packetsReceived || 0), 0);
-    
-    const averagePacketLoss = totalPacketsSent > 0 ? 
+
+    const averagePacketLoss = totalPacketsSent > 0 ?
       totalPacketsLost / (totalPacketsSent + totalPacketsReceived) : 0;
 
     const averageJitter = receiverStats.length > 0 ?
@@ -1005,14 +963,14 @@ async function getWebRTCStats(room: Room): Promise<{
  */
 async function getSenderStats(room: Room): Promise<any[]> {
   const stats: any[] = [];
-  
+
   try {
     const localTracks = Array.from(room.localParticipant.tracks.values());
-    
+
     for (const trackPub of localTracks) {
       if (trackPub.track && trackPub.track.sender) {
         const senderStats = await trackPub.track.sender.getStats();
-        
+
         for (const report of senderStats.values()) {
           if (report.type === 'outbound-rtp') {
             stats.push({
@@ -1032,7 +990,7 @@ async function getSenderStats(room: Room): Promise<any[]> {
   } catch (error) {
     console.warn('Failed to get sender stats:', error);
   }
-  
+
   return stats;
 }
 
@@ -1041,15 +999,15 @@ async function getSenderStats(room: Room): Promise<any[]> {
  */
 async function getReceiverStats(room: Room): Promise<any[]> {
   const stats: any[] = [];
-  
+
   try {
     for (const participant of room.remoteParticipants.values()) {
       const remoteTracks = Array.from(participant.tracks.values());
-      
+
       for (const trackPub of remoteTracks) {
         if (trackPub.track && trackPub.track.receiver) {
           const receiverStats = await trackPub.track.receiver.getStats();
-          
+
           for (const report of receiverStats.values()) {
             if (report.type === 'inbound-rtp') {
               stats.push({
@@ -1072,7 +1030,7 @@ async function getReceiverStats(room: Room): Promise<any[]> {
   } catch (error) {
     console.warn('Failed to get receiver stats:', error);
   }
-  
+
   return stats;
 }
 
@@ -1083,15 +1041,15 @@ function calculateBitrate(report: any): number {
   if (!report.timestamp || !report.bytesReceived && !report.bytesSent) {
     return 0;
   }
-  
+
   const bytes = report.bytesReceived || report.bytesSent || 0;
   const bits = bytes * 8;
-  
+
   // Store previous values for rate calculation
   const key = `${report.ssrc}_${report.type}`;
   const now = report.timestamp;
   const prev = (globalThis as any).__webrtcStatsCache?.[key];
-  
+
   if (!prev) {
     // Initialize cache
     if (!(globalThis as any).__webrtcStatsCache) {
@@ -1100,13 +1058,13 @@ function calculateBitrate(report: any): number {
     (globalThis as any).__webrtcStatsCache[key] = { bits, timestamp: now };
     return 0;
   }
-  
+
   const timeDelta = (now - prev.timestamp) / 1000; // Convert to seconds
   const bitsDelta = bits - prev.bits;
-  
+
   // Update cache
   (globalThis as any).__webrtcStatsCache[key] = { bits, timestamp: now };
-  
+
   return timeDelta > 0 ? Math.round(bitsDelta / timeDelta) : 0;
 }
 
@@ -1115,7 +1073,7 @@ function calculateBitrate(report: any): number {
  */
 function createDefaultLogger(debugMode: boolean = false) {
   const prefix = '[QuantumLiveKit]';
-  
+
   return {
     info: (message: string, data?: any) => {
       if (debugMode) {
@@ -1140,14 +1098,14 @@ function createFallbackService(config: {
   debugMode?: boolean;
 }): any {
   const logger = config.dependencies?.logger || createDefaultLogger(config.debugMode);
-  
+
   logger.info('Creating fallback classical-only service', { conversationId: config.conversationId });
-  
+
   return {
     generateKeyPair: async (algorithm: string) => {
       // Generate AES key for classical encryption
       const key = crypto.getRandomValues(new Uint8Array(32));
-      
+
       return {
         public: key,
         private: key,
@@ -1159,7 +1117,7 @@ function createFallbackService(config: {
     encapsulate: async (publicKey: Uint8Array, algorithm: string) => {
       // For classical fallback, just return the shared key
       const shared_secret = crypto.getRandomValues(new Uint8Array(32));
-      
+
       return {
         ciphertext: publicKey, // Just echo back for compatibility
         shared_secret,
@@ -1170,7 +1128,7 @@ function createFallbackService(config: {
     decapsulate: async (ciphertext: Uint8Array, privateKey: Uint8Array, algorithm: string) => {
       // For classical fallback, derive shared secret from private key
       const shared_secret = privateKey.slice(0, 32);
-      
+
       return {
         shared_secret,
         algorithm: 'AES-256-GCM',

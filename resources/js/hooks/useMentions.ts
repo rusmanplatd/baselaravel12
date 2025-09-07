@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { apiService } from '@/services/ApiService';
 import { getUserStorageItem, setUserStorageItem } from '@/utils/localStorage';
 
 interface MentionUser {
@@ -48,10 +49,10 @@ interface UseMentionsOptions {
   enableQuantumEncryption?: boolean;
 }
 
-export const useMentions = ({ 
-  conversationId, 
+export const useMentions = ({
+  conversationId,
   organizationId,
-  enableQuantumEncryption = true 
+  enableQuantumEncryption = true
 }: UseMentionsOptions = {}) => {
   const [users, setUsers] = useState<MentionUser[]>([]);
   const [channels, setChannels] = useState<MentionChannel[]>([]);
@@ -66,28 +67,31 @@ export const useMentions = ({
   // API call wrapper with device fingerprint
   const apiCall = useCallback(async (url: string, options: RequestInit = {}): Promise<any> => {
     const deviceFingerprint = getDeviceFingerprint();
-    
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'X-Device-Fingerprint': deviceFingerprint,
-        ...options.headers,
-      },
-    });
+    const method = (options.method || 'GET').toUpperCase();
+    const headers = {
+      'X-Device-Fingerprint': deviceFingerprint,
+      ...(options.headers as Record<string, string> | undefined),
+    };
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'API call failed');
+    switch (method) {
+      case 'GET':
+        return await apiService.get(url, { headers });
+      case 'POST':
+        return await apiService.post(url, options.body ? JSON.parse(String(options.body)) : undefined, { headers });
+      case 'PUT':
+        return await apiService.put(url, options.body ? JSON.parse(String(options.body)) : undefined, { headers });
+      case 'PATCH':
+        return await apiService.patch(url, options.body ? JSON.parse(String(options.body)) : undefined, { headers });
+      case 'DELETE':
+        return await apiService.delete(url, { headers });
+      default:
+        return await apiService.request(url, { ...options, headers });
     }
-
-    return await response.json();
   }, []);
 
   const fetchMentionData = useCallback(async () => {
     setLoading(true);
-    
+
     try {
       const params = new URLSearchParams();
       if (conversationId) params.set('conversation_id', conversationId);
@@ -109,15 +113,15 @@ export const useMentions = ({
       // Fetch recent mentions for this user
       const recentResponse = await apiCall(`/api/v1/mentions/recent?${params.toString()}`);
       setRecentMentions(recentResponse.recent_mentions || []);
-      
+
     } catch (error) {
       console.error('Failed to fetch mention data:', error);
       // Fallback data
       setUsers([
-        { 
-          id: '1', 
-          name: 'John Doe', 
-          email: 'john@example.com', 
+        {
+          id: '1',
+          name: 'John Doe',
+          email: 'john@example.com',
           online: true,
           device_status: {
             quantum_ready: true,
@@ -125,10 +129,10 @@ export const useMentions = ({
             encryption_preference: 'quantum'
           }
         },
-        { 
-          id: '2', 
-          name: 'Jane Smith', 
-          email: 'jane@example.com', 
+        {
+          id: '2',
+          name: 'Jane Smith',
+          email: 'jane@example.com',
           online: false,
           device_status: {
             quantum_ready: false,
@@ -148,7 +152,7 @@ export const useMentions = ({
 
   // Create encrypted mention notification
   const createEncryptedMention = useCallback(async (
-    userId: string, 
+    userId: string,
     messageContent: string,
     mentionType: 'user' | 'channel' | 'group' = 'user'
   ): Promise<EncryptedMention | null> => {
@@ -189,7 +193,7 @@ export const useMentions = ({
       if (enableQuantumEncryption) params.set('include_quantum_status', 'true');
 
       const response = await apiCall(`/api/v1/mentions/search?${params.toString()}`);
-      
+
       return {
         users: response.users || [],
         channels: response.channels || [],
@@ -253,14 +257,14 @@ export const useMentions = ({
     groups,
     recentMentions,
     loading,
-    
+
     // Actions
     refresh: fetchMentionData,
     createEncryptedMention,
     searchMentions,
     markMentionAsRead,
     getMentionStats,
-    
+
     // Quantum-specific
     getQuantumReadyUsers,
     quantumEnabled: enableQuantumEncryption,
@@ -286,7 +290,7 @@ function generateDeviceFingerprint(): string {
     screen.width + 'x' + screen.height,
     new Date().getTimezoneOffset().toString(),
   ];
-  
+
   const combined = components.join('|');
   return btoa(combined).replace(/[+/=]/g, '').substring(0, 16);
 }

@@ -12,6 +12,7 @@ import ActivityLogModal from '@/components/ActivityLogModal';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
+import { apiService } from '@/services/ApiService';
 import {
     Briefcase,
     Eye,
@@ -220,20 +221,8 @@ export default function OrganizationPositionsApi() {
         }
 
         try {
-            const response = await fetch(`/api/v1/organization-positions/${position.id}`, {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
-                    'Accept': 'application/json',
-                },
-            });
-
-            if (response.ok) {
-                refresh();
-            } else {
-                const errorData = await response.json();
-                alert(errorData.message || 'Failed to delete position');
-            }
+            await apiService.delete(`/api/v1/organization-positions/${position.id}`);
+            refresh();
         } catch (error) {
             console.error('Error deleting position:', error);
             alert('Failed to delete position');

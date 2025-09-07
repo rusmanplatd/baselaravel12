@@ -5,10 +5,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-  Users, 
-  MessageSquare, 
-  Shield, 
+import {
+  Users,
+  MessageSquare,
+  Shield,
   Webhook,
   Video,
   Settings,
@@ -27,6 +27,7 @@ import {
 import SecurityDashboard from '@/components/security/SecurityDashboard';
 import WebhookManager from '@/components/webhooks/WebhookManager';
 import { toast } from 'sonner';
+import { apiService } from '@/services/ApiService';
 
 interface SystemStats {
   total_users: number;
@@ -93,27 +94,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
   const fetchDashboardData = async () => {
     try {
       setRefreshing(true);
-      
-      const [statsResponse, servicesResponse, activityResponse] = await Promise.all([
-        fetch('/api/v1/admin/dashboard/stats'),
-        fetch('/api/v1/admin/dashboard/services'),
-        fetch('/api/v1/admin/dashboard/activity')
+
+      const [statsData, servicesData, activityData] = await Promise.all([
+        apiService.get('/api/v1/admin/dashboard/stats'),
+        apiService.get('/api/v1/admin/dashboard/services'),
+        apiService.get('/api/v1/admin/dashboard/activity')
       ]);
 
-      if (statsResponse.ok) {
-        const statsData = await statsResponse.json();
-        setStats(statsData.stats);
-      }
-
-      if (servicesResponse.ok) {
-        const servicesData = await servicesResponse.json();
-        setServiceStatuses(servicesData.services);
-      }
-
-      if (activityResponse.ok) {
-        const activityData = await activityResponse.json();
-        setRecentActivity(activityData.activities);
-      }
+      setStats(statsData.stats);
+      setServiceStatuses(servicesData.services);
+      setRecentActivity(activityData.activities);
 
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
@@ -183,8 +173,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
             Monitor and manage your application's performance and security
           </p>
         </div>
-        <Button 
-          onClick={fetchDashboardData} 
+        <Button
+          onClick={fetchDashboardData}
           disabled={refreshing}
           variant="outline"
           size="sm"
@@ -199,7 +189,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
         <Alert className="border-yellow-200 bg-yellow-50">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            System health score is {stats.system_health_score}%. 
+            System health score is {stats.system_health_score}%.
             Please review service statuses and recent activity for issues.
           </AlertDescription>
         </Alert>
@@ -264,8 +254,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stats?.system_health_score}%</div>
-                <Progress 
-                  value={stats?.system_health_score} 
+                <Progress
+                  value={stats?.system_health_score}
                   className="mt-2"
                 />
               </CardContent>
@@ -287,8 +277,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                     <span>Used Storage</span>
                     <span>{stats?.storage_used_gb}GB / {stats?.storage_limit_gb}GB</span>
                   </div>
-                  <Progress 
-                    value={(stats?.storage_used_gb || 0) / (stats?.storage_limit_gb || 1) * 100} 
+                  <Progress
+                    value={(stats?.storage_used_gb || 0) / (stats?.storage_limit_gb || 1) * 100}
                   />
                 </div>
               </CardContent>
@@ -348,7 +338,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                         </div>
                       </div>
                     </div>
-                    <Badge 
+                    <Badge
                       variant={service.status === 'healthy' ? 'default' : 'destructive'}
                       className="capitalize"
                     >
@@ -426,7 +416,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                       </div>
                       {service.service.replace('_', ' ')}
                     </CardTitle>
-                    <Badge 
+                    <Badge
                       variant={service.status === 'healthy' ? 'default' : 'destructive'}
                       className="capitalize"
                     >
@@ -477,8 +467,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
             <CardContent>
               <div className="space-y-3">
                 {recentActivity.map((activity) => (
-                  <div 
-                    key={activity.id} 
+                  <div
+                    key={activity.id}
                     className={`p-4 border rounded-lg ${getActivitySeverityColor(activity.severity)}`}
                   >
                     <div className="flex items-start justify-between">
@@ -502,7 +492,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ className }) => {
                           </div>
                         </div>
                       </div>
-                      <Badge 
+                      <Badge
                         variant={activity.severity === 'error' ? 'destructive' : 'secondary'}
                         className="ml-2"
                       >

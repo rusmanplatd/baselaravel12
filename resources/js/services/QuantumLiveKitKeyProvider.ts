@@ -5,6 +5,7 @@
 
 import { BaseKeyProvider } from 'livekit-client';
 import { getUserStorageItem, setUserStorageItem, removeUserStorageItem } from '@/utils/localStorage';
+import { apiService } from '@/services/ApiService';
 
 export interface QuantumKeyMaterial {
   keyId: string;
@@ -493,26 +494,12 @@ export class QuantumLiveKitKeyProvider extends BaseKeyProvider {
 
   private async getDeviceInfoFromAPI(participantId: string): Promise<any | null> {
     try {
-      const response = await fetch(`/api/v1/livekit/participants/${participantId}/device-info`, {
-        method: 'GET',
+      const data = await apiService.get(`/api/v1/livekit/participants/${participantId}/device-info`, {
         headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
           'X-Device-Fingerprint': this.getDeviceFingerprint(),
           'X-Conversation-Id': this.conversationId,
         },
-        credentials: 'same-origin',
       });
-      
-      if (!response.ok) {
-        if (response.status === 404) {
-          // Participant not found, might be new
-          return null;
-        }
-        throw new Error(`API error: ${response.status}`);
-      }
-      
-      const data = await response.json();
       
       // Cache the result
       this.cacheDeviceInfo(participantId, data.deviceInfo);
@@ -1087,19 +1074,7 @@ export class QuantumLiveKitKeyProvider extends BaseKeyProvider {
   }
 
   private async sendViaSignalingServer(message: any): Promise<void> {
-    const response = await fetch('/api/v1/livekit/signaling/send', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      credentials: 'same-origin',
-      body: JSON.stringify(message)
-    });
-
-    if (!response.ok) {
-      throw new Error(`Signaling server error: ${response.status}`);
-    }
+    await apiService.post('/api/v1/livekit/signaling/send', message);
   }
 
   // Method to set data channel when WebRTC connection is established

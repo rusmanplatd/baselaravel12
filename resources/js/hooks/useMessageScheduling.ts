@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { apiService } from '@/services/ApiService';
 
 export interface ScheduledMessage {
   id: string;
@@ -52,31 +53,40 @@ export const useMessageScheduling = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const makeApiCall = async <T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<T> => {
+  const makeApiCall = async <T>(endpoint: string, options: RequestInit = {}): Promise<T> => {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch(`/api/v1/scheduled-messages/${endpoint}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          ...options.headers,
-        },
-        ...options,
-      });
+      const url = `/api/v1/scheduled-messages/${endpoint}`;
+      const method = (options.method || 'GET').toUpperCase();
+      const headers = {
+        'X-Requested-With': 'XMLHttpRequest',
+        ...(options.headers as Record<string, string> | undefined),
+      };
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      let data: any;
+      switch (method) {
+        case 'GET':
+          data = await apiService.get(url, { headers });
+          break;
+        case 'POST':
+          data = await apiService.post(url, options.body ? JSON.parse(String(options.body)) : undefined, { headers });
+          break;
+        case 'PUT':
+          data = await apiService.put(url, options.body ? JSON.parse(String(options.body)) : undefined, { headers });
+          break;
+        case 'PATCH':
+          data = await apiService.patch(url, options.body ? JSON.parse(String(options.body)) : undefined, { headers });
+          break;
+        case 'DELETE':
+          data = await apiService.delete(url, { headers });
+          break;
+        default:
+          data = await apiService.request(url, { ...options, headers });
       }
 
-      const data = await response.json();
-      return data;
+      return data as T;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred';
       setError(errorMessage);
@@ -93,7 +103,7 @@ export const useMessageScheduling = () => {
     limit?: number;
   } = {}): Promise<ScheduledMessagesResponse> => {
     const queryParams = new URLSearchParams();
-    
+
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
         if (Array.isArray(value)) {
@@ -289,22 +299,22 @@ export const useMessageScheduling = () => {
   const canScheduleForTime = useCallback((scheduledFor: string): { valid: boolean; error?: string } => {
     const now = new Date();
     const scheduled = new Date(scheduledFor);
-    
+
     if (isNaN(scheduled.getTime())) {
       return { valid: false, error: 'Invalid date format' };
     }
-    
+
     if (scheduled <= now) {
       return { valid: false, error: 'Schedule time must be in the future' };
     }
-    
+
     const maxFuture = new Date();
     maxFuture.setDate(maxFuture.getDate() + 365); // 1 year max
-    
+
     if (scheduled > maxFuture) {
       return { valid: false, error: 'Cannot schedule more than 1 year in advance' };
     }
-    
+
     return { valid: true };
   }, []);
 

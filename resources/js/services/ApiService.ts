@@ -405,6 +405,53 @@ class ApiService {
     public isAuthenticated(): boolean {
         return !!this.accessToken;
     }
+
+    /**
+     * Make a request with custom headers (for special cases like broadcasting auth)
+     */
+    public async request<T>(url: string, options: RequestInit = {}): Promise<T> {
+        const response = await fetch(url, options);
+        return this.handleResponse<T>(response);
+    }
+
+    /**
+     * Make a GET request without authentication (for public endpoints)
+     */
+    public async getPublic<T>(url: string, options: RequestInit = {}): Promise<T> {
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                ...options.headers as Record<string, string>,
+            },
+            ...options,
+        });
+
+        return this.handleResponse<T>(response);
+    }
+
+    /**
+     * Make a POST request with CSRF token only (for broadcasting auth and similar)
+     */
+    public async postWithCSRF<T>(url: string, data?: unknown, options: RequestInit = {}): Promise<T> {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': this.getCSRFToken(),
+                'X-Requested-With': 'XMLHttpRequest',
+                ...options.headers as Record<string, string>,
+            },
+            credentials: 'same-origin',
+            body: data ? JSON.stringify(data) : undefined,
+            ...options,
+        });
+
+        return this.handleResponse<T>(response);
+    }
 }
 
 // Custom error class for API errors

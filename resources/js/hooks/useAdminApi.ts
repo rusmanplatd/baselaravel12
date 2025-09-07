@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { apiService } from '@/services/ApiService';
 import {
   SystemStats,
   ServiceStatus,
@@ -26,22 +27,34 @@ export const useAdminApi = () => {
     setError(null);
 
     try {
-      const response = await fetch(`/api/v1/admin/${endpoint}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          ...options.headers,
-        },
-        ...options,
-      });
+      const url = `/api/v1/admin/${endpoint}`;
+      const method = (options.method || 'GET').toUpperCase();
+      const headers = {
+        'X-Requested-With': 'XMLHttpRequest',
+        ...(options.headers as Record<string, string> | undefined),
+      };
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.message || `HTTP error! status: ${response.status}`);
+      let data: any;
+      switch (method) {
+        case 'GET':
+          data = await apiService.get(url, { headers });
+          break;
+        case 'POST':
+          data = await apiService.post(url, options.body ? JSON.parse(String(options.body)) : undefined, { headers });
+          break;
+        case 'PUT':
+          data = await apiService.put(url, options.body ? JSON.parse(String(options.body)) : undefined, { headers });
+          break;
+        case 'PATCH':
+          data = await apiService.patch(url, options.body ? JSON.parse(String(options.body)) : undefined, { headers });
+          break;
+        case 'DELETE':
+          data = await apiService.delete(url, { headers });
+          break;
+        default:
+          data = await apiService.request(url, { ...options, headers });
       }
 
-      const data = await response.json();
       return data;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred';
@@ -270,20 +283,11 @@ export const useAdminApi = () => {
       end: string;
     };
   }): Promise<Blob> => {
-    const response = await fetch('/api/v1/admin/reports/export', {
-      method: 'POST',
+    const response = await apiService.downloadBlob('/api/v1/admin/reports/export', params, {
       headers: {
-        'Content-Type': 'application/json',
-        'Accept': params.format === 'json' ? 'application/json' : 'application/octet-stream',
-        'X-Requested-With': 'XMLHttpRequest',
+        Accept: params.format === 'json' ? 'application/json' : 'application/octet-stream',
       },
-      body: JSON.stringify(params),
     });
-
-    if (!response.ok) {
-      throw new Error(`Export failed: ${response.status}`);
-    }
-
     return response.blob();
   }, []);
 

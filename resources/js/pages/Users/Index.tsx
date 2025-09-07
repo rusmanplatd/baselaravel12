@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useApiData } from '@/hooks/useApiData';
 import { PermissionGuard } from '@/components/permission-guard';
 import AppLayout from '@/layouts/app-layout';
+import { apiService } from '@/services/ApiService';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import {
@@ -138,23 +139,11 @@ export default function UsersIndex() {
         }
 
         try {
-            const response = await fetch(`/users/${user.id}`, {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
-                    'Accept': 'application/json',
-                },
-            });
-
-            if (response.ok) {
-                refresh();
-            } else {
-                const errorData = await response.json();
-                alert(errorData.message || 'Failed to delete user');
-            }
+            await apiService.delete(`/users/${user.id}`);
+            refresh();
         } catch (error) {
             console.error('Error deleting user:', error);
-            alert('Failed to delete user');
+            alert(error instanceof Error ? error.message : 'Failed to delete user');
         }
     };
 

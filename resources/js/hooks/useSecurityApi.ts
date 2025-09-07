@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { router } from '@inertiajs/react';
+import { apiService } from '@/services/ApiService';
 
 interface SecurityDashboardData {
   metrics: {
@@ -57,28 +58,41 @@ export const useSecurityApi = () => {
   const [error, setError] = useState<string | null>(null);
 
   const makeApiCall = async <T>(
-    endpoint: string, 
+    endpoint: string,
     options: RequestInit = {}
   ): Promise<T> => {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch(`/api/v1/security/${endpoint}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          ...options.headers,
-        },
-        ...options,
-      });
+      const url = `/api/v1/security/${endpoint}`;
+      const method = (options.method || 'GET').toUpperCase();
+      const headers = {
+        'X-Requested-With': 'XMLHttpRequest',
+        ...(options.headers as Record<string, string> | undefined),
+      };
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      let data: any;
+      switch (method) {
+        case 'GET':
+          data = await apiService.get(url, { headers });
+          break;
+        case 'POST':
+          data = await apiService.post(url, options.body ? JSON.parse(String(options.body)) : undefined, { headers });
+          break;
+        case 'PUT':
+          data = await apiService.put(url, options.body ? JSON.parse(String(options.body)) : undefined, { headers });
+          break;
+        case 'PATCH':
+          data = await apiService.patch(url, options.body ? JSON.parse(String(options.body)) : undefined, { headers });
+          break;
+        case 'DELETE':
+          data = await apiService.delete(url, { headers });
+          break;
+        default:
+          data = await apiService.request(url, { ...options, headers });
       }
 
-      const data = await response.json();
       return data;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred';
@@ -106,14 +120,14 @@ export const useSecurityApi = () => {
     to?: string;
   } = {}): Promise<AuditLogsResponse> => {
     const queryParams = new URLSearchParams();
-    
+
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
         queryParams.append(key, String(value));
       }
     });
 
-    const endpoint = queryParams.toString() 
+    const endpoint = queryParams.toString()
       ? `audit-logs?${queryParams.toString()}`
       : 'audit-logs';
 
@@ -131,7 +145,7 @@ export const useSecurityApi = () => {
   };
 
   const resolveEvent = async (
-    id: string, 
+    id: string,
     resolution: 'resolved' | 'false_positive',
     notes?: string
   ): Promise<{ audit_log: SecurityEvent }> => {

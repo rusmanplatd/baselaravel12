@@ -10,6 +10,7 @@ import { useApiData } from '@/hooks/useApiData';
 import { PermissionGuard } from '@/components/permission-guard';
 import ActivityLogModal from '@/components/ActivityLogModal';
 import AppLayout from '@/layouts/app-layout';
+import { apiService } from '@/services/ApiService';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import {
@@ -150,23 +151,11 @@ export default function RolesApi() {
         }
 
         try {
-            const response = await fetch(`/api/v1/roles/${role.id}`, {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
-                    'Accept': 'application/json',
-                },
-            });
-
-            if (response.ok) {
-                refresh();
-            } else {
-                const errorData = await response.json();
-                alert(errorData.message || 'Failed to delete role');
-            }
+            await apiService.delete(`/api/v1/roles/${role.id}`);
+            refresh();
         } catch (error) {
             console.error('Error deleting role:', error);
-            alert('Failed to delete role');
+            alert(error instanceof Error ? error.message : 'Failed to delete role');
         }
     };
 

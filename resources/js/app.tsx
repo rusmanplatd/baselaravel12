@@ -46,7 +46,7 @@ window.Echo = new Echo({
                         const token = await apiService.getAccessToken();
                         console.log('🔑 Using API token for broadcasting auth:', token ? 'Token available' : 'No token');
 
-                        const response = await fetch('/broadcasting/auth', {
+                        const data = await apiService.request('/broadcasting/auth', {
                             method: 'POST',
                             headers: {
                                 'Authorization': `Bearer ${token}`,
@@ -62,28 +62,19 @@ window.Echo = new Echo({
                             }),
                         });
 
-                        console.log('📡 Broadcasting auth response status:', response.status);
-
-                        if (!response.ok) {
-                            const text = await response.text();
-                            console.error('🚨 Broadcasting auth failed with response:', text);
-
-                            // Handle 403 errors gracefully (user doesn't have access to conversation)
-                            if (response.status === 403) {
-                                console.warn('Access denied to conversation channel. User may not have permission to access this conversation.');
-                                // Don't throw the error, just call the callback with null to prevent subscription
-                                callback(null, null);
-                                return;
-                            }
-
-                            throw new Error(`HTTP ${response.status}: ${response.statusText} - ${text}`);
-                        }
-
-                        const data = await response.json();
                         console.log('✅ Broadcasting auth success:', data);
                         callback(null, data);
                     } catch (error) {
                         console.error('🚨 Broadcasting auth error:', error);
+                        
+                        // Handle 403 errors gracefully (user doesn't have access to conversation)
+                        if (error instanceof Error && error.message.includes('403')) {
+                            console.warn('Access denied to conversation channel. User may not have permission to access this conversation.');
+                            // Don't throw the error, just call the callback with null to prevent subscription
+                            callback(null, null);
+                            return;
+                        }
+                        
                         callback(error instanceof Error ? error : new Error(String(error)), null);
                     }
                 })();

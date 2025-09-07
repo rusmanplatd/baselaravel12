@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { apiService } from '@/services/ApiService';
 
 interface PaginatedResponse<T> {
   data: T[];
@@ -51,24 +52,24 @@ interface UsePublicApiDataReturn<T> {
 function getUrlParams(): Record<string, string> {
   const urlParams = new URLSearchParams(window.location.search);
   const params: Record<string, string> = {};
-  
+
   urlParams.forEach((value, key) => {
     params[key] = value;
   });
-  
+
   return params;
 }
 
 // Helper function to update URL without reloading the page
 function updateUrl(params: Record<string, string | number | undefined>) {
   const urlParams = new URLSearchParams();
-  
+
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined && value !== '' && value !== null) {
       urlParams.set(key, value.toString());
     }
   });
-  
+
   const newUrl = `${window.location.pathname}${urlParams.toString() ? '?' + urlParams.toString() : ''}`;
   window.history.replaceState({}, '', newUrl);
 }
@@ -81,11 +82,11 @@ export function usePublicApiData<T>({
 }: UsePublicApiDataOptions): UsePublicApiDataReturn<T> {
   // Initialize state from URL parameters
   const urlParams = getUrlParams();
-  
+
   const [paginatedResponse, setPaginatedResponse] = useState<PaginatedResponse<T> | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Initialize from URL or fallback to initial values
   const [filters, setFilters] = useState(() => {
     const urlFilters: Record<string, string> = {};
@@ -94,7 +95,7 @@ export function usePublicApiData<T>({
     });
     return urlFilters;
   });
-  
+
   const [sort, setSort] = useState(urlParams.sort || initialSort);
   const [perPage, setPerPage] = useState(() => {
     const urlPerPage = parseInt(urlParams.per_page || '');
@@ -111,7 +112,7 @@ export function usePublicApiData<T>({
 
     try {
       const params = new URLSearchParams();
-      
+
       // Add filters
       Object.entries(filters).forEach(([key, value]) => {
         if (value && value.trim() !== '') {
@@ -133,23 +134,7 @@ export function usePublicApiData<T>({
       }
 
       const url = `${endpoint}${params.toString() ? '?' + params.toString() : ''}`;
-      
-      // Use direct fetch for public API endpoints
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-        },
-        credentials: 'same-origin',
-      });
-
-      if (!response.ok) {
-        throw new Error(`API request failed: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json() as PaginatedResponse<T>;
+      const data = await apiService.getPublic<PaginatedResponse<T>>(url);
       setPaginatedResponse(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -168,14 +153,14 @@ export function usePublicApiData<T>({
     const currentSort = newSort !== undefined ? newSort : sort;
     const currentPerPage = newPerPage || perPage;
     const currentPage = newPage || page;
-    
+
     const urlParams: Record<string, string | number | undefined> = {
       ...currentFilters,
       sort: currentSort || undefined,
       per_page: currentPerPage !== 15 ? currentPerPage : undefined,
       page: currentPage !== 1 ? currentPage : undefined,
     };
-    
+
     updateUrl(urlParams);
   }, [filters, sort, perPage, page]);
 
@@ -209,7 +194,7 @@ export function usePublicApiData<T>({
       acc[key] = '';
       return acc;
     }, {} as Record<string, string>);
-    
+
     setFilters(clearedFilters);
     setPage(1);
     syncToUrl(clearedFilters, sort, perPage, 1);

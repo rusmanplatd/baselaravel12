@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { apiService } from '@/services/ApiService';
 
 export interface Bot {
   id: string;
@@ -67,21 +68,34 @@ export const useBotApi = () => {
     setError(null);
 
     try {
-      const response = await fetch(`/api/v1/bots/${endpoint}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          ...options.headers,
-        },
-        ...options,
-      });
+      const url = `/api/v1/bots/${endpoint}`;
+      const method = (options.method || 'GET').toUpperCase();
+      const headers = {
+        'X-Requested-With': 'XMLHttpRequest',
+        ...(options.headers as Record<string, string> | undefined),
+      };
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      let data: any;
+      switch (method) {
+        case 'GET':
+          data = await apiService.get(url, { headers });
+          break;
+        case 'POST':
+          data = await apiService.post(url, options.body ? JSON.parse(String(options.body)) : undefined, { headers });
+          break;
+        case 'PUT':
+          data = await apiService.put(url, options.body ? JSON.parse(String(options.body)) : undefined, { headers });
+          break;
+        case 'PATCH':
+          data = await apiService.patch(url, options.body ? JSON.parse(String(options.body)) : undefined, { headers });
+          break;
+        case 'DELETE':
+          data = await apiService.delete(url, { headers });
+          break;
+        default:
+          data = await apiService.request(url, { ...options, headers });
       }
 
-      const data = await response.json();
       return data;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred';
@@ -97,7 +111,7 @@ export const useBotApi = () => {
     limit?: number;
   } = {}): Promise<BotsResponse> => {
     const queryParams = new URLSearchParams();
-    
+
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
         queryParams.append(key, String(value));
@@ -128,7 +142,7 @@ export const useBotApi = () => {
   };
 
   const updateBot = async (
-    id: string, 
+    id: string,
     botData: Partial<Bot>
   ): Promise<{ bot: Bot; message: string }> => {
     return makeApiCall<{ bot: Bot; message: string }>(id, {
@@ -195,27 +209,16 @@ export const useBotApi = () => {
     setError(null);
 
     try {
-      const response = await fetch(`/api/v1/bots/${botId}/send-message`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${apiToken}`,
-          'X-Requested-With': 'XMLHttpRequest',
-        },
-        body: JSON.stringify({
-          conversation_id: conversationId,
-          content,
-          content_type: contentType,
-          metadata,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const headers = {
+        'Authorization': `Bearer ${apiToken}`,
+        'X-Requested-With': 'XMLHttpRequest',
+      };
+      const data = await apiService.post(`/api/v1/bots/${botId}/send-message`, {
+        conversation_id: conversationId,
+        content,
+        content_type: contentType,
+        metadata,
+      }, { headers });
       return data;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred';
@@ -240,7 +243,7 @@ export const useBotApi = () => {
         .createHmac('sha256', secret)
         .update(payload)
         .digest('hex');
-      
+
       return crypto.timingSafeEqual(
         Buffer.from(expectedSignature),
         Buffer.from(signature)

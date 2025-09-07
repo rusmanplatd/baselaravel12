@@ -11,6 +11,7 @@ import ActivityLogModal from '@/components/ActivityLogModal';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
+import { apiService } from '@/services/ApiService';
 import {
     Eye,
     Edit,
@@ -143,20 +144,8 @@ export default function CountriesApi() {
         }
 
         try {
-            const response = await fetch(`/api/v1/geo/countries/${country.id}`, {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content || '',
-                    'Accept': 'application/json',
-                },
-            });
-
-            if (response.ok) {
-                refresh();
-            } else {
-                const errorData = await response.json();
-                alert(errorData.message || 'Failed to delete country');
-            }
+            await apiService.delete(`/api/v1/geo/countries/${country.id}`);
+            refresh();
         } catch (error) {
             console.error('Error deleting country:', error);
             alert('Failed to delete country');

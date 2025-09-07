@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import axios from 'axios';
+import apiService, { ApiError } from '@/services/ApiService';
 
 interface Broadcast {
     id: string;
@@ -59,8 +59,8 @@ export function useChannelBroadcasts(channelId: string) {
 
     const handleError = useCallback((err: unknown) => {
         console.error('Broadcast operation error:', err);
-        const message = axios.isAxiosError(err) 
-            ? err.response?.data?.message || err.message 
+        const message = err instanceof ApiError 
+            ? err.message 
             : 'An error occurred';
         setError(message);
     }, []);
@@ -78,8 +78,7 @@ export function useChannelBroadcasts(channelId: string) {
                 }
             });
 
-            const response = await axios.get(`/api/v1/chat/channels/${channelId}/broadcasts?${params}`);
-            const data = response.data as PaginatedResponse<Broadcast>;
+            const data = await apiService.get<PaginatedResponse<Broadcast>>(`/api/v1/chat/channels/${channelId}/broadcasts?${params}`);
             
             setBroadcasts(data.data);
             setPagination(data.meta);
@@ -101,8 +100,8 @@ export function useChannelBroadcasts(channelId: string) {
         setError(null);
         
         try {
-            const response = await axios.post(`/api/v1/chat/channels/${channelId}/broadcasts`, broadcastData);
-            const newBroadcast = response.data.broadcast;
+            const response = await apiService.post<{broadcast: Broadcast}>(`/api/v1/chat/channels/${channelId}/broadcasts`, broadcastData);
+            const newBroadcast = response.broadcast;
             
             // Add to broadcasts list if it's currently loaded
             setBroadcasts(prev => [newBroadcast, ...prev]);
@@ -117,8 +116,7 @@ export function useChannelBroadcasts(channelId: string) {
     // Get single broadcast
     const getBroadcast = useCallback(async (broadcastId: string): Promise<Broadcast | null> => {
         try {
-            const response = await axios.get(`/api/v1/chat/channels/${channelId}/broadcasts/${broadcastId}`);
-            return response.data;
+            return await apiService.get<Broadcast>(`/api/v1/chat/channels/${channelId}/broadcasts/${broadcastId}`);
         } catch (err) {
             handleError(err);
             return null;
@@ -136,8 +134,8 @@ export function useChannelBroadcasts(channelId: string) {
         setError(null);
         
         try {
-            const response = await axios.patch(`/api/v1/chat/channels/${channelId}/broadcasts/${broadcastId}`, updates);
-            const updatedBroadcast = response.data.broadcast;
+            const response = await apiService.patch<{broadcast: Broadcast}>(`/api/v1/chat/channels/${channelId}/broadcasts/${broadcastId}`, updates);
+            const updatedBroadcast = response.broadcast;
             
             // Update in broadcasts list
             setBroadcasts(prev => 
@@ -156,8 +154,8 @@ export function useChannelBroadcasts(channelId: string) {
         setError(null);
         
         try {
-            const response = await axios.post(`/api/v1/chat/channels/${channelId}/broadcasts/${broadcastId}/send`);
-            const sentBroadcast = response.data.broadcast;
+            const response = await apiService.post<{broadcast: Broadcast}>(`/api/v1/chat/channels/${channelId}/broadcasts/${broadcastId}/send`);
+            const sentBroadcast = response.broadcast;
             
             // Update in broadcasts list
             setBroadcasts(prev => 
@@ -178,8 +176,8 @@ export function useChannelBroadcasts(channelId: string) {
         setError(null);
         
         try {
-            const response = await axios.post(`/api/v1/chat/channels/${channelId}/broadcasts/${broadcastId}/duplicate`);
-            const duplicatedBroadcast = response.data.broadcast;
+            const response = await apiService.post<{broadcast: Broadcast}>(`/api/v1/chat/channels/${channelId}/broadcasts/${broadcastId}/duplicate`);
+            const duplicatedBroadcast = response.broadcast;
             
             // Add to broadcasts list
             setBroadcasts(prev => [duplicatedBroadcast, ...prev]);
@@ -196,7 +194,7 @@ export function useChannelBroadcasts(channelId: string) {
         setError(null);
         
         try {
-            await axios.delete(`/api/v1/chat/channels/${channelId}/broadcasts/${broadcastId}`);
+            await apiService.delete(`/api/v1/chat/channels/${channelId}/broadcasts/${broadcastId}`);
             
             // Remove from broadcasts list
             setBroadcasts(prev => prev.filter(broadcast => broadcast.id !== broadcastId));
@@ -211,8 +209,7 @@ export function useChannelBroadcasts(channelId: string) {
     // Get broadcast analytics
     const getBroadcastAnalytics = useCallback(async (broadcastId: string): Promise<any> => {
         try {
-            const response = await axios.get(`/api/v1/chat/channels/${channelId}/broadcasts/${broadcastId}/analytics`);
-            return response.data;
+            return await apiService.get(`/api/v1/chat/channels/${channelId}/broadcasts/${broadcastId}/analytics`);
         } catch (err) {
             handleError(err);
             return null;
@@ -226,10 +223,8 @@ export function useChannelBroadcasts(channelId: string) {
         setIsLoading(true);
         
         try {
-            const response = await axios.get(`/api/v1/chat/channels/${channelId}/broadcasts`, {
-                params: { page, per_page: pagination.per_page }
-            });
-            const data = response.data as PaginatedResponse<Broadcast>;
+            const params = new URLSearchParams({ page: page.toString(), per_page: pagination.per_page.toString() });
+            const data = await apiService.get<PaginatedResponse<Broadcast>>(`/api/v1/chat/channels/${channelId}/broadcasts?${params}`);
             
             setBroadcasts(prev => [...prev, ...data.data]);
             setPagination(data.meta);

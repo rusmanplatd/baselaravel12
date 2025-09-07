@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import axios from 'axios';
+import apiService, { ApiError } from '@/services/ApiService';
 
 interface Channel {
     id: string;
@@ -77,9 +77,11 @@ export function useChannels() {
         total: 0,
     });
 
-    const handleError = useCallback((err: any) => {
+    const handleError = useCallback((err: unknown) => {
         console.error('Channel operation error:', err);
-        const message = err.response?.data?.message || err.message || 'An error occurred';
+        const message = err instanceof ApiError 
+            ? err.message 
+            : 'An error occurred';
         setError(message);
     }, []);
 
@@ -96,8 +98,7 @@ export function useChannels() {
                 }
             });
 
-            const response = await axios.get(`/api/v1/chat/channels?${params}`);
-            const data = response.data as PaginatedResponse<Channel>;
+            const data = await apiService.get<PaginatedResponse<Channel>>(`/api/v1/chat/channels?${params}`);
             
             setChannels(data.data);
             setPagination(data.meta);
@@ -121,8 +122,7 @@ export function useChannels() {
                 }
             });
 
-            const response = await axios.get(`/api/v1/chat/channels/discover?${params}`);
-            const data = response.data as PaginatedResponse<Channel>;
+            const data = await apiService.get<PaginatedResponse<Channel>>(`/api/v1/chat/channels/discover?${params}`);
             
             setChannels(data.data);
             setPagination(data.meta);
@@ -136,8 +136,8 @@ export function useChannels() {
     // Load channel categories
     const loadCategories = useCallback(async () => {
         try {
-            const response = await axios.get('/api/v1/chat/channels/categories');
-            setCategories(response.data);
+            const data = await apiService.get<ChannelCategory[]>('/api/v1/chat/channels/categories');
+            setCategories(data);
         } catch (err) {
             console.error('Failed to load categories:', err);
         }
@@ -146,8 +146,7 @@ export function useChannels() {
     // Get single channel
     const getChannel = useCallback(async (channelId: string): Promise<Channel | null> => {
         try {
-            const response = await axios.get(`/api/v1/chat/channels/${channelId}`);
-            return response.data;
+            return await apiService.get<Channel>(`/api/v1/chat/channels/${channelId}`);
         } catch (err) {
             handleError(err);
             return null;
@@ -172,8 +171,8 @@ export function useChannels() {
         setError(null);
         
         try {
-            const response = await axios.post('/api/v1/chat/channels', channelData);
-            const newChannel = response.data.channel;
+            const response = await apiService.post<{channel: Channel}>('/api/v1/chat/channels', channelData);
+            const newChannel = response.channel;
             
             // Add to channels list if it's currently loaded
             setChannels(prev => [newChannel, ...prev]);
@@ -203,8 +202,8 @@ export function useChannels() {
         setError(null);
         
         try {
-            const response = await axios.patch(`/api/v1/chat/channels/${channelId}`, updates);
-            const updatedChannel = response.data.channel;
+            const response = await apiService.patch<{channel: Channel}>(`/api/v1/chat/channels/${channelId}`, updates);
+            const updatedChannel = response.channel;
             
             // Update in channels list
             setChannels(prev => 
@@ -223,7 +222,7 @@ export function useChannels() {
         setError(null);
         
         try {
-            await axios.post(`/api/v1/chat/channels/${channelId}/subscribe`);
+            await apiService.post(`/api/v1/chat/channels/${channelId}/subscribe`);
             
             // Update subscription status in channels list
             setChannels(prev => 
@@ -246,7 +245,7 @@ export function useChannels() {
         setError(null);
         
         try {
-            await axios.delete(`/api/v1/chat/channels/${channelId}/unsubscribe`);
+            await apiService.delete(`/api/v1/chat/channels/${channelId}/unsubscribe`);
             
             // Update subscription status in channels list
             setChannels(prev => 
@@ -296,10 +295,8 @@ export function useChannels() {
     // Get channel statistics (admin only)
     const getChannelStatistics = useCallback(async (channelId: string, period: string = 'week'): Promise<any> => {
         try {
-            const response = await axios.get(`/api/v1/chat/channels/${channelId}/statistics`, {
-                params: { period }
-            });
-            return response.data;
+            const params = new URLSearchParams({ period });
+            return await apiService.get(`/api/v1/chat/channels/${channelId}/statistics?${params}`);
         } catch (err) {
             handleError(err);
             return null;
@@ -313,10 +310,8 @@ export function useChannels() {
         setIsLoading(true);
         
         try {
-            const response = await axios.get(`/api/v1/chat/channels/discover`, {
-                params: { page, per_page: pagination.per_page }
-            });
-            const data = response.data as PaginatedResponse<Channel>;
+            const params = new URLSearchParams({ page: page.toString(), per_page: pagination.per_page.toString() });
+            const data = await apiService.get<PaginatedResponse<Channel>>(`/api/v1/chat/channels/discover?${params}`);
             
             setChannels(prev => [...prev, ...data.data]);
             setPagination(data.meta);

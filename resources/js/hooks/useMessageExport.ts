@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { apiService } from '@/services/ApiService';
 import { getUserStorageItem, setUserStorageItem } from '@/utils/localStorage';
 
 export interface ExportFormat {
@@ -78,28 +79,28 @@ interface UseMessageExportReturn {
   exportJobs: ExportJob[];
   isExporting: boolean;
   exportProgress: number;
-  
+
   // Backup functionality
   backupJobs: BackupJob[];
   isBackingUp: boolean;
   backupProgress: number;
-  
+
   // Actions
   startExport: (conversationId: string, options: ExportOptions) => Promise<ExportJob>;
   cancelExport: (jobId: string) => Promise<void>;
   downloadExport: (jobId: string) => Promise<void>;
   deleteExport: (jobId: string) => Promise<void>;
-  
+
   startBackup: (backupType: BackupJob['backup_type'], options?: Partial<ExportOptions>) => Promise<BackupJob>;
   cancelBackup: (jobId: string) => Promise<void>;
   downloadBackup: (jobId: string) => Promise<void>;
   deleteBackup: (jobId: string) => Promise<void>;
-  
+
   // Data management
   getExportJobs: () => Promise<void>;
   getBackupJobs: () => Promise<void>;
   cleanupExpiredJobs: () => Promise<void>;
-  
+
   // Statistics
   getExportStats: () => Promise<{
     total_exports: number;
@@ -178,28 +179,32 @@ export const useMessageExport = (): UseMessageExportReturn => {
   // API wrapper
   const apiCall = useCallback(async (url: string, options: RequestInit = {}): Promise<any> => {
     const deviceFingerprint = getDeviceFingerprint();
-    
-    const response = await fetch(`/api/v1/export${url}`, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'X-Device-Fingerprint': deviceFingerprint,
-        ...options.headers,
-      },
-    });
+    const method = (options.method || 'GET').toUpperCase();
+    const headers = {
+      'X-Device-Fingerprint': deviceFingerprint,
+      ...(options.headers as Record<string, string> | undefined),
+    };
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'API call failed');
+    const fullUrl = `/api/v1/export${url}`;
+    switch (method) {
+      case 'GET':
+        return await apiService.get(fullUrl, { headers });
+      case 'POST':
+        return await apiService.post(fullUrl, options.body ? JSON.parse(String(options.body)) : undefined, { headers });
+      case 'PUT':
+        return await apiService.put(fullUrl, options.body ? JSON.parse(String(options.body)) : undefined, { headers });
+      case 'PATCH':
+        return await apiService.patch(fullUrl, options.body ? JSON.parse(String(options.body)) : undefined, { headers });
+      case 'DELETE':
+        return await apiService.delete(fullUrl, { headers });
+      default:
+        return await apiService.request(fullUrl, { ...options, headers });
     }
-
-    return await response.json();
   }, []);
 
   // Start export
   const startExport = useCallback(async (
-    conversationId: string, 
+    conversationId: string,
     options: ExportOptions
   ): Promise<ExportJob> => {
     setIsExporting(true);
@@ -233,7 +238,7 @@ export const useMessageExport = (): UseMessageExportReturn => {
       try {
         const response = await apiCall(`/jobs/${jobId}`);
         const job = response.job;
-        
+
         setExportProgress(job.progress);
         setExportJobs(prev => prev.map(j => j.id === jobId ? job : j));
 
@@ -260,8 +265,8 @@ export const useMessageExport = (): UseMessageExportReturn => {
         method: 'POST',
       });
 
-      setExportJobs(prev => prev.map(job => 
-        job.id === jobId 
+      setExportJobs(prev => prev.map(job =>
+        job.id === jobId
           ? { ...job, status: 'failed', error_message: 'Cancelled by user' }
           : job
       ));
@@ -345,7 +350,7 @@ export const useMessageExport = (): UseMessageExportReturn => {
       try {
         const response = await apiCall(`/backup/${jobId}`);
         const job = response.job;
-        
+
         setBackupProgress(job.progress);
         setBackupJobs(prev => prev.map(j => j.id === jobId ? job : j));
 
@@ -372,8 +377,8 @@ export const useMessageExport = (): UseMessageExportReturn => {
         method: 'POST',
       });
 
-      setBackupJobs(prev => prev.map(job => 
-        job.id === jobId 
+      setBackupJobs(prev => prev.map(job =>
+        job.id === jobId
           ? { ...job, status: 'failed', error_message: 'Cancelled by user' }
           : job
       ));
@@ -446,7 +451,7 @@ export const useMessageExport = (): UseMessageExportReturn => {
       await apiCall('/cleanup', {
         method: 'POST',
       });
-      
+
       // Refresh both lists
       await Promise.all([getExportJobs(), getBackupJobs()]);
     } catch (error) {
@@ -476,28 +481,28 @@ export const useMessageExport = (): UseMessageExportReturn => {
     exportJobs,
     isExporting,
     exportProgress,
-    
+
     // Backup functionality
     backupJobs,
     isBackingUp,
     backupProgress,
-    
+
     // Actions
     startExport,
     cancelExport,
     downloadExport,
     deleteExport,
-    
+
     startBackup,
     cancelBackup,
     downloadBackup,
     deleteBackup,
-    
+
     // Data management
     getExportJobs,
     getBackupJobs,
     cleanupExpiredJobs,
-    
+
     // Statistics
     getExportStats,
   };
@@ -522,7 +527,7 @@ function generateDeviceFingerprint(): string {
     screen.width + 'x' + screen.height,
     new Date().getTimezoneOffset().toString(),
   ];
-  
+
   const combined = components.join('|');
   return btoa(combined).replace(/[+/=]/g, '').substring(0, 16);
 }
@@ -536,6 +541,6 @@ function getFormatExtension(format: string): string {
     'csv': 'csv',
     'encrypted-archive': 'enc.zip',
   };
-  
+
   return formatMap[format] || 'unknown';
 }

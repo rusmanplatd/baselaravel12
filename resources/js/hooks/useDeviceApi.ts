@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { apiService } from '@/services/ApiService';
 import {
   UserDevice,
   DeviceCreateData,
@@ -29,22 +30,34 @@ export const useDeviceApi = () => {
     setError(null);
 
     try {
-      const response = await fetch(`/api/v1/devices/${endpoint}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          ...options.headers,
-        },
-        ...options,
-      });
+      const url = `/api/v1/devices/${endpoint}`;
+      const method = (options.method || 'GET').toUpperCase();
+      const headers = {
+        'X-Requested-With': 'XMLHttpRequest',
+        ...(options.headers as Record<string, string> | undefined),
+      };
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.message || `HTTP error! status: ${response.status}`);
+      let data: any;
+      switch (method) {
+        case 'GET':
+          data = await apiService.get(url, { headers });
+          break;
+        case 'POST':
+          data = await apiService.post(url, options.body ? JSON.parse(String(options.body)) : undefined, { headers });
+          break;
+        case 'PUT':
+          data = await apiService.put(url, options.body ? JSON.parse(String(options.body)) : undefined, { headers });
+          break;
+        case 'PATCH':
+          data = await apiService.patch(url, options.body ? JSON.parse(String(options.body)) : undefined, { headers });
+          break;
+        case 'DELETE':
+          data = await apiService.delete(url, { headers });
+          break;
+        default:
+          data = await apiService.request(url, { ...options, headers });
       }
 
-      const data = await response.json();
       return data;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred';
@@ -64,7 +77,7 @@ export const useDeviceApi = () => {
     device_type?: string;
   } = {}): Promise<UserDevice[]> => {
     const queryParams = new URLSearchParams();
-    
+
     if (userId) queryParams.append('user_id', userId);
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
@@ -206,10 +219,10 @@ export const useDeviceApi = () => {
       }
     });
 
-    const endpoint = queryParams.toString() 
+    const endpoint = queryParams.toString()
       ? `${deviceId}/security-events?${queryParams.toString()}`
       : `${deviceId}/security-events`;
-    
+
     const response = await makeApiCall<{ events: DeviceSecurityEvent[] }>(endpoint);
     return response.events;
   }, []);
@@ -344,60 +357,60 @@ export const useDeviceApi = () => {
   return {
     loading,
     error,
-    
+
     // Device Management
     fetchDevices,
     fetchDevice,
     addDevice,
     updateDevice,
     deleteDevice,
-    
+
     // Trust Management
     trustDevice,
     untrustDevice,
     suspendDevice,
     unsuspendDevice,
-    
+
     // Pairing
     generatePairingCode,
     usePairingCode,
-    
+
     // Security Operations
     rotateDeviceKeys,
     revokeAllSessions,
     fetchDeviceSessions,
     revokeSession,
-    
+
     // Location
     getDeviceLocation,
     updateDeviceLocation,
-    
+
     // Security Events
     fetchDeviceSecurityEvents,
     resolveSecurityEvent,
-    
+
     // Statistics
     fetchDeviceStats,
-    
+
     // Security Policies
     fetchSecurityPolicies,
     createSecurityPolicy,
     updateSecurityPolicy,
-    
+
     // Compliance
     runComplianceCheck,
     fetchComplianceHistory,
-    
+
     // Backup and Recovery
     createDeviceBackup,
     restoreFromBackup,
     initiateDeviceRecovery,
-    
+
     // Bulk Operations
     bulkTrustDevices,
     bulkSuspendDevices,
     bulkDeleteDevices,
-    
+
     // Verification
     sendVerificationCode,
     verifyDevice,
