@@ -464,6 +464,7 @@ class MessageController extends Controller
 
     /**
      * Upload file attachment
+     * Note: In proper E2EE, files should be encrypted client-side before upload
      */
     public function uploadAttachment(Request $request, string $conversationId): JsonResponse
     {
@@ -489,31 +490,16 @@ class MessageController extends Controller
             $mimeType = $file->getMimeType();
             $size = $file->getSize();
 
-            // Generate encryption key for file
-            $fileKey = random_bytes(32);
-            $fileIv = random_bytes(16);
-
-            // Encrypt and store file
-            $encryptedContent = $this->encryptFile($file->getContent(), $fileKey, $fileIv);
-            $storagePath = 'chat/attachments/'.uniqid().'.encrypted';
-
-            Storage::disk('private')->put($storagePath, $encryptedContent);
-
-            // Generate thumbnail for images/videos
-            $thumbnail = null;
-            if (str_starts_with($mimeType, 'image/') || str_starts_with($mimeType, 'video/')) {
-                $thumbnail = $this->generateEncryptedThumbnail($file, $fileKey);
-            }
+            // Store file as-is (assuming it's already encrypted client-side)
+            $storagePath = 'chat/attachments/'.uniqid();
+            Storage::disk('private')->put($storagePath, $file->getContent());
 
             return response()->json([
                 'file_info' => [
                     'filename' => $filename,
                     'mime_type' => $mimeType,
                     'size' => $size,
-                    'encrypted_key' => base64_encode($fileKey),
-                    'iv' => base64_encode($fileIv),
-                    'storage_path' => encrypt($storagePath),
-                    'thumbnail' => $thumbnail,
+                    'storage_path' => $storagePath,
                 ],
                 'message' => 'File uploaded successfully',
             ]);
@@ -585,70 +571,14 @@ class MessageController extends Controller
     }
 
     /**
-     * Migration endpoint to decrypt existing quantum-encrypted messages
-     * This is a temporary endpoint to help migrate from old quantum system to new client-side E2EE
+     * @deprecated Migration endpoint removed - server cannot decrypt E2EE messages
+     * Use client-side migration tools instead
      */
     public function migrateMessage(Request $request, string $messageId): JsonResponse
     {
-        $user = $request->user();
-        $message = Message::findOrFail($messageId);
-
-        // Check if user has access to this message
-        if (!$message->conversation->hasUser($user->id)) {
-            return response()->json(['error' => 'Access denied'], 403);
-        }
-
-        try {
-            // Try to decrypt the message using the old server-side logic
-            $data = json_decode($message->encrypted_content, true);
-
-            if (isset($data['ciphertext']) && isset($data['encrypted_message']) && isset($data['nonce'])) {
-                // This is a quantum-encrypted message
-
-                // Check if the encrypted_message is actually base64-encoded plain text (fallback)
-                $decoded = base64_decode($data['encrypted_message'], true);
-                if ($decoded !== false && ctype_print($decoded)) {
-                    // This is a fallback message with base64-encoded plain text
-                    return response()->json([
-                        'message_id' => $message->id,
-                        'decrypted_content' => $decoded,
-                        'migration_status' => 'success',
-                        'message_type' => 'fallback_decoded'
-                    ]);
-                } else {
-                    // This is real quantum encryption - cannot decrypt without quantum keys
-                    return response()->json([
-                        'message_id' => $message->id,
-                        'decrypted_content' => '[Message encrypted with quantum cryptography - cannot be decrypted in current environment]',
-                        'migration_status' => 'quantum_encrypted',
-                        'message_type' => 'quantum_encrypted',
-                        'error' => 'Message is quantum-encrypted and cannot be decrypted without quantum keys'
-                    ]);
-                }
-            } else {
-                // Unknown format
-                return response()->json([
-                    'message_id' => $message->id,
-                    'decrypted_content' => null,
-                    'migration_status' => 'unknown_format',
-                    'message_type' => 'unknown',
-                    'error' => 'Unknown message format'
-                ]);
-            }
-        } catch (\Exception $e) {
-            Log::error('Message migration failed', [
-                'message_id' => $messageId,
-                'user_id' => $user->id,
-                'error' => $e->getMessage()
-            ]);
-
-            return response()->json([
-                'message_id' => $message->id,
-                'decrypted_content' => null,
-                'migration_status' => 'error',
-                'error' => 'Migration failed: ' . $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'error' => 'Server-side message migration is disabled for E2EE. Use client-side migration tools.'
+        ], 410); // 410 Gone - endpoint is permanently removed
     }
 
 }
