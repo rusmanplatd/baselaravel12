@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
 class ChatPermissionMiddleware
@@ -12,10 +13,23 @@ class ChatPermissionMiddleware
     public function handle(Request $request, Closure $next, string $permission, ?string $conversationParam = null): Response
     {
         $user = Auth::user();
-        
+
         if (! $user) {
+            Log::info('ChatPermissionMiddleware: No authenticated user', [
+                'path' => $request->path(),
+                'permission' => $permission,
+                'conversation_param' => $conversationParam,
+            ]);
             return response()->json(['error' => 'Authentication required'], 401);
         }
+
+        Log::info('ChatPermissionMiddleware: Checking permission', [
+            'user_id' => $user->id,
+            'path' => $request->path(),
+            'permission' => $permission,
+            'conversation_param' => $conversationParam,
+            'route_conversation' => $request->route($conversationParam),
+        ]);
 
         // Define basic chat permissions that all authenticated users should have
         $basicChatPermissions = [
@@ -27,6 +41,10 @@ class ChatPermissionMiddleware
 
         // If this is a basic chat permission, automatically grant it to authenticated users
         if (in_array($permission, $basicChatPermissions)) {
+            Log::info('ChatPermissionMiddleware: Granting basic permission', [
+                'user_id' => $user->id,
+                'permission' => $permission,
+            ]);
             return $next($request);
         }
 
@@ -38,12 +56,19 @@ class ChatPermissionMiddleware
         // Check conversation-specific permission if conversation parameter is provided
         if ($conversationParam && $request->route($conversationParam)) {
             $conversationId = $request->route($conversationParam);
-            
+
             // Check if user has conversation-specific permission
             if ($this->hasConversationPermission($user, $conversationId, $permission)) {
                 return $next($request);
             }
         }
+
+        Log::info('ChatPermissionMiddleware: Permission denied', [
+            'user_id' => $user->id,
+            'permission' => $permission,
+            'conversation_param' => $conversationParam,
+            'route_conversation' => $request->route($conversationParam),
+        ]);
 
         return response()->json([
             'error' => 'Insufficient permissions',

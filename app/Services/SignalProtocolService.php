@@ -100,7 +100,7 @@ class SignalProtocolService
         }
 
         foreach ($recipients as $recipient) {
-            $recipientDevices = $recipient->devices()->active()->get();
+            $recipientDevices = $recipient->userDevices()->active()->get();
 
             foreach ($recipientDevices as $recipientDevice) {
                 $encryptedMessage = $this->encryptMessageForDevice(
@@ -481,7 +481,7 @@ class SignalProtocolService
         $algorithm = $senderIdentityKey->getBestAlgorithmForPeer($recipientIdentityKey);
 
         if (str_contains($algorithm, 'ML-KEM') || str_contains($algorithm, 'QUANTUM')) {
-            return $this->encryptQuantumMessage($plaintext, $senderIdentityKey, $recipientIdentityKey);
+            return $this->encryptQuantumMessage($senderIdentityKey, $recipientIdentityKey, $plaintext);
         } elseif (str_contains($algorithm, 'HYBRID')) {
             return $this->encryptHybridMessage($plaintext, $senderIdentityKey, $recipientIdentityKey);
         } else {
@@ -603,7 +603,7 @@ class SignalProtocolService
         // Use AES-256-GCM for classical encryption
         $key = random_bytes(32); // 256-bit key
         $nonce = random_bytes(12); // 96-bit nonce for GCM
-        
+
         $encrypted = openssl_encrypt(
             $plaintext,
             'aes-256-gcm',
@@ -652,10 +652,10 @@ class SignalProtocolService
     {
         // For hybrid, use both classical and quantum methods
         $classicalResult = $this->encryptClassicalMessage($plaintext, $senderKey, $recipientKey);
-        
+
         if ($recipientKey->isQuantumCapable()) {
             $quantumResult = $this->encryptQuantumMessage($senderKey, $recipientKey, $plaintext);
-            
+
             return [
                 'content' => json_encode([
                     'classical' => json_decode($classicalResult['content'], true),
@@ -685,8 +685,8 @@ class SignalProtocolService
             // Try quantum decryption first
             try {
                 return $this->decryptQuantumMessage(
-                    json_encode($data['quantum']), 
-                    $recipientKey, 
+                    json_encode($data['quantum']),
+                    $recipientKey,
                     $senderKey
                 );
             } catch (Exception $e) {
@@ -698,8 +698,8 @@ class SignalProtocolService
 
         // Fall back to classical decryption
         return $this->decryptClassicalMessage(
-            json_encode($data['classical']), 
-            $recipientKey, 
+            json_encode($data['classical']),
+            $recipientKey,
             $senderKey
         );
     }
@@ -711,7 +711,7 @@ class SignalProtocolService
     {
         // Generate encryption keys for new participant's devices
         $devices = $newParticipant->devices()->active()->get();
-        
+
         foreach ($devices as $device) {
             $this->generateEncryptionKeyForDevice($conversation, $newParticipant, $device);
         }
@@ -739,7 +739,7 @@ class SignalProtocolService
     {
         // For direct messages, rotate session keys between the two participants
         $participants = $conversation->activeParticipants()->with('user')->get();
-        
+
         if ($participants->count() === 2) {
             foreach ($participants as $participant) {
                 $devices = $participant->user->devices()->active()->get();

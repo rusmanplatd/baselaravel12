@@ -12,12 +12,12 @@ class MessageReaction extends Model
 {
     use HasFactory, HasUlids;
 
-    protected $table = 'chat_message_reactions';
+    protected $table = 'message_reactions';
 
     protected $fillable = [
         'message_id',
         'user_id',
-        'emoji',
+        'device_id',
         'reaction_type',
     ];
 

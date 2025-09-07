@@ -20,9 +20,9 @@ class LiveKitService
 
     public function __construct()
     {
-        $this->apiKey = config('livekit.api_key');
-        $this->apiSecret = config('livekit.api_secret');
-        $this->serverUrl = config('livekit.server_url');
+        $this->apiKey = config('livekit.api_key') ?? '';
+        $this->apiSecret = config('livekit.api_secret') ?? '';
+        $this->serverUrl = config('livekit.server_url') ?? 'ws://localhost:7880';
         $this->httpClient = new Client;
     }
 

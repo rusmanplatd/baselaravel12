@@ -12,14 +12,16 @@ class MessageReadReceipt extends Model
 {
     use HasFactory, HasUlids;
 
-    protected $table = 'chat_message_read_receipts';
+    protected $table = 'message_delivery_receipts';
 
     protected $fillable = [
         'message_id',
-        'user_id',
-        'device_id',
-        'read_at',
+        'recipient_user_id',
+        'recipient_device_id',
+        'status',
         'delivered_at',
+        'read_at',
+        'failure_reason',
     ];
 
     protected $casts = [
@@ -34,12 +36,12 @@ class MessageReadReceipt extends Model
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(User::class, 'recipient_user_id');
     }
 
     public function device(): BelongsTo
     {
-        return $this->belongsTo(UserDevice::class, 'device_id');
+        return $this->belongsTo(UserDevice::class, 'recipient_device_id');
     }
 
     // Scopes
@@ -65,7 +67,7 @@ class MessageReadReceipt extends Model
 
     public function scopeByUser($query, $userId)
     {
-        return $query->where('user_id', $userId);
+        return $query->where('recipient_user_id', $userId);
     }
 
     // Helper methods

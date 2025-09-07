@@ -21,13 +21,13 @@ class ConversationController extends Controller
         $this->middleware('auth:api');
         $this->middleware('throttle:60,1')->only(['store']);
         $this->middleware('throttle:30,1')->only(['addParticipant', 'removeParticipant']);
-        
+
         // Apply chat permissions - using standard chat permissions that all users have
         $this->middleware('chat.permission:chat:write')->only(['store']);
-        $this->middleware('chat.permission:chat:manage,conversationId')->only([
+        $this->middleware('chat.permission:chat:manage,conversation')->only([
             'addParticipant', 'removeParticipant', 'update'
         ]);
-        $this->middleware('chat.permission:chat:manage,conversationId')->only(['rotateKeys']);
+        $this->middleware('chat.permission:chat:manage,conversation')->only(['rotateKeys']);
     }
 
     /**
@@ -119,7 +119,7 @@ class ConversationController extends Controller
     public function store(Request $request): JsonResponse
     {
         $type = $request->input('type');
-        
+
         // Dynamic validation based on conversation type
         $validationRules = [
             'type' => 'required|in:direct,group,channel',
@@ -167,7 +167,7 @@ class ConversationController extends Controller
 
             // Get participant users
             $participantUsers = User::whereIn('id', $request->participants)->get();
-            
+
             // Check if all requested participants exist
             if ($participantUsers->count() !== count($request->participants)) {
                 return response()->json(['error' => 'Some participants not found'], 404);
@@ -183,7 +183,7 @@ class ConversationController extends Controller
                 if ($participantUsers->count() !== 2) {
                     return response()->json(['error' => 'Direct conversations must have exactly 2 participants'], 422);
                 }
-                
+
                 // Prevent creating conversation with yourself
                 $userIds = $participantUsers->pluck('id')->toArray();
                 if (count(array_unique($userIds)) < 2) {
@@ -553,7 +553,7 @@ class ConversationController extends Controller
 
         foreach ($otherParticipants as $participant) {
             $permissions = ['send_messages'];
-            
+
             // Add additional permissions based on conversation type
             if ($type === 'group') {
                 $permissions[] = 'add_members'; // Groups allow members to add others by default
@@ -573,7 +573,7 @@ class ConversationController extends Controller
     {
         $activeKeysQuery = $conversation->encryptionKeys()
             ->where('user_id', $user->id);
-        
+
         // Check if the active() scope exists on the relationship
         $activeKeys = $activeKeysQuery->where('is_active', true)->count();
 

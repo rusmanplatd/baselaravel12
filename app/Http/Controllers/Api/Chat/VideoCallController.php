@@ -20,12 +20,12 @@ class VideoCallController extends Controller
     {
         $this->middleware('auth:api');
         $this->middleware('throttle:30,1');
-        
+
         // Apply chat permissions - using standard chat permissions that all users have
-        $this->middleware('chat.permission:chat:calls,conversationId')->only(['initiate']);
-        $this->middleware('chat.permission:chat:calls,conversationId')->only(['join']);
-        $this->middleware('chat.permission:chat:moderate,conversationId')->only(['end', 'mute', 'kick']);
-        
+        $this->middleware('chat.permission:chat:calls,conversation')->only(['initiate']);
+        $this->middleware('chat.permission:chat:calls,conversation')->only(['join']);
+        $this->middleware('chat.permission:chat:moderate,conversation')->only(['end', 'mute', 'kick']);
+
         $this->liveKitService = $liveKitService;
     }
 

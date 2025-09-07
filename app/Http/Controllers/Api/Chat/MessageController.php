@@ -25,12 +25,12 @@ class MessageController extends Controller
         $this->middleware('auth:api');
         $this->middleware('throttle:120,1')->only(['store']);
         $this->middleware('throttle:60,1')->only(['addReaction', 'removeReaction']);
-        
+
         // Apply chat permissions - using standard chat permissions that all users have
-        $this->middleware('chat.permission:chat:write,conversationId')->only(['store']);
-        $this->middleware('chat.permission:chat:write,conversationId')->only(['update']);
-        $this->middleware('chat.permission:chat:write,conversationId')->only(['destroy']);
-        $this->middleware('chat.permission:chat:moderate,conversationId')->only(['moderate']);
+        $this->middleware('chat.permission:chat:write,conversation')->only(['store']);
+        $this->middleware('chat.permission:chat:write,conversation')->only(['update']);
+        $this->middleware('chat.permission:chat:write,conversation')->only(['destroy']);
+        $this->middleware('chat.permission:chat:moderate,conversation')->only(['moderate']);
     }
 
     /**
@@ -65,11 +65,11 @@ class MessageController extends Controller
         $query = Message::inConversation($conversationId)
             ->with([
                 'sender:id,name,avatar',
-                'replyTo:id,sender_id,type,created_at',
+                'replyTo:id,sender_id,message_type,created_at',
                 'replyTo.sender:id,name',
                 'reactions.user:id,name',
                 'readReceipts' => function ($query) use ($conversation) {
-                    $query->whereIn('user_id', $conversation->participants->pluck('user_id'));
+                    $query->whereIn('recipient_user_id', $conversation->participants->pluck('user_id'));
                 },
             ])
             ->orderByDesc('created_at');
@@ -139,7 +139,7 @@ class MessageController extends Controller
             DB::beginTransaction();
 
             // Encrypt message for all participants
-            $recipients = $conversation->activeParticipants()->with('user')->get()->pluck('user')->toArray();
+            $recipients = $conversation->activeParticipants()->with('user')->get()->pluck('user')->values()->all();
             $encryptedMessages = $this->signalService->encryptMessage(
                 $request->content,
                 $conversation,
@@ -152,21 +152,20 @@ class MessageController extends Controller
             $message = Message::create([
                 'conversation_id' => $conversation->id,
                 'sender_id' => $user->id,
+                'sender_device_id' => $device->id,
                 'reply_to_id' => $request->reply_to_id,
-                'type' => $request->type,
+                'message_type' => $request->type,
                 'encrypted_content' => $encryptedMessages[0]['encrypted_content'], // Primary encrypted content
                 'content_hash' => $encryptedMessages[0]['content_hash'],
-                'metadata' => $request->metadata,
-                'scheduled_at' => $request->scheduled_at,
-                'message_priority' => $request->input('priority', 'normal'),
-                'status' => $request->scheduled_at ? 'scheduled' : 'sent',
+                'encrypted_metadata' => $request->metadata ? json_encode($request->metadata) : null,
             ]);
 
             // Store delivery receipts for all recipients
             foreach ($encryptedMessages as $encryptedMessage) {
                 $message->readReceipts()->create([
-                    'user_id' => $encryptedMessage['recipient_user_id'],
-                    'device_id' => $encryptedMessage['recipient_device_id'],
+                    'recipient_user_id' => $encryptedMessage['recipient_user_id'],
+                    'recipient_device_id' => $encryptedMessage['recipient_device_id'],
+                    'status' => 'sent',
                     'delivered_at' => now(),
                 ]);
             }
@@ -179,7 +178,7 @@ class MessageController extends Controller
             // Load relationships for response
             $message->load([
                 'sender:id,name,avatar',
-                'replyTo:id,sender_id,type,created_at',
+                'replyTo:id,sender_id,message_type,created_at',
                 'reactions.user:id,name',
             ]);
 
@@ -636,10 +635,10 @@ class MessageController extends Controller
     {
         // Load sender relationship for broadcasting
         $message->load('sender:id,name,avatar');
-        
+
         // Fire the MessageSent event which will be broadcast via Reverb
         MessageSent::dispatch($message, $conversation);
-        
+
         Log::debug('Broadcasting message', [
             'message_id' => $message->id,
             'conversation_id' => $conversation->id,
