@@ -39,6 +39,15 @@ export function MessageReplyIndicator({
         return null;
     }
 
+    // Debug logging to see what we're getting
+    console.log('Reply message data:', {
+        id: replyToMessage.id,
+        sender: replyToMessage.sender?.name,
+        decrypted_content: replyToMessage.decrypted_content,
+        has_encrypted_content: !!(replyToMessage as any).encrypted_content,
+        all_keys: Object.keys(replyToMessage)
+    });
+
     const handleJumpToMessage = () => {
         if (onJumpToMessage) {
             onJumpToMessage(replyToMessage.id);
@@ -56,70 +65,38 @@ export function MessageReplyIndicator({
         <div className={`group relative ${className}`}>
             <div 
                 className={`
-                    flex items-start gap-3 p-3 rounded-lg border-l-4 border-primary/50 
-                    bg-muted/50 hover:bg-muted/70 transition-colors
+                    flex items-start gap-2 p-2 rounded border-l-4 border-primary/60
+                    bg-muted/30 hover:bg-muted/50 transition-colors text-sm
                     ${onJumpToMessage ? 'cursor-pointer' : ''}
                 `}
                 onClick={onJumpToMessage ? handleJumpToMessage : undefined}
             >
-                {/* Reply icon */}
+                {/* Reply icon (smaller and positioned left) */}
                 <div className="flex-shrink-0 mt-0.5">
-                    <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
-                        <Reply className="w-3 h-3 text-primary" />
-                    </div>
+                    <Reply className="w-3 h-3 text-primary/70" />
                 </div>
 
-                {/* Original message info */}
-                <div className="flex-1 min-w-0 space-y-1">
-                    <div className="flex items-center gap-2">
-                        <Avatar className="h-5 w-5">
-                            <AvatarImage src={replyToMessage.sender.avatar} />
-                            <AvatarFallback className="text-xs">
-                                {replyToMessage.sender.name.charAt(0)}
-                            </AvatarFallback>
-                        </Avatar>
-                        <span className="text-sm font-medium text-muted-foreground">
-                            {replyToMessage.sender.name}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                            {formatDistance(new Date(replyToMessage.created_at), new Date(), { addSuffix: true })}
-                        </span>
-                        {replyToMessage.is_edited && (
-                            <Badge variant="outline" className="text-xs h-4">
-                                edited
-                            </Badge>
-                        )}
-                        {replyToMessage.is_forwarded && (
-                            <Badge variant="secondary" className="text-xs h-4">
-                                forwarded
-                            </Badge>
-                        )}
+                {/* Original message info - Telegram style */}
+                <div className="flex-1 min-w-0">
+                    {/* Sender name - more prominent like Telegram */}
+                    <div className="text-sm font-medium text-primary mb-1 truncate">
+                        {replyToMessage.sender.name}
                     </div>
                     
-                    <div className="text-sm text-muted-foreground line-clamp-2">
-                        {replyToMessage.decrypted_content || '[Encrypted message]'}
+                    {/* Original message content - styled like Telegram */}
+                    <div className="text-sm text-foreground/80 line-clamp-2 leading-tight">
+                        {replyToMessage.decrypted_content || 
+                         (replyToMessage as any).encrypted_content ? '[Decrypting...]' : '[No content available]'}
                     </div>
                 </div>
 
                 {/* Action buttons */}
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    {onJumpToMessage && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 w-6 p-0"
-                            onClick={handleJumpToMessage}
-                            title="Jump to original message"
-                        >
-                            <ArrowUp className="w-3 h-3" />
-                        </Button>
-                    )}
-                    
                     {showClearButton && onClearReply && (
                         <Button
                             variant="ghost"
                             size="sm"
-                            className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+                            className="h-5 w-5 p-0 text-muted-foreground hover:text-destructive"
                             onClick={handleClearReply}
                             title="Clear reply"
                         >
@@ -128,11 +105,6 @@ export function MessageReplyIndicator({
                     )}
                 </div>
             </div>
-
-            {/* Connection line for visual thread indication */}
-            {onJumpToMessage && (
-                <div className="absolute -left-px top-0 bottom-0 w-px bg-gradient-to-b from-primary/50 via-primary/20 to-transparent" />
-            )}
         </div>
     );
 }

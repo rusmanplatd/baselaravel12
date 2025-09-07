@@ -440,9 +440,50 @@ export function useE2EEChat(): UseE2EEChatReturn {
                 response.messages.map(async (message: Message) => {
                     try {
                         const decryptedContent = await decryptMessageClientSide(message.encrypted_content);
+                        
+                        // Also decrypt reply_to message if it exists
+                        let decryptedReplyTo = message.reply_to;
+                        if (message.reply_to && message.reply_to.encrypted_content) {
+                            console.log('Decrypting reply_to message:', {
+                                messageId: message.id,
+                                replyToId: message.reply_to.id,
+                                hasEncryptedContent: !!message.reply_to.encrypted_content,
+                                encryptedContentPreview: message.reply_to.encrypted_content.substring(0, 100)
+                            });
+                            
+                            try {
+                                const decryptedReplyContent = await decryptMessageClientSide(message.reply_to.encrypted_content);
+                                console.log('Successfully decrypted reply_to:', {
+                                    replyToId: message.reply_to.id,
+                                    decryptedContent: decryptedReplyContent
+                                });
+                                decryptedReplyTo = {
+                                    ...message.reply_to,
+                                    decrypted_content: decryptedReplyContent,
+                                };
+                            } catch (replyError) {
+                                console.error('Failed to decrypt reply message:', {
+                                    replyToId: message.reply_to.id,
+                                    error: replyError,
+                                    encryptedContent: message.reply_to.encrypted_content
+                                });
+                                decryptedReplyTo = {
+                                    ...message.reply_to,
+                                    decrypted_content: '[Encrypted message - decryption failed]',
+                                };
+                            }
+                        } else {
+                            console.log('Reply_to message has no encrypted_content:', {
+                                messageId: message.id,
+                                hasReplyTo: !!message.reply_to,
+                                replyToData: message.reply_to
+                            });
+                        }
+                        
                         return {
                             ...message,
                             decrypted_content: decryptedContent,
+                            reply_to: decryptedReplyTo,
                         };
                     } catch (error) {
                         console.warn('Failed to decrypt message:', error);
@@ -797,6 +838,17 @@ export function useE2EEChat(): UseE2EEChatReturn {
                                 }
                             } else {
                                 fullMessage.decrypted_content = '[Encrypted message - decryption failed]';
+                            }
+                        }
+
+                        // Also decrypt reply_to message if it exists
+                        if (fullMessage.reply_to && fullMessage.reply_to.encrypted_content) {
+                            try {
+                                const decryptedReplyContent = await decryptMessageClientSide(fullMessage.reply_to.encrypted_content);
+                                fullMessage.reply_to.decrypted_content = decryptedReplyContent;
+                            } catch (replyError) {
+                                logger.warn('Failed to decrypt reply message in real-time', replyError, 'E2EEChat');
+                                fullMessage.reply_to.decrypted_content = '[Encrypted message - decryption failed]';
                             }
                         }
 

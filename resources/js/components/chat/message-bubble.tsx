@@ -238,17 +238,17 @@ export default function MessageBubble({
                     </div>
                 )}
 
-                {/* Reply indicator */}
+                {/* Reply indicator - Telegram style */}
                 {message.reply_to && (
                     <div className={cn(
-                        "text-xs text-muted-foreground border-l-2 pl-2 mb-2 max-w-full",
-                        isOwn ? "border-r-2 border-l-0 pr-2 pl-0 text-right" : "border-primary"
+                        "text-sm border-l-4 border-primary/60 pl-2 mb-2 max-w-full bg-muted/30 rounded p-2",
+                        isOwn ? "border-r-4 border-l-0 pr-2 pl-0 text-right" : ""
                     )}>
-                        <div className="font-medium">
+                        <div className="font-medium text-primary mb-1 truncate">
                             {message.reply_to.sender?.name || 'Unknown User'}
                         </div>
-                        <div className="truncate">
-                            {message.reply_to.decrypted_content?.slice(0, 50)}...
+                        <div className="text-foreground/80 truncate leading-tight">
+                            {message.reply_to.decrypted_content || '[Encrypted message]'}
                         </div>
                     </div>
                 )}

@@ -65,7 +65,7 @@ class MessageController extends Controller
         $query = Message::inConversation($conversationId)
             ->with([
                 'sender:id,name,username,avatar',
-                'replyTo:id,sender_id,message_type,created_at',
+                'replyTo:id,sender_id,message_type,encrypted_content,created_at',
                 'replyTo.sender:id,name,username',
                 'reactions.user:id,name,username',
                 'readReceipts' => function ($query) use ($conversation) {
@@ -182,7 +182,8 @@ class MessageController extends Controller
             // Load relationships for response
             $message->load([
                 'sender:id,name,avatar',
-                'replyTo:id,sender_id,message_type,created_at',
+                'replyTo:id,sender_id,message_type,encrypted_content,created_at',
+                'replyTo.sender:id,name',
                 'reactions.user:id,name',
             ]);
 
@@ -258,7 +259,7 @@ class MessageController extends Controller
 
         $message = Message::with([
             'sender:id,name,username,avatar',
-            'replyTo:id,sender_id,type,created_at',
+            'replyTo:id,sender_id,message_type,encrypted_content,created_at',
             'replyTo.sender:id,name,username',
             'replies' => function ($query) {
                 $query->with('sender:id,name,username,avatar')->orderBy('created_at');
@@ -558,7 +559,7 @@ class MessageController extends Controller
             foreach ($forwardedMessages as $message) {
                 $message->load([
                     'sender:id,name,avatar',
-                    'forwardedFrom:id,sender_id,message_type,created_at',
+                    'forwardedFrom:id,sender_id,message_type,encrypted_content,created_at',
                     'forwardedFrom.sender:id,name',
                     'originalConversation:id,name',
                 ]);
