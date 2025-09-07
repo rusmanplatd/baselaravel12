@@ -16,10 +16,50 @@ Route::post('broadcasting/auth', function (\Illuminate\Http\Request $request) {
         'user' => Auth::user() ? Auth::user()->only(['id', 'name']) : null,
         'socket_id' => $request->input('socket_id'),
         'channel_name' => $request->input('channel_name'),
-        'headers' => $request->headers->all(),
+        'has_auth_header' => $request->hasHeader('Authorization'),
+        'auth_header_prefix' => $request->header('Authorization') ? substr($request->header('Authorization'), 0, 20) . '...' : null,
     ]);
 
     $user = Auth::user();
+
+    // If no session user, try API token authentication
+    if (! $user && $request->hasHeader('Authorization')) {
+        $token = $request->header('Authorization');
+
+        // Remove 'Bearer ' prefix if present
+        if (str_starts_with($token, 'Bearer ')) {
+            $token = substr($token, 7);
+        }
+
+        try {
+            // Create a temporary request with the auth header for API guard
+            $originalRequest = app('request');
+            $testRequest = \Illuminate\Http\Request::create('/', 'GET', [], [], [], [], '');
+            $testRequest->headers->set('Authorization', 'Bearer '.$token);
+
+            // Temporarily swap the request
+            app()->instance('request', $testRequest);
+
+            // Use the API guard to authenticate
+            $guard = auth('api');
+            $guard->forgetUser(); // Clear any cached user
+            $user = $guard->user();
+
+            // Restore original request
+            app()->instance('request', $originalRequest);
+            $guard->forgetUser(); // Clear cache again after restoring
+
+            \Log::info('API token authentication result', [
+                'authenticated' => $user !== null,
+                'user_id' => $user ? $user->id : null,
+            ]);
+        } catch (Exception $e) {
+            \Log::error('API token authentication error', [
+                'error' => $e->getMessage(),
+                'token_prefix' => substr($token, 0, 10).'...',
+            ]);
+        }
+    }
 
     if (! $user) {
         \Log::warning('No authenticated user for broadcasting auth');

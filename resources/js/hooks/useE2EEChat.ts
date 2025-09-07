@@ -625,17 +625,26 @@ export function useE2EEChat(): UseE2EEChatReturn {
             // Subscribe to conversation channel with enhanced error handling
             await subscribeToChannel(`conversation.${conversationId}`, {
                 'message.sent': (data: any) => {
-                    console.log('Received real-time message:', data);
+                    console.log('🎉 Received real-time message:', data);
+                    console.log('📨 Message data:', {
+                        messageId: data.message?.id,
+                        conversationId: data.message?.conversation_id,
+                        senderId: data.sender_id,
+                        messageType: data.message?.type,
+                        timestamp: data.message?.created_at
+                    });
 
                     // Get current user ID to filter out own messages
                     const currentUserId = getUserStorageItem('user_id');
+                    console.log('👤 Current user ID:', currentUserId, 'Sender ID:', data.sender_id);
 
                     // Don't process messages from the current user (they already see their own message)
                     if (data.sender_id && data.sender_id.toString() === currentUserId?.toString()) {
-                        console.log('Ignoring own message in real-time update');
+                        console.log('🚫 Ignoring own message in real-time update');
                         return;
                     }
 
+                    console.log('✅ Processing real-time message from another user');
                     handleRealTimeMessage({
                         type: 'new_message',
                         message: data.message
