@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { usePage } from '@inertiajs/react';
 import { useE2EEChat } from '@/hooks/useE2EEChat';
-import { useWebSocket } from '@/hooks/useWebSocket';
 import { useMentions } from '@/hooks/useMentions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,12 +10,12 @@ import type { JSONContent } from '@tiptap/react';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-    Send, 
-    Paperclip, 
-    Shield, 
-    ShieldCheck, 
-    MoreVertical, 
+import {
+    Send,
+    Paperclip,
+    Shield,
+    ShieldCheck,
+    MoreVertical,
     Smile,
     Reply,
     Edit3,
@@ -90,6 +90,9 @@ interface ChatInterfaceProps {
 }
 
 export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
+    const { auth } = usePage<SharedData>().props;
+    const currentUser = auth.user;
+
     const {
         conversations,
         messages,
@@ -123,19 +126,72 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
     const [typingUsers, setTypingUsers] = useState<string[]>([]);
     const [isRecording, setIsRecording] = useState(false);
     const [isTyping, setIsTyping] = useState(false);
-    
+
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    // WebSocket connection for real-time features
-    const { sendMessage: sendWebSocketMessage } = useWebSocket({
-        url: selectedConversationId ? `ws://localhost:8080/ws/conversations/${selectedConversationId}` : '',
-        options: {
-            onMessage: handleWebSocketMessage,
-        },
-        enabled: !!selectedConversationId
-    });
+    // Echo connection for real-time features
+    const [echoChannel, setEchoChannel] = useState<any>(null);
+
+    // Subscribe to Echo channel for real-time updates
+    useEffect(() => {
+        if (!selectedConversationId || !window.Echo) {
+            return;
+        }
+
+        const channelName = `conversation.${selectedConversationId}`;
+        console.log('Subscribing to Echo channel:', channelName);
+
+        const channel = window.Echo.private(channelName)
+            .listen('message.sent', (data: any) => {
+                console.log('Received message via Echo:', data);
+                loadMessages(selectedConversationId);
+            })
+            .listen('message.edited', (data: any) => {
+                console.log('Received message edit via Echo:', data);
+                loadMessages(selectedConversationId);
+            })
+            .listen('message.deleted', (data: any) => {
+                console.log('Received message deletion via Echo:', data);
+                loadMessages(selectedConversationId);
+            })
+            .listen('reaction.added', (data: any) => {
+                console.log('Received reaction via Echo:', data);
+                loadMessages(selectedConversationId);
+            })
+            .listen('reaction.removed', (data: any) => {
+                console.log('Received reaction removal via Echo:', data);
+                loadMessages(selectedConversationId);
+            })
+            .listen('participant.joined', (data: any) => {
+                console.log('Participant joined via Echo:', data);
+                loadConversation(selectedConversationId);
+            })
+            .listen('participant.left', (data: any) => {
+                console.log('Participant left via Echo:', data);
+                loadConversation(selectedConversationId);
+            })
+            .listenForWhisper('typing', (data: any) => {
+                console.log('Received typing event via Echo:', data);
+                if (data.type === 'typing_start') {
+                    setTypingUsers(prev => [...prev.filter(id => id !== data.user_id), data.user_id]);
+                } else if (data.type === 'typing_stop') {
+                    setTypingUsers(prev => prev.filter(id => id !== data.user_id));
+                }
+            })
+            .error((error: any) => {
+                console.error('Echo channel error:', error);
+            });
+
+        setEchoChannel(channel);
+
+        return () => {
+            console.log('Unsubscribing from Echo channel:', channelName);
+            window.Echo.leave(channelName);
+            setEchoChannel(null);
+        };
+    }, [selectedConversationId, loadMessages, loadConversation]);
 
     // Mentions hook for user and channel suggestions
     const { users: mentionableUsers, channels: mentionableChannels } = useMentions({
@@ -143,42 +199,17 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
         organizationId: currentConversation?.organization_id
     });
 
-    // WebSocket message handler
-    function handleWebSocketMessage(event: MessageEvent) {
-        try {
-            const data = JSON.parse(event.data);
-            
-            switch (data.type) {
-                case 'message':
-                    loadMessages(selectedConversationId!);
-                    break;
-                case 'typing_start':
-                    setTypingUsers(prev => [...prev.filter(id => id !== data.user_id), data.user_id]);
-                    break;
-                case 'typing_stop':
-                    setTypingUsers(prev => prev.filter(id => id !== data.user_id));
-                    break;
-                case 'message_edited':
-                case 'message_deleted':
-                case 'reaction_added':
-                case 'reaction_removed':
-                    loadMessages(selectedConversationId!);
-                    break;
-                case 'participant_joined':
-                case 'participant_left':
-                    loadConversation(selectedConversationId!);
-                    break;
-            }
-        } catch (error) {
-            console.error('Failed to parse WebSocket message:', error);
-        }
-    }
 
     // Typing handler
     const handleTyping = useCallback(() => {
-        if (!isTyping) {
+        if (!isTyping && echoChannel) {
             setIsTyping(true);
-            sendWebSocketMessage({ type: 'typing_start', conversation_id: selectedConversationId });
+            // Send typing start event via Echo
+            echoChannel.whisper('typing', {
+                user_id: currentUser?.id,
+                conversation_id: selectedConversationId,
+                type: 'typing_start'
+            });
         }
 
         if (typingTimeoutRef.current) {
@@ -187,9 +218,16 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
 
         typingTimeoutRef.current = setTimeout(() => {
             setIsTyping(false);
-            sendWebSocketMessage({ type: 'typing_stop', conversation_id: selectedConversationId });
+            if (echoChannel) {
+                // Send typing stop event via Echo
+                echoChannel.whisper('typing', {
+                    user_id: currentUser?.id,
+                    conversation_id: selectedConversationId,
+                    type: 'typing_stop'
+                });
+            }
         }, 3000);
-    }, [isTyping, sendWebSocketMessage, selectedConversationId]);
+    }, [isTyping, selectedConversationId, echoChannel, currentUser?.id]);
 
     // Load conversations on mount
     useEffect(() => {
@@ -203,7 +241,7 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
             loadMessages(selectedConversationId);
             subscribeToConversation(selectedConversationId);
         }
-        
+
         return () => {
             if (selectedConversationId) {
                 unsubscribeFromConversation(selectedConversationId);
@@ -218,7 +256,7 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         if (!messageInput.trim() || !selectedConversationId) {
             return;
         }
@@ -230,7 +268,7 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
             setMessageInput('');
             setMessageContent(null);
             setReplyingTo(null);
-            
+
             // Stop typing indicator
             if (isTyping) {
                 setIsTyping(false);
@@ -239,7 +277,7 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
                     clearTimeout(typingTimeoutRef.current);
                 }
             }
-            
+
             toast.success('Message sent');
         } catch (error) {
             console.error('Failed to send message:', error);
@@ -286,7 +324,7 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
             // Images
             'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
             // Documents
-            'application/pdf', 'text/plain', 'text/markdown', 
+            'application/pdf', 'text/plain', 'text/markdown',
             'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
             'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
@@ -317,7 +355,7 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
 
                 // Upload file using E2EE service
                 const fileInfo = await uploadFile(selectedConversationId, file);
-                
+
                 // Send message with file attachment
                 await sendMessage(selectedConversationId, `📎 Shared file: ${file.name}`, {
                     type: 'file',
@@ -348,7 +386,7 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
 
     const handleDeleteMessage = async (messageId: string) => {
         if (!selectedConversationId) return;
-        
+
         try {
             await deleteMessage(selectedConversationId, messageId);
         } catch (error) {
@@ -358,7 +396,7 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
 
     const handleAddReaction = async (messageId: string, emoji: string) => {
         if (!selectedConversationId) return;
-        
+
         try {
             await addReaction(selectedConversationId, messageId, emoji);
             setShowEmojiPicker(null);
@@ -369,9 +407,9 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
 
     const getEncryptionStatus = () => {
         if (!currentConversation) return null;
-        
+
         const { encryption_status } = currentConversation;
-        
+
         if (!encryption_status.is_encrypted) {
             return (
                 <Badge variant="destructive" className="flex items-center gap-1">
@@ -380,7 +418,7 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
                 </Badge>
             );
         }
-        
+
         return (
             <Badge variant={encryption_status.quantum_ready ? "default" : "secondary"} className="flex items-center gap-1">
                 <Lock className="w-3 h-3" />
@@ -418,7 +456,7 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
                         </Button>
                     </div>
                 </div>
-                
+
                 <ScrollArea className="flex-1">
                     {conversations.map((conversation) => (
                         <div
@@ -435,7 +473,7 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
                                         {conversation.name ? conversation.name[0] : 'G'}
                                     </AvatarFallback>
                                 </Avatar>
-                                
+
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center justify-between mb-1">
                                         <h3 className="font-medium truncate">
@@ -447,20 +485,20 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
                                             </Badge>
                                         )}
                                     </div>
-                                    
+
                                     <div className="flex items-center gap-2">
                                         <div className="flex items-center gap-1">
                                             {conversation.encryption_status.is_encrypted ? (
                                                 <Shield className={`w-3 h-3 ${
-                                                    conversation.encryption_status.quantum_ready 
-                                                        ? 'text-green-500' 
+                                                    conversation.encryption_status.quantum_ready
+                                                        ? 'text-green-500'
                                                         : 'text-blue-500'
                                                 }`} />
                                             ) : (
                                                 <Unlock className="w-3 h-3 text-orange-500" />
                                             )}
                                         </div>
-                                        
+
                                         <p className="text-xs text-muted-foreground truncate">
                                             {formatMessageTime(conversation.last_activity_at)}
                                         </p>
@@ -486,7 +524,7 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
                                             {currentConversation.name ? currentConversation.name[0] : 'G'}
                                         </AvatarFallback>
                                     </Avatar>
-                                    
+
                                     <div>
                                         <h2 className="font-semibold">
                                             {currentConversation.name || 'Group Chat'}
@@ -509,10 +547,10 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 <div className="flex items-center gap-2">
-                                    <Button 
-                                        variant="ghost" 
+                                    <Button
+                                        variant="ghost"
                                         size="sm"
                                         onClick={() => setShowSearch(!showSearch)}
                                     >
@@ -524,8 +562,8 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
                                     <Button variant="ghost" size="sm">
                                         <Video className="w-4 h-4" />
                                     </Button>
-                                    <Button 
-                                        variant="ghost" 
+                                    <Button
+                                        variant="ghost"
                                         size="sm"
                                         onClick={() => setShowParticipants(true)}
                                     >
@@ -595,7 +633,7 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
                                                     {message.sender.name[0]}
                                                 </AvatarFallback>
                                             </Avatar>
-                                            
+
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center gap-2 mb-1">
                                                     <span className="font-medium text-sm">
@@ -610,7 +648,7 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
                                                         </Badge>
                                                     )}
                                                 </div>
-                                                
+
                                                 {editingMessageId === message.id ? (
                                                     <div className="space-y-2">
                                                         <Input
@@ -645,7 +683,7 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
                                                                 {message.decrypted_content || '[Encrypted]'}
                                                             </p>
                                                         </div>
-                                                        
+
                                                         {/* Reactions */}
                                                         {message.reactions && message.reactions.length > 0 && (
                                                             <div className="flex gap-1 mt-2">
@@ -665,7 +703,7 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
                                                 )}
                                             </div>
                                         </div>
-                                        
+
                                         {/* Message Actions */}
                                         <div className="absolute right-0 top-0 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <div className="flex gap-1">
@@ -698,7 +736,7 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
                                                 </Button>
                                             </div>
                                         </div>
-                                        
+
                                         {/* Emoji Picker */}
                                         {showEmojiPicker === message.id && (
                                             <div className="absolute top-8 right-0 z-10 bg-popover border border-border rounded-lg p-2 shadow-lg">
@@ -833,7 +871,7 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
                                             <Paperclip className="w-4 h-4" />
                                         </Button>
                                     </div>
-                                    
+
                                     <div className="flex-1">
                                         <RichTextEditor
                                             content={messageInput}
@@ -851,7 +889,7 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
                                             className="border border-input rounded-md"
                                         />
                                     </div>
-                                    
+
                                     <div className="flex items-center gap-1">
                                         {!isRecording ? (
                                             <Button
@@ -873,10 +911,10 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
                                                 <StopCircle className="w-4 h-4" />
                                             </Button>
                                         )}
-                                        
-                                        <Button 
-                                            type="button" 
-                                            size="sm" 
+
+                                        <Button
+                                            type="button"
+                                            size="sm"
                                             disabled={!messageInput.trim() || isLoadingMessages}
                                             onClick={() => handleRichTextSubmit(messageContent || {}, messageInput)}
                                         >
@@ -884,7 +922,7 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
                                         </Button>
                                     </div>
                                 </div>
-                                
+
                                 {!currentConversation.encryption_status.is_encrypted && (
                                     <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
                                         <AlertTriangle className="w-3 h-3" />
