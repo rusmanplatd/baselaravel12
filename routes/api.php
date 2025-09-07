@@ -279,6 +279,18 @@ Route::middleware('auth:api')->prefix('v1')->group(function () {
                 Route::post('{message}/forward', [\App\Http\Controllers\Api\Chat\MessageController::class, 'forward'])
                     ->name('forward');
 
+                // Message actions
+                Route::post('{message}/pin', [\App\Http\Controllers\Api\Chat\MessageController::class, 'togglePin'])
+                    ->name('toggle-pin');
+                Route::post('{message}/bookmark', [\App\Http\Controllers\Api\Chat\MessageController::class, 'toggleBookmark'])
+                    ->name('toggle-bookmark');
+                Route::post('{message}/flag', [\App\Http\Controllers\Api\Chat\MessageController::class, 'toggleFlag'])
+                    ->name('toggle-flag');
+                Route::get('{message}/read-receipts', [\App\Http\Controllers\Api\Chat\MessageController::class, 'getReadReceipts'])
+                    ->name('read-receipts');
+                Route::get('{message}/download', [\App\Http\Controllers\Api\Chat\MessageController::class, 'downloadAttachment'])
+                    ->name('download-attachment');
+
                 // Migration endpoint for existing quantum-encrypted messages
                 Route::post('{message}/migrate', [\App\Http\Controllers\Api\Chat\MessageController::class, 'migrateMessage'])
                     ->name('migrate');

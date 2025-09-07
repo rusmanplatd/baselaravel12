@@ -64,10 +64,10 @@ class MessageController extends Controller
 
         $query = Message::inConversation($conversationId)
             ->with([
-                'sender:id,name,avatar',
+                'sender:id,name,username,avatar',
                 'replyTo:id,sender_id,message_type,created_at',
-                'replyTo.sender:id,name',
-                'reactions.user:id,name',
+                'replyTo.sender:id,name,username',
+                'reactions.user:id,name,username',
                 'readReceipts' => function ($query) use ($conversation) {
                     $query->whereIn('recipient_user_id', $conversation->participants->pluck('user_id'));
                 },
@@ -257,13 +257,14 @@ class MessageController extends Controller
         }
 
         $message = Message::with([
-            'sender:id,name,avatar',
+            'sender:id,name,username,avatar',
             'replyTo:id,sender_id,type,created_at',
+            'replyTo.sender:id,name,username',
             'replies' => function ($query) {
-                $query->with('sender:id,name,avatar')->orderBy('created_at');
+                $query->with('sender:id,name,username,avatar')->orderBy('created_at');
             },
-            'reactions.user:id,name',
-            'readReceipts.user:id,name',
+            'reactions.user:id,name,username',
+            'readReceipts.user:id,name,username',
         ])->findOrFail($messageId);
 
         // In proper E2EE, the server should not decrypt messages
@@ -692,6 +693,234 @@ class MessageController extends Controller
         Log::debug('Broadcasting message deletion', [
             'message_id' => $message->id,
             'conversation_id' => $conversation->id,
+        ]);
+    }
+
+    /**
+     * Pin/unpin a message
+     */
+    public function togglePin(Request $request, string $conversationId, string $messageId): JsonResponse
+    {
+        $user = $request->user();
+        $conversation = Conversation::findOrFail($conversationId);
+        $message = Message::findOrFail($messageId);
+
+        if (! $conversation->hasUser($user->id)) {
+            return response()->json(['error' => 'Access denied'], 403);
+        }
+
+        try {
+            $message->update([
+                'is_pinned' => !$message->is_pinned,
+                'pinned_by' => !$message->is_pinned ? null : $user->id,
+                'pinned_at' => !$message->is_pinned ? null : now(),
+            ]);
+
+            $action = $message->is_pinned ? 'pinned' : 'unpinned';
+            
+            Log::info("Message {$action}", [
+                'message_id' => $messageId,
+                'conversation_id' => $conversationId,
+                'user_id' => $user->id,
+            ]);
+
+            return response()->json([
+                'message' => $message->fresh(),
+                'success' => "Message {$action} successfully",
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error("Failed to toggle pin on message", [
+                'message_id' => $messageId,
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json(['error' => 'Failed to toggle pin'], 500);
+        }
+    }
+
+    /**
+     * Bookmark/unbookmark a message for current user
+     */
+    public function toggleBookmark(Request $request, string $conversationId, string $messageId): JsonResponse
+    {
+        $user = $request->user();
+        $conversation = Conversation::findOrFail($conversationId);
+        $message = Message::findOrFail($messageId);
+
+        if (! $conversation->hasUser($user->id)) {
+            return response()->json(['error' => 'Access denied'], 403);
+        }
+
+        try {
+            $bookmark = $message->bookmarks()->where('user_id', $user->id)->first();
+            
+            if ($bookmark) {
+                $bookmark->delete();
+                $action = 'removed bookmark from';
+                $isBookmarked = false;
+            } else {
+                $message->bookmarks()->create([
+                    'user_id' => $user->id,
+                    'bookmarked_at' => now(),
+                ]);
+                $action = 'bookmarked';
+                $isBookmarked = true;
+            }
+
+            Log::info("User {$action} message", [
+                'message_id' => $messageId,
+                'conversation_id' => $conversationId,
+                'user_id' => $user->id,
+            ]);
+
+            return response()->json([
+                'is_bookmarked' => $isBookmarked,
+                'success' => "Message {$action} successfully",
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error("Failed to toggle bookmark on message", [
+                'message_id' => $messageId,
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json(['error' => 'Failed to toggle bookmark'], 500);
+        }
+    }
+
+    /**
+     * Flag/unflag a message for moderation
+     */
+    public function toggleFlag(Request $request, string $conversationId, string $messageId): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'reason' => 'nullable|string|max:500',
+            'category' => 'nullable|in:spam,inappropriate,harassment,other',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $user = $request->user();
+        $conversation = Conversation::findOrFail($conversationId);
+        $message = Message::findOrFail($messageId);
+
+        if (! $conversation->hasUser($user->id)) {
+            return response()->json(['error' => 'Access denied'], 403);
+        }
+
+        try {
+            $flag = $message->flags()->where('user_id', $user->id)->first();
+            
+            if ($flag) {
+                $flag->delete();
+                $action = 'removed flag from';
+                $isFlagged = false;
+            } else {
+                $message->flags()->create([
+                    'user_id' => $user->id,
+                    'reason' => $request->reason,
+                    'category' => $request->category ?? 'other',
+                    'flagged_at' => now(),
+                ]);
+                $action = 'flagged';
+                $isFlagged = true;
+            }
+
+            Log::info("User {$action} message", [
+                'message_id' => $messageId,
+                'conversation_id' => $conversationId,
+                'user_id' => $user->id,
+                'reason' => $request->reason,
+            ]);
+
+            return response()->json([
+                'is_flagged' => $isFlagged,
+                'success' => "Message {$action} successfully",
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error("Failed to toggle flag on message", [
+                'message_id' => $messageId,
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json(['error' => 'Failed to toggle flag'], 500);
+        }
+    }
+
+    /**
+     * Download file attachment (if user has access)
+     */
+    public function downloadAttachment(Request $request, string $conversationId, string $messageId): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $user = $request->user();
+        $conversation = Conversation::findOrFail($conversationId);
+        $message = Message::findOrFail($messageId);
+
+        if (! $conversation->hasUser($user->id)) {
+            abort(403, 'Access denied');
+        }
+
+        // Check if message has file attachment
+        $metadata = json_decode($message->encrypted_metadata, true);
+        if (!isset($metadata['file_info']['storage_path'])) {
+            abort(404, 'File not found');
+        }
+
+        $storagePath = $metadata['file_info']['storage_path'];
+        $filename = $metadata['file_info']['filename'] ?? 'attachment';
+
+        if (!Storage::disk('private')->exists($storagePath)) {
+            abort(404, 'File not found');
+        }
+
+        Log::info('File attachment downloaded', [
+            'message_id' => $messageId,
+            'user_id' => $user->id,
+            'filename' => $filename,
+        ]);
+
+        return Storage::disk('private')->download($storagePath, $filename);
+    }
+
+    /**
+     * Get message read receipts
+     */
+    public function getReadReceipts(Request $request, string $conversationId, string $messageId): JsonResponse
+    {
+        $user = $request->user();
+        $conversation = Conversation::findOrFail($conversationId);
+        $message = Message::findOrFail($messageId);
+
+        if (! $conversation->hasUser($user->id)) {
+            return response()->json(['error' => 'Access denied'], 403);
+        }
+
+        // Only show read receipts for messages the user sent or if they're a moderator
+        $participant = $conversation->participants()->where('user_id', $user->id)->first();
+        $canViewReceipts = ($message->sender_id === $user->id) || 
+                          ($participant && $participant->canViewReadReceipts());
+
+        if (! $canViewReceipts) {
+            return response()->json(['error' => 'Cannot view read receipts for this message'], 403);
+        }
+
+        $readReceipts = $message->readReceipts()
+            ->with('user:id,name,avatar')
+            ->where('status', 'read')
+            ->orderBy('read_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'read_receipts' => $readReceipts,
+            'total_recipients' => $conversation->getParticipantCount() - 1, // Exclude sender
+            'read_count' => $readReceipts->count(),
         ]);
     }
 

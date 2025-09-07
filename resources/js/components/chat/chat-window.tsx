@@ -13,7 +13,9 @@ import {
     Video, 
     MoreVertical,
     Lock,
-    Users
+    Users,
+    Reply,
+    X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import MessageBubble from './message-bubble';
@@ -70,22 +72,37 @@ interface ChatWindowProps {
     conversation: Conversation | null;
     messages: Message[];
     onSendMessage: (content: string, options?: any) => Promise<void>;
+    onReplyMessage?: (message: Message) => void;
+    onEditMessage?: (messageId: string, content: string) => Promise<void>;
+    onDeleteMessage?: (messageId: string) => Promise<void>;
+    onForwardMessage?: (messageId: string, conversationIds: string[]) => Promise<void>;
+    onAddReaction?: (messageId: string, emoji: string) => Promise<void>;
+    onRemoveReaction?: (messageId: string, emoji: string) => Promise<void>;
     isLoadingMessages: boolean;
     error: string | null;
     currentUser: any;
+    conversations?: Conversation[];
 }
 
 export default function ChatWindow({
     conversation,
     messages,
     onSendMessage,
+    onReplyMessage,
+    onEditMessage,
+    onDeleteMessage,
+    onForwardMessage,
+    onAddReaction,
+    onRemoveReaction,
     isLoadingMessages,
     error,
     currentUser,
+    conversations = [],
 }: ChatWindowProps) {
     const [messageInput, setMessageInput] = useState('');
     const [isSending, setIsSending] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
+    const [replyToMessage, setReplyToMessage] = useState<Message | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     // Auto-scroll to bottom when new messages arrive
@@ -98,8 +115,10 @@ export default function ChatWindow({
 
         setIsSending(true);
         try {
-            await onSendMessage(messageInput.trim());
+            const options = replyToMessage ? { reply_to_id: replyToMessage.id } : undefined;
+            await onSendMessage(messageInput.trim(), options);
             setMessageInput('');
+            setReplyToMessage(null);
         } catch (error) {
             console.error('Failed to send message:', error);
         } finally {
@@ -137,6 +156,50 @@ export default function ChatWindow({
         }
         
         return `${conversation.participants.length} participants`;
+    };
+
+    // Message action handlers
+    const handleReply = (message: Message) => {
+        setReplyToMessage(message);
+        if (onReplyMessage) {
+            onReplyMessage(message);
+        }
+    };
+
+    const handleEdit = async (messageId: string, content: string) => {
+        if (!onEditMessage || !conversation) return;
+        try {
+            await onEditMessage(messageId, content);
+        } catch (error) {
+            console.error('Failed to edit message:', error);
+        }
+    };
+
+    const handleDelete = async (messageId: string) => {
+        if (!onDeleteMessage || !conversation) return;
+        try {
+            await onDeleteMessage(messageId);
+        } catch (error) {
+            console.error('Failed to delete message:', error);
+        }
+    };
+
+    const handleForward = async (messageId: string, conversationIds: string[]) => {
+        if (!onForwardMessage || !conversation) return;
+        try {
+            await onForwardMessage(messageId, conversationIds);
+        } catch (error) {
+            console.error('Failed to forward message:', error);
+        }
+    };
+
+    const handleAddReaction = async (messageId: string, emoji: string) => {
+        if (!onAddReaction || !conversation) return;
+        try {
+            await onAddReaction(messageId, emoji);
+        } catch (error) {
+            console.error('Failed to add reaction:', error);
+        }
     };
 
     if (!conversation) {
@@ -230,6 +293,12 @@ export default function ChatWindow({
                             message={message}
                             isOwn={message.sender_id === currentUser.id}
                             currentUser={currentUser}
+                            conversations={conversations}
+                            onReply={handleReply}
+                            onEdit={handleEdit}
+                            onDelete={handleDelete}
+                            onForward={handleForward}
+                            onAddReaction={handleAddReaction}
                         />
                     ))}
                     <div ref={messagesEndRef} />
@@ -238,6 +307,30 @@ export default function ChatWindow({
 
             {/* Input Area */}
             <div className="p-4 border-t bg-background">
+                {/* Reply Preview */}
+                {replyToMessage && (
+                    <div className="mb-3 bg-muted/50 border-l-4 border-primary p-3 rounded">
+                        <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-2 text-sm font-medium">
+                                <Reply className="h-3 w-3" />
+                                Replying to {replyToMessage.sender.name}
+                            </div>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0"
+                                onClick={() => setReplyToMessage(null)}
+                            >
+                                <X className="h-3 w-3" />
+                            </Button>
+                        </div>
+                        <div className="text-sm text-muted-foreground truncate">
+                            {replyToMessage.decrypted_content?.slice(0, 100)}
+                            {(replyToMessage.decrypted_content?.length || 0) > 100 && '...'}
+                        </div>
+                    </div>
+                )}
+
                 {/* Encryption Status */}
                 {conversation.encryption_status.is_encrypted && (
                     <div className="flex items-center justify-center mb-2 text-xs text-muted-foreground">

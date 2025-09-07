@@ -53,7 +53,12 @@ class MessageSent implements ShouldBroadcastNow
     public function broadcastWith(): array
     {
         // Fetch fresh data to avoid serialization issues
-        $message = Message::with('sender:id,name,avatar')->find($this->message->id);
+        $message = Message::with([
+            'sender:id,name,username,avatar',
+            'replyTo:id,sender_id,message_type,created_at',
+            'replyTo.sender:id,name,username',
+            'reactions.user:id,name,username'
+        ])->find($this->message->id);
 
         if (!$message) {
             \Log::warning('Message not found for broadcasting', ['message_id' => $this->message->id]);

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { apiService } from '@/services/ApiService';
 import { getUserStorageItem, setUserStorageItem } from '@/utils/localStorage';
 import { subscribeToChannel, leaveChannel, handleBroadcastingAuthError } from '@/utils/broadcastingAuth';
+import logger from '@/services/LoggerService';
 
 interface Message {
     id: string;
@@ -492,7 +493,9 @@ export function useE2EEChat(): UseE2EEChatReturn {
     ): Promise<void> => {
         try {
             // Encrypt message on client side for proper E2EE
+            logger.chat.encryption('encrypting', { conversationId, contentLength: content.length });
             const encryptedData = await encryptMessageClientSide(content, conversationId);
+            logger.chat.encryption('encrypted', { algorithm: encryptedData.algorithm });
 
             const response = await apiCall(`/conversations/${conversationId}/messages`, 'POST', {
                 type: options.type || 'text',
@@ -510,9 +513,10 @@ export function useE2EEChat(): UseE2EEChatReturn {
                 decrypted_content: content, // Show decrypted content locally
             };
             setMessages(prev => [messageWithDecryptedContent, ...prev]);
+            logger.websocket.message('sent', { messageId: response.message.id, conversationId });
             setError(null);
         } catch (err) {
-            console.error('Failed to send message:', err);
+            logger.error('Failed to send message', err, 'E2EEChat');
         }
     }, [apiCall]);
 
@@ -654,8 +658,8 @@ export function useE2EEChat(): UseE2EEChatReturn {
             // Subscribe to conversation channel with enhanced error handling
             await subscribeToChannel(`conversation.${conversationId}`, {
                 'message.sent': (data: any) => {
-                    console.log('🎉 Received real-time message:', data);
-                    console.log('📨 Message data:', {
+                    logger.websocket.event('message.sent', data);
+                    logger.websocket.message('received', {
                         messageId: data.message?.id,
                         conversationId: data.message?.conversation_id,
                         senderId: data.sender_id,
@@ -665,29 +669,88 @@ export function useE2EEChat(): UseE2EEChatReturn {
 
                     // Get current user ID to filter out own messages
                     const currentUserId = getUserStorageItem('user_id');
-                    console.log('👤 Current user ID:', currentUserId, 'Sender ID:', data.sender_id);
+                    logger.debug(`Current user ID: ${currentUserId}, Sender ID: ${data.sender_id}`, {
+                        currentUserId,
+                        senderId: data.sender_id
+                    }, 'E2EEChat');
 
                     // Don't process messages from the current user (they already see their own message)
                     if (data.sender_id && data.sender_id.toString() === currentUserId?.toString()) {
-                        console.log('🚫 Ignoring own message in real-time update');
+                        logger.debug('Ignoring own message in real-time update', null, 'E2EEChat');
                         return;
                     }
 
-                    console.log('✅ Processing real-time message from another user');
+                    logger.debug('Processing real-time message from another user', null, 'E2EEChat');
                     handleRealTimeMessage({
                         type: 'new_message',
                         message: data.message
                     });
+                },
+                'message.edited': (data: any) => {
+                    logger.websocket.event('message.edited', data);
+                    handleRealTimeMessage({
+                        type: 'message_edited',
+                        message: data.message
+                    });
+                },
+                'message.deleted': (data: any) => {
+                    logger.websocket.event('message.deleted', data);
+                    handleRealTimeMessage({
+                        type: 'message_deleted',
+                        message_id: data.message_id
+                    });
+                },
+                'reaction.added': (data: any) => {
+                    logger.websocket.event('reaction.added', data);
+                    handleRealTimeMessage({
+                        type: 'reaction_added',
+                        message_id: data.message_id,
+                        reaction: data.reaction
+                    });
+                },
+                'reaction.removed': (data: any) => {
+                    logger.websocket.event('reaction.removed', data);
+                    handleRealTimeMessage({
+                        type: 'reaction_removed',
+                        message_id: data.message_id,
+                        reaction_id: data.reaction_id
+                    });
+                },
+                'participant.joined': (data: any) => {
+                    logger.websocket.event('participant.joined', data);
+                    // Refresh conversation to get updated participants
+                    if (data.conversation_id === conversationId) {
+                        loadConversation(conversationId);
+                    }
+                },
+                'participant.left': (data: any) => {
+                    logger.websocket.event('participant.left', data);
+                    // Refresh conversation to get updated participants
+                    if (data.conversation_id === conversationId) {
+                        loadConversation(conversationId);
+                    }
+                },
+                'typing.start': (data: any) => {
+                    logger.websocket.event('typing.start', data);
+                    // Handle typing indicators
+                },
+                'typing.stop': (data: any) => {
+                    logger.websocket.event('typing.stop', data);
+                    // Handle typing indicators
+                },
+                'presence.updated': (data: any) => {
+                    logger.websocket.event('presence.updated', data);
+                    // Handle presence updates
                 }
             });
 
             subscribedConversations.current.add(conversationId);
-            console.log(`Subscribed to conversation: ${conversationId}`);
+            logger.chat.conversation('subscribed', { conversationId });
         } catch (error) {
-            console.error(`Failed to subscribe to conversation ${conversationId}:`, error);
+            logger.error(`Failed to subscribe to conversation ${conversationId}`, error, 'E2EEChat');
             await handleBroadcastingAuthError(error);
         }
-    }, []);
+    }, [loadConversation]);
 
     const unsubscribeFromConversation = useCallback((conversationId: string): void => {
         if (!subscribedConversations.current.has(conversationId)) {
@@ -697,6 +760,7 @@ export function useE2EEChat(): UseE2EEChatReturn {
         // Leave the conversation channel
         leaveChannel(`conversation.${conversationId}`);
         subscribedConversations.current.delete(conversationId);
+        logger.chat.conversation('unsubscribed', { conversationId });
     }, []);
 
     // Handle real-time messages
@@ -709,6 +773,36 @@ export function useE2EEChat(): UseE2EEChatReturn {
                         const response = await apiService.get(`/api/v1/chat/conversations/${data.message.conversation_id}/messages/${data.message.id}`);
                         const fullMessage = response.data.message;
 
+                        // Decrypt the message content on client side for proper E2EE
+                        try {
+                            logger.chat.encryption('decrypting', { messageId: fullMessage.id });
+                            const decryptedContent = await decryptMessageClientSide(fullMessage.encrypted_content);
+                            fullMessage.decrypted_content = decryptedContent;
+                            logger.chat.encryption('decrypted', { messageId: fullMessage.id });
+                        } catch (decryptError) {
+                            logger.warn('Failed to decrypt real-time message', decryptError, 'E2EEChat');
+                            
+                            // Try migration endpoint for quantum-encrypted messages
+                            if (fullMessage.encrypted_content && fullMessage.encrypted_content.includes('ciphertext') && fullMessage.encrypted_content.includes('encrypted_message')) {
+                                try {
+                                    const migrationResponse = await apiCall(`/conversations/${data.message.conversation_id}/messages/${data.message.id}/migrate`, 'POST');
+                                    if (migrationResponse.migration_status === 'success' && migrationResponse.decrypted_content) {
+                                        fullMessage.decrypted_content = migrationResponse.decrypted_content;
+                                    } else {
+                                        fullMessage.decrypted_content = '[Encrypted message - decryption failed]';
+                                    }
+                                } catch (migrationError) {
+                                    logger.warn('Migration failed for real-time message', migrationError, 'E2EEChat');
+                                    fullMessage.decrypted_content = '[Encrypted message - decryption failed]';
+                                }
+                            } else {
+                                fullMessage.decrypted_content = '[Encrypted message - decryption failed]';
+                            }
+                        }
+
+                        // Map type field for frontend compatibility
+                        fullMessage.type = fullMessage.message_type;
+
                         setMessages(prev => [fullMessage, ...prev]);
 
                         // Update conversation last activity
@@ -718,9 +812,14 @@ export function useE2EEChat(): UseE2EEChatReturn {
                                 : conv
                         ));
                     } catch (error) {
-                        console.error('Failed to fetch full message for real-time update:', error);
-                        // Fallback to using the broadcasted message data
-                        setMessages(prev => [data.message, ...prev]);
+                        logger.error('Failed to fetch full message for real-time update', error, 'E2EEChat');
+                        // Fallback to using the broadcasted message data (but it won't have encrypted content)
+                        const fallbackMessage = {
+                            ...data.message,
+                            decrypted_content: '[Message content not available]',
+                            type: data.message.type || data.message.message_type,
+                        };
+                        setMessages(prev => [fallbackMessage, ...prev]);
                     }
                 })();
                 break;
@@ -759,7 +858,7 @@ export function useE2EEChat(): UseE2EEChatReturn {
                 }));
                 break;
         }
-    }, []);
+    }, [apiCall]);
 
     // Load devices on mount
     useEffect(() => {

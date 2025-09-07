@@ -29,6 +29,11 @@ export default function Chat({ auth, initialConversationId }: ChatPageProps) {
         registerDevice,
         subscribeToConversation,
         unsubscribeFromConversation,
+        editMessage,
+        deleteMessage,
+        forwardMessage,
+        addReaction,
+        removeReaction,
     } = useE2EEChat();
 
     const [selectedConversationId, setSelectedConversationId] = useState<string | null>(
@@ -93,6 +98,42 @@ export default function Chat({ auth, initialConversationId }: ChatPageProps) {
         }
     };
 
+    const handleEditMessage = async (messageId: string, content: string) => {
+        if (!selectedConversationId) return;
+        try {
+            await editMessage(selectedConversationId, messageId, content);
+        } catch (error) {
+            console.error('Failed to edit message:', error);
+        }
+    };
+
+    const handleDeleteMessage = async (messageId: string) => {
+        if (!selectedConversationId) return;
+        try {
+            await deleteMessage(selectedConversationId, messageId);
+        } catch (error) {
+            console.error('Failed to delete message:', error);
+        }
+    };
+
+    const handleForwardMessage = async (messageId: string, conversationIds: string[]) => {
+        if (!selectedConversationId) return;
+        try {
+            await forwardMessage(selectedConversationId, messageId, conversationIds);
+        } catch (error) {
+            console.error('Failed to forward message:', error);
+        }
+    };
+
+    const handleAddReaction = async (messageId: string, emoji: string) => {
+        if (!selectedConversationId) return;
+        try {
+            await addReaction(selectedConversationId, messageId, emoji);
+        } catch (error) {
+            console.error('Failed to add reaction:', error);
+        }
+    };
+
     const handleNewConversation = async (participants: string[], options?: any) => {
         try {
             const conversation = await createConversation(participants, options);
@@ -152,9 +193,14 @@ export default function Chat({ auth, initialConversationId }: ChatPageProps) {
                         conversation={currentConversation}
                         messages={messages}
                         onSendMessage={handleSendMessage}
+                        onEditMessage={handleEditMessage}
+                        onDeleteMessage={handleDeleteMessage}
+                        onForwardMessage={handleForwardMessage}
+                        onAddReaction={handleAddReaction}
                         isLoadingMessages={isLoadingMessages}
                         error={error}
                         currentUser={auth.user}
+                        conversations={conversations}
                     />
                 </div>
             </div>

@@ -13,6 +13,7 @@ import {
     Edit2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { MessageContextMenu } from './MessageContextMenu';
 
 interface Message {
     id: string;
@@ -41,13 +42,58 @@ interface Message {
     reply_to?: Message;
 }
 
+interface Conversation {
+    id: string;
+    name?: string;
+    avatar_url?: string;
+    participants: Array<{
+        user_id: string;
+        user?: {
+            id: string;
+            name: string;
+        };
+    }>;
+}
+
 interface MessageBubbleProps {
     message: Message;
     isOwn: boolean;
     currentUser: any;
+    conversations?: Conversation[];
+    onReply?: (message: Message) => void;
+    onEdit?: (messageId: string, content: string) => void;
+    onDelete?: (messageId: string) => void;
+    onForward?: (messageId: string, conversationIds: string[]) => void;
+    onAddReaction?: (messageId: string, emoji: string) => void;
+    onPin?: (messageId: string) => void;
+    onUnpin?: (messageId: string) => void;
+    onBookmark?: (messageId: string) => void;
+    onUnbookmark?: (messageId: string) => void;
+    onFlag?: (messageId: string) => void;
+    onUnflag?: (messageId: string) => void;
+    onDownload?: (messageId: string) => void;
+    onQuote?: (message: Message) => void;
 }
 
-export default function MessageBubble({ message, isOwn, currentUser }: MessageBubbleProps) {
+export default function MessageBubble({ 
+    message, 
+    isOwn, 
+    currentUser,
+    conversations = [],
+    onReply = () => {},
+    onEdit = () => {},
+    onDelete = () => {},
+    onForward = () => {},
+    onAddReaction = () => {},
+    onPin,
+    onUnpin,
+    onBookmark,
+    onUnbookmark,
+    onFlag,
+    onUnflag,
+    onDownload,
+    onQuote,
+}: MessageBubbleProps) {
     const formatTime = (timestamp: string): string => {
         return new Date(timestamp).toLocaleTimeString([], { 
             hour: '2-digit', 
@@ -160,10 +206,16 @@ export default function MessageBubble({ message, isOwn, currentUser }: MessageBu
     };
 
     return (
-        <div className={cn(
-            "flex gap-3 group",
-            isOwn ? "flex-row-reverse" : "flex-row"
-        )}>
+        <div 
+            className={cn(
+                "flex gap-3 group",
+                isOwn ? "flex-row-reverse" : "flex-row"
+            )}
+            onContextMenu={(e) => {
+                e.preventDefault();
+                // Context menu will be handled by the wrapper if needed
+            }}
+        >
             {/* Avatar */}
             {!isOwn && (
                 <Avatar className="h-8 w-8 mt-1">
@@ -176,7 +228,7 @@ export default function MessageBubble({ message, isOwn, currentUser }: MessageBu
 
             {/* Message Content */}
             <div className={cn(
-                "flex flex-col max-w-[70%]",
+                "flex flex-col max-w-[70%] relative",
                 isOwn ? "items-end" : "items-start"
             )}>
                 {/* Sender name (only for group chats and not own messages) */}
@@ -193,7 +245,7 @@ export default function MessageBubble({ message, isOwn, currentUser }: MessageBu
                         isOwn ? "border-r-2 border-l-0 pr-2 pl-0 text-right" : "border-primary"
                     )}>
                         <div className="font-medium">
-                            {message.reply_to.sender.name}
+                            {message.reply_to.sender?.name || 'Unknown User'}
                         </div>
                         <div className="truncate">
                             {message.reply_to.decrypted_content?.slice(0, 50)}...
@@ -223,12 +275,32 @@ export default function MessageBubble({ message, isOwn, currentUser }: MessageBu
                         "absolute top-0 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1",
                         isOwn ? "-left-12" : "-right-12"
                     )}>
-                        <Button variant="ghost" size="icon" className="h-6 w-6">
+                        <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-6 w-6"
+                            onClick={() => onReply(message)}
+                        >
                             <Reply className="h-3 w-3" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-6 w-6">
-                            <MoreHorizontal className="h-3 w-3" />
-                        </Button>
+                        <MessageContextMenu
+                            message={message}
+                            currentUserId={currentUser?.id || ''}
+                            conversations={conversations}
+                            onReply={onReply}
+                            onEdit={onEdit}
+                            onDelete={onDelete}
+                            onForward={onForward}
+                            onAddReaction={onAddReaction}
+                            onPin={onPin}
+                            onUnpin={onUnpin}
+                            onBookmark={onBookmark}
+                            onUnbookmark={onUnbookmark}
+                            onFlag={onFlag}
+                            onUnflag={onUnflag}
+                            onDownload={onDownload}
+                            onQuote={onQuote}
+                        />
                     </div>
                 </div>
 
