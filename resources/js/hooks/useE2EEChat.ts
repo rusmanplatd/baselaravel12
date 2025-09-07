@@ -11,6 +11,8 @@ interface Message {
     decrypted_content?: string;
     encrypted_content: string;
     is_edited: boolean;
+    is_forwarded?: boolean;
+    forward_count?: number;
     created_at: string;
     sender: {
         id: string;
@@ -114,6 +116,7 @@ interface UseE2EEChatReturn {
     sendMessage: (conversationId: string, content: string, options?: SendMessageOptions) => Promise<void>;
     editMessage: (conversationId: string, messageId: string, content: string) => Promise<void>;
     deleteMessage: (conversationId: string, messageId: string) => Promise<void>;
+    forwardMessage: (conversationId: string, messageId: string, targetConversationIds: string[]) => Promise<void>;
     addReaction: (conversationId: string, messageId: string, emoji: string) => Promise<void>;
     removeReaction: (conversationId: string, messageId: string, emoji: string) => Promise<void>;
 
@@ -543,6 +546,32 @@ export function useE2EEChat(): UseE2EEChatReturn {
         }
     }, [apiCall]);
 
+    const forwardMessage = useCallback(async (
+        conversationId: string, 
+        messageId: string, 
+        targetConversationIds: string[]
+    ): Promise<void> => {
+        try {
+            // Get the original message to forward
+            const originalMessage = messages.find(msg => msg.id === messageId);
+            if (!originalMessage) {
+                throw new Error('Message not found');
+            }
+
+            // Forward message via API
+            await apiCall(`/conversations/${conversationId}/messages/${messageId}/forward`, 'POST', {
+                target_conversation_ids: targetConversationIds,
+                encrypted_content: originalMessage.encrypted_content,
+                content_hash: originalMessage.encrypted_content ? btoa(originalMessage.encrypted_content) : ''
+            });
+
+            setError(null);
+        } catch (err) {
+            console.error('Failed to forward message:', err);
+            throw err;
+        }
+    }, [apiCall, messages]);
+
     const addReaction = useCallback(async (
         conversationId: string,
         messageId: string,
@@ -777,6 +806,7 @@ export function useE2EEChat(): UseE2EEChatReturn {
         sendMessage,
         editMessage,
         deleteMessage,
+        forwardMessage,
         addReaction,
         removeReaction,
 

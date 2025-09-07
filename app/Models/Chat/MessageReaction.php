@@ -19,6 +19,7 @@ class MessageReaction extends Model
         'user_id',
         'device_id',
         'reaction_type',
+        'emoji',
     ];
 
     protected $attributes = [

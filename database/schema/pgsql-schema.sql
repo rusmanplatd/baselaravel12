@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict c1cpUBInhxN6AeLA5FEzolgT5n94dNgHfX9VRboUGCFRwiRum5qBM5tJahQQg0T
+\restrict 3tIAFRIAhncdAYX1y8iJxbWF5ODRoUlUAEfHYHwygeaIjmpK2oa42cAtia48rwN
 
 -- Dumped from database version 17.6 (Ubuntu 17.6-1.pgdg24.04+1)
 -- Dumped by pg_dump version 17.6 (Ubuntu 17.6-1.pgdg24.04+1)
@@ -270,7 +270,7 @@ CREATE TABLE public.chat_conversations (
     created_at timestamp(0) without time zone,
     updated_at timestamp(0) without time zone,
     deleted_at timestamp(0) without time zone,
-    CONSTRAINT chat_conversations_type_check CHECK (((type)::text = ANY ((ARRAY['direct'::character varying, 'group'::character varying, 'channel'::character varying])::text[])))
+    CONSTRAINT chat_conversations_type_check CHECK (((type)::text = ANY (ARRAY[('direct'::character varying)::text, ('group'::character varying)::text, ('channel'::character varying)::text])))
 );
 
 
@@ -309,7 +309,7 @@ CREATE TABLE public.chat_messages (
     id character(26) NOT NULL,
     conversation_id character(26) NOT NULL,
     sender_id character(26) NOT NULL,
-    sender_device_id character(26) NOT NULL,
+    sender_device_id character(26),
     message_type character varying(255) NOT NULL,
     encrypted_content text NOT NULL,
     encrypted_metadata json,
@@ -326,7 +326,10 @@ CREATE TABLE public.chat_messages (
     expires_at timestamp(0) without time zone,
     created_at timestamp(0) without time zone,
     updated_at timestamp(0) without time zone,
-    CONSTRAINT chat_messages_message_type_check CHECK (((message_type)::text = ANY ((ARRAY['text'::character varying, 'image'::character varying, 'video'::character varying, 'audio'::character varying, 'file'::character varying, 'voice'::character varying, 'poll'::character varying, 'system'::character varying, 'call'::character varying])::text[])))
+    forwarded_from_id character(26),
+    original_conversation_id character(26),
+    forward_count integer DEFAULT 0 NOT NULL,
+    CONSTRAINT chat_messages_message_type_check CHECK (((message_type)::text = ANY (ARRAY[('text'::character varying)::text, ('image'::character varying)::text, ('video'::character varying)::text, ('audio'::character varying)::text, ('file'::character varying)::text, ('voice'::character varying)::text, ('poll'::character varying)::text, ('system'::character varying)::text, ('call'::character varying)::text])))
 );
 
 
@@ -409,7 +412,7 @@ CREATE TABLE public.conversation_participants (
     last_read_message_id character(26),
     created_at timestamp(0) without time zone,
     updated_at timestamp(0) without time zone,
-    CONSTRAINT conversation_participants_role_check CHECK (((role)::text = ANY ((ARRAY['admin'::character varying, 'moderator'::character varying, 'member'::character varying])::text[])))
+    CONSTRAINT conversation_participants_role_check CHECK (((role)::text = ANY (ARRAY[('admin'::character varying)::text, ('moderator'::character varying)::text, ('member'::character varying)::text])))
 );
 
 
@@ -550,14 +553,14 @@ CREATE TABLE public.message_delivery_receipts (
     id character(26) NOT NULL,
     message_id character(26) NOT NULL,
     recipient_user_id character(26) NOT NULL,
-    recipient_device_id character(26) NOT NULL,
+    recipient_device_id character(26),
     status character varying(255) DEFAULT 'sent'::character varying NOT NULL,
     delivered_at timestamp(0) without time zone,
     read_at timestamp(0) without time zone,
     failure_reason text,
     created_at timestamp(0) without time zone,
     updated_at timestamp(0) without time zone,
-    CONSTRAINT message_delivery_receipts_status_check CHECK (((status)::text = ANY ((ARRAY['sent'::character varying, 'delivered'::character varying, 'read'::character varying, 'failed'::character varying])::text[])))
+    CONSTRAINT message_delivery_receipts_status_check CHECK (((status)::text = ANY (ARRAY[('sent'::character varying)::text, ('delivered'::character varying)::text, ('read'::character varying)::text, ('failed'::character varying)::text])))
 );
 
 
@@ -596,7 +599,7 @@ CREATE TABLE public.message_mentions (
     length integer NOT NULL,
     created_at timestamp(0) without time zone,
     updated_at timestamp(0) without time zone,
-    CONSTRAINT message_mentions_mention_type_check CHECK (((mention_type)::text = ANY ((ARRAY['user'::character varying, 'all'::character varying, 'here'::character varying])::text[])))
+    CONSTRAINT message_mentions_mention_type_check CHECK (((mention_type)::text = ANY (ARRAY[('user'::character varying)::text, ('all'::character varying)::text, ('here'::character varying)::text])))
 );
 
 
@@ -645,7 +648,8 @@ CREATE TABLE public.message_reactions (
     device_id character(26) NOT NULL,
     reaction_type character varying(255) NOT NULL,
     created_at timestamp(0) without time zone,
-    updated_at timestamp(0) without time zone
+    updated_at timestamp(0) without time zone,
+    emoji character varying(255) NOT NULL
 );
 
 
@@ -848,7 +852,7 @@ CREATE TABLE public.oauth_clients (
     last_used_at timestamp(0) without time zone,
     user_access_scope character varying(255) NOT NULL,
     user_access_rules json,
-    CONSTRAINT oauth_clients_user_access_scope_check CHECK (((user_access_scope)::text = ANY ((ARRAY['all_users'::character varying, 'organization_members'::character varying, 'custom'::character varying])::text[])))
+    CONSTRAINT oauth_clients_user_access_scope_check CHECK (((user_access_scope)::text = ANY (ARRAY[('all_users'::character varying)::text, ('organization_members'::character varying)::text, ('custom'::character varying)::text])))
 );
 
 
@@ -948,7 +952,7 @@ CREATE TABLE public.organization_memberships (
     created_by character(26) NOT NULL,
     updated_by character(26) NOT NULL,
     CONSTRAINT organization_memberships_membership_type_check CHECK (((membership_type)::text = ANY (ARRAY[('employee'::character varying)::text, ('board_member'::character varying)::text, ('consultant'::character varying)::text, ('contractor'::character varying)::text, ('intern'::character varying)::text, ('manager'::character varying)::text]))),
-    CONSTRAINT organization_memberships_status_check CHECK (((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'terminated'::character varying])::text[])))
+    CONSTRAINT organization_memberships_status_check CHECK (((status)::text = ANY (ARRAY[('active'::character varying)::text, ('inactive'::character varying)::text, ('terminated'::character varying)::text])))
 );
 
 
@@ -1023,7 +1027,7 @@ CREATE TABLE public.organization_units (
     updated_at timestamp(0) with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     created_by character(26) NOT NULL,
     updated_by character(26) NOT NULL,
-    CONSTRAINT organization_units_unit_type_check CHECK (((unit_type)::text = ANY ((ARRAY['board_of_commissioners'::character varying, 'board_of_directors'::character varying, 'executive_committee'::character varying, 'audit_committee'::character varying, 'risk_committee'::character varying, 'nomination_committee'::character varying, 'remuneration_committee'::character varying, 'division'::character varying, 'department'::character varying, 'section'::character varying, 'team'::character varying, 'branch_office'::character varying, 'representative_office'::character varying])::text[])))
+    CONSTRAINT organization_units_unit_type_check CHECK (((unit_type)::text = ANY (ARRAY[('board_of_commissioners'::character varying)::text, ('board_of_directors'::character varying)::text, ('executive_committee'::character varying)::text, ('audit_committee'::character varying)::text, ('risk_committee'::character varying)::text, ('nomination_committee'::character varying)::text, ('remuneration_committee'::character varying)::text, ('division'::character varying)::text, ('department'::character varying)::text, ('section'::character varying)::text, ('team'::character varying)::text, ('branch_office'::character varying)::text, ('representative_office'::character varying)::text])))
 );
 
 
@@ -1058,7 +1062,7 @@ CREATE TABLE public.organizations (
     updated_at timestamp(0) with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     created_by character(26) NOT NULL,
     updated_by character(26) NOT NULL,
-    CONSTRAINT organizations_organization_type_check CHECK (((organization_type)::text = ANY ((ARRAY['holding_company'::character varying, 'subsidiary'::character varying, 'division'::character varying, 'branch'::character varying, 'department'::character varying, 'unit'::character varying])::text[])))
+    CONSTRAINT organizations_organization_type_check CHECK (((organization_type)::text = ANY (ARRAY[('holding_company'::character varying)::text, ('subsidiary'::character varying)::text, ('division'::character varying)::text, ('branch'::character varying)::text, ('department'::character varying)::text, ('unit'::character varying)::text])))
 );
 
 
@@ -1371,8 +1375,8 @@ CREATE TABLE public.security_audit_logs (
     organization_id character(26),
     created_at timestamp(0) without time zone,
     updated_at timestamp(0) without time zone,
-    CONSTRAINT security_audit_logs_severity_check CHECK (((severity)::text = ANY ((ARRAY['info'::character varying, 'low'::character varying, 'medium'::character varying, 'high'::character varying, 'critical'::character varying])::text[]))),
-    CONSTRAINT security_audit_logs_status_check CHECK (((status)::text = ANY ((ARRAY['normal'::character varying, 'pending'::character varying, 'investigating'::character varying, 'resolved'::character varying, 'false_positive'::character varying])::text[])))
+    CONSTRAINT security_audit_logs_severity_check CHECK (((severity)::text = ANY (ARRAY[('info'::character varying)::text, ('low'::character varying)::text, ('medium'::character varying)::text, ('high'::character varying)::text, ('critical'::character varying)::text]))),
+    CONSTRAINT security_audit_logs_status_check CHECK (((status)::text = ANY (ARRAY[('normal'::character varying)::text, ('pending'::character varying)::text, ('investigating'::character varying)::text, ('resolved'::character varying)::text, ('false_positive'::character varying)::text])))
 );
 
 
@@ -1728,7 +1732,8 @@ CREATE TABLE public.sys_users (
     phone_verified_at timestamp(0) without time zone,
     profile_updated_at timestamp(0) without time zone,
     external_id character varying(255),
-    social_links json
+    social_links json,
+    last_seen_at timestamp(0) without time zone
 );
 
 
@@ -1750,7 +1755,7 @@ CREATE TABLE public.user_consents (
     granted_by_ip character varying(255),
     granted_user_agent text,
     usage_stats json,
-    CONSTRAINT user_consents_status_check CHECK (((status)::text = ANY ((ARRAY['active'::character varying, 'revoked'::character varying, 'expired'::character varying])::text[])))
+    CONSTRAINT user_consents_status_check CHECK (((status)::text = ANY (ARRAY[('active'::character varying)::text, ('revoked'::character varying)::text, ('expired'::character varying)::text])))
 );
 
 
@@ -2027,7 +2032,7 @@ CREATE TABLE public.webhook_deliveries (
     error_message text,
     created_at timestamp(0) without time zone,
     updated_at timestamp(0) without time zone,
-    CONSTRAINT webhook_deliveries_status_check CHECK (((status)::text = ANY ((ARRAY['pending'::character varying, 'success'::character varying, 'failed'::character varying])::text[])))
+    CONSTRAINT webhook_deliveries_status_check CHECK (((status)::text = ANY (ARRAY[('pending'::character varying)::text, ('success'::character varying)::text, ('failed'::character varying)::text])))
 );
 
 
@@ -2049,7 +2054,7 @@ CREATE TABLE public.webhooks (
     created_by character(26) NOT NULL,
     created_at timestamp(0) without time zone,
     updated_at timestamp(0) without time zone,
-    CONSTRAINT webhooks_status_check CHECK (((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'disabled'::character varying])::text[])))
+    CONSTRAINT webhooks_status_check CHECK (((status)::text = ANY (ARRAY[('active'::character varying)::text, ('inactive'::character varying)::text, ('disabled'::character varying)::text])))
 );
 
 
@@ -3499,10 +3504,24 @@ CREATE INDEX chat_messages_expires_at_index ON public.chat_messages USING btree 
 
 
 --
+-- Name: chat_messages_forwarded_from_id_index; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX chat_messages_forwarded_from_id_index ON public.chat_messages USING btree (forwarded_from_id);
+
+
+--
 -- Name: chat_messages_message_type_is_deleted_index; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX chat_messages_message_type_is_deleted_index ON public.chat_messages USING btree (message_type, is_deleted);
+
+
+--
+-- Name: chat_messages_original_conversation_id_index; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX chat_messages_original_conversation_id_index ON public.chat_messages USING btree (original_conversation_id);
 
 
 --
@@ -3692,6 +3711,13 @@ CREATE INDEX message_polls_expires_at_index ON public.message_polls USING btree 
 --
 
 CREATE INDEX message_polls_message_id_is_active_index ON public.message_polls USING btree (message_id, is_active);
+
+
+--
+-- Name: message_reactions_message_id_emoji_index; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX message_reactions_message_id_emoji_index ON public.message_reactions USING btree (message_id, emoji);
 
 
 --
@@ -4921,6 +4947,22 @@ ALTER TABLE ONLY public.chat_messages
 
 
 --
+-- Name: chat_messages chat_messages_forwarded_from_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_messages
+    ADD CONSTRAINT chat_messages_forwarded_from_id_foreign FOREIGN KEY (forwarded_from_id) REFERENCES public.chat_messages(id) ON DELETE SET NULL;
+
+
+--
+-- Name: chat_messages chat_messages_original_conversation_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.chat_messages
+    ADD CONSTRAINT chat_messages_original_conversation_id_foreign FOREIGN KEY (original_conversation_id) REFERENCES public.chat_conversations(id) ON DELETE SET NULL;
+
+
+--
 -- Name: chat_messages chat_messages_reply_to_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -6124,13 +6166,13 @@ ALTER TABLE ONLY public.webhooks
 -- PostgreSQL database dump complete
 --
 
-\unrestrict c1cpUBInhxN6AeLA5FEzolgT5n94dNgHfX9VRboUGCFRwiRum5qBM5tJahQQg0T
+\unrestrict 3tIAFRIAhncdAYX1y8iJxbWF5ODRoUlUAEfHYHwygeaIjmpK2oa42cAtia48rwN
 
 --
 -- PostgreSQL database dump
 --
 
-\restrict 90p8tj1nqlQ7S0GVhSKtIDJtQ24pxqKc6TgDxjlfkMchHag1mxHTIM7Lc2fQ21r
+\restrict 25S2qLQhRY0NDrNhAQmy8fL2VMWY0tR6tF3M301I6wwXuFZSIg45uM6xO2mgOYW
 
 -- Dumped from database version 17.6 (Ubuntu 17.6-1.pgdg24.04+1)
 -- Dumped by pg_dump version 17.6 (Ubuntu 17.6-1.pgdg24.04+1)
@@ -6219,6 +6261,11 @@ COPY public.migrations (id, migration, batch) FROM stdin;
 65	2025_09_07_130000_create_voice_transcriptions_table	1
 66	2025_09_07_140000_create_scheduled_messages_table	1
 67	2025_09_06_231714_create_chat_encryption_keys_table	2
+68	2025_09_06_232220_add_last_seen_at_to_users_table	3
+69	2025_09_07_043717_make_sender_device_id_nullable_in_chat_messages	3
+70	2025_09_07_043820_make_recipient_device_id_nullable_in_message_delivery_receipts	3
+71	2025_09_07_060712_add_forwarded_from_to_chat_messages_table	3
+72	2025_09_07_061332_add_emoji_to_message_reactions_table	3
 \.
 
 
@@ -6226,12 +6273,12 @@ COPY public.migrations (id, migration, batch) FROM stdin;
 -- Name: migrations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.migrations_id_seq', 67, true);
+SELECT pg_catalog.setval('public.migrations_id_seq', 72, true);
 
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 90p8tj1nqlQ7S0GVhSKtIDJtQ24pxqKc6TgDxjlfkMchHag1mxHTIM7Lc2fQ21r
+\unrestrict 25S2qLQhRY0NDrNhAQmy8fL2VMWY0tR6tF3M301I6wwXuFZSIg45uM6xO2mgOYW
 

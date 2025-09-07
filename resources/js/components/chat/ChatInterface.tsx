@@ -2,9 +2,14 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { usePage } from '@inertiajs/react';
 import { useE2EEChat } from '@/hooks/useE2EEChat';
 import { useMentions } from '@/hooks/useMentions';
+import type { SharedData } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { MessageContextMenu } from './MessageContextMenu';
+import { MessageReactions } from './MessageReactions';
+import { MessageReplyIndicator, MessageThreadInfo } from './MessageReplyIndicator';
+import { EmojiPicker } from './EmojiPicker';
 import RichTextEditor from './RichTextEditor';
 import type { JSONContent } from '@tiptap/react';
 import { Badge } from '@/components/ui/badge';
@@ -33,7 +38,8 @@ import {
     Mic,
     StopCircle,
     Quote,
-    AlertTriangle
+    AlertTriangle,
+    Forward
 } from 'lucide-react';
 import {
     DropdownMenu,
@@ -75,13 +81,27 @@ interface ConversationParticipant {
     user?: MessageUser;
 }
 
-interface Message {
+interface ChatMessageReaction {
+    id: string;
+    emoji: string;
+    user_id: string;
+    user: MessageUser;
+    created_at: string;
+}
+
+interface ChatMessage {
     id: string;
     sender: MessageUser;
-    decrypted_content: string;
+    decrypted_content?: string;
     created_at: string;
     is_edited?: boolean;
-    reactions?: Array<{ id: string; emoji: string }>;
+    is_forwarded?: boolean;
+    forward_count?: number;
+    forwarded_from_id?: string;
+    reply_to_id?: string;
+    reply_to?: ChatMessage;
+    reactions?: ChatMessageReaction[];
+    replies?: ChatMessage[];
     attachments?: Attachment[];
 }
 
@@ -105,8 +125,10 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
         loadMessages,
         sendMessage,
         addReaction,
+        removeReaction,
         editMessage,
         deleteMessage,
+        forwardMessage,
         subscribeToConversation,
         unsubscribeFromConversation,
         uploadFile,
@@ -118,7 +140,7 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
     const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
     const [editingContent, setEditingContent] = useState('');
     const [showEmojiPicker, setShowEmojiPicker] = useState<string | null>(null);
-    const [replyingTo, setReplyingTo] = useState<Message | null>(null);
+    const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [showSearch, setShowSearch] = useState(false);
     const [selectedTab, setSelectedTab] = useState<'messages' | 'media' | 'files' | 'links'>('messages');
@@ -126,6 +148,15 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
     const [typingUsers, setTypingUsers] = useState<string[]>([]);
     const [isRecording, setIsRecording] = useState(false);
     const [isTyping, setIsTyping] = useState(false);
+    const [loadingStates, setLoadingStates] = useState<{
+        reactions: { [messageId: string]: string };
+        editing: { [messageId: string]: boolean };
+        deleting: { [messageId: string]: boolean };
+    }>({
+        reactions: {},
+        editing: {},
+        deleting: {}
+    });
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -154,6 +185,10 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
             })
             .listen('message.deleted', (data: any) => {
                 console.log('Received message deletion via Echo:', data);
+                loadMessages(selectedConversationId);
+            })
+            .listen('message.forwarded', (data: any) => {
+                console.log('Received message forward via Echo:', data);
                 loadMessages(selectedConversationId);
             })
             .listen('reaction.added', (data: any) => {
@@ -262,9 +297,9 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
         }
 
         try {
-            // For rich content, we could send the JSON content as metadata
-            // For now, we'll send the plain text
-            await sendMessage(selectedConversationId, messageInput);
+            // Send message with optional reply
+            const options = replyingTo ? { reply_to_id: replyingTo.id } : undefined;
+            await sendMessage(selectedConversationId, messageInput, options);
             setMessageInput('');
             setMessageContent(null);
             setReplyingTo(null);
@@ -272,7 +307,6 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
             // Stop typing indicator
             if (isTyping) {
                 setIsTyping(false);
-                sendWebSocketMessage({ type: 'typing_stop', conversation_id: selectedConversationId });
                 if (typingTimeoutRef.current) {
                     clearTimeout(typingTimeoutRef.current);
                 }
@@ -375,12 +409,26 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
             return;
         }
 
+        // Set loading state
+        setLoadingStates(prev => ({
+            ...prev,
+            editing: { ...prev.editing, [messageId]: true }
+        }));
+
         try {
             await editMessage(selectedConversationId, messageId, editingContent);
             setEditingMessageId(null);
             setEditingContent('');
+            toast.success('Message edited');
         } catch (error) {
             console.error('Failed to edit message:', error);
+            toast.error('Failed to edit message');
+        } finally {
+            // Clear loading state
+            setLoadingStates(prev => ({
+                ...prev,
+                editing: { ...prev.editing, [messageId]: false }
+            }));
         }
     };
 
@@ -396,12 +444,70 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
 
     const handleAddReaction = async (messageId: string, emoji: string) => {
         if (!selectedConversationId) return;
+        
+        // Set loading state
+        setLoadingStates(prev => ({
+            ...prev,
+            reactions: { ...prev.reactions, [messageId]: emoji }
+        }));
 
         try {
             await addReaction(selectedConversationId, messageId, emoji);
             setShowEmojiPicker(null);
+            toast.success('Reaction added');
         } catch (error) {
             console.error('Failed to add reaction:', error);
+            toast.error('Failed to add reaction');
+        } finally {
+            // Clear loading state
+            setLoadingStates(prev => ({
+                ...prev,
+                reactions: { ...prev.reactions, [messageId]: '' }
+            }));
+        }
+    };
+
+    const handleRemoveReaction = async (messageId: string, emoji: string) => {
+        if (!selectedConversationId) return;
+        
+        // Set loading state
+        setLoadingStates(prev => ({
+            ...prev,
+            reactions: { ...prev.reactions, [messageId]: emoji }
+        }));
+
+        try {
+            await removeReaction(selectedConversationId, messageId, emoji);
+            toast.success('Reaction removed');
+        } catch (error) {
+            console.error('Failed to remove reaction:', error);
+            toast.error('Failed to remove reaction');
+        } finally {
+            // Clear loading state
+            setLoadingStates(prev => ({
+                ...prev,
+                reactions: { ...prev.reactions, [messageId]: '' }
+            }));
+        }
+    };
+
+    const handleReply = (message: ChatMessage) => {
+        setReplyingTo(message);
+    };
+
+    const handleStartEdit = (messageId: string, content: string) => {
+        setEditingMessageId(messageId);
+        setEditingContent(content);
+    };
+
+    const handleForward = async (messageId: string, conversationIds: string[]) => {
+        if (!selectedConversationId) return;
+        
+        try {
+            await forwardMessage(selectedConversationId, messageId, conversationIds);
+        } catch (error) {
+            console.error('Failed to forward message:', error);
+            throw error;
         }
     };
 
@@ -430,8 +536,6 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
     const formatMessageTime = (timestamp: string) => {
         return formatDistance(new Date(timestamp), new Date(), { addSuffix: true });
     };
-
-    const commonEmojis = ['👍', '❤️', '😂', '😮', '😢', '😡', '👎', '🔥'];
 
     if (isLoading) {
         return (
@@ -625,138 +729,142 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
                                     <ScrollArea className="flex-1 px-4">
                                         <div className="space-y-4 py-4">
                                             {messages.map((message) => (
-                                    <div key={message.id} className="group relative">
-                                        <div className="flex items-start gap-3">
-                                            <Avatar className="h-8 w-8">
-                                                <AvatarImage src={message.sender.avatar} />
-                                                <AvatarFallback>
-                                                    {message.sender.name[0]}
-                                                </AvatarFallback>
-                                            </Avatar>
-
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <span className="font-medium text-sm">
-                                                        {message.sender.name}
-                                                    </span>
-                                                    <span className="text-xs text-muted-foreground">
-                                                        {formatMessageTime(message.created_at)}
-                                                    </span>
-                                                    {message.is_edited && (
-                                                        <Badge variant="outline" className="text-xs">
-                                                            edited
-                                                        </Badge>
-                                                    )}
-                                                </div>
-
-                                                {editingMessageId === message.id ? (
-                                                    <div className="space-y-2">
-                                                        <Input
-                                                            value={editingContent}
-                                                            onChange={(e) => setEditingContent(e.target.value)}
-                                                            className="text-sm"
-                                                            autoFocus
+                                                <div key={message.id} className={`group relative ${
+                                                    editingMessageId === message.id ? 'ring-2 ring-primary/20 bg-primary/5 rounded-lg p-2' : ''
+                                                }`}>
+                                                    {/* Reply indicator for threaded messages */}
+                                                    {message.reply_to && (
+                                                        <MessageReplyIndicator
+                                                            replyToMessage={message.reply_to}
+                                                            className="mb-2"
                                                         />
-                                                        <div className="flex gap-2">
-                                                            <Button
-                                                                size="sm"
-                                                                onClick={() => handleEditMessage(message.id)}
-                                                            >
-                                                                Save
-                                                            </Button>
-                                                            <Button
-                                                                size="sm"
-                                                                variant="outline"
-                                                                onClick={() => {
-                                                                    setEditingMessageId(null);
-                                                                    setEditingContent('');
-                                                                }}
-                                                            >
-                                                                Cancel
-                                                            </Button>
+                                                    )}
+
+                                                    <div className="flex items-start gap-3">
+                                                        <Avatar className="h-8 w-8 flex-shrink-0">
+                                                            <AvatarImage src={message.sender.avatar} />
+                                                            <AvatarFallback>
+                                                                {message.sender.name[0]}
+                                                            </AvatarFallback>
+                                                        </Avatar>
+
+                                                        <div className="flex-1 min-w-0">
+                                                            {/* Message header */}
+                                                            <div className="flex items-center gap-2 mb-1">
+                                                                <span className="font-medium text-sm">
+                                                                    {message.sender.name}
+                                                                </span>
+                                                                <span className="text-xs text-muted-foreground">
+                                                                    {formatMessageTime(message.created_at)}
+                                                                </span>
+                                                                {message.is_edited && (
+                                                                    <Badge variant="outline" className="text-xs">
+                                                                        edited
+                                                                    </Badge>
+                                                                )}
+                                                                {message.is_forwarded && (
+                                                                    <Badge variant="secondary" className="text-xs flex items-center gap-1">
+                                                                        <Forward className="w-3 h-3" />
+                                                                        forwarded
+                                                                    </Badge>
+                                                                )}
+                                                            </div>
+
+                                                            {/* Message content */}
+                                                            {editingMessageId === message.id ? (
+                                                                <div className="space-y-2">
+                                                                    <Input
+                                                                        value={editingContent}
+                                                                        onChange={(e) => setEditingContent(e.target.value)}
+                                                                        className="text-sm"
+                                                                        autoFocus
+                                                                        onKeyDown={(e) => {
+                                                                            if (e.key === 'Enter' && !e.shiftKey) {
+                                                                                e.preventDefault();
+                                                                                handleEditMessage(message.id);
+                                                                            }
+                                                                            if (e.key === 'Escape') {
+                                                                                setEditingMessageId(null);
+                                                                                setEditingContent('');
+                                                                            }
+                                                                        }}
+                                                                    />
+                                                                    <div className="flex gap-2">
+                                                                        <Button
+                                                                            size="sm"
+                                                                            onClick={() => handleEditMessage(message.id)}
+                                                                            disabled={loadingStates.editing[message.id]}
+                                                                        >
+                                                                            {loadingStates.editing[message.id] ? (
+                                                                                <>
+                                                                                    <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin mr-1" />
+                                                                                    Saving...
+                                                                                </>
+                                                                            ) : (
+                                                                                'Save'
+                                                                            )}
+                                                                        </Button>
+                                                                        <Button
+                                                                            size="sm"
+                                                                            variant="outline"
+                                                                            onClick={() => {
+                                                                                setEditingMessageId(null);
+                                                                                setEditingContent('');
+                                                                            }}
+                                                                        >
+                                                                            Cancel
+                                                                        </Button>
+                                                                    </div>
+                                                                </div>
+                                                            ) : (
+                                                                <>
+                                                                    <div className="bg-muted/50 p-3 rounded-lg max-w-2xl">
+                                                                        <p className="text-sm whitespace-pre-wrap">
+                                                                            {message.decrypted_content || '[Encrypted]'}
+                                                                        </p>
+                                                                    </div>
+
+                                                                    {/* Enhanced reactions display */}
+                                                                    <MessageReactions
+                                                                        reactions={message.reactions || []}
+                                                                        currentUserId={currentUser?.id || ''}
+                                                                        onAddReaction={(emoji) => handleAddReaction(message.id, emoji)}
+                                                                        onRemoveReaction={(emoji) => handleRemoveReaction(message.id, emoji)}
+                                                                        className="mt-2"
+                                                                        isLoading={loadingStates.reactions[message.id] !== undefined && loadingStates.reactions[message.id] !== ''}
+                                                                        loadingEmoji={loadingStates.reactions[message.id]}
+                                                                    />
+
+                                                                    {/* Thread info for messages with replies */}
+                                                                    {message.replies && message.replies.length > 0 && (
+                                                                        <MessageThreadInfo
+                                                                            replyCount={message.replies.length}
+                                                                            lastReplyAt={message.replies[message.replies.length - 1]?.created_at}
+                                                                            lastReplyUser={message.replies[message.replies.length - 1]?.sender}
+                                                                            className="mt-2"
+                                                                        />
+                                                                    )}
+                                                                </>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Enhanced message actions */}
+                                                        <div className="absolute right-0 top-0">
+                                                            <MessageContextMenu
+                                                                message={message}
+                                                                currentUserId={currentUser?.id || ''}
+                                                                conversations={conversations.filter(c => c.id !== selectedConversationId)}
+                                                                onReply={handleReply}
+                                                                onEdit={handleStartEdit}
+                                                                onDelete={handleDeleteMessage}
+                                                                onForward={handleForward}
+                                                                onAddReaction={handleAddReaction}
+                                                                loading={isLoadingMessages}
+                                                            />
                                                         </div>
                                                     </div>
-                                                ) : (
-                                                    <>
-                                                        <div className="bg-muted p-3 rounded-lg max-w-md">
-                                                            <p className="text-sm whitespace-pre-wrap">
-                                                                {message.decrypted_content || '[Encrypted]'}
-                                                            </p>
-                                                        </div>
-
-                                                        {/* Reactions */}
-                                                        {message.reactions && message.reactions.length > 0 && (
-                                                            <div className="flex gap-1 mt-2">
-                                                                {message.reactions.map((reaction) => (
-                                                                    <Button
-                                                                        key={reaction.id}
-                                                                        variant="outline"
-                                                                        size="sm"
-                                                                        className="h-6 px-2 text-xs"
-                                                                    >
-                                                                        {reaction.emoji}
-                                                                    </Button>
-                                                                ))}
-                                                            </div>
-                                                        )}
-                                                    </>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        {/* Message Actions */}
-                                        <div className="absolute right-0 top-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <div className="flex gap-1">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() => setShowEmojiPicker(message.id)}
-                                                >
-                                                    <Smile className="w-4 h-4" />
-                                                </Button>
-                                                <Button variant="ghost" size="sm">
-                                                    <Reply className="w-4 h-4" />
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() => {
-                                                        setEditingMessageId(message.id);
-                                                        setEditingContent(message.decrypted_content || '');
-                                                    }}
-                                                >
-                                                    <Edit3 className="w-4 h-4" />
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() => handleDeleteMessage(message.id)}
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </Button>
-                                            </div>
-                                        </div>
-
-                                        {/* Emoji Picker */}
-                                        {showEmojiPicker === message.id && (
-                                            <div className="absolute top-8 right-0 z-10 bg-popover border border-border rounded-lg p-2 shadow-lg">
-                                                <div className="grid grid-cols-4 gap-1">
-                                                    {commonEmojis.map((emoji) => (
-                                                        <Button
-                                                            key={emoji}
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            className="h-8 w-8 p-0"
-                                                            onClick={() => handleAddReaction(message.id, emoji)}
-                                                        >
-                                                            {emoji}
-                                                        </Button>
-                                                    ))}
                                                 </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
+                                            ))}
                                             <div ref={messagesEndRef} />
                                         </div>
                                     </ScrollArea>
@@ -826,27 +934,15 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
                                 </TabsContent>
                             </Tabs>
 
-                            {/* Reply Preview */}
+                            {/* Enhanced Reply Preview */}
                             {replyingTo && (
-                                <div className="mx-4 mb-2 p-3 bg-muted rounded-lg">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <Quote className="h-4 w-4 text-muted-foreground" />
-                                            <span className="text-sm font-medium">
-                                                Replying to {replyingTo.sender?.name}
-                                            </span>
-                                        </div>
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => setReplyingTo(null)}
-                                        >
-                                            ×
-                                        </Button>
-                                    </div>
-                                    <p className="text-sm text-muted-foreground mt-1 truncate">
-                                        {replyingTo.decrypted_content}
-                                    </p>
+                                <div className="mx-4 mb-2">
+                                    <MessageReplyIndicator
+                                        replyToMessage={replyingTo}
+                                        onClearReply={() => setReplyingTo(null)}
+                                        showClearButton={true}
+                                        className="border-l-4 border-primary"
+                                    />
                                 </div>
                             )}
 

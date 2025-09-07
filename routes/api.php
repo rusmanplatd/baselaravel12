@@ -276,6 +276,8 @@ Route::middleware('auth:api')->prefix('v1')->group(function () {
                     ->name('add-reaction');
                 Route::delete('{message}/reactions', [\App\Http\Controllers\Api\Chat\MessageController::class, 'removeReaction'])
                     ->name('remove-reaction');
+                Route::post('{message}/forward', [\App\Http\Controllers\Api\Chat\MessageController::class, 'forward'])
+                    ->name('forward');
 
                 // Migration endpoint for existing quantum-encrypted messages
                 Route::post('{message}/migrate', [\App\Http\Controllers\Api\Chat\MessageController::class, 'migrateMessage'])

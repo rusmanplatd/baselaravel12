@@ -8,6 +8,7 @@ use App\Models\Chat\Message;
 use App\Services\WebhookService;
 use App\Services\SignalProtocolService;
 use App\Events\MessageSent;
+use App\Events\MessageForwarded;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -24,9 +25,10 @@ class MessageController extends Controller
         $this->middleware('auth:api');
         $this->middleware('throttle:120,1')->only(['store']);
         $this->middleware('throttle:60,1')->only(['addReaction', 'removeReaction']);
+        $this->middleware('throttle:30,1')->only(['forward']);
 
         // Apply chat permissions - using standard chat permissions that all users have
-        $this->middleware('chat.permission:chat:write,conversation')->only(['store']);
+        $this->middleware('chat.permission:chat:write,conversation')->only(['store', 'forward']);
         $this->middleware('chat.permission:chat:write,conversation')->only(['update']);
         $this->middleware('chat.permission:chat:write,conversation')->only(['destroy']);
         $this->middleware('chat.permission:chat:moderate,conversation')->only(['moderate']);
@@ -459,6 +461,129 @@ class MessageController extends Controller
             ]);
 
             return response()->json(['error' => 'Failed to delete message'], 500);
+        }
+    }
+
+    /**
+     * Forward a message to another conversation
+     */
+    public function forward(Request $request, string $conversationId, string $messageId): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'target_conversation_ids' => 'required|array|min:1|max:10',
+            'target_conversation_ids.*' => 'required|exists:chat_conversations,id',
+            'encrypted_content' => 'required|string',
+            'content_hash' => 'required|string',
+            'additional_message' => 'nullable|string|max:1000',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $user = $request->user();
+        $sourceConversation = Conversation::findOrFail($conversationId);
+        $originalMessage = Message::findOrFail($messageId);
+
+        // Check if user has access to source conversation
+        if (! $sourceConversation->hasUser($user->id)) {
+            return response()->json(['error' => 'Access denied to source conversation'], 403);
+        }
+
+        // Check if message can be forwarded (not deleted)
+        if ($originalMessage->is_deleted) {
+            return response()->json(['error' => 'Cannot forward deleted message'], 400);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $forwardedMessages = [];
+            $targetConversationIds = $request->input('target_conversation_ids');
+
+            foreach ($targetConversationIds as $targetConversationId) {
+                $targetConversation = Conversation::findOrFail($targetConversationId);
+
+                // Check if user can send messages to target conversation
+                $participant = $targetConversation->participants()->where('user_id', $user->id)->active()->first();
+                if (! $participant || ! $participant->canSendMessages()) {
+                    return response()->json(['error' => "Cannot send messages to conversation {$targetConversationId}"], 403);
+                }
+
+                // Create forwarded message
+                $forwardedMessage = Message::create([
+                    'conversation_id' => $targetConversationId,
+                    'sender_id' => $user->id,
+                    'sender_device_id' => null,
+                    'forwarded_from_id' => $originalMessage->id,
+                    'original_conversation_id' => $originalMessage->conversation_id,
+                    'forward_count' => ($originalMessage->forward_count ?? 0) + 1,
+                    'message_type' => $originalMessage->message_type,
+                    'encrypted_content' => $request->input('encrypted_content'),
+                    'content_hash' => $request->input('content_hash'),
+                    'encrypted_metadata' => $originalMessage->encrypted_metadata,
+                    'encryption_algorithm' => $originalMessage->encryption_algorithm,
+                    'encryption_version' => $originalMessage->encryption_version,
+                ]);
+
+                // Create delivery receipts for target conversation participants
+                $targetParticipants = $targetConversation->activeParticipants()->with('user')->get();
+                foreach ($targetParticipants as $participant) {
+                    if ($participant->user_id !== $user->id) {
+                        $forwardedMessage->readReceipts()->create([
+                            'recipient_user_id' => $participant->user_id,
+                            'recipient_device_id' => null,
+                            'status' => 'sent',
+                            'delivered_at' => now(),
+                        ]);
+                    }
+                }
+
+                // Update target conversation last activity
+                $targetConversation->update(['last_activity_at' => now()]);
+
+                $forwardedMessages[] = $forwardedMessage;
+
+                // Broadcast forward event to target conversation participants
+                MessageForwarded::dispatch($forwardedMessage, $targetConversation, $originalMessage);
+            }
+
+            // Update forward count on original message
+            $originalMessage->increment('forward_count');
+
+            DB::commit();
+
+            // Load relationships for response
+            foreach ($forwardedMessages as $message) {
+                $message->load([
+                    'sender:id,name,avatar',
+                    'forwardedFrom:id,sender_id,message_type,created_at',
+                    'forwardedFrom.sender:id,name',
+                    'originalConversation:id,name',
+                ]);
+                $message->type = $message->message_type;
+            }
+
+            Log::info('Message forwarded', [
+                'original_message_id' => $messageId,
+                'forwarded_to_conversations' => $targetConversationIds,
+                'user_id' => $user->id,
+            ]);
+
+            return response()->json([
+                'forwarded_messages' => $forwardedMessages,
+                'message' => 'Message forwarded successfully',
+            ], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to forward message', [
+                'message_id' => $messageId,
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json(['error' => 'Failed to forward message'], 500);
         }
     }
 

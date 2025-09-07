@@ -8,7 +8,7 @@ import { initializeLocalStorage, onUserLogin } from './utils/localStorage';
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
 import { apiService } from './services/ApiService';
-import './utils/websocket-test';
+// import './utils/websocket-test';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 

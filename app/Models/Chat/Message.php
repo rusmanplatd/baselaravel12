@@ -24,6 +24,9 @@ class Message extends Model
         'sender_id',
         'sender_device_id',
         'reply_to_id',
+        'forwarded_from_id',
+        'original_conversation_id',
+        'forward_count',
         'message_type',
         'encrypted_content',
         'encrypted_metadata',
@@ -43,6 +46,7 @@ class Message extends Model
         'delivery_status' => 'array',
         'is_edited' => 'boolean',
         'is_deleted' => 'boolean',
+        'forward_count' => 'integer',
         'edited_at' => 'datetime',
         'deleted_at' => 'datetime',
         'expires_at' => 'datetime',
@@ -105,6 +109,21 @@ class Message extends Model
     public function replies(): HasMany
     {
         return $this->hasMany(Message::class, 'reply_to_id');
+    }
+
+    public function forwardedFrom(): BelongsTo
+    {
+        return $this->belongsTo(Message::class, 'forwarded_from_id');
+    }
+
+    public function forwards(): HasMany
+    {
+        return $this->hasMany(Message::class, 'forwarded_from_id');
+    }
+
+    public function originalConversation(): BelongsTo
+    {
+        return $this->belongsTo(Conversation::class, 'original_conversation_id');
     }
 
     public function reactions(): HasMany
@@ -232,6 +251,11 @@ class Message extends Model
         return ! empty($this->reply_to_id);
     }
 
+    public function isForwarded(): bool
+    {
+        return ! empty($this->forwarded_from_id);
+    }
+
     public function isEdited(): bool
     {
         return $this->is_edited;
@@ -279,7 +303,11 @@ class Message extends Model
     {
         return $this->reactions()->updateOrCreate(
             ['user_id' => $userId, 'emoji' => $emoji],
-            ['created_at' => now()]
+            [
+                'reaction_type' => 'emoji', 
+                'device_id' => null,
+                'created_at' => now()
+            ]
         );
     }
 
