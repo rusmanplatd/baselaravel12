@@ -3,6 +3,11 @@
 namespace App\Models\Chat;
 
 use App\Models\User;
+use App\Models\Channel\ChannelSubscription;
+use App\Models\Channel\ChannelStatistic;
+use App\Models\Channel\ChannelBroadcast;
+use App\Models\Channel\ChannelMessageView;
+use App\Models\Channel\ChannelCategory;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -24,6 +29,16 @@ class Conversation extends Model
         'privacy',
         'username',
         'description',
+        'category',
+        'is_verified',
+        'is_broadcast',
+        'allow_anonymous_posts',
+        'show_subscriber_count',
+        'require_join_approval',
+        'channel_settings',
+        'view_count',
+        'subscriber_count',
+        'last_broadcast_at',
         'welcome_message',
         'avatar_url',
         'settings',
@@ -45,13 +60,22 @@ class Conversation extends Model
     protected $casts = [
         'settings' => 'array',
         'group_settings' => 'array',
+        'channel_settings' => 'array',
         'is_active' => 'boolean',
+        'is_verified' => 'boolean',
+        'is_broadcast' => 'boolean',
+        'allow_anonymous_posts' => 'boolean',
+        'show_subscriber_count' => 'boolean',
+        'require_join_approval' => 'boolean',
         'can_members_add_others' => 'boolean',
         'require_approval_to_join' => 'boolean',
         'show_member_count' => 'boolean',
         'allow_anonymous_viewing' => 'boolean',
+        'view_count' => 'integer',
+        'subscriber_count' => 'integer',
         'last_activity_at' => 'datetime',
         'last_message_at' => 'datetime',
+        'last_broadcast_at' => 'datetime',
     ];
 
     protected $attributes = [
@@ -479,5 +503,303 @@ class Conversation extends Model
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent(),
         ]);
+    }
+
+    // Channel-specific relationships
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(ChannelSubscription::class, 'channel_id');
+    }
+
+    public function activeSubscriptions(): HasMany
+    {
+        return $this->subscriptions()->subscribed();
+    }
+
+    public function channelStatistics(): HasMany
+    {
+        return $this->hasMany(ChannelStatistic::class, 'channel_id');
+    }
+
+    public function broadcasts(): HasMany
+    {
+        return $this->hasMany(ChannelBroadcast::class, 'channel_id');
+    }
+
+    public function messageViews(): HasMany
+    {
+        return $this->hasMany(ChannelMessageView::class, 'channel_id');
+    }
+
+    public function categoryInfo(): BelongsTo
+    {
+        return $this->belongsTo(ChannelCategory::class, 'category', 'slug');
+    }
+
+    // Channel-specific scopes
+    public function scopeVerified($query)
+    {
+        return $query->where('is_verified', true);
+    }
+
+    public function scopeUnverified($query)
+    {
+        return $query->where('is_verified', false);
+    }
+
+    public function scopeBroadcastOnly($query)
+    {
+        return $query->where('is_broadcast', true);
+    }
+
+    public function scopeInteractive($query)
+    {
+        return $query->where('is_broadcast', false);
+    }
+
+    public function scopeByCategory($query, $category)
+    {
+        return $query->where('category', $category);
+    }
+
+    public function scopePopular($query, $period = 'week')
+    {
+        return $query->channels()
+            ->where('is_active', true)
+            ->orderBy('subscriber_count', 'desc')
+            ->orderBy('view_count', 'desc');
+    }
+
+    public function scopeDiscoverable($query)
+    {
+        return $query->channels()
+            ->public()
+            ->active()
+            ->where('privacy', 'public');
+    }
+
+    // Channel-specific helper methods
+    public function isVerified(): bool
+    {
+        return $this->is_verified;
+    }
+
+    public function isBroadcastOnly(): bool
+    {
+        return $this->is_broadcast;
+    }
+
+    public function allowsAnonymousPosts(): bool
+    {
+        return $this->allow_anonymous_posts;
+    }
+
+    public function showsSubscriberCount(): bool
+    {
+        return $this->show_subscriber_count;
+    }
+
+    public function requiresJoinApproval(): bool
+    {
+        return $this->require_join_approval;
+    }
+
+    public function getSubscriberCount(): int
+    {
+        if ($this->isChannel()) {
+            return $this->subscriber_count ?? $this->activeSubscriptions()->count();
+        }
+        
+        return $this->getParticipantCount();
+    }
+
+    public function getViewCount(): int
+    {
+        return $this->view_count ?? 0;
+    }
+
+    public function hasCategory(): bool
+    {
+        return !empty($this->category);
+    }
+
+    public function getCategoryName(): ?string
+    {
+        return $this->categoryInfo?->name;
+    }
+
+    public function isUserSubscribed(string $userId): bool
+    {
+        if (!$this->isChannel()) {
+            return $this->hasUser($userId);
+        }
+
+        return $this->activeSubscriptions()
+            ->where('user_id', $userId)
+            ->exists();
+    }
+
+    public function subscribeUser(string $userId): ChannelSubscription
+    {
+        return $this->subscriptions()->updateOrCreate(
+            ['user_id' => $userId],
+            [
+                'status' => 'subscribed',
+                'subscribed_at' => now(),
+                'unsubscribed_at' => null,
+            ]
+        );
+    }
+
+    public function unsubscribeUser(string $userId): bool
+    {
+        $subscription = $this->subscriptions()
+            ->where('user_id', $userId)
+            ->first();
+
+        if ($subscription) {
+            $subscription->unsubscribe();
+            $this->decrementSubscriberCount();
+            return true;
+        }
+
+        return false;
+    }
+
+    public function incrementViewCount(int $count = 1): void
+    {
+        $this->increment('view_count', $count);
+    }
+
+    public function incrementSubscriberCount(int $count = 1): void
+    {
+        $this->increment('subscriber_count', $count);
+    }
+
+    public function decrementSubscriberCount(int $count = 1): void
+    {
+        $this->decrement('subscriber_count', $count);
+    }
+
+    public function refreshSubscriberCount(): void
+    {
+        if ($this->isChannel()) {
+            $actualCount = $this->activeSubscriptions()->count();
+            $this->update(['subscriber_count' => $actualCount]);
+        }
+    }
+
+    public function verify(): void
+    {
+        $this->update(['is_verified' => true]);
+    }
+
+    public function unverify(): void
+    {
+        $this->update(['is_verified' => false]);
+    }
+
+    public function setBroadcastOnly(bool $broadcastOnly = true): void
+    {
+        $this->update(['is_broadcast' => $broadcastOnly]);
+    }
+
+    public function canUserPost(string $userId): bool
+    {
+        if (!$this->isChannel()) {
+            $participant = $this->participants()->where('user_id', $userId)->active()->first();
+            return $participant?->canSendMessages() ?? false;
+        }
+
+        // For broadcast-only channels, only admins can post
+        if ($this->isBroadcastOnly()) {
+            return $this->isUserAdmin($userId);
+        }
+
+        // For interactive channels, check subscription and permissions
+        if (!$this->isUserSubscribed($userId)) {
+            return false;
+        }
+
+        $participant = $this->participants()
+            ->where('user_id', $userId)
+            ->active()
+            ->first();
+
+        return $participant?->canSendMessages() ?? true;
+    }
+
+    public function recordView(?string $userId = null, ?string $ipAddress = null, ?string $userAgent = null): void
+    {
+        if (!$this->isChannel()) {
+            return;
+        }
+
+        // Check if this is a unique view for statistics
+        $isUnique = false;
+        if ($userId) {
+            $isUnique = !ChannelMessageView::where('channel_id', $this->id)
+                ->where('user_id', $userId)
+                ->whereDate('viewed_at', today())
+                ->exists();
+        }
+
+        // Record in statistics
+        ChannelStatistic::recordView($this->id, $isUnique);
+        
+        // Increment conversation view count
+        $this->incrementViewCount();
+    }
+
+    public function createBroadcast(string $userId, array $data): ChannelBroadcast
+    {
+        return $this->broadcasts()->create([
+            'created_by_user_id' => $userId,
+            'title' => $data['title'] ?? null,
+            'content' => $data['content'],
+            'media_attachments' => $data['media_attachments'] ?? null,
+            'broadcast_settings' => $data['broadcast_settings'] ?? null,
+        ]);
+    }
+
+    public function getChannelUrl(): ?string
+    {
+        if (!$this->isChannel() || !$this->hasUsername()) {
+            return null;
+        }
+
+        return route('channels.show', ['username' => $this->username]);
+    }
+
+    public function getChannelStatsForPeriod(string $period = 'week'): array
+    {
+        if (!$this->isChannel()) {
+            return [];
+        }
+
+        $stats = $this->channelStatistics()
+            ->forPeriod($period)
+            ->get();
+
+        return [
+            'total_views' => $stats->sum('views'),
+            'unique_views' => $stats->sum('unique_views'),
+            'new_subscribers' => $stats->sum('new_subscribers'),
+            'unsubscribes' => $stats->sum('unsubscribes'),
+            'shares' => $stats->sum('shares'),
+            'messages_sent' => $stats->sum('messages_sent'),
+            'net_subscribers' => $stats->sum('new_subscribers') - $stats->sum('unsubscribes'),
+            'engagement_rate' => $stats->avg('engagement_rate') ?? 0,
+            'daily_breakdown' => $stats->groupBy('date')->map(function ($dayStat) {
+                $stat = $dayStat->first();
+                return [
+                    'date' => $stat->date->format('Y-m-d'),
+                    'views' => $stat->views,
+                    'unique_views' => $stat->unique_views,
+                    'new_subscribers' => $stat->new_subscribers,
+                    'unsubscribes' => $stat->unsubscribes,
+                ];
+            })->values(),
+        ];
     }
 }

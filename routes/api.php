@@ -652,4 +652,88 @@ Route::middleware('auth:api')->prefix('v1')->group(function () {
             ->name('bulk-action')
             ->middleware('throttle:10,1');
     });
+
+    // Channel Management API
+    Route::prefix('channels')->name('channels.')->group(function () {
+        // Public channel discovery (no authentication required)
+        Route::get('discover', [\App\Http\Controllers\Api\Chat\ChannelController::class, 'discover'])
+            ->name('discover');
+        Route::get('categories', [\App\Http\Controllers\Api\Chat\ChannelController::class, 'categories'])
+            ->name('categories');
+        
+        // Authenticated channel routes
+        Route::middleware('auth:api')->group(function () {
+            // Channel CRUD
+            Route::get('/', [\App\Http\Controllers\Api\Chat\ChannelController::class, 'index'])
+                ->name('index');
+            Route::post('/', [\App\Http\Controllers\Api\Chat\ChannelController::class, 'store'])
+                ->name('store')
+                ->middleware('rate_limit:create_channel,per_user');
+            Route::get('{channel}', [\App\Http\Controllers\Api\Chat\ChannelController::class, 'show'])
+                ->name('show');
+            Route::patch('{channel}', [\App\Http\Controllers\Api\Chat\ChannelController::class, 'update'])
+                ->name('update');
+            
+            // Channel subscription management
+            Route::post('{channel}/subscribe', [\App\Http\Controllers\Api\Chat\ChannelController::class, 'subscribe'])
+                ->name('subscribe')
+                ->middleware('rate_limit:channel_subscribe,per_user');
+            Route::delete('{channel}/unsubscribe', [\App\Http\Controllers\Api\Chat\ChannelController::class, 'unsubscribe'])
+                ->name('unsubscribe');
+            
+            // Channel admin routes
+            Route::middleware('throttle:30,1')->group(function () {
+                Route::get('{channel}/subscribers', [\App\Http\Controllers\Api\Chat\ChannelController::class, 'subscribers'])
+                    ->name('subscribers');
+                Route::get('{channel}/statistics', [\App\Http\Controllers\Api\Chat\ChannelController::class, 'statistics'])
+                    ->name('statistics');
+                Route::post('{channel}/verify', [\App\Http\Controllers\Api\Chat\ChannelController::class, 'verify'])
+                    ->name('verify');
+                
+                // Channel broadcasts
+                Route::prefix('{channel}/broadcasts')->name('broadcasts.')->group(function () {
+                    Route::get('/', [\App\Http\Controllers\Api\Chat\ChannelBroadcastController::class, 'index'])
+                        ->name('index');
+                    Route::post('/', [\App\Http\Controllers\Api\Chat\ChannelBroadcastController::class, 'store'])
+                        ->name('store');
+                    Route::get('{broadcast}', [\App\Http\Controllers\Api\Chat\ChannelBroadcastController::class, 'show'])
+                        ->name('show');
+                    Route::patch('{broadcast}', [\App\Http\Controllers\Api\Chat\ChannelBroadcastController::class, 'update'])
+                        ->name('update');
+                    Route::delete('{broadcast}', [\App\Http\Controllers\Api\Chat\ChannelBroadcastController::class, 'destroy'])
+                        ->name('destroy');
+                    Route::post('{broadcast}/send', [\App\Http\Controllers\Api\Chat\ChannelBroadcastController::class, 'send'])
+                        ->name('send');
+                    Route::post('{broadcast}/duplicate', [\App\Http\Controllers\Api\Chat\ChannelBroadcastController::class, 'duplicate'])
+                        ->name('duplicate');
+                    Route::get('{broadcast}/analytics', [\App\Http\Controllers\Api\Chat\ChannelBroadcastController::class, 'analytics'])
+                        ->name('analytics');
+                });
+                
+                // Channel management (admin functions)
+                Route::prefix('{channel}/manage')->name('manage.')->group(function () {
+                    Route::post('add-admin', [\App\Http\Controllers\Api\Chat\ChannelManagementController::class, 'addAdmin'])
+                        ->name('add-admin');
+                    Route::delete('remove-admin/{user}', [\App\Http\Controllers\Api\Chat\ChannelManagementController::class, 'removeAdmin'])
+                        ->name('remove-admin');
+                    Route::post('ban-user', [\App\Http\Controllers\Api\Chat\ChannelManagementController::class, 'banUser'])
+                        ->name('ban-user');
+                    Route::delete('unban-user/{user}', [\App\Http\Controllers\Api\Chat\ChannelManagementController::class, 'unbanUser'])
+                        ->name('unban-user');
+                    Route::delete('delete', [\App\Http\Controllers\Api\Chat\ChannelManagementController::class, 'deleteChannel'])
+                        ->name('delete');
+                    Route::post('transfer-ownership', [\App\Http\Controllers\Api\Chat\ChannelManagementController::class, 'transferOwnership'])
+                        ->name('transfer-ownership');
+                    Route::get('admins', [\App\Http\Controllers\Api\Chat\ChannelManagementController::class, 'getAdmins'])
+                        ->name('admins');
+                    Route::get('banned-users', [\App\Http\Controllers\Api\Chat\ChannelManagementController::class, 'getBannedUsers'])
+                        ->name('banned-users');
+                    Route::patch('settings', [\App\Http\Controllers\Api\Chat\ChannelManagementController::class, 'updateChannelSettings'])
+                        ->name('settings');
+                    Route::get('export', [\App\Http\Controllers\Api\Chat\ChannelManagementController::class, 'exportData'])
+                        ->name('export');
+                });
+            });
+        });
+    });
 });
