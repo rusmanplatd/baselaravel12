@@ -146,6 +146,7 @@ make clean          # Clean up Docker resources
   - `useChatPagination.ts` - Chat message pagination
   - `usePermissions.tsx` - Permission checking
 - **Services**: `resources/js/services/` - Frontend services:
+  - `ApiService.ts` - Centralized HTTP client with authentication and token management
   - `MultiDeviceE2EEService.ts` - Multi-device encryption
   - `OptimizedE2EEService.ts` - Performance optimized encryption with quantum support
   - `QuantumE2EEService.ts` - Client-side quantum cryptography
@@ -297,6 +298,7 @@ E2E test categories:
 - **Event-Driven Architecture**: Laravel events for chat notifications, presence updates, and security alerts
 - **Multi-Tenant Architecture**: Organization-scoped permissions and OAuth clients with tenant context
 - **API Rate Limiting**: Different rate limits for various endpoint categories (auth, chat, OAuth)
+- **Centralized HTTP Client**: All API calls use `ApiService` with automatic authentication, token refresh, and error handling
 
 ### Environment Setup
 - **Concurrency Scripts**: `composer dev` and `composer dev:ssr` run multiple services in parallel
@@ -325,6 +327,34 @@ E2E test categories:
 - `vite.config.ts` - Frontend build configuration with SSR support
 - `components.json` - shadcn/ui configuration
 - `tsconfig.json` - TypeScript configuration with path aliases
+
+### HTTP Client Usage
+All frontend API requests must use the centralized `ApiService` instead of direct fetch calls:
+
+```typescript
+import apiService from '@/services/ApiService';
+
+// GET request
+const data = await apiService.get<ResponseType>('/api/endpoint');
+
+// POST request
+const result = await apiService.post<ResponseType>('/api/endpoint', payload);
+
+// File upload
+const formData = new FormData();
+formData.append('file', file);
+const response = await apiService.postFormData<ResponseType>('/api/upload', formData);
+
+// Public endpoints (no authentication)
+const publicData = await apiService.getPublic<ResponseType>('/api/public/endpoint');
+```
+
+**Benefits of using ApiService:**
+- Automatic authentication token management
+- Token refresh on expiration
+- Consistent error handling across all API calls
+- CSRF protection for web requests
+- User session management across browser tabs
 
 ## Quantum Cryptography API
 
@@ -374,8 +404,15 @@ GET /api/v1/quantum/health
 #### Basic Quantum Encryption
 ```typescript
 import { useQuantumE2EE } from '@/hooks/useQuantumE2EE';
+import apiService from '@/services/ApiService';
 
 const { encryptMessage, quantumStatus } = useQuantumE2EE();
+
+// Generate quantum keypair using ApiService
+const keypair = await apiService.post('/api/v1/quantum/generate-keypair', {
+  algorithm: 'ML-KEM-768',
+  security_level: 768
+});
 
 // Encrypt with quantum algorithm
 const encrypted = await encryptMessage(
@@ -409,6 +446,14 @@ import { QuantumHealthIndicator } from '@/components/ui/quantum-health-indicator
 #### Migration Management
 ```typescript
 import { quantumMigrationUtils } from '@/utils/QuantumMigrationUtils';
+import apiService from '@/services/ApiService';
+
+// Register device with quantum capabilities using ApiService
+const deviceRegistration = await apiService.post('/api/v1/quantum/register-device', {
+  device_name: 'My Device',
+  device_type: 'desktop',
+  capabilities: ['ml-kem-768', 'ml-kem-1024']
+});
 
 // Assess migration readiness
 const assessment = await quantumMigrationUtils.assessMigrationReadiness();
