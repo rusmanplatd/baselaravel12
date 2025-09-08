@@ -10,13 +10,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { 
-  MessageSquare, 
-  Users, 
-  Clock, 
-  Plus, 
-  MoreVertical, 
-  Bell, 
+import {
+  MessageSquare,
+  Users,
+  Clock,
+  Plus,
+  MoreVertical,
+  Bell,
   BellOff,
   UserPlus,
   UserMinus,
@@ -92,12 +92,12 @@ export function ThreadView({ conversationId, parentMessageId, className }: Threa
 
   const handleCreateThread = async () => {
     if (!parentMessageId) return;
-    
+
     try {
       const thread = await createThread(parentMessageId, {
         title: newThreadTitle || undefined,
       });
-      
+
       setSelectedThreadId(thread.id);
       setNewThreadTitle('');
       setShowCreateThread(false);
@@ -109,7 +109,7 @@ export function ThreadView({ conversationId, parentMessageId, className }: Threa
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim() || !currentThread) return;
-    
+
     try {
       await sendThreadMessage(currentThread.id, newMessage.trim());
       setNewMessage('');
@@ -120,7 +120,7 @@ export function ThreadView({ conversationId, parentMessageId, className }: Threa
 
   const handleMarkAsRead = async () => {
     if (!currentThread) return;
-    
+
     try {
       await markThreadAsRead(currentThread.id);
     } catch (error) {
@@ -236,7 +236,7 @@ export function ThreadView({ conversationId, parentMessageId, className }: Threa
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center space-x-2">
                   <Badge variant="secondary">
                     <Users className="h-3 w-3 mr-1" />
@@ -246,12 +246,12 @@ export function ThreadView({ conversationId, parentMessageId, className }: Threa
                     <MessageSquare className="h-3 w-3 mr-1" />
                     {currentThread.message_count}
                   </Badge>
-                  
+
                   <ThreadSettings
                     thread={currentThread}
                     onJoin={() => joinThread(currentThread.id)}
                     onLeave={() => leaveThread(currentThread.id)}
-                    onUpdateNotifications={(settings) => 
+                    onUpdateNotifications={(settings) =>
                       updateNotificationSettings(currentThread.id, settings)
                     }
                     onMarkAsRead={handleMarkAsRead}
@@ -303,7 +303,7 @@ export function ThreadView({ conversationId, parentMessageId, className }: Threa
                 <Input
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="Type a message..."
+                  placeholder="Type a message...306"
                   className="flex-1"
                 />
                 <Button type="submit" size="sm" disabled={!newMessage.trim()}>
@@ -338,7 +338,7 @@ interface ThreadCardProps {
 
 function ThreadCard({ thread, isSelected, onClick, onUpdate, onDelete }: ThreadCardProps) {
   return (
-    <Card 
+    <Card
       className={cn(
         "cursor-pointer transition-colors mb-2",
         isSelected ? "border-primary bg-primary/5" : "hover:bg-muted/50"
@@ -361,7 +361,7 @@ function ThreadCard({ thread, isSelected, onClick, onUpdate, onDelete }: ThreadC
                 <Edit className="h-4 w-4 mr-2" />
                 Edit
               </DropdownMenuItem>
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 className="text-destructive"
                 onClick={() => onDelete(thread.id)}
               >
@@ -371,7 +371,7 @@ function ThreadCard({ thread, isSelected, onClick, onUpdate, onDelete }: ThreadC
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        
+
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <div className="flex items-center space-x-2">
             <span className="flex items-center">
@@ -383,7 +383,7 @@ function ThreadCard({ thread, isSelected, onClick, onUpdate, onDelete }: ThreadC
               {thread.message_count}
             </span>
           </div>
-          
+
           <span className="flex items-center">
             <Clock className="h-3 w-3 mr-1" />
             {formatDistanceToNow(new Date(thread.last_message_at), { addSuffix: true })}
@@ -407,7 +407,7 @@ function ThreadMessageItem({ message }: ThreadMessageItemProps) {
           {message.sender.name.charAt(0)}
         </AvatarFallback>
       </Avatar>
-      
+
       <div className="flex-1 min-w-0">
         <div className="flex items-center space-x-2 mb-1">
           <span className="font-medium text-sm">{message.sender.name}</span>
@@ -415,11 +415,11 @@ function ThreadMessageItem({ message }: ThreadMessageItemProps) {
             {formatDistanceToNow(new Date(message.created_at), { addSuffix: true })}
           </span>
         </div>
-        
+
         <div className="text-sm">
           {message.decrypted_content || '[Encrypted message]'}
         </div>
-        
+
         {message.reactions && message.reactions.length > 0 && (
           <div className="flex items-center space-x-1 mt-2">
             {message.reactions.map((reaction, index) => (
@@ -451,12 +451,12 @@ interface ThreadSettingsProps {
   onMarkAsRead: () => void;
 }
 
-function ThreadSettings({ 
-  thread, 
-  onJoin, 
-  onLeave, 
-  onUpdateNotifications, 
-  onMarkAsRead 
+function ThreadSettings({
+  thread,
+  onJoin,
+  onLeave,
+  onUpdateNotifications,
+  onMarkAsRead
 }: ThreadSettingsProps) {
   return (
     <DropdownMenu>

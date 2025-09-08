@@ -7,7 +7,7 @@ use App\Models\Chat\Conversation;
 use App\Models\Chat\Message;
 use App\Models\Chat\MessageFile;
 use App\Models\User;
-use App\Services\EncryptedFileService;
+use App\Services\E2EEFileService;
 use App\Services\SignalProtocolService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,7 +21,7 @@ use Illuminate\Validation\ValidationException;
 class FileController extends Controller
 {
     public function __construct(
-        private readonly EncryptedFileService $encryptedFileService,
+        private readonly E2EEFileService $e2eeFileService,
         private readonly SignalProtocolService $signalService
     ) {}
 
@@ -29,10 +29,15 @@ class FileController extends Controller
     {
         try {
             $validator = Validator::make($request->all(), [
-                'file' => 'required|file|max:100000', // 100MB max
+                'encrypted_file' => 'required|file|max:100000', // 100MB max encrypted file
                 'device_id' => 'required|string',
+                'original_filename' => 'required|string',
+                'original_mime_type' => 'required|string',
+                'original_size' => 'required|integer',
+                'file_hash' => 'required|string',
+                'encryption_key_data' => 'required|array',
                 'message_content' => 'nullable|string',
-                'generate_thumbnail' => 'boolean',
+                'encrypted_thumbnail' => 'nullable|string', // Base64 encoded encrypted thumbnail
             ]);
 
             if ($validator->fails()) {
@@ -53,30 +58,36 @@ class FileController extends Controller
                 ], 403);
             }
 
-            $file = $request->file('file');
+            $encryptedFile = $request->file('encrypted_file');
             $deviceId = $request->input('device_id');
             $messageContent = $request->input('message_content', '');
-            $generateThumbnail = $request->boolean('generate_thumbnail', false);
+            
+            // Collect metadata from the request
+            $metadata = [
+                'original_filename' => $request->input('original_filename'),
+                'original_mime_type' => $request->input('original_mime_type'),
+                'original_size' => (int)$request->input('original_size'),
+                'file_hash' => $request->input('file_hash'),
+                'encryption_key_data' => $request->input('encryption_key_data'),
+                'encrypted_thumbnail' => $request->input('encrypted_thumbnail'),
+            ];
 
             DB::beginTransaction();
 
-            // Upload and encrypt file
-            $fileResult = $this->encryptedFileService->uploadEncryptedFile(
-                $file,
+            // Store the encrypted file blob
+            $fileResult = $this->e2eeFileService->storeEncryptedFile(
+                $encryptedFile,
                 $user,
                 $conversation,
                 $deviceId,
-                [
-                    'generate_thumbnail' => $generateThumbnail,
-                    'message_content' => $messageContent,
-                ]
+                $metadata
             );
 
             // Create message with file attachment
             $encryptionResult = $this->signalService->encryptMessage(
                 $user,
                 $conversation,
-                $messageContent ?: "📎 {$file->getClientOriginalName()}",
+                $messageContent ?: "📎 {$metadata['original_filename']}",
                 $deviceId,
                 ['message_type' => 'file']
             );
@@ -99,25 +110,28 @@ class FileController extends Controller
             $messageFile = MessageFile::create([
                 'id' => $fileResult['file_id'],
                 'message_id' => $message->id,
-                'original_filename' => $file->getClientOriginalName(),
+                'original_filename' => $fileResult['original_filename'],
                 'encrypted_filename' => $fileResult['encrypted_filename'],
-                'mime_type' => $file->getMimeType(),
-                'file_size' => $file->getSize(),
+                'mime_type' => $fileResult['original_mime_type'],
+                'file_size' => $fileResult['original_size'],
                 'encrypted_size' => $fileResult['encrypted_size'],
                 'file_hash' => $fileResult['file_hash'],
-                'encryption_key_encrypted' => $fileResult['encryption_keys'],
-                'thumbnail_path' => $fileResult['thumbnail_path'] ?? null,
-                'thumbnail_encrypted' => $fileResult['thumbnail_encrypted'] ?? false,
+                'encryption_key_encrypted' => $fileResult['encryption_key_data'],
+                'thumbnail_path' => $fileResult['thumbnail_path'],
+                'thumbnail_encrypted' => !is_null($fileResult['thumbnail_path']),
                 'metadata' => json_encode($fileResult['metadata']),
             ]);
 
             DB::commit();
 
-            Log::info('File uploaded and encrypted', [
+            Log::info('Encrypted file stored successfully', [
                 'user_id' => $user->id,
                 'conversation_id' => $conversation->id,
                 'file_id' => $messageFile->id,
-                'file_size' => $file->getSize(),
+                'original_filename' => $fileResult['original_filename'],
+                'original_size' => $fileResult['original_size'],
+                'encrypted_size' => $fileResult['encrypted_size'],
+                'has_thumbnail' => !is_null($fileResult['thumbnail_path']),
                 'quantum_resistant' => $encryptionResult['quantum_resistant'] ?? false,
             ]);
 
@@ -138,7 +152,10 @@ class FileController extends Controller
                         'original_filename' => $messageFile->original_filename,
                         'mime_type' => $messageFile->mime_type,
                         'file_size' => $messageFile->file_size,
-                        'has_thumbnail' => ! is_null($messageFile->thumbnail_path),
+                        'encrypted_size' => $messageFile->encrypted_size,
+                        'file_type' => E2EEFileService::getFileTypeCategory($messageFile->mime_type),
+                        'has_thumbnail' => !is_null($messageFile->thumbnail_path),
+                        'supports_preview' => $fileResult['metadata']['supports_preview'],
                     ],
                 ],
             ]);
@@ -152,7 +169,7 @@ class FileController extends Controller
             ], 422);
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('File upload failed', [
+            Log::error('Encrypted file upload failed', [
                 'user_id' => Auth::id(),
                 'conversation_id' => $conversationId,
                 'error' => $e->getMessage(),
@@ -161,7 +178,7 @@ class FileController extends Controller
 
             return response()->json([
                 'success' => false,
-                'error' => 'File upload failed',
+                'error' => 'File upload failed: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -198,31 +215,37 @@ class FileController extends Controller
                 })
                 ->firstOrFail();
 
-            // Download and decrypt file
-            $decryptedFile = $this->encryptedFileService->downloadDecryptedFile(
+            // Retrieve encrypted file blob
+            $encryptedFileData = $this->e2eeFileService->retrieveEncryptedFile(
                 $messageFile,
                 $user,
                 $deviceId
             );
 
-            Log::info('File downloaded and decrypted', [
+            Log::info('Encrypted file retrieved for client decryption', [
                 'user_id' => $user->id,
                 'file_id' => $fileId,
                 'conversation_id' => $conversationId,
+                'encrypted_size' => strlen($encryptedFileData['encrypted_content']),
             ]);
 
-            return response()->stream(function () use ($decryptedFile) {
-                echo $decryptedFile['content'];
+            // Return encrypted blob for client-side decryption
+            return response()->stream(function () use ($encryptedFileData) {
+                echo $encryptedFileData['encrypted_content'];
             }, 200, [
-                'Content-Type' => $messageFile->mime_type,
-                'Content-Disposition' => 'attachment; filename="'.$messageFile->original_filename.'"',
-                'Content-Length' => (string) $messageFile->file_size,
-                'X-File-Hash' => $decryptedFile['file_hash'],
-                'X-Integrity-Verified' => $decryptedFile['integrity_verified'] ? '1' : '0',
+                'Content-Type' => 'application/octet-stream',
+                'Content-Disposition' => 'attachment; filename="'.$messageFile->id.'.encrypted"',
+                'Content-Length' => (string) $encryptedFileData['encrypted_size'],
+                'X-Original-Filename' => $encryptedFileData['original_filename'],
+                'X-Original-Mime-Type' => $encryptedFileData['original_mime_type'],
+                'X-Original-Size' => (string) $encryptedFileData['original_size'],
+                'X-File-Hash' => $encryptedFileData['file_hash'],
+                'X-Encryption-Key-Data' => base64_encode(json_encode($encryptedFileData['encryption_key_data'])),
+                'X-File-Id' => $messageFile->id,
             ]);
 
         } catch (\Exception $e) {
-            Log::error('File download failed', [
+            Log::error('Encrypted file download failed', [
                 'user_id' => Auth::id(),
                 'file_id' => $fileId,
                 'conversation_id' => $conversationId,
@@ -231,7 +254,7 @@ class FileController extends Controller
 
             return response()->json([
                 'success' => false,
-                'error' => 'File download failed',
+                'error' => 'File download failed: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -269,30 +292,33 @@ class FileController extends Controller
                 ->whereNotNull('thumbnail_path')
                 ->firstOrFail();
 
-            // Get thumbnail
-            $thumbnail = $this->encryptedFileService->getThumbnail(
+            // Get encrypted thumbnail
+            $encryptedThumbnail = $this->e2eeFileService->retrieveEncryptedThumbnail(
                 $messageFile,
                 $user,
                 $deviceId
             );
 
-            if (! $thumbnail) {
+            if (!$encryptedThumbnail) {
                 return response()->json([
                     'success' => false,
                     'error' => 'Thumbnail not available',
                 ], 404);
             }
 
-            return response()->stream(function () use ($thumbnail) {
-                echo $thumbnail['content'];
+            // Return encrypted thumbnail for client-side decryption
+            return response()->stream(function () use ($encryptedThumbnail) {
+                echo $encryptedThumbnail['encrypted_content'];
             }, 200, [
-                'Content-Type' => $thumbnail['mime_type'],
-                'Content-Length' => (string) strlen($thumbnail['content']),
+                'Content-Type' => 'application/octet-stream',
+                'Content-Length' => (string) $encryptedThumbnail['size'],
                 'Cache-Control' => 'private, max-age=3600',
+                'X-File-Id' => $messageFile->id,
+                'X-Is-Thumbnail' => '1',
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Thumbnail download failed', [
+            Log::error('Encrypted thumbnail download failed', [
                 'user_id' => Auth::id(),
                 'file_id' => $fileId,
                 'conversation_id' => $conversationId,

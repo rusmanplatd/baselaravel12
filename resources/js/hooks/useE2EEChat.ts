@@ -94,6 +94,7 @@ interface UseE2EEChatReturn {
     messages: Message[];
     currentConversation: Conversation | null;
     devices: Device[];
+    currentDevice: Device | null;
     isLoading: boolean;
     isLoadingMessages: boolean;
     error: string | null;
@@ -172,6 +173,7 @@ export function useE2EEChat(): UseE2EEChatReturn {
     const [messages, setMessages] = useState<Message[]>([]);
     const [currentConversation, setCurrentConversation] = useState<Conversation | null>(null);
     const [devices, setDevices] = useState<Device[]>([]);
+    const [currentDevice, setCurrentDevice] = useState<Device | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isLoadingMessages, setIsLoadingMessages] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -189,6 +191,18 @@ export function useE2EEChat(): UseE2EEChatReturn {
         }
         return fingerprint;
     }, []);
+
+    // Set current device when devices are loaded
+    useEffect(() => {
+        if (devices.length > 0 && !currentDevice) {
+            // Find the current device by fingerprint or set the first active device
+            const deviceFingerprint = getDeviceFingerprint();
+            const matchingDevice = devices.find(device => 
+                device.fingerprint === deviceFingerprint || device.is_current
+            );
+            setCurrentDevice(matchingDevice || devices[0]);
+        }
+    }, [devices, currentDevice, getDeviceFingerprint]);
 
     // API call wrapper with error handling using ApiService
     const apiCall = useCallback(async (url: string, method: string = 'GET', data?: unknown, options: RequestInit = {}): Promise<any> => {
@@ -666,28 +680,109 @@ export function useE2EEChat(): UseE2EEChatReturn {
     }, [apiCall]);
 
     // File upload function
-    const uploadFile = useCallback(async (conversationId: string, file: File): Promise<string> => {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('type', getFileType(file));
+    const uploadFile = useCallback(async (
+        conversationId: string, 
+        file: File, 
+        options: { messageContent?: string; generateThumbnail?: boolean } = {}
+    ): Promise<any> => {
+        // Use current device or fallback to device fingerprint
+        const deviceId = currentDevice?.id || getDeviceFingerprint();
 
         try {
-            const response = await apiService.postFormData<{ file_info: string }>(
-                `/api/v1/chat/conversations/${conversationId}/attachments`,
-                formData,
-                {
-                    headers: {
-                        'X-Device-Fingerprint': getDeviceFingerprint(),
+            // Import E2EE file service dynamically to avoid circular dependency
+            const { e2eeFileService } = await import('@/services/E2EEFileService');
+            
+            // Initialize with current E2EE service if not already done
+            e2eeFileService.initialize({
+                encryptData: async (convId: string, deviceId: string, data: ArrayBuffer) => {
+                    // TODO: Implement proper quantum E2EE integration
+                    // For now, use basic Web Crypto API encryption
+                    try {
+                        const key = await crypto.subtle.generateKey(
+                            { name: 'AES-GCM', length: 256 },
+                            true,
+                            ['encrypt']
+                        );
+                        
+                        const iv = crypto.getRandomValues(new Uint8Array(12));
+                        const encrypted = await crypto.subtle.encrypt(
+                            { name: 'AES-GCM', iv },
+                            key,
+                            data
+                        );
+
+                        // Export key for storage
+                        const exportedKey = await crypto.subtle.exportKey('raw', key);
+                        
+                        return {
+                            encryptedContent: encrypted,
+                            encryptionKeys: {
+                                key: Array.from(new Uint8Array(exportedKey)),
+                                iv: Array.from(iv),
+                                algorithm: 'AES-GCM-256'
+                            },
+                        };
+                    } catch (error) {
+                        console.error('File encryption failed:', error);
+                        throw new Error('File encryption failed');
                     }
+                },
+                decryptData: async (convId: string, deviceId: string, encryptedData: ArrayBuffer, keys: any) => {
+                    // TODO: Implement proper quantum E2EE integration
+                    // For now, use basic Web Crypto API decryption
+                    try {
+                        if (!keys.key || !keys.iv) {
+                            throw new Error('Missing encryption keys');
+                        }
+
+                        // Import the key
+                        const key = await crypto.subtle.importKey(
+                            'raw',
+                            new Uint8Array(keys.key),
+                            { name: 'AES-GCM', length: 256 },
+                            false,
+                            ['decrypt']
+                        );
+
+                        const decrypted = await crypto.subtle.decrypt(
+                            { name: 'AES-GCM', iv: new Uint8Array(keys.iv) },
+                            key,
+                            encryptedData
+                        );
+
+                        return decrypted;
+                    } catch (error) {
+                        console.error('File decryption failed:', error);
+                        throw new Error('File decryption failed');
+                    }
+                }
+            });
+
+            // Encrypt file client-side
+            const encryptedFileData = await e2eeFileService.encryptFile(
+                file,
+                conversationId,
+                deviceId,
+                {
+                    messageContent: options.messageContent,
+                    generateThumbnail: options.generateThumbnail ?? file.type.startsWith('image/')
                 }
             );
 
-            return response.file_info;
+            // Upload encrypted file
+            const response = await e2eeFileService.uploadEncryptedFile(
+                conversationId,
+                encryptedFileData
+            );
+
+            return response;
+            
         } catch (err) {
-            setError('Failed to upload file');
+            console.error('E2EE file upload failed:', err);
+            setError('Failed to upload encrypted file');
             throw err;
         }
-    }, [getDeviceFingerprint]);
+    }, [currentDevice, getDeviceFingerprint]);
 
     // Real-time subscription functions
     const subscribeToConversation = useCallback(async (conversationId: string): Promise<void> => {
@@ -934,6 +1029,7 @@ export function useE2EEChat(): UseE2EEChatReturn {
         messages,
         currentConversation,
         devices,
+        currentDevice,
         isLoading,
         isLoadingMessages,
         error,

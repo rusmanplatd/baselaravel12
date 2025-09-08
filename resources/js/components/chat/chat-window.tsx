@@ -4,21 +4,25 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { 
-    Send, 
-    Paperclip, 
-    Mic, 
-    Shield, 
-    Phone, 
-    Video, 
+import {
+    Send,
+    Mic,
+    Shield,
+    Phone,
+    Video,
     MoreVertical,
     Lock,
     Users,
     Reply,
-    X
+    X,
+    Image,
+    FileText,
+    Music,
+    Film
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import MessageBubble from './message-bubble';
+import RichTextEditor from './RichTextEditor';
 
 interface Message {
     id: string;
@@ -103,6 +107,7 @@ export default function ChatWindow({
     const [isSending, setIsSending] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
     const [replyToMessage, setReplyToMessage] = useState<Message | null>(null);
+    const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     // Auto-scroll to bottom when new messages arrive
@@ -111,14 +116,27 @@ export default function ChatWindow({
     }, [messages]);
 
     const handleSendMessage = async () => {
-        if (!messageInput.trim() || isSending || !conversation) return;
+        if ((!messageInput.trim() && selectedFiles.length === 0) || isSending || !conversation) return;
 
         setIsSending(true);
         try {
             const options = replyToMessage ? { reply_to_id: replyToMessage.id } : undefined;
-            await onSendMessage(messageInput.trim(), options);
+            
+            // Handle text message
+            if (messageInput.trim()) {
+                await onSendMessage(messageInput.trim(), options);
+            }
+            
+            // Handle file uploads
+            if (selectedFiles.length > 0) {
+                console.log('Sending files:', selectedFiles);
+                // TODO: Implement actual E2EE file upload
+            }
+            
+            // Clear inputs
             setMessageInput('');
             setReplyToMessage(null);
+            setSelectedFiles([]);
         } catch (error) {
             console.error('Failed to send message:', error);
         } finally {
@@ -133,28 +151,59 @@ export default function ChatWindow({
         }
     };
 
+    // File handling functions
+    const getFileIcon = (file: File) => {
+        if (file.type.startsWith('image/')) return <Image className="h-4 w-4 text-blue-500" />;
+        if (file.type.startsWith('video/')) return <Film className="h-4 w-4 text-red-500" />;
+        if (file.type.startsWith('audio/')) return <Music className="h-4 w-4 text-purple-500" />;
+        if (file.type.includes('pdf') || file.type.includes('document') || file.type.includes('text')) {
+            return <FileText className="h-4 w-4 text-green-500" />;
+        }
+        return <FileText className="h-4 w-4 text-gray-500" />;
+    };
+
+    const formatFileSize = (bytes: number) => {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    };
+
+    const handleFilesSelected = (files: File[]) => {
+        setSelectedFiles(files);
+    };
+
+    const removeFile = (index: number) => {
+        setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const clearAllFiles = () => {
+        setSelectedFiles([]);
+    };
+
     const getConversationTitle = (): string => {
         if (!conversation) return '';
-        
+
         if (conversation.name) return conversation.name;
-        
+
         if (conversation.type === 'direct') {
             const otherParticipant = conversation.participants.find(
                 p => p.user.id !== currentUser.id
             );
             return otherParticipant?.user.name || 'Unknown User';
         }
-        
+
         return 'Group Chat';
     };
 
     const getParticipantsText = (): string => {
         if (!conversation) return '';
-        
+
         if (conversation.type === 'direct') {
             return 'Direct message';
         }
-        
+
         return `${conversation.participants.length} participants`;
     };
 
@@ -232,7 +281,7 @@ export default function ChatWindow({
                                 .toUpperCase()}
                         </AvatarFallback>
                     </Avatar>
-                    
+
                     <div className="flex-1">
                         <div className="flex items-center gap-2">
                             <h2 className="font-semibold">{getConversationTitle()}</h2>
@@ -340,20 +389,60 @@ export default function ChatWindow({
                         encryption
                     </div>
                 )}
-                
+
+                {/* Selected Files Preview */}
+                {selectedFiles.length > 0 && (
+                    <div className="mb-3 p-3 bg-muted/20 border border-border rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm font-medium text-muted-foreground">
+                                {selectedFiles.length} file{selectedFiles.length > 1 ? 's' : ''} selected
+                            </span>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={clearAllFiles}
+                                className="h-6 px-2 text-xs"
+                            >
+                                Clear all
+                            </Button>
+                        </div>
+                        <div className="grid grid-cols-1 gap-2 max-h-32 overflow-y-auto">
+                            {selectedFiles.map((file, index) => (
+                                <div key={index} className="flex items-center gap-2 p-2 bg-background border border-border rounded text-sm">
+                                    {getFileIcon(file)}
+                                    <div className="flex-1 min-w-0">
+                                        <div className="font-medium truncate">{file.name}</div>
+                                        <div className="text-xs text-muted-foreground">{formatFileSize(file.size)}</div>
+                                    </div>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => removeFile(index)}
+                                        className="h-6 w-6 p-0 flex-shrink-0"
+                                    >
+                                        <X className="h-3 w-3" />
+                                    </Button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 <div className="flex items-end gap-2">
-                    <Button variant="ghost" size="icon" className="mb-2">
-                        <Paperclip className="h-4 w-4" />
-                    </Button>
-                    
                     <div className="flex-1">
-                        <Input
-                            placeholder="Type a message..."
-                            value={messageInput}
-                            onChange={(e) => setMessageInput(e.target.value)}
-                            onKeyPress={handleKeyPress}
+                        <RichTextEditor
+                            placeholder="Type a message...347"
+                            content={messageInput}
+                            onUpdate={(content, text) => setMessageInput(text)}
+                            onSubmit={(content, text) => {
+                                handleSendMessage();
+                            }}
+                            onFilesSelected={handleFilesSelected}
                             disabled={isSending}
-                            className="min-h-[40px]"
+                            showToolbar={false}
+                            minHeight={40}
+                            maxHeight={120}
+                            autoFocus={true}
                         />
                     </div>
 
@@ -373,13 +462,14 @@ export default function ChatWindow({
 
                     <Button
                         onClick={handleSendMessage}
-                        disabled={!messageInput.trim() || isSending}
+                        disabled={(!messageInput.trim() && selectedFiles.length === 0) || isSending}
                         className="mb-2"
                     >
                         <Send className="h-4 w-4" />
                     </Button>
                 </div>
             </div>
+
         </div>
     );
 }

@@ -11,6 +11,8 @@ import { MessageReactions } from './MessageReactions';
 import { MessageReplyIndicator, MessageThreadInfo } from './MessageReplyIndicator';
 import { EmojiPicker } from './EmojiPicker';
 import RichTextEditor from './RichTextEditor';
+import { FileAttachment } from './FileAttachment';
+import { FileUpload } from './FileUpload';
 import type { JSONContent } from '@tiptap/react';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -117,6 +119,7 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
         conversations,
         messages,
         currentConversation,
+        currentDevice,
         isLoading,
         isLoadingMessages,
         error,
@@ -145,6 +148,7 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
     const [showSearch, setShowSearch] = useState(false);
     const [selectedTab, setSelectedTab] = useState<'messages' | 'media' | 'files' | 'links'>('messages');
     const [showParticipants, setShowParticipants] = useState(false);
+    const [showFileUpload, setShowFileUpload] = useState(false);
     const [typingUsers, setTypingUsers] = useState<string[]>([]);
     const [isRecording, setIsRecording] = useState(false);
     const [isTyping, setIsTyping] = useState(false);
@@ -694,6 +698,11 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
                                             <DropdownMenuItem>Rotate Keys</DropdownMenuItem>
                                             <DropdownMenuItem>Export Chat</DropdownMenuItem>
                                             <DropdownMenuSeparator />
+                                            <DropdownMenuItem onClick={() => setShowFileUpload(true)}>
+                                                <Paperclip className="w-4 h-4 mr-2" />
+                                                Upload Files
+                                            </DropdownMenuItem>
+                                            <DropdownMenuSeparator />
                                             <DropdownMenuItem className="text-destructive">
                                                 <Trash2 className="w-4 h-4 mr-2" />
                                                 Leave Chat
@@ -824,6 +833,32 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
                                                                         </p>
                                                                     </div>
 
+                                                                    {/* File attachments */}
+                                                                    {message.attachments && message.attachments.length > 0 && (
+                                                                        <div className="mt-2 space-y-2">
+                                                                            {message.attachments.map((attachment, index) => (
+                                                                                <FileAttachment
+                                                                                    key={`${message.id}-${index}`}
+                                                                                    file={{
+                                                                                        id: attachment.id,
+                                                                                        original_filename: attachment.filename,
+                                                                                        mime_type: attachment.type === 'image' ? 'image/jpeg' : 
+                                                                                                   attachment.type === 'video' ? 'video/mp4' :
+                                                                                                   attachment.type === 'file' ? 'application/octet-stream' : 'application/octet-stream',
+                                                                                        file_size: attachment.file_size,
+                                                                                        encrypted_size: attachment.file_size,
+                                                                                        file_type: attachment.type as any,
+                                                                                        has_thumbnail: attachment.type === 'image',
+                                                                                        supports_preview: ['image', 'video'].includes(attachment.type),
+                                                                                    }}
+                                                                                    conversationId={selectedConversationId!}
+                                                                                    deviceId={currentDevice?.id || ''}
+                                                                                    className="max-w-md"
+                                                                                />
+                                                                            ))}
+                                                                        </div>
+                                                                    )}
+
                                                                     {/* Enhanced reactions display */}
                                                                     <MessageReactions
                                                                         reactions={message.reactions || []}
@@ -950,22 +985,19 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
                             <div className="p-4 border-t border-border">
                                 <div className="flex items-end gap-2">
                                     <div className="flex items-center gap-1">
-                                        <input
-                                            type="file"
-                                            ref={fileInputRef}
-                                            className="hidden"
-                                            multiple
-                                            accept="*/*"
-                                            onChange={(e) => e.target.files && handleFileUpload(e.target.files)}
+                                        <FileUpload
+                                            conversationId={selectedConversationId!}
+                                            deviceId={currentDevice?.id}
+                                            onUploadComplete={(results) => {
+                                                console.log('Files uploaded:', results);
+                                                // Refresh messages to show new attachments
+                                                loadMessages(selectedConversationId!);
+                                            }}
+                                            maxFiles={5}
+                                            maxFileSize={50}
+                                            compact={true}
+                                            className="flex-shrink-0"
                                         />
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => fileInputRef.current?.click()}
-                                        >
-                                            <Paperclip className="w-4 h-4" />
-                                        </Button>
                                     </div>
 
                                     <div className="flex-1">
@@ -1049,6 +1081,36 @@ export function ChatInterface({ initialConversationId }: ChatInterfaceProps) {
                     onClick={() => setShowEmojiPicker(null)}
                 />
             )}
+
+            {/* File Upload Dialog */}
+            <Dialog open={showFileUpload} onOpenChange={setShowFileUpload}>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Upload Files</DialogTitle>
+                        <DialogDescription>
+                            Upload files to share in this conversation. All files will be encrypted end-to-end.
+                        </DialogDescription>
+                    </DialogHeader>
+                    
+                    {selectedConversationId && (
+                        <FileUpload
+                            conversationId={selectedConversationId}
+                            deviceId={currentDevice?.id}
+                            onUploadComplete={(results) => {
+                                console.log('Files uploaded:', results);
+                                loadMessages(selectedConversationId);
+                                if (results.length > 0) {
+                                    setShowFileUpload(false);
+                                    toast.success(`${results.length} file(s) uploaded successfully`);
+                                }
+                            }}
+                            maxFiles={10}
+                            maxFileSize={100}
+                            compact={false}
+                        />
+                    )}
+                </DialogContent>
+            </Dialog>
 
             {/* Participants Dialog */}
             <Dialog open={showParticipants} onOpenChange={setShowParticipants}>

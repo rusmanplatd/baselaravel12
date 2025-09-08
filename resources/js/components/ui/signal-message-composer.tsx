@@ -49,7 +49,7 @@ export function SignalMessageComposer({
   onSendMessage,
   onStartTyping,
   onStopTyping,
-  placeholder = "Type a message...",
+  placeholder = "Type a message...52",
   disabled = false,
   className = ''
 }: SignalMessageComposerProps) {
@@ -63,7 +63,7 @@ export function SignalMessageComposer({
     useSignal: isSignalEnabled,
     expirationTime: undefined,
   });
-  
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -90,7 +90,7 @@ export function SignalMessageComposer({
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
-    
+
     typingTimeoutRef.current = setTimeout(() => {
       if (onStopTyping) {
         onStopTyping();
@@ -107,7 +107,7 @@ export function SignalMessageComposer({
       await onSendMessage(message.trim(), messageOptions);
       setMessage('');
       adjustTextareaHeight();
-      
+
       // Stop typing indicator
       if (onStopTyping) {
         onStopTyping();
@@ -282,7 +282,7 @@ export function SignalMessageComposer({
                 {/* Encryption Options */}
                 <div className="space-y-3">
                   <h5 className="text-sm font-medium">Encryption</h5>
-                  
+
                   {isSignalEnabled && (
                     <div className="flex items-center justify-between">
                       <div>
@@ -318,7 +318,7 @@ export function SignalMessageComposer({
                 {/* Delivery Options */}
                 <div className="space-y-3">
                   <h5 className="text-sm font-medium">Delivery</h5>
-                  
+
                   <div>
                     <Label className="text-sm">Priority</Label>
                     <select

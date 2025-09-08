@@ -6,9 +6,9 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { 
-  AtSign, 
-  Hash, 
+import {
+  AtSign,
+  Hash,
   Users,
   Shield,
   ShieldCheck,
@@ -54,7 +54,7 @@ interface MentionSuggestion {
 export function MentionInput({
   value,
   onChange,
-  placeholder = "Type a message...",
+  placeholder = "Type a message...57",
   conversationId,
   organizationId,
   onMention,
@@ -72,7 +72,7 @@ export function MentionInput({
   } | null>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [filteredSuggestions, setFilteredSuggestions] = useState<MentionSuggestion[]>([]);
-  
+
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
@@ -95,7 +95,7 @@ export function MentionInput({
   // Combine all mention sources
   const allSuggestions = useMemo(() => {
     const suggestions: MentionSuggestion[] = [];
-    
+
     // Add users
     users.forEach(user => {
       suggestions.push({
@@ -160,9 +160,9 @@ export function MentionInput({
             query,
             trigger === '@' ? 'users' : 'channels'
           );
-          
+
           const results: MentionSuggestion[] = [];
-          
+
           if (trigger === '@') {
             searchResults.users.forEach(user => {
               results.push({
@@ -196,10 +196,10 @@ export function MentionInput({
         }
       } else {
         // Show all suggestions for the trigger type
-        const typedSuggestions = allSuggestions.filter(s => 
+        const typedSuggestions = allSuggestions.filter(s =>
           trigger === '@' ? s.type === 'user' : s.type !== 'user'
         );
-        
+
         setFilteredSuggestions(typedSuggestions.slice(0, 10));
         setShowSuggestions(typedSuggestions.length > 0);
       }
@@ -217,13 +217,13 @@ export function MentionInput({
     const { trigger, start, end } = currentMention;
     const beforeMention = value.slice(0, start);
     const afterMention = value.slice(end);
-    
-    const mentionText = trigger === '@' 
-      ? `@${suggestion.name}` 
+
+    const mentionText = trigger === '@'
+      ? `@${suggestion.name}`
       : `#${suggestion.name}`;
-    
+
     const newValue = `${beforeMention}${mentionText} ${afterMention}`;
-    
+
     onChange(newValue);
 
     // Create encrypted mention if it's a user mention
@@ -261,14 +261,14 @@ export function MentionInput({
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
-        setSelectedIndex(prev => 
+        setSelectedIndex(prev =>
           prev < filteredSuggestions.length - 1 ? prev + 1 : 0
         );
         break;
 
       case 'ArrowUp':
         e.preventDefault();
-        setSelectedIndex(prev => 
+        setSelectedIndex(prev =>
           prev > 0 ? prev - 1 : filteredSuggestions.length - 1
         );
         break;
@@ -333,7 +333,7 @@ export function MentionInput({
             maxHeight: '150px',
           }}
         />
-        
+
         {/* Character count */}
         {maxLength && (
           <div className="absolute bottom-2 right-2 text-xs text-muted-foreground">
@@ -535,7 +535,7 @@ function MentionSuggestionItem({
           <span className="font-medium text-sm truncate">
             {suggestion.name}
           </span>
-          
+
           <div className="flex items-center space-x-1">
             {getStatusBadges()}
           </div>

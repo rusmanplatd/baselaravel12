@@ -17,10 +17,10 @@ import { ListItem } from '@tiptap/extension-list-item';
 import { HardBreak } from '@tiptap/extension-hard-break';
 
 import { Button } from '@/components/ui/button';
-import { 
-  Bold as BoldIcon, 
-  Italic as ItalicIcon, 
-  Strikethrough, 
+import {
+  Bold as BoldIcon,
+  Italic as ItalicIcon,
+  Strikethrough,
   Underline as UnderlineIcon,
   Code2,
   Quote,
@@ -30,7 +30,9 @@ import {
   Type,
   Hash,
   AtSign,
-  Smile
+  Smile,
+  Paperclip,
+  Mic
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -54,6 +56,7 @@ interface RichTextEditorProps {
   placeholder?: string;
   onUpdate?: (content: JSONContent, text: string) => void;
   onSubmit?: (content: JSONContent, text: string) => void;
+  onFilesSelected?: (files: File[]) => void;
   onEmojiClick?: () => void;
   disabled?: boolean;
   mentionableUsers?: User[];
@@ -64,6 +67,8 @@ interface RichTextEditorProps {
   maxHeight?: number;
   showToolbar?: boolean;
   autoFocus?: boolean;
+  showFileUpload?: boolean;
+  showMicButton?: boolean;
 }
 
 interface MentionSuggestion {
@@ -77,9 +82,10 @@ interface MentionSuggestion {
 
 const RichTextEditor: React.FC<RichTextEditorProps> = ({
   content = '',
-  placeholder = 'Type a message...',
+  placeholder = 'Type a message...80',
   onUpdate,
   onSubmit,
+  onFilesSelected,
   onEmojiClick,
   disabled = false,
   mentionableUsers = [],
@@ -89,12 +95,15 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   minHeight = 40,
   maxHeight = 200,
   showToolbar = true,
-  autoFocus = false
+  autoFocus = false,
+  showFileUpload = true,
+  showMicButton = true
 }) => {
   const [suggestions, setSuggestions] = useState<MentionSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedSuggestion, setSelectedSuggestion] = useState(0);
   const suggestionRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Create mention suggestions list
   const createSuggestions = useCallback((query: string): MentionSuggestion[] => {
@@ -344,11 +353,26 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
     editor?.chain().focus().insertContent(char).run();
   }, [editor]);
 
+  // File handling functions
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0 && onFilesSelected) {
+      onFilesSelected(files);
+    }
+    // Reset input
+    e.target.value = '';
+  }, [onFilesSelected]);
+
+  const handleFileUploadClick = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
   if (!editor) {
     return null;
   }
 
   return (
+    <React.Fragment>
     <div className="relative">
       {/* Toolbar */}
       {showToolbar && editable && (
@@ -365,7 +389,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           >
             <BoldIcon className="h-4 w-4" />
           </Button>
-          
+
           <Button
             type="button"
             variant="ghost"
@@ -378,7 +402,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           >
             <ItalicIcon className="h-4 w-4" />
           </Button>
-          
+
           <Button
             type="button"
             variant="ghost"
@@ -391,7 +415,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           >
             <Strikethrough className="h-4 w-4" />
           </Button>
-          
+
           <Button
             type="button"
             variant="ghost"
@@ -404,7 +428,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           >
             <UnderlineIcon className="h-4 w-4" />
           </Button>
-          
+
           <Button
             type="button"
             variant="ghost"
@@ -417,9 +441,9 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           >
             <Code2 className="h-4 w-4" />
           </Button>
-          
+
           <div className="w-px h-6 bg-border mx-1" />
-          
+
           <Button
             type="button"
             variant="ghost"
@@ -432,7 +456,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           >
             <Quote className="h-4 w-4" />
           </Button>
-          
+
           <Button
             type="button"
             variant="ghost"
@@ -445,7 +469,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           >
             <List className="h-4 w-4" />
           </Button>
-          
+
           <Button
             type="button"
             variant="ghost"
@@ -458,7 +482,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           >
             <ListOrdered className="h-4 w-4" />
           </Button>
-          
+
           <Button
             type="button"
             variant="ghost"
@@ -471,9 +495,9 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           >
             <Link2 className="h-4 w-4" />
           </Button>
-          
+
           <div className="w-px h-6 bg-border mx-1" />
-          
+
           <Button
             type="button"
             variant="ghost"
@@ -482,7 +506,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           >
             <AtSign className="h-4 w-4" />
           </Button>
-          
+
           <Button
             type="button"
             variant="ghost"
@@ -509,25 +533,66 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
       )}
 
       {/* Editor */}
-      <div 
-        className="relative"
-        style={{ 
+      <div
+        className="relative flex items-end border border-border rounded-lg bg-background"
+        style={{
           minHeight: `${minHeight}px`,
-          maxHeight: `${maxHeight}px`,
-          overflowY: 'auto'
+          maxHeight: `${maxHeight}px`
         }}
       >
-        <EditorContent 
-          editor={editor}
-          className={cn(
-            'prose prose-sm max-w-none',
-            disabled && 'pointer-events-none'
-          )}
+        {/* Hidden file input */}
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileSelect}
+          multiple
+          accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt"
+          className="hidden"
         />
+
+        {/* File Upload Button */}
+        {showFileUpload && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={handleFileUploadClick}
+            disabled={false}
+            className="h-8 w-8 m-1 flex-shrink-0"
+            title="Upload files"
+          >
+            <Paperclip className="h-4 w-4" />
+          </Button>
+        )}
+
+        {/* Editor Content */}
+        <div className="flex-1 relative" style={{ maxHeight: `${maxHeight}px`, overflowY: 'auto' }}>
+          <EditorContent
+            editor={editor}
+            className={cn(
+              'prose prose-sm max-w-none',
+              disabled && 'pointer-events-none'
+            )}
+          />
+        </div>
+
+        {/* Mic Button */}
+        {showMicButton && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            disabled={disabled}
+            className="h-8 w-8 m-1 flex-shrink-0"
+          >
+            <Mic className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
 
         {/* Mention Suggestions */}
         {showSuggestions && suggestions.length > 0 && (
-          <div 
+          <div
             ref={suggestionRef}
             className="absolute z-50 bg-background border border-border rounded-lg shadow-lg max-h-48 overflow-y-auto"
             style={{ top: '100%', left: '0', minWidth: '200px' }}
@@ -550,8 +615,8 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
                   <>
                     <div className="w-6 h-6 rounded-full bg-accent flex items-center justify-center text-xs font-medium">
                       {suggestion.avatar ? (
-                        <img 
-                          src={suggestion.avatar} 
+                        <img
+                          src={suggestion.avatar}
                           alt={suggestion.name}
                           className="w-6 h-6 rounded-full"
                         />
@@ -586,7 +651,8 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
           </div>
         )}
       </div>
-    </div>
+
+    </React.Fragment>
   );
 };
 
