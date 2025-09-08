@@ -62,45 +62,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-interface MessageUser {
-    id: string;
-    name: string;
-    avatar?: string;
-}
-
-interface Message {
-    id: string;
-    sender: MessageUser;
-    decrypted_content?: string;
-    created_at: string;
-    updated_at?: string;
-    is_edited?: boolean;
-    is_forwarded?: boolean;
-    is_pinned?: boolean;
-    is_bookmarked?: boolean;
-    is_flagged?: boolean;
-    read_receipts?: Array<{
-        user_id: string;
-        user: MessageUser;
-        read_at: string;
-    }>;
-    delivery_status?: 'sent' | 'delivered' | 'read';
-    type?: 'text' | 'image' | 'video' | 'audio' | 'file' | 'voice' | 'poll';
-    file_url?: string;
-    file_name?: string;
-    file_size?: number;
-    encrypted?: boolean;
-}
-
-interface Conversation {
-    id: string;
-    name?: string;
-    avatar_url?: string;
-    participants: Array<{
-        user_id: string;
-        user?: MessageUser;
-    }>;
-}
+import type { Message, Conversation } from '@/types/chat';
 
 interface MessageContextMenuProps {
     message: Message;

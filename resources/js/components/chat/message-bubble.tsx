@@ -3,62 +3,34 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { 
-    Check, 
     CheckCheck, 
-    Clock, 
-    Shield, 
     Lock,
     Reply,
-    MoreHorizontal,
-    Edit2
+    Edit2,
+    Phone,
+    PhoneCall,
+    FileText,
+    Image,
+    Video,
+    Music,
+    Mic,
+    Download,
+    Play,
+    AlertCircle,
+    Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MessageContextMenu } from './MessageContextMenu';
-
-interface Message {
-    id: string;
-    conversation_id: string;
-    sender_id: string;
-    type: 'text' | 'image' | 'video' | 'audio' | 'file' | 'voice' | 'poll';
-    decrypted_content?: string;
-    encrypted_content: string;
-    is_edited: boolean;
-    created_at: string;
-    sender: {
-        id: string;
-        name: string;
-        avatar: string;
-    };
-    reactions?: Array<{
-        id: string;
-        user_id: string;
-        emoji: string;
-        user: {
-            id: string;
-            name: string;
-        };
-    }>;
-    replies?: Message[];
-    reply_to?: Message;
-}
-
-interface Conversation {
-    id: string;
-    name?: string;
-    avatar_url?: string;
-    participants: Array<{
-        user_id: string;
-        user?: {
-            id: string;
-            name: string;
-        };
-    }>;
-}
+import type { Message, Conversation } from '@/types/chat';
 
 interface MessageBubbleProps {
     message: Message;
     isOwn: boolean;
-    currentUser: any;
+    currentUser: {
+        id: string;
+        name: string;
+        [key: string]: unknown;
+    };
     conversations?: Conversation[];
     onReply?: (message: Message) => void;
     onEdit?: (messageId: string, content: string) => void;
@@ -105,72 +77,325 @@ export default function MessageBubble({
         return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
     };
 
+    const renderDecryptionStatus = () => {
+        if (message.decryption_failed) {
+            return (
+                <div className="flex items-center gap-2 text-destructive text-sm">
+                    <AlertCircle className="h-4 w-4" />
+                    <span>Decryption failed</span>
+                    {message.decryption_error && (
+                        <span className="text-xs">({message.decryption_error})</span>
+                    )}
+                </div>
+            );
+        }
+
+        if (!message.decrypted_content && (message.type === 'text' || !message.type)) {
+            return (
+                <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Decrypting...</span>
+                </div>
+            );
+        }
+
+        return null;
+    };
+
+    const formatFileSize = (bytes: number): string => {
+        const units = ['B', 'KB', 'MB', 'GB'];
+        let size = bytes;
+        let unitIndex = 0;
+
+        while (size >= 1024 && unitIndex < units.length - 1) {
+            size /= 1024;
+            unitIndex++;
+        }
+
+        return `${Math.round(size * 10) / 10} ${units[unitIndex]}`;
+    };
+
+    const formatDuration = (seconds: number): string => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    const renderFileContent = () => {
+        const attachment = message.attachments?.[0];
+        const metadata = message.metadata;
+        
+        return (
+            <div className="bg-muted rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0">
+                        <FileText className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <div className="font-medium truncate">
+                            {attachment?.filename || metadata?.filename || 'Encrypted File'}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                            {metadata?.file_size && formatFileSize(metadata.file_size)}
+                            {metadata?.mime_type && ` • ${metadata.mime_type}`}
+                        </div>
+                        {message.decrypted_content && (
+                            <div className="text-sm mt-2">{message.decrypted_content}</div>
+                        )}
+                    </div>
+                    <Button variant="ghost" size="icon" className="flex-shrink-0">
+                        <Download className="h-4 w-4" />
+                    </Button>
+                </div>
+            </div>
+        );
+    };
+
+    const renderImageContent = () => {
+        const attachment = message.attachments?.[0];
+        
+        return (
+            <div className="space-y-2">
+                <div className="bg-muted rounded-lg overflow-hidden">
+                    {attachment?.thumbnail_path ? (
+                        <div className="relative">
+                            <img 
+                                src={attachment.thumbnail_path} 
+                                alt={attachment.filename || 'Image'}
+                                className="w-full max-w-sm rounded-lg"
+                            />
+                            <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                                <Lock className="h-6 w-6 text-white" />
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="p-8 text-center">
+                            <Image className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
+                            <div className="font-medium">Encrypted Image</div>
+                            <div className="text-sm text-muted-foreground">
+                                {message.metadata?.filename || 'Loading preview...'}
+                            </div>
+                        </div>
+                    )}
+                </div>
+                {message.decrypted_content && (
+                    <div className="text-sm">{message.decrypted_content}</div>
+                )}
+            </div>
+        );
+    };
+
+    const renderVideoContent = () => {
+        const attachment = message.attachments?.[0];
+        const metadata = message.metadata;
+        
+        return (
+            <div className="space-y-2">
+                <div className="bg-muted rounded-lg p-6 text-center">
+                    <Video className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
+                    <div className="font-medium">
+                        {attachment?.filename || metadata?.filename || 'Encrypted Video'}
+                    </div>
+                    <div className="text-sm text-muted-foreground space-x-2">
+                        {metadata?.duration && <span>{formatDuration(metadata.duration)}</span>}
+                        {metadata?.file_size && <span>• {formatFileSize(metadata.file_size)}</span>}
+                    </div>
+                </div>
+                {message.decrypted_content && (
+                    <div className="text-sm">{message.decrypted_content}</div>
+                )}
+            </div>
+        );
+    };
+
+    const renderAudioContent = () => {
+        const metadata = message.metadata;
+        
+        return (
+            <div className="bg-muted rounded-lg p-4">
+                <div className="flex items-center gap-3">
+                    <Button variant="ghost" size="icon" className="flex-shrink-0">
+                        <Play className="h-4 w-4" />
+                    </Button>
+                    <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                            <Music className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-medium">Audio Message</span>
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                            {metadata?.duration && formatDuration(metadata.duration)}
+                            {metadata?.file_size && ` • ${formatFileSize(metadata.file_size)}`}
+                        </div>
+                    </div>
+                </div>
+                {message.decrypted_content && (
+                    <div className="text-sm mt-2">{message.decrypted_content}</div>
+                )}
+            </div>
+        );
+    };
+
+    const renderVoiceContent = () => {
+        const metadata = message.metadata;
+        
+        return (
+            <div className="bg-muted rounded-lg p-4">
+                <div className="flex items-center gap-3">
+                    <Button variant="ghost" size="icon" className="flex-shrink-0">
+                        <Play className="h-4 w-4" />
+                    </Button>
+                    <div className="flex-1 flex items-center gap-2">
+                        <Mic className="h-4 w-4 text-primary" />
+                        <div className="flex-1 bg-primary/20 h-2 rounded-full">
+                            <div className="bg-primary h-full w-1/3 rounded-full"></div>
+                        </div>
+                        <span className="text-sm font-mono">
+                            {metadata?.voice_duration_seconds ? 
+                                formatDuration(metadata.voice_duration_seconds) : '0:00'}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    const renderPollContent = () => {
+        const pollOptions = message.metadata?.poll_options || [];
+        
+        return (
+            <div className="bg-muted rounded-lg p-4">
+                <div className="flex items-center gap-2 mb-3">
+                    <div className="text-lg">📊</div>
+                    <div className="font-medium">Poll</div>
+                </div>
+                
+                {message.decrypted_content ? (
+                    <div>
+                        <div className="text-sm mb-3">{message.decrypted_content}</div>
+                        {pollOptions.length > 0 && (
+                            <div className="space-y-2">
+                                {pollOptions.map((option, index) => (
+                                    <div key={option.id || index} className="bg-background rounded p-2">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-sm">{option.text}</span>
+                                            <Badge variant="secondary" className="text-xs">
+                                                {option.votes} votes
+                                            </Badge>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    <div className="text-sm text-muted-foreground">
+                        Encrypted poll content
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    const renderSystemContent = () => {
+        return (
+            <div className="text-center py-2">
+                <div className="text-sm text-muted-foreground bg-muted/50 rounded-full px-3 py-1 inline-block">
+                    {message.decrypted_content || message.encrypted_content}
+                </div>
+            </div>
+        );
+    };
+
+    const getCallStatusText = (status: string): string => {
+        switch (status) {
+            case 'missed': return 'Missed call';
+            case 'answered': return 'Call ended';
+            case 'declined': return 'Call declined';
+            case 'busy': return 'Line busy';
+            default: return 'Call';
+        }
+    };
+
+    const renderCallContent = () => {
+        const metadata = message.metadata;
+        const callStatus = metadata?.call_status || 'unknown';
+        const duration = metadata?.call_duration;
+        
+        const getCallIcon = () => {
+            switch (callStatus) {
+                case 'missed':
+                    return <Phone className="h-4 w-4 text-destructive" />;
+                case 'answered':
+                    return <PhoneCall className="h-4 w-4 text-green-600" />;
+                case 'declined':
+                case 'busy':
+                    return <Phone className="h-4 w-4 text-muted-foreground" />;
+                default:
+                    return <Phone className="h-4 w-4" />;
+            }
+        };
+        
+        return (
+            <div className="bg-muted rounded-lg p-4">
+                <div className="flex items-center gap-3">
+                    {getCallIcon()}
+                    <div>
+                        <div className="font-medium capitalize">
+                            {getCallStatusText(callStatus)}
+                        </div>
+                        {duration && callStatus === 'answered' && (
+                            <div className="text-sm text-muted-foreground">
+                                Duration: {formatDuration(duration)}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     const renderMessageContent = () => {
-        switch (message.type) {
+        const decryptionStatus = renderDecryptionStatus();
+        if (decryptionStatus) {
+            return decryptionStatus;
+        }
+
+        switch (message.type || 'text') {
             case 'text':
                 return (
                     <div className="whitespace-pre-wrap break-words">
-                        {message.decrypted_content || 'Decrypting...'}
+                        {message.decrypted_content || 'Message content unavailable'}
                     </div>
                 );
             
             case 'image':
-                return (
-                    <div className="space-y-2">
-                        <div className="bg-muted rounded-lg p-4 text-center">
-                            📷 Image
-                            <div className="text-xs text-muted-foreground mt-1">
-                                Encrypted image content
-                            </div>
-                        </div>
-                        {message.decrypted_content && (
-                            <div className="text-sm">{message.decrypted_content}</div>
-                        )}
-                    </div>
-                );
+                return renderImageContent();
+            
+            case 'video':
+                return renderVideoContent();
+                
+            case 'audio':
+                return renderAudioContent();
             
             case 'file':
-                return (
-                    <div className="bg-muted rounded-lg p-4 flex items-center gap-3">
-                        <div className="text-2xl">📎</div>
-                        <div>
-                            <div className="font-medium">Encrypted File</div>
-                            <div className="text-xs text-muted-foreground">
-                                File content is encrypted
-                            </div>
-                        </div>
-                    </div>
-                );
+                return renderFileContent();
             
             case 'voice':
-                return (
-                    <div className="bg-muted rounded-lg p-4 flex items-center gap-3">
-                        <div className="text-2xl">🎤</div>
-                        <div>
-                            <div className="font-medium">Voice Message</div>
-                            <div className="text-xs text-muted-foreground">
-                                Encrypted voice content
-                            </div>
-                        </div>
-                    </div>
-                );
+                return renderVoiceContent();
             
             case 'poll':
-                return (
-                    <div className="bg-muted rounded-lg p-4">
-                        <div className="flex items-center gap-2 mb-2">
-                            <div className="text-lg">📊</div>
-                            <div className="font-medium">Poll</div>
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                            Encrypted poll content
-                        </div>
-                    </div>
-                );
+                return renderPollContent();
+                
+            case 'system':
+                return renderSystemContent();
+                
+            case 'call':
+                return renderCallContent();
             
             default:
                 return (
-                    <div className="text-muted-foreground text-sm">
+                    <div className="text-muted-foreground text-sm flex items-center gap-2">
+                        <AlertCircle className="h-4 w-4" />
                         Unsupported message type: {message.type}
                     </div>
                 );
@@ -211,6 +436,7 @@ export default function MessageBubble({
                 "flex gap-3 group",
                 isOwn ? "flex-row-reverse" : "flex-row"
             )}
+            role="listitem"
             onContextMenu={(e) => {
                 e.preventDefault();
                 // Context menu will be handled by the wrapper if needed
@@ -263,7 +489,7 @@ export default function MessageBubble({
                     {renderMessageContent()}
                     
                     {/* Encryption indicator for sensitive messages */}
-                    {message.type !== 'text' && (
+                    {message.type && message.type !== 'text' && (
                         <div className="flex items-center gap-1 mt-2 text-xs opacity-70">
                             <Lock className="h-3 w-3" />
                             <span>End-to-end encrypted</span>
