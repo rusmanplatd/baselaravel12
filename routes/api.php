@@ -653,6 +653,139 @@ Route::middleware('auth:api')->prefix('v1')->group(function () {
             ->middleware('throttle:10,1');
     });
 
+    // Project Management API
+    Route::prefix('projects')->name('projects.')->group(function () {
+        // Project CRUD operations
+        Route::get('/', [\App\Http\Controllers\Api\ProjectController::class, 'index'])
+            ->name('index');
+        Route::post('/', [\App\Http\Controllers\Api\ProjectController::class, 'store'])
+            ->name('store')
+            ->middleware('throttle:20,1');
+        Route::get('{project}', [\App\Http\Controllers\Api\ProjectController::class, 'show'])
+            ->name('show');
+        Route::put('{project}', [\App\Http\Controllers\Api\ProjectController::class, 'update'])
+            ->name('update');
+        Route::delete('{project}', [\App\Http\Controllers\Api\ProjectController::class, 'destroy'])
+            ->name('destroy');
+
+        // Project actions
+        Route::post('{project}/close', [\App\Http\Controllers\Api\ProjectController::class, 'close'])
+            ->name('close');
+        Route::post('{project}/reopen', [\App\Http\Controllers\Api\ProjectController::class, 'reopen'])
+            ->name('reopen');
+
+        // Project fields and statistics
+        Route::get('{project}/fields', [\App\Http\Controllers\Api\ProjectController::class, 'fields'])
+            ->name('fields');
+        Route::post('{project}/fields', [\App\Http\Controllers\Api\ProjectController::class, 'addField'])
+            ->name('add-field');
+        Route::get('{project}/stats', [\App\Http\Controllers\Api\ProjectController::class, 'stats'])
+            ->name('stats');
+
+        // Project items management
+        Route::prefix('{project}/items')->name('items.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Api\ProjectItemController::class, 'index'])
+                ->name('index');
+            Route::post('/', [\App\Http\Controllers\Api\ProjectItemController::class, 'store'])
+                ->name('store')
+                ->middleware('throttle:60,1');
+            Route::get('{item}', [\App\Http\Controllers\Api\ProjectItemController::class, 'show'])
+                ->name('show');
+            Route::put('{item}', [\App\Http\Controllers\Api\ProjectItemController::class, 'update'])
+                ->name('update');
+            Route::delete('{item}', [\App\Http\Controllers\Api\ProjectItemController::class, 'destroy'])
+                ->name('destroy');
+
+            // Item actions
+            Route::post('{item}/assign', [\App\Http\Controllers\Api\ProjectItemController::class, 'assignUser'])
+                ->name('assign');
+            Route::post('{item}/unassign', [\App\Http\Controllers\Api\ProjectItemController::class, 'unassignUser'])
+                ->name('unassign');
+            Route::post('{item}/complete', [\App\Http\Controllers\Api\ProjectItemController::class, 'complete'])
+                ->name('complete');
+            Route::post('{item}/reopen', [\App\Http\Controllers\Api\ProjectItemController::class, 'reopen'])
+                ->name('reopen');
+            Route::post('{item}/archive', [\App\Http\Controllers\Api\ProjectItemController::class, 'archive'])
+                ->name('archive');
+            Route::post('{item}/unarchive', [\App\Http\Controllers\Api\ProjectItemController::class, 'unarchive'])
+                ->name('unarchive');
+            Route::post('{item}/update-status', [\App\Http\Controllers\Api\ProjectItemController::class, 'updateStatus'])
+                ->name('update-status');
+        });
+
+        // Bulk item operations
+        Route::post('{project}/items/update-order', [\App\Http\Controllers\Api\ProjectItemController::class, 'updateOrder'])
+            ->name('items.update-order');
+
+        // Project views management
+        Route::prefix('{project}/views')->name('views.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Api\ProjectViewController::class, 'index'])
+                ->name('index');
+            Route::post('/', [\App\Http\Controllers\Api\ProjectViewController::class, 'store'])
+                ->name('store');
+            Route::get('{view}', [\App\Http\Controllers\Api\ProjectViewController::class, 'show'])
+                ->name('show');
+            Route::put('{view}', [\App\Http\Controllers\Api\ProjectViewController::class, 'update'])
+                ->name('update');
+            Route::delete('{view}', [\App\Http\Controllers\Api\ProjectViewController::class, 'destroy'])
+                ->name('destroy');
+
+            // View actions
+            Route::post('{view}/make-default', [\App\Http\Controllers\Api\ProjectViewController::class, 'makeDefault'])
+                ->name('make-default');
+            Route::get('{view}/items', [\App\Http\Controllers\Api\ProjectViewController::class, 'items'])
+                ->name('items');
+        });
+
+        // Project members management
+        Route::prefix('{project}/members')->name('members.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Api\ProjectMemberController::class, 'index'])
+                ->name('index');
+            Route::post('/', [\App\Http\Controllers\Api\ProjectMemberController::class, 'store'])
+                ->name('store');
+            Route::get('{member}', [\App\Http\Controllers\Api\ProjectMemberController::class, 'show'])
+                ->name('show');
+            Route::put('{member}', [\App\Http\Controllers\Api\ProjectMemberController::class, 'update'])
+                ->name('update');
+            Route::delete('{member}', [\App\Http\Controllers\Api\ProjectMemberController::class, 'destroy'])
+                ->name('destroy');
+
+            // Member actions
+            Route::post('{member}/update-role', [\App\Http\Controllers\Api\ProjectMemberController::class, 'updateRole'])
+                ->name('update-role');
+            Route::get('available-users', [\App\Http\Controllers\Api\ProjectMemberController::class, 'availableUsers'])
+                ->name('available-users');
+        });
+
+        // Leave project
+        Route::post('{project}/leave', [\App\Http\Controllers\Api\ProjectMemberController::class, 'leave'])
+            ->name('leave');
+
+        // Project workflows management
+        Route::prefix('{project}/workflows')->name('workflows.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Api\ProjectWorkflowController::class, 'index'])
+                ->name('index');
+            Route::post('/', [\App\Http\Controllers\Api\ProjectWorkflowController::class, 'store'])
+                ->name('store');
+            Route::get('events', [\App\Http\Controllers\Api\ProjectWorkflowController::class, 'getAvailableEvents'])
+                ->name('events');
+            Route::get('actions', [\App\Http\Controllers\Api\ProjectWorkflowController::class, 'getAvailableActions'])
+                ->name('actions');
+            Route::get('{workflow}', [\App\Http\Controllers\Api\ProjectWorkflowController::class, 'show'])
+                ->name('show');
+            Route::put('{workflow}', [\App\Http\Controllers\Api\ProjectWorkflowController::class, 'update'])
+                ->name('update');
+            Route::delete('{workflow}', [\App\Http\Controllers\Api\ProjectWorkflowController::class, 'destroy'])
+                ->name('destroy');
+            Route::post('{workflow}/toggle', [\App\Http\Controllers\Api\ProjectWorkflowController::class, 'toggle'])
+                ->name('toggle');
+            Route::post('{workflow}/duplicate', [\App\Http\Controllers\Api\ProjectWorkflowController::class, 'duplicate'])
+                ->name('duplicate');
+            Route::post('update-order', [\App\Http\Controllers\Api\ProjectWorkflowController::class, 'updateOrder'])
+                ->name('update-order');
+        });
+    });
+
     // Channel Management API
     Route::prefix('channels')->name('channels.')->group(function () {
         // Public channel discovery (no authentication required)

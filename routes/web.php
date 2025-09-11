@@ -250,6 +250,16 @@ Route::middleware(['auth', 'verified', 'mfa.verified'])->group(function () {
         return Inertia::render('dashboard');
     })->name('dashboard');
 
+    Route::get('projects', function () {
+        return Inertia::render('projects');
+    })->name('projects');
+
+    Route::get('projects/{project}', function (Request $request, $project) {
+        return Inertia::render('project-detail', [
+            'projectId' => $project
+        ]);
+    })->name('projects.show');
+
     Route::get('chat', function () {
         return Inertia::render('chat');
     })->name('chat');

@@ -75,6 +75,11 @@ class Organization extends Model
         return $this->hasMany(\Laravel\Passport\Client::class, 'organization_id');
     }
 
+    public function projects(): HasMany
+    {
+        return $this->hasMany(Project::class);
+    }
+
     public function updatePath(): void
     {
         if ($this->parent_organization_id) {

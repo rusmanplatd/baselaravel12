@@ -423,4 +423,27 @@ class User extends Authenticatable implements HasPasskeys
         // For all other permissions, use the default behavior
         return parent::can($abilities, $arguments);
     }
+
+    public function projectMemberships(): HasMany
+    {
+        return $this->hasMany(ProjectMember::class);
+    }
+
+    public function projects(): BelongsToMany
+    {
+        return $this->belongsToMany(Project::class, 'project_members')
+            ->withPivot(['role', 'permissions', 'added_by', 'added_at'])
+            ->withTimestamps();
+    }
+
+    public function adminProjects(): BelongsToMany
+    {
+        return $this->projects()->wherePivot('role', 'admin');
+    }
+
+    public function assignedProjectItems(): BelongsToMany
+    {
+        return $this->belongsToMany(ProjectItem::class, 'project_item_assignees')
+            ->withTimestamps();
+    }
 }

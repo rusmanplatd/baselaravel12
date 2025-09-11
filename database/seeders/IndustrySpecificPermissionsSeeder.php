@@ -133,6 +133,34 @@ class IndustrySpecificPermissionsSeeder extends Seeder
             'retail.promotions.create' => 'Create promotions',
             'retail.returns.view' => 'View return requests',
             'retail.returns.process' => 'Process returns',
+
+            // Project Management Permissions
+            'projects.view' => 'View projects',
+            'projects.create' => 'Create new projects',
+            'projects.edit' => 'Edit projects',
+            'projects.delete' => 'Delete projects',
+            'projects.admin' => 'Administer projects',
+            'projects.members.view' => 'View project members',
+            'projects.members.add' => 'Add project members',
+            'projects.members.remove' => 'Remove project members',
+            'projects.members.manage' => 'Manage member roles',
+            'projects.items.view' => 'View project items',
+            'projects.items.create' => 'Create project items',
+            'projects.items.edit' => 'Edit project items',
+            'projects.items.delete' => 'Delete project items',
+            'projects.items.assign' => 'Assign project items',
+            'projects.views.view' => 'View project views',
+            'projects.views.create' => 'Create project views',
+            'projects.views.edit' => 'Edit project views',
+            'projects.views.delete' => 'Delete project views',
+            'projects.fields.view' => 'View project fields',
+            'projects.fields.create' => 'Create custom fields',
+            'projects.fields.edit' => 'Edit custom fields',
+            'projects.fields.delete' => 'Delete custom fields',
+            'projects.workflows.view' => 'View project workflows',
+            'projects.workflows.create' => 'Create project workflows',
+            'projects.workflows.edit' => 'Edit project workflows',
+            'projects.workflows.delete' => 'Delete project workflows',
         ];
 
         // Create industry-specific permissions
@@ -376,6 +404,79 @@ class IndustrySpecificPermissionsSeeder extends Seeder
             ],
         ];
 
+        // Project Management Role Permissions
+        $projectRoles = [
+            'Project Manager' => [
+                'projects.view',
+                'projects.create',
+                'projects.edit',
+                'projects.admin',
+                'projects.members.view',
+                'projects.members.add',
+                'projects.members.remove',
+                'projects.members.manage',
+                'projects.items.view',
+                'projects.items.create',
+                'projects.items.edit',
+                'projects.items.delete',
+                'projects.items.assign',
+                'projects.views.view',
+                'projects.views.create',
+                'projects.views.edit',
+                'projects.views.delete',
+                'projects.fields.view',
+                'projects.fields.create',
+                'projects.fields.edit',
+                'projects.fields.delete',
+                'projects.workflows.view',
+                'projects.workflows.create',
+                'projects.workflows.edit',
+                'projects.workflows.delete',
+            ],
+            'Team Lead' => [
+                'projects.view',
+                'projects.edit',
+                'projects.members.view',
+                'projects.members.add',
+                'projects.items.view',
+                'projects.items.create',
+                'projects.items.edit',
+                'projects.items.assign',
+                'projects.views.view',
+                'projects.views.create',
+                'projects.views.edit',
+                'projects.fields.view',
+                'projects.workflows.view',
+            ],
+            'Developer' => [
+                'projects.view',
+                'projects.members.view',
+                'projects.items.view',
+                'projects.items.create',
+                'projects.items.edit',
+                'projects.views.view',
+                'projects.fields.view',
+                'projects.workflows.view',
+            ],
+            'Designer' => [
+                'projects.view',
+                'projects.members.view',
+                'projects.items.view',
+                'projects.items.create',
+                'projects.items.edit',
+                'projects.views.view',
+                'projects.fields.view',
+                'projects.workflows.view',
+            ],
+            'Stakeholder' => [
+                'projects.view',
+                'projects.members.view',
+                'projects.items.view',
+                'projects.views.view',
+                'projects.fields.view',
+            ],
+        ];
+
         $allRolePermissions = array_merge(
             $financialRoles,
             $healthcareRoles,
@@ -383,7 +484,8 @@ class IndustrySpecificPermissionsSeeder extends Seeder
             $governmentRoles,
             $nonProfitRoles,
             $educationalRoles,
-            $retailRoles
+            $retailRoles,
+            $projectRoles
         );
 
         foreach ($allRolePermissions as $roleName => $permissions) {
