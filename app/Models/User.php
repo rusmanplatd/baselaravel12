@@ -18,13 +18,14 @@ use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\LaravelPasskeys\Models\Concerns\HasPasskeys;
 use Spatie\LaravelPasskeys\Models\Concerns\InteractsWithPasskeys;
 use Spatie\Permission\Traits\HasRoles;
+use App\Traits\HasScopedPermissions;
 
 class User extends Authenticatable implements HasPasskeys
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
 
-    use HasRoles, InteractsWithPasskeys;
+    use HasRoles, InteractsWithPasskeys, HasScopedPermissions;
     use HasUlids, LogsActivity;
 
     protected $table = 'sys_users';

@@ -39,6 +39,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => \App\Http\Middleware\CheckPermission::class,
             'permission.check' => \App\Http\Middleware\CheckPermissionMiddleware::class,
             'permission.dynamic' => \App\Http\Middleware\DynamicPermissionMiddleware::class,
+            'permission.scoped' => \App\Http\Middleware\ScopedPermissionMiddleware::class,
+            'role.scoped' => \App\Http\Middleware\ScopedRoleMiddleware::class,
             'chat.permission' => \App\Http\Middleware\ChatPermissionMiddleware::class,
             'role' => \App\Http\Middleware\CheckRole::class,
             'organization.access' => \App\Http\Middleware\CheckOrganizationAccess::class,
