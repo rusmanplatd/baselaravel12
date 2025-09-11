@@ -3,7 +3,7 @@ import { NavMain } from '@/components/nav-main';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, Building, Users, Network, UserCheck, Target, Shield, KeyRound, Award, Activity, Globe, Code, MessageCircle } from 'lucide-react';
+import { BookOpen, Folder, LayoutGrid, Building, Users, Network, UserCheck, Target, Shield, KeyRound, Award, Activity, Globe, Code, MessageCircle, Calendar } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -13,10 +13,20 @@ const mainNavItems: NavItem[] = [
         icon: LayoutGrid,
     },
     {
+        title: 'Projects',
+        href: '/projects',
+        icon: Folder,
+    },
+    {
         title: 'Chat',
         href: '/chat',
         icon: MessageCircle,
         permission: 'chat:read',
+    },
+    {
+        title: 'Calendar',
+        href: '/calendar',
+        icon: Calendar,
     },
     {
         title: 'Organizations',

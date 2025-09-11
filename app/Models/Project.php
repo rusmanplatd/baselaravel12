@@ -220,6 +220,11 @@ class Project extends Model
         ]);
     }
 
+    public function calendars()
+    {
+        return $this->morphMany(Calendar::class, 'calendarable');
+    }
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()

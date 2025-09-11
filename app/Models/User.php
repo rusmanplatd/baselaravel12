@@ -446,4 +446,21 @@ class User extends Authenticatable implements HasPasskeys
         return $this->belongsToMany(ProjectItem::class, 'project_item_assignees')
             ->withTimestamps();
     }
+
+    public function calendars()
+    {
+        return $this->morphMany(Calendar::class, 'calendarable');
+    }
+
+    public function calendarPermissions(): HasMany
+    {
+        return $this->hasMany(CalendarPermission::class);
+    }
+
+    public function sharedCalendars()
+    {
+        return $this->belongsToMany(Calendar::class, 'calendar_permissions')
+            ->withPivot(['permission', 'granted_by'])
+            ->withTimestamps();
+    }
 }

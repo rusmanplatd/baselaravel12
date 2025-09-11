@@ -213,4 +213,9 @@ class Organization extends Model
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
+
+    public function calendars()
+    {
+        return $this->morphMany(Calendar::class, 'calendarable');
+    }
 }

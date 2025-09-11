@@ -869,4 +869,52 @@ Route::middleware('auth:api')->prefix('v1')->group(function () {
             });
         });
     });
+
+    // Calendar Management API
+    Route::prefix('calendars')->name('calendars.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\CalendarController::class, 'index'])
+            ->name('index');
+        Route::post('/', [\App\Http\Controllers\Api\CalendarController::class, 'store'])
+            ->name('store')
+            ->middleware('throttle:20,1');
+        Route::get('{calendar}', [\App\Http\Controllers\Api\CalendarController::class, 'show'])
+            ->name('show');
+        Route::put('{calendar}', [\App\Http\Controllers\Api\CalendarController::class, 'update'])
+            ->name('update');
+        Route::delete('{calendar}', [\App\Http\Controllers\Api\CalendarController::class, 'destroy'])
+            ->name('destroy');
+
+        // Calendar sharing
+        Route::post('{calendar}/share', [\App\Http\Controllers\Api\CalendarController::class, 'shareCalendar'])
+            ->name('share')
+            ->middleware('throttle:10,1');
+        Route::post('{calendar}/revoke-access', [\App\Http\Controllers\Api\CalendarController::class, 'revokeAccess'])
+            ->name('revoke-access')
+            ->middleware('throttle:10,1');
+
+        // Calendar events management
+        Route::prefix('{calendar}/events')->name('events.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Api\CalendarEventController::class, 'index'])
+                ->name('index');
+            Route::post('/', [\App\Http\Controllers\Api\CalendarEventController::class, 'store'])
+                ->name('store')
+                ->middleware('throttle:60,1');
+            Route::get('{event}', [\App\Http\Controllers\Api\CalendarEventController::class, 'show'])
+                ->name('show');
+            Route::put('{event}', [\App\Http\Controllers\Api\CalendarEventController::class, 'update'])
+                ->name('update');
+            Route::delete('{event}', [\App\Http\Controllers\Api\CalendarEventController::class, 'destroy'])
+                ->name('destroy');
+
+            // Event-specific actions
+            Route::post('{event}/attendee-status', [\App\Http\Controllers\Api\CalendarEventController::class, 'updateAttendeeStatus'])
+                ->name('attendee-status')
+                ->middleware('throttle:30,1');
+        });
+    });
+
+    // Global calendar events endpoint (cross-calendar queries)
+    Route::get('events', [\App\Http\Controllers\Api\CalendarEventController::class, 'getEventsInRange'])
+        ->name('events.range')
+        ->middleware('throttle:60,1');
 });

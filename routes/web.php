@@ -285,6 +285,10 @@ Route::middleware(['auth', 'verified', 'mfa.verified'])->group(function () {
         ]);
     })->name('chat.conversation');
 
+    Route::get('calendar', function () {
+        return Inertia::render('calendar');
+    })->name('calendar');
+
     // Generate personal access token for API usage
     Route::post('api/generate-token', function () {
         $user = auth()->user();
