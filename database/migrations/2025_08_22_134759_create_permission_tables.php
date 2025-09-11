@@ -67,23 +67,27 @@ return new class extends Migration
             $table->string('model_type');
             $table->ulid($columnNames['model_morph_key']);
             $table->index([$columnNames['model_morph_key'], 'model_type'], 'model_has_permissions_model_id_model_type_index');
+            $table->string('scope_type')->nullable()->comment('Type of resource this permission assignment is scoped to');
+            $table->ulid('scope_id')->nullable()->comment('ID of the resource this permission assignment is scoped to');
 
             $table->foreign($pivotPermission)
                 ->references('id') // permission id
                 ->on($tableNames['permissions'])
                 ->onDelete('cascade');
+            $table->index(['scope_type', 'scope_id']);
+
             if ($teams) {
                 $table->ulid($columnNames['team_foreign_key'])->nullable();
                 $table->index($columnNames['team_foreign_key'], 'model_has_permissions_team_foreign_key_index');
 
                 $table->unique(
-                    [$columnNames['team_foreign_key'], $pivotPermission, $columnNames['model_morph_key'], 'model_type'],
-                    'model_has_permissions_permission_model_type_primary'
+                    [$columnNames['team_foreign_key'], $pivotPermission, $columnNames['model_morph_key'], 'model_type', 'scope_type', 'scope_id'],
+                    'model_has_permissions_unique_scoped'
                 );
             } else {
-                $table->primary(
-                    [$pivotPermission, $columnNames['model_morph_key'], 'model_type'],
-                    'model_has_permissions_permission_model_type_primary'
+                $table->unique(
+                    [$pivotPermission, $columnNames['model_morph_key'], 'model_type', 'scope_type', 'scope_id'],
+                    'model_has_permissions_unique_scoped'
                 );
             }
         });
@@ -94,23 +98,26 @@ return new class extends Migration
             $table->string('model_type');
             $table->ulid($columnNames['model_morph_key']);
             $table->index([$columnNames['model_morph_key'], 'model_type'], 'model_has_roles_model_id_model_type_index');
+            $table->string('scope_type')->nullable()->comment('Type of resource this permission assignment is scoped to');
+            $table->ulid('scope_id')->nullable()->comment('ID of the resource this permission assignment is scoped to');
 
             $table->foreign($pivotRole)
                 ->references('id') // role id
                 ->on($tableNames['roles'])
                 ->onDelete('cascade');
+            $table->index(['scope_type', 'scope_id']);
             if ($teams) {
                 $table->ulid($columnNames['team_foreign_key'])->nullable();
                 $table->index($columnNames['team_foreign_key'], 'model_has_roles_team_foreign_key_index');
 
-                $table->primary(
-                    [$columnNames['team_foreign_key'], $pivotRole, $columnNames['model_morph_key'], 'model_type'],
-                    'model_has_roles_role_model_type_primary'
+                $table->unique(
+                    [$columnNames['team_foreign_key'], $pivotRole, $columnNames['model_morph_key'], 'model_type', 'scope_type', 'scope_id'],
+                    'model_has_roles_unique_scoped'
                 );
             } else {
-                $table->primary(
-                    [$pivotRole, $columnNames['model_morph_key'], 'model_type'],
-                    'model_has_roles_role_model_type_primary'
+                $table->unique(
+                    [$pivotRole, $columnNames['model_morph_key'], 'model_type', 'scope_type', 'scope_id'],
+                    'model_has_roles_unique_scoped'
                 );
             }
         });

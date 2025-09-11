@@ -50,6 +50,10 @@ class ChatPermissionMiddleware
 
         // Check global permission for advanced permissions (manage, moderate, admin)
         if ($user->can($permission)) {
+            Log::info('ChatPermissionMiddleware: Granted global permission', [
+                'user_id' => $user->id,
+                'permission' => $permission,
+            ]);
             return $next($request);
         }
 
@@ -59,6 +63,11 @@ class ChatPermissionMiddleware
 
             // Check if user has conversation-specific permission
             if ($this->hasConversationPermission($user, $conversationId, $permission)) {
+                Log::info('ChatPermissionMiddleware: Granted conversation permission', [
+                    'user_id' => $user->id,
+                    'permission' => $permission,
+                    'conversation_id' => $conversationId,
+                ]);
                 return $next($request);
             }
         }

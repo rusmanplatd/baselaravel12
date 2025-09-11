@@ -323,82 +323,82 @@ class OrganizationMembershipSeeder extends Seeder
         $roleAssignments = [
             // C-Level Executives - Super Admin or Organization Admin roles
             'john.smith@techcorp.com' => [
-                'roles' => ['Super Admin', 'organization-admin'],
+                'roles' => ['super-admin', 'organization-admin'],
                 'organization_ids' => [$orgIds['techcorp_holdings']],
                 'reason' => 'CEO of TechCorp Holdings - needs full system access',
             ],
             'jane.doe@techcorp.com' => [
-                'roles' => ['Admin', 'organization-admin'],
+                'roles' => ['organization-admin'],
                 'organization_ids' => [$orgIds['techcorp_holdings']],
                 'reason' => 'CFO - needs organization administration access',
             ],
 
             // Managing Directors and CTOs - Admin/Manager role
             'mike.johnson@techcorpsoftware.com' => [
-                'roles' => ['Admin', 'organization-admin'],
+                'roles' => ['organization-admin'],
                 'organization_ids' => [$orgIds['techcorp_software']],
                 'reason' => 'Managing Director of TechCorp Software',
             ],
             'sarah.wilson@techcorpsoftware.com' => [
-                'roles' => ['Admin', 'organization-admin'],
+                'roles' => ['organization-admin'],
                 'organization_ids' => [$orgIds['techcorp_software']],
                 'reason' => 'CTO - needs technical and organizational oversight',
             ],
             'david.brown@techcorpdata.com' => [
-                'roles' => ['Admin', 'organization-admin'],
+                'roles' => ['organization-admin'],
                 'organization_ids' => [$orgIds['techcorp_data']],
                 'reason' => 'Managing Director of TechCorp Data',
             ],
 
             // VPs and Senior Leadership - Manager role
             'robert.taylor@techcorpsoftware.com' => [
-                'roles' => ['Manager', 'manager'],
+                'roles' => ['manager'],
                 'organization_ids' => [$orgIds['techcorp_software']],
                 'reason' => 'VP of Engineering - manages engineering teams',
             ],
             'emily.davis@techcorpdata.com' => [
-                'roles' => ['Manager', 'manager'],
+                'roles' => ['manager'],
                 'organization_ids' => [$orgIds['techcorp_data']],
                 'reason' => 'Head of AI Research - manages research teams',
             ],
             'maria.rodriguez@techcorpsoftware.com' => [
-                'roles' => ['Manager', 'manager'],
+                'roles' => ['manager'],
                 'organization_ids' => [$orgIds['techcorp_software']],
                 'reason' => 'QA Manager - manages quality assurance processes',
             ],
 
             // Senior Developers and Team Leads - Manager role (for their teams)
             'lisa.anderson@techcorpsoftware.com' => [
-                'roles' => ['Manager', 'manager'],
+                'roles' => ['manager'],
                 'organization_ids' => [$orgIds['techcorp_software']],
                 'reason' => 'Senior Frontend Developer - technical team lead',
             ],
             'jennifer.martinez@techcorpsoftware.com' => [
-                'roles' => ['Manager', 'manager'],
+                'roles' => ['manager'],
                 'organization_ids' => [$orgIds['techcorp_software']],
                 'reason' => 'Senior Backend Developer - technical team lead',
             ],
 
-            // Regular employees - User/Employee role
+            // Regular employees - Employee role
             'michael.chen@techcorpsoftware.com' => [
-                'roles' => ['User', 'employee'],
+                'roles' => ['employee'],
                 'organization_ids' => [$orgIds['techcorp_software']],
                 'reason' => 'Frontend Developer',
             ],
             'alex.thompson@techcorpsoftware.com' => [
-                'roles' => ['User', 'employee'],
+                'roles' => ['employee'],
                 'organization_ids' => [$orgIds['techcorp_software']],
                 'reason' => 'Backend Developer',
             ],
 
             // System users with special roles
             'test@example.com' => [
-                'roles' => ['User', 'consultant'],
+                'roles' => ['consultant'],
                 'organization_ids' => [$orgIds['techcorp_software'], $orgIds['techcorp_cloud']],
                 'reason' => 'Technical consultant across multiple organizations',
             ],
             'admin@example.com' => [
-                'roles' => ['Super Admin'],
+                'roles' => ['super-admin'],
                 'organization_ids' => [$orgIds['techcorp_security']],
                 'reason' => 'Security administrator with cross-organization access',
             ],
@@ -556,8 +556,8 @@ class OrganizationMembershipSeeder extends Seeder
             }
 
             try {
-                // Try both naming conventions for board member role
-                $boardRolesToTry = ['board-member', 'Admin', 'Super Admin'];
+                // Try GitHub-style role names for board member role
+                $boardRolesToTry = ['board-member'];
 
                 if ($defaultOrgId) {
                     foreach ($boardRolesToTry as $roleName) {

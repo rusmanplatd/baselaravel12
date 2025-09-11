@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Traits\HasScopedRoles;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -17,14 +18,13 @@ use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\LaravelPasskeys\Models\Concerns\HasPasskeys;
 use Spatie\LaravelPasskeys\Models\Concerns\InteractsWithPasskeys;
-use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements HasPasskeys
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasApiTokens, HasFactory, Notifiable;
 
-    use HasRoles, InteractsWithPasskeys;
+    use HasScopedRoles, InteractsWithPasskeys;
     use HasUlids, LogsActivity;
 
     protected $table = 'sys_users';
@@ -420,7 +420,7 @@ class User extends Authenticatable implements HasPasskeys
             }
         }
 
-        // For all other permissions, use the default behavior
+        // For all other permissions, use the default behavior (which includes scoped permissions via HasScopedRoles trait)
         return parent::can($abilities, $arguments);
     }
 
