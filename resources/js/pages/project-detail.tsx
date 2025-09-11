@@ -25,6 +25,10 @@ import { ProjectTable } from '@/components/projects/ProjectTable';
 import { ProjectMemberManager } from '@/components/projects/ProjectMemberManager';
 import { ProjectFieldsManager } from '@/components/projects/ProjectFieldsManager';
 import { ProjectWorkflowManager } from '@/components/projects/ProjectWorkflowManager';
+import { ProjectIterationManager } from '@/components/projects/ProjectIterationManager';
+import { ProjectPermissionManager } from '@/components/projects/ProjectPermissionManager';
+import { ProjectViewManager } from '@/components/projects/ProjectViewManager';
+import { useProjectPermissions } from '@/hooks/useProjectPermissions';
 
 interface Organization {
     id: string;
@@ -107,6 +111,9 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
     const [activeView, setActiveView] = useState<string>('items');
     const [itemsViewMode, setItemsViewMode] = useState<'table' | 'board'>('table');
     const [currentUser, setCurrentUser] = useState<User | null>(null);
+    
+    // Use the new permissions hook
+    const { permissions, canPerformAction } = useProjectPermissions(projectId);
 
     useEffect(() => {
         fetchProject();
@@ -327,127 +334,70 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
                     <TabsList>
                         <TabsTrigger value="items">Items ({project.items.length})</TabsTrigger>
                         <TabsTrigger value="views">Views ({project.views.length})</TabsTrigger>
+                        <TabsTrigger value="iterations">Iterations</TabsTrigger>
                         <TabsTrigger value="members">Members ({project.members.length})</TabsTrigger>
                         <TabsTrigger value="fields">Fields ({project.fields.length})</TabsTrigger>
-                        <TabsTrigger value="workflows">Workflows ({project.workflows.length})</TabsTrigger>
+                        <TabsTrigger value="workflows">Workflows ({project.workflows?.length || 0})</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="items" className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                                <h3 className="text-lg font-medium">Project Items</h3>
-                                <div className="flex items-center gap-1 border rounded-lg p-1">
-                                    <Button
-                                        variant={itemsViewMode === 'table' ? 'default' : 'ghost'}
-                                        size="sm"
-                                        className="h-7 px-2"
-                                        onClick={() => setItemsViewMode('table')}
-                                    >
-                                        <TableIcon className="h-3 w-3 mr-1" />
-                                        Table
-                                    </Button>
-                                    <Button
-                                        variant={itemsViewMode === 'board' ? 'default' : 'ghost'}
-                                        size="sm"
-                                        className="h-7 px-2"
-                                        onClick={() => setItemsViewMode('board')}
-                                    >
-                                        <LayoutGrid className="h-3 w-3 mr-1" />
-                                        Board
-                                    </Button>
-                                </div>
-                            </div>
-                            <Button size="sm">
-                                <Plus className="h-4 w-4 mr-2" />
-                                Add Item
-                            </Button>
-                        </div>
-                        
-                        {project.items.length === 0 ? (
-                            <Card>
-                                <CardContent className="p-12 text-center">
-                                    <div className="mx-auto w-24 h-24 mb-6 text-muted-foreground/20">
-                                        <Circle className="w-full h-full" />
-                                    </div>
-                                    <h3 className="text-lg font-semibold mb-2">No items yet</h3>
-                                    <p className="text-muted-foreground mb-6">
-                                        Create your first item to start tracking work in this project.
-                                    </p>
-                                    <Button>
-                                        <Plus className="h-4 w-4 mr-2" />
-                                        Create Item
-                                    </Button>
-                                </CardContent>
-                            </Card>
-                        ) : itemsViewMode === 'board' ? (
-                            <ProjectBoard
-                                items={project.items}
-                                projectId={projectId}
-                                onItemClick={(item) => console.log('Item clicked:', item)}
-                                onAddItem={(status) => console.log('Add item to:', status)}
-                                onItemUpdate={handleItemUpdate}
-                            />
-                        ) : (
-                            <ProjectTable
-                                items={project.items}
-                                onItemClick={(item) => console.log('Item clicked:', item)}
-                                onSelectionChange={(selectedIds) => console.log('Selection changed:', selectedIds)}
-                            />
-                        )}
+                        <ProjectViewManager
+                            projectId={projectId}
+                            items={project.items}
+                            fields={project.fields}
+                            views={project.views}
+                            canEdit={canPerformAction('create-view')}
+                            onViewUpdate={(views) => setProject(prev => prev ? { ...prev, views } : prev)}
+                            onItemUpdate={handleItemUpdate}
+                        />
                     </TabsContent>
 
                     <TabsContent value="views" className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-lg font-medium">Project Views</h3>
-                            <Button size="sm">
-                                <Plus className="h-4 w-4 mr-2" />
-                                Create View
+                        <div className="text-center py-8">
+                            <p className="text-muted-foreground">
+                                Views are now managed in the Items tab. Switch to the Items tab to create and manage different views of your project.
+                            </p>
+                            <Button 
+                                variant="outline" 
+                                onClick={() => setActiveView('items')}
+                                className="mt-4"
+                            >
+                                Go to Items & Views
                             </Button>
-                        </div>
-                        
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                            {project.views.map((view) => (
-                                <Card key={view.id} className="hover:shadow-sm transition-shadow cursor-pointer">
-                                    <CardHeader>
-                                        <div className="flex items-center justify-between">
-                                            <CardTitle className="text-base">{view.name}</CardTitle>
-                                            <div className="flex gap-1">
-                                                {view.is_default && (
-                                                    <Badge variant="outline" className="text-xs">Default</Badge>
-                                                )}
-                                                <Badge variant="secondary" className="text-xs capitalize">
-                                                    {view.layout}
-                                                </Badge>
-                                            </div>
-                                        </div>
-                                    </CardHeader>
-                                </Card>
-                            ))}
                         </div>
                     </TabsContent>
 
-                    <TabsContent value="members" className="space-y-4">
-                        <ProjectMemberManager
+                    <TabsContent value="iterations" className="space-y-4">
+                        <ProjectIterationManager
                             projectId={projectId}
-                            members={project.members}
-                            canAdmin={currentUser ? 
-                                project.creator.id === currentUser.id || 
-                                project.members.some(m => m.user.id === currentUser.id && m.role === 'admin')
-                                : false
-                            }
-                            onMembersUpdate={handleMembersUpdate}
+                            canAdmin={canPerformAction('create-iteration')}
                         />
+                    </TabsContent>
+
+                    <TabsContent value="members" className="space-y-4">
+                        {currentUser ? (
+                            <ProjectPermissionManager
+                                projectId={projectId}
+                                members={project.members}
+                                currentUser={currentUser}
+                                canAdmin={canPerformAction('invite-member')}
+                                onMembersUpdate={handleMembersUpdate}
+                            />
+                        ) : (
+                            <ProjectMemberManager
+                                projectId={projectId}
+                                members={project.members}
+                                canAdmin={canPerformAction('invite-member')}
+                                onMembersUpdate={handleMembersUpdate}
+                            />
+                        )}
                     </TabsContent>
 
                     <TabsContent value="fields" className="space-y-4">
                         <ProjectFieldsManager
                             projectId={projectId}
                             fields={project.fields}
-                            canAdmin={currentUser ? 
-                                project.creator.id === currentUser.id || 
-                                project.members.some(m => m.user.id === currentUser.id && m.role === 'admin')
-                                : false
-                            }
+                            canAdmin={canPerformAction('create-field')}
                             onFieldsUpdate={handleFieldsUpdate}
                         />
                     </TabsContent>
@@ -455,12 +405,8 @@ export default function ProjectDetail({ projectId }: ProjectDetailProps) {
                     <TabsContent value="workflows" className="space-y-4">
                         <ProjectWorkflowManager
                             projectId={projectId}
-                            workflows={project.workflows}
-                            canAdmin={currentUser ? 
-                                project.creator.id === currentUser.id || 
-                                project.members.some(m => m.user.id === currentUser.id && m.role === 'admin')
-                                : false
-                            }
+                            workflows={project.workflows || []}
+                            canAdmin={canPerformAction('create-workflow')}
                             onWorkflowsUpdate={handleWorkflowsUpdate}
                         />
                     </TabsContent>

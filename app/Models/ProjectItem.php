@@ -26,12 +26,18 @@ class ProjectItem extends Model
         'updated_by',
         'completed_at',
         'archived_at',
+        'iteration_id',
+        'labels',
+        'estimate',
+        'progress',
     ];
 
     protected $casts = [
         'field_values' => 'array',
         'completed_at' => 'datetime',
         'archived_at' => 'datetime',
+        'labels' => 'array',
+        'progress' => 'decimal:2',
     ];
 
     public function project(): BelongsTo
@@ -53,6 +59,11 @@ class ProjectItem extends Model
     {
         return $this->belongsToMany(User::class, 'project_item_assignees')
             ->withTimestamps();
+    }
+
+    public function iteration(): BelongsTo
+    {
+        return $this->belongsTo(ProjectIteration::class, 'iteration_id');
     }
 
     public function scopeByStatus($query, string $status)
@@ -156,7 +167,100 @@ class ProjectItem extends Model
 
     public function canEdit(User $user): bool
     {
-        return $this->project->canEdit($user);
+        return $user->hasPermissionTo('project.item.edit', $this->project);
+    }
+
+    public function canDelete(User $user): bool
+    {
+        return $user->hasPermissionTo('project.item.delete', $this->project);
+    }
+
+    public function canAssign(User $user): bool
+    {
+        return $user->hasPermissionTo('project.item.assign', $this->project);
+    }
+
+    public function canChangeStatus(User $user): bool
+    {
+        return $user->hasPermissionTo('project.item.status', $this->project);
+    }
+
+    public function canArchive(User $user): bool
+    {
+        return $user->hasPermissionTo('project.item.archive', $this->project);
+    }
+
+    public function canConvert(User $user): bool
+    {
+        return $user->hasPermissionTo('project.item.convert', $this->project);
+    }
+
+    public function convertToIssue(): void
+    {
+        if ($this->isDraft()) {
+            $this->update(['type' => 'issue']);
+        }
+    }
+
+    public function addLabel(string $label): void
+    {
+        $labels = $this->labels ?? [];
+        if (!in_array($label, $labels)) {
+            $labels[] = $label;
+            $this->update(['labels' => $labels]);
+        }
+    }
+
+    public function removeLabel(string $label): void
+    {
+        $labels = $this->labels ?? [];
+        $labels = array_values(array_filter($labels, fn($l) => $l !== $label));
+        $this->update(['labels' => $labels]);
+    }
+
+    public function hasLabel(string $label): bool
+    {
+        return in_array($label, $this->labels ?? []);
+    }
+
+    public function updateProgress(float $progress): void
+    {
+        $this->update(['progress' => max(0, min(100, $progress))]);
+    }
+
+    public function setEstimate(int $estimate): void
+    {
+        $this->update(['estimate' => $estimate]);
+    }
+
+    public function assignToIteration(ProjectIteration $iteration): void
+    {
+        $this->update(['iteration_id' => $iteration->id]);
+    }
+
+    public function removeFromIteration(): void
+    {
+        $this->update(['iteration_id' => null]);
+    }
+
+    public function scopeInIteration($query, $iterationId)
+    {
+        return $query->where('iteration_id', $iterationId);
+    }
+
+    public function scopeWithLabel($query, string $label)
+    {
+        return $query->where('labels', 'like', '%"' . $label . '"%');
+    }
+
+    public function scopeWithEstimate($query)
+    {
+        return $query->whereNotNull('estimate');
+    }
+
+    public function scopeByProgress($query, $operator = '>=', $value = 0)
+    {
+        return $query->where('progress', $operator, $value);
     }
 
     public function isAssignedTo(User $user): bool

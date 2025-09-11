@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class Project extends Model
 {
@@ -79,6 +81,21 @@ class Project extends Model
             ->withTimestamps();
     }
 
+    public function iterations(): HasMany
+    {
+        return $this->hasMany(ProjectIteration::class);
+    }
+
+    public function savedFilters(): HasMany
+    {
+        return $this->hasMany(ProjectSavedFilter::class);
+    }
+
+    public function insights(): HasMany
+    {
+        return $this->hasMany(ProjectInsight::class);
+    }
+
     public function admins(): BelongsToMany
     {
         return $this->users()->wherePivot('role', 'admin');
@@ -135,30 +152,91 @@ class Project extends Model
 
     public function canEdit(User $user): bool
     {
-        $membership = $this->members()->where('user_id', $user->id)->first();
-        
-        return $membership && in_array($membership->role, ['admin', 'write']);
+        return $user->hasPermissionTo('project.edit', $this);
     }
 
     public function canAdmin(User $user): bool
     {
-        $membership = $this->members()->where('user_id', $user->id)->first();
-        
-        return $membership && $membership->role === 'admin';
+        return $user->hasPermissionTo('project.delete', $this) || 
+               $user->hasPermissionTo('project.settings', $this);
     }
 
-    public function addMember(User $user, string $role = 'read', array $permissions = [], User $addedBy = null): ProjectMember
+    public function userHasPermission(User $user, string $permission): bool
     {
-        return $this->members()->create([
+        return $user->hasPermissionTo($permission, $this);
+    }
+
+    public function userHasRole(User $user, string $role): bool
+    {
+        return $user->hasRole($role, $this);
+    }
+
+    public function assignRoleToUser(User $user, string $roleName): void
+    {
+        $role = Role::where('name', $roleName)->first();
+        if ($role) {
+            $user->assignRole($role, $this);
+        }
+    }
+
+    public function removeRoleFromUser(User $user, string $roleName): void
+    {
+        $role = Role::where('name', $roleName)->first();
+        if ($role) {
+            $user->removeRole($role, $this);
+        }
+    }
+
+    public function givePermissionToUser(User $user, string $permissionName): void
+    {
+        $permission = Permission::where('name', $permissionName)->first();
+        if ($permission) {
+            $user->givePermissionTo($permission, $this);
+        }
+    }
+
+    public function revokePermissionFromUser(User $user, string $permissionName): void
+    {
+        $permission = Permission::where('name', $permissionName)->first();
+        if ($permission) {
+            $user->revokePermissionTo($permission, $this);
+        }
+    }
+
+    public function addMember(User $user, string $role = 'project.viewer', array $permissions = [], User $addedBy = null): ProjectMember
+    {
+        $member = $this->members()->create([
             'user_id' => $user->id,
             'role' => $role,
             'permissions' => $permissions,
             'added_by' => $addedBy?->id ?? auth()->id(),
         ]);
+
+        // Assign scoped role to user
+        $this->assignRoleToUser($user, $role);
+
+        // Give additional permissions if specified
+        foreach ($permissions as $permission) {
+            $this->givePermissionToUser($user, $permission);
+        }
+
+        return $member;
     }
 
     public function removeMember(User $user): bool
     {
+        // Remove scoped roles and permissions
+        $member = $this->members()->where('user_id', $user->id)->first();
+        if ($member) {
+            // Remove the role
+            $this->removeRoleFromUser($user, $member->role);
+            
+            // Remove any additional permissions
+            foreach ($member->permissions ?? [] as $permission) {
+                $this->revokePermissionFromUser($user, $permission);
+            }
+        }
+
         return $this->members()->where('user_id', $user->id)->delete() > 0;
     }
 

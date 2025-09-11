@@ -761,6 +761,35 @@ Route::middleware('auth:api')->prefix('v1')->group(function () {
         Route::post('{project}/leave', [\App\Http\Controllers\Api\ProjectMemberController::class, 'leave'])
             ->name('leave');
 
+        // Project iterations management (GitHub Projects v2 style)
+        Route::prefix('{project}/iterations')->name('iterations.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Api\ProjectIterationController::class, 'index'])
+                ->name('index');
+            Route::post('/', [\App\Http\Controllers\Api\ProjectIterationController::class, 'store'])
+                ->name('store')
+                ->middleware('throttle:10,1');
+            Route::get('{iteration}', [\App\Http\Controllers\Api\ProjectIterationController::class, 'show'])
+                ->name('show');
+            Route::put('{iteration}', [\App\Http\Controllers\Api\ProjectIterationController::class, 'update'])
+                ->name('update');
+            Route::delete('{iteration}', [\App\Http\Controllers\Api\ProjectIterationController::class, 'destroy'])
+                ->name('destroy');
+            
+            // Iteration actions
+            Route::post('{iteration}/start', [\App\Http\Controllers\Api\ProjectIterationController::class, 'start'])
+                ->name('start');
+            Route::post('{iteration}/complete', [\App\Http\Controllers\Api\ProjectIterationController::class, 'complete'])
+                ->name('complete');
+            Route::post('{iteration}/cancel', [\App\Http\Controllers\Api\ProjectIterationController::class, 'cancel'])
+                ->name('cancel');
+            
+            // Iteration items management
+            Route::post('{iteration}/items', [\App\Http\Controllers\Api\ProjectIterationController::class, 'addItems'])
+                ->name('add-items');
+            Route::delete('{iteration}/items', [\App\Http\Controllers\Api\ProjectIterationController::class, 'removeItems'])
+                ->name('remove-items');
+        });
+
         // Project workflows management
         Route::prefix('{project}/workflows')->name('workflows.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Api\ProjectWorkflowController::class, 'index'])

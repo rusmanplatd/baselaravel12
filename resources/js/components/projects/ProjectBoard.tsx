@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Plus, User, Calendar } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Plus, User, Calendar, Tag, Timer, Zap, Users, BarChart3 } from 'lucide-react';
 import apiService from '@/services/ApiService';
 
 interface User {
@@ -21,6 +23,13 @@ interface ProjectItem {
     field_values: Record<string, any>;
     creator: User;
     assignees: User[];
+    labels?: string[];
+    estimate?: number;
+    progress?: number;
+    iteration?: {
+        id: string;
+        title: string;
+    };
     created_at: string;
     updated_at: string;
     completed_at?: string;
@@ -163,17 +172,62 @@ export function ProjectBoard({ items, onItemClick, onAddItem, projectId, onItemU
                                         </CardContent>
                                     )}
 
-                                    <CardContent className="p-3 pt-0">
+                                    <CardContent className="p-3 pt-0 space-y-3">
+                                        {/* Labels */}
+                                        {item.labels && item.labels.length > 0 && (
+                                            <div className="flex flex-wrap gap-1">
+                                                {item.labels.slice(0, 3).map((label, index) => (
+                                                    <Badge key={index} variant="outline" className="text-xs px-1 py-0">
+                                                        <Tag className="h-2 w-2 mr-1" />
+                                                        {label}
+                                                    </Badge>
+                                                ))}
+                                                {item.labels.length > 3 && (
+                                                    <Badge variant="outline" className="text-xs px-1 py-0">
+                                                        +{item.labels.length - 3}
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {/* Progress */}
+                                        {typeof item.progress === 'number' && item.progress > 0 && (
+                                            <div className="space-y-1">
+                                                <div className="flex items-center justify-between text-xs">
+                                                    <span className="text-muted-foreground">Progress</span>
+                                                    <span className="font-medium">{item.progress}%</span>
+                                                </div>
+                                                <Progress value={item.progress} className="h-1" />
+                                            </div>
+                                        )}
+
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
                                                 {item.assignees.length > 0 && (
                                                     <div className="flex items-center gap-1">
-                                                        <User className="h-3 w-3 text-muted-foreground" />
+                                                        <div className="flex -space-x-1">
+                                                            {item.assignees.slice(0, 2).map((assignee) => (
+                                                                <Avatar key={assignee.id} className="h-4 w-4 border border-background">
+                                                                    <AvatarImage src={assignee.avatar} alt={assignee.name} />
+                                                                    <AvatarFallback className="text-xs">
+                                                                        {assignee.name.charAt(0)}
+                                                                    </AvatarFallback>
+                                                                </Avatar>
+                                                            ))}
+                                                            {item.assignees.length > 2 && (
+                                                                <div className="h-4 w-4 rounded-full bg-muted border border-background flex items-center justify-center text-xs">
+                                                                    +{item.assignees.length - 2}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                
+                                                {item.estimate && (
+                                                    <div className="flex items-center gap-1">
+                                                        <Timer className="h-3 w-3 text-muted-foreground" />
                                                         <span className="text-xs text-muted-foreground">
-                                                            {item.assignees.length > 1 
-                                                                ? `${item.assignees[0].name} +${item.assignees.length - 1}`
-                                                                : item.assignees[0].name
-                                                            }
+                                                            {item.estimate}h
                                                         </span>
                                                     </div>
                                                 )}
@@ -187,20 +241,30 @@ export function ProjectBoard({ items, onItemClick, onAddItem, projectId, onItemU
                                             </div>
                                         </div>
 
-                                        {item.field_values?.priority && (
-                                            <div className="mt-2">
-                                                <Badge 
-                                                    variant={
-                                                        item.field_values.priority === 'urgent' ? 'destructive' :
-                                                        item.field_values.priority === 'high' ? 'default' :
-                                                        'secondary'
-                                                    }
-                                                    className="text-xs capitalize"
-                                                >
-                                                    {item.field_values.priority}
-                                                </Badge>
-                                            </div>
-                                        )}
+                                        <div className="flex items-center justify-between">
+                                            {item.field_values?.priority && (
+                                                <div className="flex items-center gap-1">
+                                                    <Zap className="h-3 w-3 text-muted-foreground" />
+                                                    <Badge 
+                                                        variant={
+                                                            item.field_values.priority === 'urgent' ? 'destructive' :
+                                                            item.field_values.priority === 'high' ? 'default' :
+                                                            'secondary'
+                                                        }
+                                                        className="text-xs capitalize"
+                                                    >
+                                                        {item.field_values.priority}
+                                                    </Badge>
+                                                </div>
+                                            )}
+
+                                            {item.iteration && (
+                                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                                    <BarChart3 className="h-3 w-3" />
+                                                    <span className="truncate max-w-20">{item.iteration.title}</span>
+                                                </div>
+                                            )}
+                                        </div>
                                     </CardContent>
                                 </Card>
                             ))}

@@ -14,7 +14,8 @@ return new class extends Migration
             $table->string('name');
             $table->enum('type', [
                 'text', 'number', 'date', 'single_select', 'multi_select', 
-                'assignees', 'repository', 'milestone', 'iteration'
+                'assignees', 'repository', 'milestone', 'iteration', 'labels',
+                'progress', 'estimate', 'url', 'status', 'priority'
             ]);
             $table->json('options')->nullable(); // For select fields, stores available options
             $table->json('settings')->nullable(); // Field-specific settings
