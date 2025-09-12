@@ -9,7 +9,7 @@ import {
   Home,
   Loader2
 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import apiService from '@/services/ApiService';
 
 interface Folder {
@@ -151,11 +151,7 @@ export default function FolderTree({
       setFolders(response.tree || []);
     } catch (error) {
       console.error('Failed to load folder tree:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load folder structure',
-        variant: 'destructive'
-      });
+      toast.error('Failed to load folder structure');
     } finally {
       setIsLoading(false);
     }
@@ -222,11 +218,7 @@ export default function FolderTree({
       setFolders(updateFolderChildren(folders));
     } catch (error) {
       console.error('Failed to load folder children:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load subfolder contents',
-        variant: 'destructive'
-      });
+      toast.error('Failed to load subfolder contents');
     }
   };
 

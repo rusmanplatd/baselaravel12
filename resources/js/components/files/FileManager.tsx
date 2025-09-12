@@ -17,7 +17,7 @@ import {
   Eye,
   MoreHorizontal
 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import apiService from '@/services/ApiService';
 import FileList from './FileList';
 import FolderTree from './FolderTree';
@@ -113,11 +113,7 @@ export default function FileManager({ className = '' }: FileManagerProps) {
       setFolders(foldersResponse.folders || []);
     } catch (error) {
       console.error('Failed to load files:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load files and folders',
-        variant: 'destructive'
-      });
+      toast.error('Failed to load files and folders');
     } finally {
       setIsLoading(false);
     }
@@ -142,19 +138,12 @@ export default function FileManager({ className = '' }: FileManagerProps) {
 
       await Promise.all(uploads);
       
-      toast({
-        title: 'Success',
-        description: `Uploaded ${uploadedFiles.length} file(s) successfully`
-      });
+      toast.success(`Uploaded ${uploadedFiles.length} file(s) successfully`);
       
       loadData();
     } catch (error) {
       console.error('Upload failed:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to upload files',
-        variant: 'destructive'
-      });
+      toast.error('Failed to upload files');
     }
   };
 
@@ -167,19 +156,12 @@ export default function FileManager({ className = '' }: FileManagerProps) {
         parent_id: currentFolder?.id || null
       });
 
-      toast({
-        title: 'Success',
-        description: 'Folder created successfully'
-      });
+      toast.success('Folder created successfully');
 
       loadData();
     } catch (error) {
       console.error('Failed to create folder:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to create folder',
-        variant: 'destructive'
-      });
+      toast.error('Failed to create folder');
     }
   };
 
@@ -223,11 +205,7 @@ export default function FileManager({ className = '' }: FileManagerProps) {
       }
     } catch (error) {
       console.error('Download failed:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to download file',
-        variant: 'destructive'
-      });
+      toast.error('Failed to download file');
     }
   };
 
@@ -236,19 +214,12 @@ export default function FileManager({ className = '' }: FileManagerProps) {
       const endpoint = type === 'file' ? `/api/v1/files/${item.id}` : `/api/v1/folders/${item.id}`;
       await apiService.delete(endpoint);
 
-      toast({
-        title: 'Success',
-        description: `${type === 'file' ? 'File' : 'Folder'} deleted successfully`
-      });
+      toast.success(`${type === 'file' ? 'File' : 'Folder'} deleted successfully`);
 
       loadData();
     } catch (error) {
       console.error('Delete failed:', error);
-      toast({
-        title: 'Error',
-        description: `Failed to delete ${type}`,
-        variant: 'destructive'
-      });
+      toast.error(`Failed to delete ${type}`);
     }
   };
 

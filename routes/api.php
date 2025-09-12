@@ -998,4 +998,68 @@ Route::middleware('auth:api')->prefix('v1')->group(function () {
     Route::get('events', [\App\Http\Controllers\Api\CalendarEventController::class, 'getEventsInRange'])
         ->name('events.range')
         ->middleware('throttle:60,1');
+
+    // Documents API
+    Route::prefix('documents')->name('api.documents.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Api\DocumentController::class, 'index'])
+            ->name('index')
+            ->middleware('throttle:60,1');
+        Route::post('/', [\App\Http\Controllers\Api\DocumentController::class, 'store'])
+            ->name('store')
+            ->middleware('throttle:30,1');
+        
+        Route::prefix('{document}')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Api\DocumentController::class, 'show'])
+                ->name('show');
+            Route::put('/', [\App\Http\Controllers\Api\DocumentController::class, 'update'])
+                ->name('update');
+            Route::delete('/', [\App\Http\Controllers\Api\DocumentController::class, 'destroy'])
+                ->name('destroy');
+            
+            // Document synchronization
+            Route::put('sync', [\App\Http\Controllers\Api\DocumentController::class, 'sync'])
+                ->name('sync')
+                ->middleware('throttle:120,1');
+            
+            // Document permissions
+            Route::get('permissions', [\App\Http\Controllers\Api\DocumentController::class, 'permissions'])
+                ->name('permissions');
+            
+            // Collaborators management
+            Route::get('collaborators', [\App\Http\Controllers\Api\DocumentController::class, 'collaborators'])
+                ->name('collaborators');
+            Route::post('collaborators', [\App\Http\Controllers\Api\DocumentController::class, 'addCollaborator'])
+                ->name('collaborators.add')
+                ->middleware('throttle:30,1');
+            Route::put('collaborators/{collaborator}', [\App\Http\Controllers\Api\DocumentController::class, 'updateCollaborator'])
+                ->name('collaborators.update');
+            Route::delete('collaborators/{collaborator}', [\App\Http\Controllers\Api\DocumentController::class, 'removeCollaborator'])
+                ->name('collaborators.remove');
+            Route::put('collaborators/{userId}/presence', [\App\Http\Controllers\Api\DocumentController::class, 'updatePresence'])
+                ->name('collaborators.presence')
+                ->middleware('throttle:240,1');
+            
+            // Collaboration sessions
+            Route::get('collaboration-sessions', [\App\Http\Controllers\Api\DocumentController::class, 'collaborationSessions'])
+                ->name('collaboration-sessions');
+            Route::post('collaboration-sessions', [\App\Http\Controllers\Api\DocumentController::class, 'createCollaborationSession'])
+                ->name('collaboration-sessions.create')
+                ->middleware('throttle:60,1');
+            
+            // Revisions and version history
+            Route::get('revisions', [\App\Http\Controllers\Api\DocumentController::class, 'revisions'])
+                ->name('revisions');
+            Route::post('revisions', [\App\Http\Controllers\Api\DocumentController::class, 'createRevision'])
+                ->name('revisions.create')
+                ->middleware('throttle:30,1');
+            Route::post('revisions/{revision}/restore', [\App\Http\Controllers\Api\DocumentController::class, 'restoreRevision'])
+                ->name('revisions.restore')
+                ->middleware('throttle:10,1');
+            
+            // Document duplication
+            Route::post('duplicate', [\App\Http\Controllers\Api\DocumentController::class, 'duplicate'])
+                ->name('duplicate')
+                ->middleware('throttle:10,1');
+        });
+    });
 });
