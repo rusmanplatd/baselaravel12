@@ -7,6 +7,11 @@ Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');
 
+// File Manager route
+Route::middleware(['auth', 'verified'])->get('/file-manager', function () {
+    return Inertia::render('file-manager');
+})->name('file-manager');
+
 // Public API documentation
 Route::get('developer/api-reference', [\App\Http\Controllers\DeveloperController::class, 'apiReference'])->name('developer.api-reference');
 

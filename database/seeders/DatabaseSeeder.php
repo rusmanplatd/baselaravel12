@@ -39,5 +39,10 @@ class DatabaseSeeder extends Seeder
             PersonalAccessTokenSeeder::class,
             OAuthClientSeeder::class, // Ensure OAuth clients are properly seeded
         ]);
+
+        // File system permissions
+        $this->call([
+            FileSystemPermissionsSeeder::class,
+        ]);
     }
 }

@@ -39,6 +39,26 @@ Route::prefix('v1')->group(function () {
         Route::get('villages', [\App\Http\Controllers\Api\Geo\VillageController::class, 'index'])->name('villages.index');
     });
 
+    // File Management API routes (authenticated)
+    Route::middleware('auth:sanctum')->group(function () {
+        // Files
+        Route::apiResource('files', \App\Http\Controllers\Api\FileController::class);
+        Route::get('files/{file}/download', [\App\Http\Controllers\Api\FileController::class, 'download'])->name('api.files.download');
+        Route::get('files/{file}/thumbnail', [\App\Http\Controllers\Api\FileController::class, 'thumbnail'])->name('api.files.thumbnail');
+        Route::post('files/{file}/copy', [\App\Http\Controllers\Api\FileController::class, 'copy'])->name('api.files.copy');
+        Route::post('files/{file}/move', [\App\Http\Controllers\Api\FileController::class, 'move'])->name('api.files.move');
+        Route::get('files/{file}/versions', [\App\Http\Controllers\Api\FileController::class, 'versions'])->name('api.files.versions');
+        Route::post('files/{id}/restore', [\App\Http\Controllers\Api\FileController::class, 'restore'])->name('api.files.restore');
+        Route::get('files/search', [\App\Http\Controllers\Api\FileController::class, 'search'])->name('api.files.search');
+        Route::get('files/stats', [\App\Http\Controllers\Api\FileController::class, 'stats'])->name('api.files.stats');
+
+        // Folders
+        Route::apiResource('folders', \App\Http\Controllers\Api\FolderController::class);
+        Route::get('folders/tree', [\App\Http\Controllers\Api\FolderController::class, 'tree'])->name('api.folders.tree');
+        Route::post('folders/{folder}/copy', [\App\Http\Controllers\Api\FolderController::class, 'copy'])->name('api.folders.copy');
+        Route::post('folders/{folder}/move', [\App\Http\Controllers\Api\FolderController::class, 'move'])->name('api.folders.move');
+    });
+
     Route::apiResource('organizations', \App\Http\Controllers\Api\OrganizationController::class)->names([
         'index' => 'api.organizations.index',
         'store' => 'api.organizations.store',
@@ -48,6 +68,38 @@ Route::prefix('v1')->group(function () {
     ]);
     Route::get('organizations/hierarchy/tree', [\App\Http\Controllers\Api\OrganizationController::class, 'getHierarchy']);
     Route::get('organizations/type/{type}', [\App\Http\Controllers\Api\OrganizationController::class, 'getByType']);
+
+    // File Management API
+    Route::prefix('files')->name('api.files.')->group(function () {
+        Route::get('search', [\App\Http\Controllers\Api\FileController::class, 'search'])->name('search');
+        Route::get('stats', [\App\Http\Controllers\Api\FileController::class, 'stats'])->name('stats');
+        Route::post('{file}/restore', [\App\Http\Controllers\Api\FileController::class, 'restore'])->name('restore');
+        Route::post('{file}/copy', [\App\Http\Controllers\Api\FileController::class, 'copy'])->name('copy');
+        Route::post('{file}/move', [\App\Http\Controllers\Api\FileController::class, 'move'])->name('move');
+        Route::get('{file}/download', [\App\Http\Controllers\Api\FileController::class, 'download'])->name('download');
+        Route::get('{file}/thumbnail', [\App\Http\Controllers\Api\FileController::class, 'thumbnail'])->name('thumbnail');
+        Route::get('{file}/versions', [\App\Http\Controllers\Api\FileController::class, 'versions'])->name('versions');
+    });
+    Route::apiResource('files', \App\Http\Controllers\Api\FileController::class)->names([
+        'index' => 'api.files.index',
+        'store' => 'api.files.store',
+        'show' => 'api.files.show',
+        'update' => 'api.files.update',
+        'destroy' => 'api.files.destroy',
+    ]);
+
+    Route::prefix('folders')->name('api.folders.')->group(function () {
+        Route::get('tree', [\App\Http\Controllers\Api\FolderController::class, 'tree'])->name('tree');
+        Route::post('{folder}/copy', [\App\Http\Controllers\Api\FolderController::class, 'copy'])->name('copy');
+        Route::post('{folder}/move', [\App\Http\Controllers\Api\FolderController::class, 'move'])->name('move');
+    });
+    Route::apiResource('folders', \App\Http\Controllers\Api\FolderController::class)->names([
+        'index' => 'api.folders.index',
+        'store' => 'api.folders.store',
+        'show' => 'api.folders.show',
+        'update' => 'api.folders.update',
+        'destroy' => 'api.folders.destroy',
+    ]);
 
     // Organization member management
     Route::get('organizations/{organization}/members', [\App\Http\Controllers\Api\OrganizationController::class, 'members']);

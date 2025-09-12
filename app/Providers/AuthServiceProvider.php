@@ -10,6 +10,8 @@ class AuthServiceProvider extends ServiceProvider
     protected $policies = [
         \App\Models\Calendar::class => \App\Policies\CalendarPolicy::class,
         \App\Models\CalendarEvent::class => \App\Policies\CalendarEventPolicy::class,
+        \App\Models\File::class => \App\Policies\FilePolicy::class,
+        \App\Models\Folder::class => \App\Policies\FolderPolicy::class,
     ];
 
     public function boot(): void
