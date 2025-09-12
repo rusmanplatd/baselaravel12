@@ -294,6 +294,10 @@ Route::middleware(['auth', 'verified', 'mfa.verified'])->group(function () {
         return Inertia::render('calendar');
     })->name('calendar');
 
+    // Meeting routes
+    Route::get('meetings/{meeting}/join', [\App\Http\Controllers\MeetingController::class, 'join'])->name('meetings.join');
+    Route::get('meetings/{meeting}/host', [\App\Http\Controllers\MeetingController::class, 'host'])->name('meetings.host');
+
     // Generate personal access token for API usage
     Route::post('api/generate-token', function () {
         $user = auth()->user();

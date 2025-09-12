@@ -1062,4 +1062,47 @@ Route::middleware('auth:api')->prefix('v1')->group(function () {
                 ->middleware('throttle:10,1');
         });
     });
+
+    // Meeting Management API
+    Route::prefix('meetings')->name('meetings.')->group(function () {
+        // Meeting CRUD operations
+        Route::get('/', [\App\Http\Controllers\Api\MeetingController::class, 'index'])
+            ->name('index');
+        Route::post('from-calendar-event', [\App\Http\Controllers\Api\MeetingController::class, 'createFromCalendarEvent'])
+            ->name('create-from-calendar')
+            ->middleware('throttle:20,1');
+        Route::get('upcoming', [\App\Http\Controllers\Api\MeetingController::class, 'upcoming'])
+            ->name('upcoming');
+        Route::get('{meeting}', [\App\Http\Controllers\Api\MeetingController::class, 'show'])
+            ->name('show');
+
+        // Meeting actions
+        Route::post('{meeting}/start', [\App\Http\Controllers\Api\MeetingController::class, 'start'])
+            ->name('start')
+            ->middleware('throttle:30,1');
+        Route::post('{meeting}/join', [\App\Http\Controllers\Api\MeetingController::class, 'join'])
+            ->name('join')
+            ->middleware('throttle:60,1');
+        Route::post('{meeting}/end', [\App\Http\Controllers\Api\MeetingController::class, 'end'])
+            ->name('end')
+            ->middleware('throttle:30,1');
+        Route::post('{meeting}/cancel', [\App\Http\Controllers\Api\MeetingController::class, 'cancel'])
+            ->name('cancel')
+            ->middleware('throttle:20,1');
+
+        // Meeting settings and management
+        Route::patch('{meeting}/settings', [\App\Http\Controllers\Api\MeetingController::class, 'updateSettings'])
+            ->name('update-settings')
+            ->middleware('throttle:30,1');
+        Route::get('{meeting}/participants', [\App\Http\Controllers\Api\MeetingController::class, 'participants'])
+            ->name('participants');
+
+        // Attendee management
+        Route::post('{meeting}/attendees', [\App\Http\Controllers\Api\MeetingController::class, 'addAttendee'])
+            ->name('add-attendee')
+            ->middleware('throttle:40,1');
+        Route::delete('{meeting}/attendees', [\App\Http\Controllers\Api\MeetingController::class, 'removeAttendee'])
+            ->name('remove-attendee')
+            ->middleware('throttle:40,1');
+    });
 });
