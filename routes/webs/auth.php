@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\ConfirmablePasswordController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\EmailVerificationPromptController;
+use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\Auth\MfaController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
@@ -41,6 +42,13 @@ Route::middleware('guest')->group(function () {
 
     Route::post('webauthn/authenticate', [WebAuthnController::class, 'authenticate'])
         ->name('webauthn.authenticate');
+
+    // Google OAuth routes
+    Route::get('google', [GoogleController::class, 'redirect'])
+        ->name('google');
+
+    Route::get('google/callback', [GoogleController::class, 'callback'])
+        ->name('google.callback');
 });
 
 Route::middleware('auth')->group(function () {

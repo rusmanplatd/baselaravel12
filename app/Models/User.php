@@ -44,6 +44,7 @@ class User extends Authenticatable implements HasPasskeys
         'email',
         'password',
         'avatar',
+        'google_id',
         'public_key',
         'profile_url',
         'website',
