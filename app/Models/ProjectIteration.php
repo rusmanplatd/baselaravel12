@@ -149,13 +149,13 @@ class ProjectIteration extends Model
 
     public function canEdit(User $user): bool
     {
-        return $user->hasPermissionTo('project.edit', $this->project) ||
-               $user->hasPermissionTo('project.settings', $this->project);
+        return $user->hasPermissionTo('projects:write', $this->project) ||
+               $user->hasPermissionTo('projects:admin', $this->project);
     }
 
     public function canDelete(User $user): bool
     {
-        return $user->hasPermissionTo('project.delete', $this->project) ||
-               $user->hasPermissionTo('project.settings', $this->project);
+        return $user->hasPermissionTo('projects:delete', $this->project) ||
+               $user->hasPermissionTo('projects:admin', $this->project);
     }
 }

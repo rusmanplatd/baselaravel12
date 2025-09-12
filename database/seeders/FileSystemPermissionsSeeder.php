@@ -29,52 +29,56 @@ class FileSystemPermissionsSeeder extends Seeder
         // Create file management permissions
         $permissions = [
             // File operations
-            'files.view' => 'View files and folders',
-            'files.create' => 'Create and upload files',
-            'files.edit' => 'Edit file properties and content',
-            'files.delete' => 'Delete files and folders',
-            'files.download' => 'Download files',
-            'files.move' => 'Move files and folders',
-            'files.copy' => 'Copy files and folders',
-            'files.restore' => 'Restore deleted files',
+            'files:read' => 'View files and folders',
+            'files:write' => 'Create, upload, and edit files',
+            'files:delete' => 'Delete files and folders',
+            'files:download' => 'Download files',
+            'files:move' => 'Move files and folders',
+            'files:copy' => 'Copy files and folders',
+            'files:restore' => 'Restore deleted files',
             
             // Folder operations
-            'folders.create' => 'Create folders',
-            'folders.manage' => 'Manage folder structure and properties',
+            'folders:read' => 'View folders',
+            'folders:write' => 'Create and manage folder structure',
+            'folders:admin' => 'Manage folder properties and permissions',
             
             // Sharing operations
-            'files.share' => 'Share files and folders',
-            'files.share.public' => 'Create public share links',
-            'files.share.password' => 'Create password protected shares',
-            'files.share.expiring' => 'Create expiring share links',
-            'files.share.manage' => 'Manage all shared files',
+            'file-sharing:read' => 'View shared files',
+            'file-sharing:write' => 'Share files and folders',
+            'file-sharing:admin' => 'Manage all shared files and sharing settings',
+            'file-sharing:public' => 'Create public share links',
+            'file-sharing:password' => 'Create password protected shares',
+            'file-sharing:expiring' => 'Create expiring share links',
             
             // Permission management
-            'files.permissions.view' => 'View file permissions',
-            'files.permissions.manage' => 'Manage file permissions',
-            'files.permissions.inherit' => 'Set inheritance rules',
+            'file-permissions:read' => 'View file permissions',
+            'file-permissions:write' => 'Manage file permissions',
+            'file-permissions:admin' => 'Set inheritance rules and advanced permissions',
             
             // Comments and collaboration
-            'files.comment' => 'Add comments to files',
-            'files.comment.manage' => 'Manage all comments',
+            'file-comments:read' => 'View comments on files',
+            'file-comments:write' => 'Add comments to files',
+            'file-comments:admin' => 'Manage all comments',
             
             // Tags and organization
-            'files.tags.create' => 'Create and assign tags',
-            'files.tags.manage' => 'Manage tag system',
+            'file-tags:read' => 'View tags on files',
+            'file-tags:write' => 'Create and assign tags',
+            'file-tags:admin' => 'Manage tag system',
             
             // Version management
-            'files.versions.view' => 'View file versions',
-            'files.versions.manage' => 'Manage file versions',
+            'file-versions:read' => 'View file versions',
+            'file-versions:write' => 'Create file versions',
+            'file-versions:admin' => 'Manage file version history',
             
             // Analytics and logs
-            'files.analytics.view' => 'View file analytics',
-            'files.logs.view' => 'View access logs',
-            'files.logs.export' => 'Export access logs',
+            'file-analytics:read' => 'View file analytics',
+            'file-logs:read' => 'View access logs',
+            'file-logs:export' => 'Export access logs',
             
             // Administration
-            'files.admin' => 'Full file system administration',
-            'files.storage.manage' => 'Manage storage settings',
-            'files.cleanup' => 'Perform cleanup operations',
+            'files:admin' => 'Full file system administration',
+            'file-storage:admin' => 'Manage storage settings',
+            'file-cleanup:admin' => 'Perform cleanup operations',
         ];
 
         foreach ($permissions as $name => $description) {
@@ -94,41 +98,42 @@ class FileSystemPermissionsSeeder extends Seeder
 
         // Create file management roles
         $roles = [
-            'File Manager' => [
-                'description' => 'Can manage files and folders with full permissions',
-                'permissions' => [
-                    'files.view', 'files.create', 'files.edit', 'files.delete',
-                    'files.download', 'files.move', 'files.copy', 'files.restore',
-                    'folders.create', 'folders.manage',
-                    'files.share', 'files.share.public', 'files.share.password',
-                    'files.permissions.view', 'files.permissions.manage',
-                    'files.comment', 'files.tags.create', 'files.tags.manage',
-                    'files.versions.view', 'files.versions.manage',
-                ]
-            ],
-            
-            'File Editor' => [
-                'description' => 'Can edit and manage files but not system settings',
-                'permissions' => [
-                    'files.view', 'files.create', 'files.edit',
-                    'files.download', 'files.move', 'files.copy',
-                    'folders.create', 'files.share',
-                    'files.comment', 'files.tags.create',
-                    'files.versions.view',
-                ]
-            ],
-            
-            'File Viewer' => [
-                'description' => 'Can only view and download files',
-                'permissions' => [
-                    'files.view', 'files.download', 'files.comment',
-                    'files.versions.view',
-                ]
-            ],
-            
-            'File Administrator' => [
+            'file-admin' => [
                 'description' => 'Full administrative access to file system',
                 'permissions' => array_keys($permissions)
+            ],
+            
+            'file-manager' => [
+                'description' => 'Can manage files and folders with full permissions',
+                'permissions' => [
+                    'files:read', 'files:write', 'files:delete',
+                    'files:download', 'files:move', 'files:copy', 'files:restore',
+                    'folders:read', 'folders:write', 'folders:admin',
+                    'file-sharing:read', 'file-sharing:write', 'file-sharing:public', 'file-sharing:password',
+                    'file-permissions:read', 'file-permissions:write',
+                    'file-comments:read', 'file-comments:write', 'file-tags:read', 'file-tags:write', 'file-tags:admin',
+                    'file-versions:read', 'file-versions:write', 'file-versions:admin',
+                ]
+            ],
+            
+            'file-contributor' => [
+                'description' => 'Can edit and manage files but not system settings',
+                'permissions' => [
+                    'files:read', 'files:write',
+                    'files:download', 'files:move', 'files:copy',
+                    'folders:read', 'folders:write', 'file-sharing:read', 'file-sharing:write',
+                    'file-comments:read', 'file-comments:write', 'file-tags:read', 'file-tags:write',
+                    'file-versions:read', 'file-versions:write',
+                ]
+            ],
+            
+            'file-viewer' => [
+                'description' => 'Can only view and download files',
+                'permissions' => [
+                    'files:read', 'files:download', 'folders:read',
+                    'file-sharing:read', 'file-comments:read', 'file-tags:read',
+                    'file-versions:read',
+                ]
             ],
         ];
 

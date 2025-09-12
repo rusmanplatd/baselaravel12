@@ -25,48 +25,45 @@ class ProjectScopedPermissionsSeeder extends Seeder
     {
         $permissions = [
             // Core project permissions
-            'project.view' => 'View project and its items',
-            'project.edit' => 'Edit project details and settings',
-            'project.delete' => 'Delete project',
-            'project.archive' => 'Archive/unarchive project',
+            'projects:read' => 'View project and its items',
+            'projects:write' => 'Edit project details and settings',
+            'projects:delete' => 'Delete project',
+            'projects:admin' => 'Archive/unarchive project and manage settings',
             
             // Item permissions
-            'project.item.create' => 'Create project items (issues, drafts, etc.)',
-            'project.item.edit' => 'Edit project items',
-            'project.item.delete' => 'Delete project items',
-            'project.item.archive' => 'Archive project items',
-            'project.item.assign' => 'Assign items to users',
-            'project.item.status' => 'Change item status',
-            'project.item.convert' => 'Convert drafts to issues',
+            'project-items:read' => 'View project items (issues, drafts, etc.)',
+            'project-items:write' => 'Create and edit project items',
+            'project-items:delete' => 'Delete project items',
+            'project-items:archive' => 'Archive project items',
+            'project-items:assign' => 'Assign items to users',
+            'project-items:triage' => 'Change item status and convert types',
             
             // Field permissions
-            'project.field.create' => 'Create custom fields',
-            'project.field.edit' => 'Edit custom fields',
-            'project.field.delete' => 'Delete custom fields',
-            'project.field.values' => 'Edit field values on items',
+            'project-fields:read' => 'View custom fields',
+            'project-fields:write' => 'Create and edit custom fields',
+            'project-fields:delete' => 'Delete custom fields',
+            'project-fields:admin' => 'Manage field configurations',
             
             // View permissions
-            'project.view.create' => 'Create project views',
-            'project.view.edit' => 'Edit project views',
-            'project.view.delete' => 'Delete project views',
-            'project.view.share' => 'Share views with others',
+            'project-views:read' => 'View project views',
+            'project-views:write' => 'Create and edit project views',
+            'project-views:delete' => 'Delete project views',
+            'project-views:share' => 'Share views with others',
             
             // Member permissions
-            'project.member.invite' => 'Invite new members',
-            'project.member.edit' => 'Edit member permissions',
-            'project.member.remove' => 'Remove members',
-            'project.member.view' => 'View project members',
+            'project-members:read' => 'View project members',
+            'project-members:write' => 'Invite and manage members',
+            'project-members:admin' => 'Edit member permissions and remove members',
             
             // Workflow permissions
-            'project.workflow.create' => 'Create workflows',
-            'project.workflow.edit' => 'Edit workflows',
-            'project.workflow.delete' => 'Delete workflows',
-            'project.workflow.trigger' => 'Manually trigger workflows',
+            'project-workflows:read' => 'View workflows',
+            'project-workflows:write' => 'Create and edit workflows',
+            'project-workflows:delete' => 'Delete workflows',
+            'project-workflows:trigger' => 'Manually trigger workflows',
             
             // Advanced permissions
-            'project.settings' => 'Manage project settings',
-            'project.export' => 'Export project data',
-            'project.webhook.manage' => 'Manage project webhooks',
+            'projects:export' => 'Export project data',
+            'projects:webhooks' => 'Manage project webhooks',
         ];
 
         $systemUser = User::first();
@@ -99,53 +96,48 @@ class ProjectScopedPermissionsSeeder extends Seeder
         }
 
         $roles = [
-            'project.admin' => [
+            'project-admin' => [
                 'permissions' => [
-                    'project.view', 'project.edit', 'project.delete', 'project.archive', 'project.settings',
-                    'project.item.create', 'project.item.edit', 'project.item.delete', 'project.item.archive',
-                    'project.item.assign', 'project.item.status', 'project.item.convert',
-                    'project.field.create', 'project.field.edit', 'project.field.delete', 'project.field.values',
-                    'project.view.create', 'project.view.edit', 'project.view.delete', 'project.view.share',
-                    'project.member.invite', 'project.member.edit', 'project.member.remove', 'project.member.view',
-                    'project.workflow.create', 'project.workflow.edit', 'project.workflow.delete', 'project.workflow.trigger',
-                    'project.export', 'project.webhook.manage',
+                    'projects:read', 'projects:write', 'projects:delete', 'projects:admin',
+                    'project-items:read', 'project-items:write', 'project-items:delete', 'project-items:archive',
+                    'project-items:assign', 'project-items:triage',
+                    'project-fields:read', 'project-fields:write', 'project-fields:delete', 'project-fields:admin',
+                    'project-views:read', 'project-views:write', 'project-views:delete', 'project-views:share',
+                    'project-members:read', 'project-members:write', 'project-members:admin',
+                    'project-workflows:read', 'project-workflows:write', 'project-workflows:delete', 'project-workflows:trigger',
+                    'projects:export', 'projects:webhooks',
                 ],
             ],
-            'project.maintainer' => [
+            'project-maintainer' => [
                 'permissions' => [
-                    'project.view', 'project.edit',
-                    'project.item.create', 'project.item.edit', 'project.item.delete', 'project.item.archive',
-                    'project.item.assign', 'project.item.status', 'project.item.convert',
-                    'project.field.create', 'project.field.edit', 'project.field.values',
-                    'project.view.create', 'project.view.edit', 'project.view.delete', 'project.view.share',
-                    'project.member.invite', 'project.member.view',
-                    'project.workflow.create', 'project.workflow.edit', 'project.workflow.trigger',
-                    'project.export',
+                    'projects:read', 'projects:write',
+                    'project-items:read', 'project-items:write', 'project-items:delete', 'project-items:archive',
+                    'project-items:assign', 'project-items:triage',
+                    'project-fields:read', 'project-fields:write', 'project-fields:admin',
+                    'project-views:read', 'project-views:write', 'project-views:delete', 'project-views:share',
+                    'project-members:read', 'project-members:write',
+                    'project-workflows:read', 'project-workflows:write', 'project-workflows:trigger',
+                    'projects:export',
                 ],
             ],
-            'project.editor' => [
+            'project-contributor' => [
                 'permissions' => [
-                    'project.view',
-                    'project.item.create', 'project.item.edit', 'project.item.assign', 'project.item.status', 'project.item.convert',
-                    'project.field.values',
-                    'project.view.create', 'project.view.edit', 'project.view.share',
-                    'project.member.view',
-                    'project.workflow.trigger',
+                    'projects:read',
+                    'project-items:read', 'project-items:write', 'project-items:assign', 'project-items:triage',
+                    'project-fields:read', 'project-fields:admin',
+                    'project-views:read', 'project-views:write', 'project-views:share',
+                    'project-members:read',
+                    'project-workflows:read', 'project-workflows:trigger',
                 ],
             ],
-            'project.contributor' => [
+            'project-viewer' => [
                 'permissions' => [
-                    'project.view',
-                    'project.item.create', 'project.item.edit', 'project.item.status',
-                    'project.field.values',
-                    'project.view.create',
-                    'project.member.view',
-                ],
-            ],
-            'project.viewer' => [
-                'permissions' => [
-                    'project.view',
-                    'project.member.view',
+                    'projects:read',
+                    'project-items:read',
+                    'project-fields:read',
+                    'project-views:read',
+                    'project-members:read',
+                    'project-workflows:read',
                 ],
             ],
         ];

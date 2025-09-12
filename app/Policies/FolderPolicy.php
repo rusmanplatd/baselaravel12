@@ -14,7 +14,7 @@ class FolderPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('files.view');
+        return $user->can('files:read');
     }
 
     /**
@@ -29,7 +29,7 @@ class FolderPolicy
 
         // Check if folder is public
         if ($folder->isPublic()) {
-            return $user->can('files.view');
+            return $user->can('files:read');
         }
 
         // Check specific folder permissions
@@ -43,7 +43,7 @@ class FolderPolicy
         }
 
         // Check if user has global view permission and folder is internal
-        if ($folder->visibility === 'internal' && $user->can('files.view')) {
+        if ($folder->visibility === 'internal' && $user->can('files:read')) {
             return true;
         }
 
@@ -88,7 +88,7 @@ class FolderPolicy
     {
         // Check if user is the owner
         if ($folder->isOwnedBy($user)) {
-            return $user->can('files.delete');
+            return $user->can('files:delete');
         }
 
         // Check specific folder permissions
@@ -119,7 +119,7 @@ class FolderPolicy
     public function forceDelete(User $user, Folder $folder): bool
     {
         return $user->can('files.admin') || 
-               ($folder->isOwnedBy($user) && $user->can('files.delete'));
+               ($folder->isOwnedBy($user) && $user->can('files:delete'));
     }
 
     /**
@@ -196,7 +196,7 @@ class FolderPolicy
     public function uploadFiles(User $user, Folder $folder): bool
     {
         // Must be able to view folder and create files
-        if (!$this->view($user, $folder) || !$user->can('files.create')) {
+        if (!$this->view($user, $folder) || !$user->can('files:write')) {
             return false;
         }
 

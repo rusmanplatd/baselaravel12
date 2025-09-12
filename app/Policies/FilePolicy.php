@@ -14,7 +14,7 @@ class FilePolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('files.view');
+        return $user->can('files:read');
     }
 
     /**
@@ -29,7 +29,7 @@ class FilePolicy
 
         // Check if file is public
         if ($file->isPublic()) {
-            return $user->can('files.view');
+            return $user->can('files:read');
         }
 
         // Check specific file permissions
@@ -43,7 +43,7 @@ class FilePolicy
         }
 
         // Check if user has global view permission and file is internal
-        if ($file->visibility === 'internal' && $user->can('files.view')) {
+        if ($file->visibility === 'internal' && $user->can('files:read')) {
             return true;
         }
 
@@ -55,7 +55,7 @@ class FilePolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('files.create');
+        return $user->can('files:write');
     }
 
     /**
@@ -65,7 +65,7 @@ class FilePolicy
     {
         // Check if user is the owner
         if ($file->isOwnedBy($user)) {
-            return $user->can('files.edit');
+            return $user->can('files:write');
         }
 
         // Check specific file permissions
@@ -88,7 +88,7 @@ class FilePolicy
     {
         // Check if user is the owner
         if ($file->isOwnedBy($user)) {
-            return $user->can('files.delete');
+            return $user->can('files:delete');
         }
 
         // Check specific file permissions
@@ -119,7 +119,7 @@ class FilePolicy
     public function forceDelete(User $user, File $file): bool
     {
         return $user->can('files.admin') || 
-               ($file->isOwnedBy($user) && $user->can('files.delete'));
+               ($file->isOwnedBy($user) && $user->can('files:delete'));
     }
 
     /**

@@ -152,13 +152,13 @@ class Project extends Model
 
     public function canEdit(User $user): bool
     {
-        return $user->hasPermissionTo('project.edit', $this);
+        return $user->hasPermissionTo('projects:write', $this);
     }
 
     public function canAdmin(User $user): bool
     {
-        return $user->hasPermissionTo('project.delete', $this) || 
-               $user->hasPermissionTo('project.settings', $this);
+        return $user->hasPermissionTo('projects:delete', $this) || 
+               $user->hasPermissionTo('projects:admin', $this);
     }
 
     public function userHasPermission(User $user, string $permission): bool
@@ -203,7 +203,7 @@ class Project extends Model
         }
     }
 
-    public function addMember(User $user, string $role = 'project.viewer', array $permissions = [], User $addedBy = null): ProjectMember
+    public function addMember(User $user, string $role = 'project-viewer', array $permissions = [], User $addedBy = null): ProjectMember
     {
         $member = $this->members()->create([
             'user_id' => $user->id,
