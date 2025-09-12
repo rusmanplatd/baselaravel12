@@ -154,8 +154,8 @@ export function ProjectViewManager({
         if (activeView.sort && activeView.sort.length > 0) {
             filtered.sort((a, b) => {
                 for (const sortRule of activeView.sort!) {
-                    let aValue = a[sortRule.field as keyof ProjectItem] || a.field_values?.[sortRule.field];
-                    let bValue = b[sortRule.field as keyof ProjectItem] || b.field_values?.[sortRule.field];
+                    const aValue = a[sortRule.field as keyof ProjectItem] || a.field_values?.[sortRule.field];
+                    const bValue = b[sortRule.field as keyof ProjectItem] || b.field_values?.[sortRule.field];
 
                     if (aValue === bValue) continue;
 

@@ -6,9 +6,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Calendar, CalendarEvent, CalendarEventForm } from '@/types/calendar';
+import { Badge } from '@/components/ui/badge';
+import { Calendar, CalendarEvent, CalendarEventForm, Attendee, Reminder } from '@/types/calendar';
 import { useCalendar } from '@/hooks/useCalendar';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, Loader2, Plus, X, Users, Bell, Video } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { format } from 'date-fns';
 
@@ -49,7 +50,12 @@ export function CreateEventDialog({
     location: '',
     status: 'confirmed',
     visibility: 'public',
+    meeting_url: '',
+    attendees: [],
+    reminders: [],
   });
+
+  const [attendeeEmail, setAttendeeEmail] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,7 +78,11 @@ export function CreateEventDialog({
         location: '',
         status: 'confirmed',
         visibility: 'public',
+        meeting_url: '',
+        attendees: [],
+        reminders: [],
       });
+      setAttendeeEmail('');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to create event');
     } finally {
@@ -85,6 +95,47 @@ export function CreateEventDialog({
       ...prev,
       is_all_day: isAllDay,
       ends_at: isAllDay ? undefined : prev.ends_at,
+    }));
+  };
+
+  const addAttendee = () => {
+    if (attendeeEmail && !formData.attendees?.find(a => a.email === attendeeEmail)) {
+      setFormData(prev => ({
+        ...prev,
+        attendees: [
+          ...(prev.attendees || []),
+          {
+            email: attendeeEmail,
+            status: 'pending',
+            added_at: new Date().toISOString(),
+          }
+        ]
+      }));
+      setAttendeeEmail('');
+    }
+  };
+
+  const removeAttendee = (email: string) => {
+    setFormData(prev => ({
+      ...prev,
+      attendees: prev.attendees?.filter(a => a.email !== email) || []
+    }));
+  };
+
+  const addReminder = (minutes: number) => {
+    const newReminder: Reminder = { minutes, method: 'popup' };
+    if (!formData.reminders?.find(r => r.minutes === minutes && r.method === 'popup')) {
+      setFormData(prev => ({
+        ...prev,
+        reminders: [...(prev.reminders || []), newReminder]
+      }));
+    }
+  };
+
+  const removeReminder = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      reminders: prev.reminders?.filter((_, i) => i !== index) || []
     }));
   };
 
@@ -205,6 +256,103 @@ export function CreateEventDialog({
               onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
               placeholder="Conference room, online, etc."
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="meeting_url">
+              <Video className="w-4 h-4 inline mr-1" />
+              Meeting URL (Optional)
+            </Label>
+            <Input
+              id="meeting_url"
+              type="url"
+              value={formData.meeting_url}
+              onChange={(e) => setFormData(prev => ({ ...prev, meeting_url: e.target.value }))}
+              placeholder="https://meet.google.com/..."
+            />
+          </div>
+
+          {/* Attendees Section */}
+          <div className="space-y-2">
+            <Label>
+              <Users className="w-4 h-4 inline mr-1" />
+              Attendees (Optional)
+            </Label>
+            <div className="flex space-x-2">
+              <Input
+                value={attendeeEmail}
+                onChange={(e) => setAttendeeEmail(e.target.value)}
+                placeholder="Enter email address"
+                type="email"
+                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addAttendee())}
+              />
+              <Button type="button" onClick={addAttendee} size="sm">
+                <Plus className="w-4 h-4" />
+              </Button>
+            </div>
+            {formData.attendees && formData.attendees.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {formData.attendees.map((attendee) => (
+                  <Badge key={attendee.email} variant="secondary" className="flex items-center gap-1">
+                    {attendee.email}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-4 w-4 p-0 hover:bg-transparent"
+                      onClick={() => removeAttendee(attendee.email || '')}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Reminders Section */}
+          <div className="space-y-2">
+            <Label>
+              <Bell className="w-4 h-4 inline mr-1" />
+              Reminders (Optional)
+            </Label>
+            <div className="flex flex-wrap gap-2">
+              {[5, 15, 30, 60, 1440].map((minutes) => (
+                <Button
+                  key={minutes}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => addReminder(minutes)}
+                  disabled={formData.reminders?.some(r => r.minutes === minutes)}
+                >
+                  {minutes < 60 ? `${minutes}min` : minutes === 1440 ? '1 day' : `${minutes/60}h`}
+                </Button>
+              ))}
+            </div>
+            {formData.reminders && formData.reminders.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {formData.reminders.map((reminder, index) => (
+                  <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                    {reminder.minutes < 60 
+                      ? `${reminder.minutes} min before` 
+                      : reminder.minutes === 1440 
+                        ? '1 day before'
+                        : `${reminder.minutes/60}h before`
+                    }
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-4 w-4 p-0 hover:bg-transparent"
+                      onClick={() => removeReminder(index)}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </Badge>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">

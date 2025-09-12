@@ -10,7 +10,7 @@ export interface Calendar {
   owner_name: string;
   events_count?: number;
   permissions?: CalendarPermission[];
-  settings?: Record<string, any>;
+  settings?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
@@ -33,7 +33,7 @@ export interface CalendarEvent {
   duration_minutes: number;
   attendees?: Attendee[];
   reminders?: Reminder[];
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   meeting_url?: string;
   creator?: {
     id: string;
@@ -76,7 +76,7 @@ export interface CalendarForm {
   owner_type: 'user' | 'organization' | 'project';
   owner_id: string;
   visibility?: 'public' | 'private' | 'shared';
-  settings?: Record<string, any>;
+  settings?: Record<string, unknown>;
 }
 
 export interface CalendarEventForm {
@@ -93,7 +93,7 @@ export interface CalendarEventForm {
   attendees?: Partial<Attendee>[];
   reminders?: Reminder[];
   meeting_url?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface CalendarViewState {

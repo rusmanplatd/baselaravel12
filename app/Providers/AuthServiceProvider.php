@@ -8,7 +8,8 @@ use Illuminate\Support\Facades\Gate;
 class AuthServiceProvider extends ServiceProvider
 {
     protected $policies = [
-        //
+        \App\Models\Calendar::class => \App\Policies\CalendarPolicy::class,
+        \App\Models\CalendarEvent::class => \App\Policies\CalendarEventPolicy::class,
     ];
 
     public function boot(): void
